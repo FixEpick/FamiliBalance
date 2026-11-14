@@ -121,8 +121,17 @@ fun TasksScreen(
     val haptic = LocalHapticFeedback.current
     var balanceBadgePosition by remember { mutableStateOf(Offset.Zero) }
     var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
+    var showConfetti by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showConfetti) {
+        if (showConfetti) {
+            delay(2500)
+            showConfetti = false
+        }
+    }
 
     val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
+        showConfetti = true
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         scope.launch(Dispatchers.IO) {
             val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
@@ -343,6 +352,9 @@ fun TasksScreen(
                 flight.onFinished()
             }
         )
+        if (showConfetti) {
+            ConfettiOverlay(modifier = Modifier.fillMaxSize())
+        }
         }
     }
 }

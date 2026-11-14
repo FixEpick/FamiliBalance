@@ -62,6 +62,7 @@ import com.example.familibalance.*
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.screens.*
 import com.example.familibalance.feature.child.components.*
+import com.example.familibalance.ui.components.ConfettiOverlay
 import com.example.familibalance.viewmodel.actions.*
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -163,8 +164,17 @@ fun MainChildScreen(
     val haptic = LocalHapticFeedback.current
     var balanceBadgePosition by remember { mutableStateOf(Offset.Zero) }
     var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
+    var showConfetti by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showConfetti) {
+        if (showConfetti) {
+            delay(2500)
+            showConfetti = false
+        }
+    }
 
     val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
+        showConfetti = true
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         scope.launch(Dispatchers.IO) {
             val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
@@ -221,8 +231,8 @@ fun MainChildScreen(
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = NeonCyan.copy(alpha = 0.2f),
-                                border = BorderStroke(1.dp, NeonCyan),
+                                color = LocalAppPalette.current.primaryNeon.copy(alpha = 0.2f),
+                                border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
                                 modifier = Modifier.size(48.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
@@ -256,7 +266,7 @@ fun MainChildScreen(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     text = "Космо-банк",
-                                    color = NeonCyan,
+                                    color = LocalAppPalette.current.primaryNeon,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     maxLines = 1,
@@ -277,7 +287,7 @@ fun MainChildScreen(
                     OutlinedButton(
                         onClick = { showCashOutDialog = true },
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = NeonCyan,
+                            containerColor = LocalAppPalette.current.primaryNeon,
                             contentColor = SpaceBgStart
                         ),
                         shape = RoundedCornerShape(12.dp),
@@ -375,8 +385,8 @@ fun MainChildScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = NeonCyan.copy(alpha = 0.15f)),
-                        border = BorderStroke(1.5.dp, NeonCyan)
+                        colors = CardDefaults.cardColors(containerColor = LocalAppPalette.current.primaryNeon.copy(alpha = 0.15f)),
+                        border = BorderStroke(1.5.dp, LocalAppPalette.current.primaryNeon)
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -385,7 +395,7 @@ fun MainChildScreen(
                         ) {
                             Text(
                                 text = child.streakBonusMessage,
-                                color = NeonCyan,
+                                color = LocalAppPalette.current.primaryNeon,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -395,7 +405,7 @@ fun MainChildScreen(
                             ) {
                                 Text(
                                     text = "✕",
-                                    color = NeonCyan,
+                                    color = LocalAppPalette.current.primaryNeon,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -423,7 +433,7 @@ fun MainChildScreen(
                         label = "dreamProgress"
                     )
 
-                    val progressBarColor = if (isGoalReached) StatusYellow else NeonCyan
+                    val progressBarColor = if (isGoalReached) StatusYellow else LocalAppPalette.current.primaryNeon
 
                     Card(
                         modifier = Modifier
@@ -438,11 +448,11 @@ fun MainChildScreen(
                             ),
                         shape = RoundedCornerShape(22.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = NeonCyan.copy(alpha = 0.10f)
+                            containerColor = LocalAppPalette.current.primaryNeon.copy(alpha = 0.10f)
                         ),
                         border = BorderStroke(
                             width = if (isGoalReached) 3.dp else 1.5.dp,
-                            color = if (isGoalReached) StatusYellow else NeonCyan.copy(alpha = 0.6f)
+                            color = if (isGoalReached) StatusYellow else LocalAppPalette.current.primaryNeon.copy(alpha = 0.6f)
                         )
                     ) {
                         Column(
@@ -458,7 +468,7 @@ fun MainChildScreen(
                             ) {
                                 Text(
                                     text = dreamTitle,
-                                    color = if (isGoalReached) StatusYellow else NeonCyan,
+                                    color = if (isGoalReached) StatusYellow else LocalAppPalette.current.primaryNeon,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 1
@@ -478,7 +488,7 @@ fun MainChildScreen(
                                 progress = { currentProgress },
                                 modifier = Modifier.fillMaxWidth().height(6.dp),
                                 color = progressBarColor,
-                                trackColor = NeonCyan.copy(alpha = 0.15f),
+                                trackColor = LocalAppPalette.current.primaryNeon.copy(alpha = 0.15f),
                                 strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
                             )
                             if (isGoalReached) {
@@ -533,7 +543,7 @@ fun MainChildScreen(
                                 .fillMaxWidth()
                                 .height(8.dp)
                                 .clip(RoundedCornerShape(4.dp)),
-                            color = NeonCyan,
+                            color = LocalAppPalette.current.primaryNeon,
                             trackColor = SpaceBgStart
                         )
 
@@ -545,7 +555,7 @@ fun MainChildScreen(
                             onClick = { showBuyTimeSheet = true },
                             enabled = canBuyTime,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = NeonCyan,
+                                containerColor = LocalAppPalette.current.primaryNeon,
                                 contentColor = SpaceBgStart,
                                 disabledContainerColor = GlassBackground,
                                 disabledContentColor = TextSecondary
@@ -611,7 +621,7 @@ fun MainChildScreen(
                                     Text(
                                         text = "$day дн",
                                         fontSize = 11.sp,
-                                        color = if (isActive) NeonCyan else TextSecondary.copy(alpha = 0.4f),
+                                        color = if (isActive) LocalAppPalette.current.primaryNeon else TextSecondary.copy(alpha = 0.4f),
                                         fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
                                     )
                                 }
@@ -624,7 +634,7 @@ fun MainChildScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             Button(
                                 onClick = { viewModel.checkInStreak(child.id) },
-                                colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = SpaceBgStart),
+                                colors = ButtonDefaults.buttonColors(containerColor = LocalAppPalette.current.primaryNeon, contentColor = SpaceBgStart),
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
@@ -633,7 +643,7 @@ fun MainChildScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = "Бонус +50 ₽ на 7-й день",
-                                color = NeonCyan,
+                                color = LocalAppPalette.current.primaryNeon,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 textAlign = TextAlign.Center,
@@ -642,7 +652,7 @@ fun MainChildScreen(
                         } else {
                             Text(
                                 text = "Бонус +50 ₽ на 7-й день",
-                                color = NeonCyan,
+                                color = LocalAppPalette.current.primaryNeon,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 textAlign = TextAlign.Center,
@@ -685,8 +695,8 @@ fun MainChildScreen(
                                     .fillMaxWidth()
                                     .height(50.dp),
                                 shape = RoundedCornerShape(16.dp),
-                                border = BorderStroke(1.dp, NeonCyan),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
+                                border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
                             ) {
                                 Text("🐱 Честное признание", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                             }
@@ -785,8 +795,8 @@ fun MainChildScreen(
                         .fillMaxWidth()
                         .height(50.dp),
                     shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, NeonCyan),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
+                    border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
                 ) {
                     Text("📜 Свиток правил", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
@@ -800,6 +810,9 @@ fun MainChildScreen(
                 flight.onFinished()
             }
         )
+        if (showConfetti) {
+            ConfettiOverlay(modifier = Modifier.fillMaxSize())
+        }
     }
 
     // Диалог вывода наличных
@@ -816,7 +829,7 @@ fun MainChildScreen(
             title = {
                 Text(
                     text = "💵 Вывести наличные",
-                    color = NeonCyan,
+                    color = LocalAppPalette.current.primaryNeon,
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -831,8 +844,8 @@ fun MainChildScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
-                            cursorColor = NeonCyan,
-                            focusedBorderColor = NeonCyan,
+                            cursorColor = LocalAppPalette.current.primaryNeon,
+                            focusedBorderColor = LocalAppPalette.current.primaryNeon,
                             unfocusedBorderColor = GlassStroke,
                             focusedContainerColor = CardBgDark.copy(alpha = 0.8f),
                             unfocusedContainerColor = CardBgDark.copy(alpha = 0.8f)
@@ -856,8 +869,8 @@ fun MainChildScreen(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White,
-                            cursorColor = NeonCyan,
-                            focusedBorderColor = NeonCyan,
+                            cursorColor = LocalAppPalette.current.primaryNeon,
+                            focusedBorderColor = LocalAppPalette.current.primaryNeon,
                             unfocusedBorderColor = GlassStroke,
                             focusedContainerColor = CardBgDark.copy(alpha = 0.8f),
                             unfocusedContainerColor = CardBgDark.copy(alpha = 0.8f)

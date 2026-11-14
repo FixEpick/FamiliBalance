@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +56,8 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            FamiliBalanceTheme {
+            var currentThemeId by rememberSaveable { mutableStateOf("COSMIC_BLUE") }
+            FamiliBalanceTheme(themeId = currentThemeId) {
                 val navController = rememberNavController()
 
                 // При возврате приложения из фона — досылаем несинхронизированные данные
@@ -93,7 +95,14 @@ class MainActivity : ComponentActivity() {
                         AdminScreen(onSwitchProfile = { backToLogin() }, viewModel = viewModel)
                     }
                     composable<ChildRoute> {
-                        ChildSection(viewModel = viewModel, onSwitchProfile = { backToLogin() })
+                        ChildSection(
+                            viewModel = viewModel,
+                            onSwitchProfile = { backToLogin() },
+                            onCycleTheme = {
+                                val idx = AppThemes.indexOfFirst { it.id == currentThemeId }
+                                currentThemeId = AppThemes[(idx + 1) % AppThemes.size].id
+                            }
+                        )
                     }
                 }
             }
@@ -111,7 +120,8 @@ private data class ChildTab(
 @Composable
 private fun ChildSection(
     viewModel: MainViewModel,
-    onSwitchProfile: () -> Unit
+    onSwitchProfile: () -> Unit,
+    onCycleTheme: () -> Unit = {}
 ) {
     val childNavController = rememberNavController()
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
@@ -207,6 +217,9 @@ private fun ChildSection(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
+                    IconButton(onClick = onCycleTheme) {
+                        Text("🎨", fontSize = 18.sp)
+                    }
                     OutlinedButton(
                         onClick = onSwitchProfile,
                         border = BorderStroke(1.dp, GlassStroke),
@@ -248,11 +261,11 @@ private fun ChildSection(
                             label = {
                                 Text(
                                     tab.title,
-                                    color = if (tab.route == selectedTabRoute) NeonCyan else TextSecondary
+                                    color = if (tab.route == selectedTabRoute) LocalAppPalette.current.primaryNeon else TextSecondary
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = NeonCyan.copy(alpha = 0.18f)
+                                indicatorColor = LocalAppPalette.current.primaryNeon.copy(alpha = 0.18f)
                             )
                         )
                     }
