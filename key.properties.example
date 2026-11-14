@@ -1,0 +1,9 @@
+# Скопируйте этот файл в key.properties (в корне проекта) и заполните значения.
+# key.properties НЕ коммитится в git.
+#
+# storeFile — путь к .jks относительно app/ (или абсолютный).
+# Пример: положите keystore в корень проекта -> storeFile=../familibalance-release.jks
+storeFile=../familibalance-release.jks
+storePassword=CHANGE_ME
+keyAlias=familibalance
+keyPassword=CHANGE_ME

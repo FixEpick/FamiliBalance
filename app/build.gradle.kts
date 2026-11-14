@@ -25,6 +25,23 @@ android {
         ?: (project.findProperty("SUPABASE_ANON_KEY") as? String)
         ?: ""
 
+    // key.properties в корне проекта — данные release-keystore (не коммитится).
+    // Если файла нет — release подписывается debug-ключом, debug-сборки не затрагиваются.
+    val keyPropsFile = rootProject.file("key.properties")
+    val keyProps = Properties().apply {
+        if (keyPropsFile.exists()) {
+            keyPropsFile.inputStream().use { load(it) }
+        }
+    }
+    val hasReleaseKey = keyPropsFile.exists() &&
+        !keyProps.getProperty("storePassword").isNullOrBlank() &&
+        !keyProps.getProperty("keyPassword").isNullOrBlank()
+
+    // GitHub repo для проверки обновлений (owner/name). Замените на реальный.
+    val githubRepo = localProps.getProperty("GITHUB_REPO")
+        ?: (project.findProperty("GITHUB_REPO") as? String)
+        ?: "user/familibalance"
+
     defaultConfig {
         applicationId = "com.example.familibalance"
         minSdk = 24
@@ -36,10 +53,27 @@ android {
 
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
+        buildConfigField("String", "GITHUB_REPO", "\"$githubRepo\"")
+    }
+
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = rootProject.file(keyProps.getProperty("storeFile") ?: "")
+                storePassword = keyProps.getProperty("storePassword")
+                keyAlias = keyProps.getProperty("keyAlias")
+                keyPassword = keyProps.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig = if (hasReleaseKey) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
@@ -78,6 +112,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:realtime-kt")
     implementation("io.github.jan-tennert.supabase:storage-kt")
     implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("com.google.mlkit:text-recognition:16.0.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")

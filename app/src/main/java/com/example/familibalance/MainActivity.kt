@@ -45,17 +45,23 @@ import com.example.familibalance.ui.screens.*
 import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
 import com.example.familibalance.ui.theme.*
+import com.example.familibalance.ui.update.UpdateDialog
+import com.example.familibalance.viewmodel.UpdateViewModel
 
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: MainViewModel
+    private lateinit var updateViewModel: UpdateViewModel
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
+        updateViewModel = ViewModelProvider(this)[UpdateViewModel::class.java]
 
         enableEdgeToEdge()
         setContent {
+            val updateState by updateViewModel.uiState.collectAsStateWithLifecycle()
+            LaunchedEffect(Unit) { updateViewModel.checkOnLaunch() }
             val familyState by viewModel.familyState.collectAsStateWithLifecycle()
             val themeChild = familyState.children[familyState.selectedChildId]
                 ?: familyState.children.values.firstOrNull()
@@ -104,6 +110,12 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+
+                UpdateDialog(
+                    state = updateState,
+                    onUpdate = { updateViewModel.startDownload() },
+                    onDismiss = { updateViewModel.dismiss() }
+                )
             }
         }
     }
