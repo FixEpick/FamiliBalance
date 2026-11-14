@@ -472,7 +472,31 @@ item {
     ResetRow("Обнуление баланса", "Обнулить") { viewModel.resetBalance(child.id) }
     Spacer(modifier = Modifier.height(12.dp))
     ResetRow("Сброс стрика и времени", "Сбросить") { viewModel.resetStreakAndTime(child.id) }
+    Spacer(modifier = Modifier.height(12.dp))
+    ResetRow("Сброс счётчиков оценок", "Сбросить") { viewModel.resetGradeCounters(child.id) }
+    Spacer(modifier = Modifier.height(12.dp))
+    ResetRow("Сброс цели-мечты", "Сбросить") { viewModel.resetDream(child.id) }
+    Spacer(modifier = Modifier.height(12.dp))
+    ResetRow("Сброс купленного времени", "Сбросить") { viewModel.resetBoughtTime(child.id) }
+    Spacer(modifier = Modifier.height(12.dp))
+    ResetRow("Сброс честного признания", "Сбросить") { viewModel.resetHonestAdmission(child.id) }
+    Spacer(modifier = Modifier.height(12.dp))
+    ResetRow("Сброс фото квестов", "Сбросить") { viewModel.resetQuestPhotos(child.id) }
+    Spacer(modifier = Modifier.height(12.dp))
+    ResetRow("Сброс темы", "Сбросить") { viewModel.resetTheme(child.id) }
+    Spacer(modifier = Modifier.height(12.dp))
+    ResetRow("Сброс видимости квестов", "Сбросить") { viewModel.resetQuestVisibility(child.id) }
     Spacer(modifier = Modifier.height(20.dp))
+    OutlinedButton(
+        onClick = { viewModel.forceSync() },
+        border = BorderStroke(1.dp, NeonCyan),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan),
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier.fillMaxWidth().height(46.dp)
+    ) {
+        Text("🔄 Синхронизировать с сервером", fontWeight = FontWeight.Bold)
+    }
+    Spacer(modifier = Modifier.height(12.dp))
     Button(
         onClick = { requestReset { viewModel.resetAllChildData(child.id) } },
         colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),

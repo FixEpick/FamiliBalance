@@ -536,18 +536,6 @@ object AppStateStorage {
     private const val KEY_STATE = "app_state_json"
     private const val KEY_LAST_DAILY = "last_daily_reset"
     private const val KEY_LAST_WEEKLY = "last_weekly_reset"
-    private const val KEY_THEME_ID = "selected_theme_id"
-
-    fun getThemeId(context: Context): String =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getString(KEY_THEME_ID, "COSMIC_BLUE") ?: "COSMIC_BLUE"
-
-    fun saveThemeId(context: Context, themeId: String) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_THEME_ID, themeId)
-            .apply()
-    }
 
     private val jsonFormat = Json {
         ignoreUnknownKeys = true

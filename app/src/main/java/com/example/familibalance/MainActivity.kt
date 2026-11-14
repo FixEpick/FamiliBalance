@@ -15,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -57,13 +56,10 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            val context = LocalContext.current
-            var currentThemeId by remember {
-                mutableStateOf(AppStateStorage.getThemeId(context))
-            }
-            LaunchedEffect(currentThemeId) {
-                AppStateStorage.saveThemeId(context, currentThemeId)
-            }
+            val familyState by viewModel.familyState.collectAsStateWithLifecycle()
+            val themeChild = familyState.children[familyState.selectedChildId]
+                ?: familyState.children.values.firstOrNull()
+            val currentThemeId = themeChild?.selectedThemeId ?: "COSMIC_BLUE"
             FamiliBalanceTheme(themeId = currentThemeId) {
                 val navController = rememberNavController()
 
@@ -104,9 +100,7 @@ class MainActivity : ComponentActivity() {
                     composable<ChildRoute> {
                         ChildSection(
                             viewModel = viewModel,
-                            onSwitchProfile = { backToLogin() },
-                            currentThemeId = currentThemeId,
-                            onThemeSelected = { currentThemeId = it }
+                            onSwitchProfile = { backToLogin() }
                         )
                     }
                 }
@@ -125,9 +119,7 @@ private data class ChildTab(
 @Composable
 private fun ChildSection(
     viewModel: MainViewModel,
-    onSwitchProfile: () -> Unit,
-    currentThemeId: String = "COSMIC_BLUE",
-    onThemeSelected: (String) -> Unit = {}
+    onSwitchProfile: () -> Unit
 ) {
     val childNavController = rememberNavController()
     var showThemeSheet by remember { mutableStateOf(false) }
@@ -307,8 +299,8 @@ private fun ChildSection(
             }
             if (showThemeSheet) {
                 ThemeSelectionBottomSheet(
-                    currentThemeId = currentThemeId,
-                    onThemeSelected = onThemeSelected,
+                    currentThemeId = child.selectedThemeId,
+                    onThemeSelected = { viewModel.updateTheme(child.id, it) },
                     onDismissRequest = { showThemeSheet = false }
                 )
             }

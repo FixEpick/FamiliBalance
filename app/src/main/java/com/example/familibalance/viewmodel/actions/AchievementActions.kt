@@ -165,6 +165,76 @@ fun MainViewModel.resetActiveQuests(userId: String) {
     )
 }
 
+fun MainViewModel.updateTheme(userId: String, themeId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    updateChildProfile(profile.copy(selectedThemeId = themeId))
+}
+
+fun MainViewModel.resetGradeCounters(userId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    updateChildProfile(
+        profile.copy(fivesCount = 0, wardrobeCount = 0, roomCount = 0)
+    )
+}
+
+fun MainViewModel.resetDream(userId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    updateChildProfile(
+        profile.copy(dreamTitle = "", dreamTarget = 0)
+    )
+}
+
+fun MainViewModel.resetBoughtTime(userId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    updateChildProfile(profile.copy(boughtMinutesToday = 0))
+}
+
+fun MainViewModel.resetHonestAdmission(userId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    updateChildProfile(
+        profile.copy(
+            honestAdmissionStatus = QuestStatus.AVAILABLE,
+            honestAdmissionText = "",
+            lastHonestAdmissionDate = ""
+        )
+    )
+}
+
+fun MainViewModel.resetQuestPhotos(userId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    updateChildProfile(
+        profile.copy(
+            closetPhotoUrl = null,
+            roomPhotoUrl = null,
+            diaryPhotoUrl = null
+        )
+    )
+}
+
+fun MainViewModel.resetTheme(userId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    updateChildProfile(
+        profile.copy(
+            selectedThemeId = "COSMIC_BLUE",
+            unlockedThemes = listOf("COSMIC_BLUE")
+        )
+    )
+}
+
+fun MainViewModel.resetQuestVisibility(userId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    updateChildProfile(
+        profile.copy(
+            isWardrobeVisible = true,
+            isRoomVisible = true,
+            isDiaryVisible = true,
+            isWardrobeDeleted = false,
+            isRoomDeleted = false,
+            isDiaryDeleted = false
+        )
+    )
+}
+
 fun MainViewModel.resetStreakAndTime(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     updateChildProfile(

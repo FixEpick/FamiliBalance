@@ -42,6 +42,7 @@ fun ThemeSelectionBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
         ) {
@@ -63,8 +64,10 @@ fun ThemeSelectionBottomSheet(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 32.dp),
-                modifier = Modifier.heightIn(max = 420.dp)
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 64.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             ) {
                 items(AppThemes, key = { it.id }) { theme ->
                     val isSelected = theme.id == currentThemeId
