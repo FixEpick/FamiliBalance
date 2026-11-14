@@ -45,7 +45,7 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF0A0E27).copy(alpha = 0.25f))
+                .background(AdminOverlayBg.copy(alpha = 0.25f))
         )
 
         Column(

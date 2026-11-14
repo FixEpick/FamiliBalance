@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.zIndex
+import com.example.familibalance.ui.theme.GoldBright
 
 data class CoinFlightData(
     val startX: Float,
@@ -68,7 +69,7 @@ private fun SingleCoinFlight(
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
-                color = Color(0xFFFFD700).copy(alpha = alpha.coerceIn(0f, 1f)),
+                color = GoldBright.copy(alpha = alpha.coerceIn(0f, 1f)),
                 radius = 18f,
                 center = Offset(currentX, currentY)
             )

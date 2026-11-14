@@ -3,6 +3,7 @@ package com.example.familibalance.viewmodel.actions
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
+import com.example.familibalance.util.PhotoStorage
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
@@ -59,11 +60,12 @@ fun MainViewModel.toggleQuestVisibility(userId: String, questId: String, isVisib
 
 fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoUrl: String) {
     val profile = familyRepository.getChild(userId) ?: return
+    val persistedPhotoUrl = PhotoStorage.persistIfNeeded(getApplication(), photoUrl)
     val updatedQuests = profile.customQuests.map { quest ->
         if (quest.id == questId) {
             quest.copy(
                 status = QuestStatus.PENDING,
-                photoUrl = photoUrl,
+                photoUrl = persistedPhotoUrl.orEmpty(),
                 rejectReason = null
             )
         } else quest

@@ -182,7 +182,7 @@ fun AdminScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF0A0E27).copy(alpha = 0.82f))
+                .background(AdminOverlayBg.copy(alpha = 0.82f))
         )
         Scaffold(
             modifier = Modifier.fillMaxSize(),
