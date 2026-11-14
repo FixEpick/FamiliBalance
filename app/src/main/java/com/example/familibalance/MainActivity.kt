@@ -12,10 +12,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -44,6 +44,7 @@ import com.example.familibalance.feature.child.TasksScreen
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.ui.screens.*
 import com.example.familibalance.ui.components.PulseBadge
+import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
 import com.example.familibalance.ui.theme.*
 
 class MainActivity : ComponentActivity() {
@@ -56,7 +57,13 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            var currentThemeId by rememberSaveable { mutableStateOf("COSMIC_BLUE") }
+            val context = LocalContext.current
+            var currentThemeId by remember {
+                mutableStateOf(AppStateStorage.getThemeId(context))
+            }
+            LaunchedEffect(currentThemeId) {
+                AppStateStorage.saveThemeId(context, currentThemeId)
+            }
             FamiliBalanceTheme(themeId = currentThemeId) {
                 val navController = rememberNavController()
 
@@ -98,10 +105,8 @@ class MainActivity : ComponentActivity() {
                         ChildSection(
                             viewModel = viewModel,
                             onSwitchProfile = { backToLogin() },
-                            onCycleTheme = {
-                                val idx = AppThemes.indexOfFirst { it.id == currentThemeId }
-                                currentThemeId = AppThemes[(idx + 1) % AppThemes.size].id
-                            }
+                            currentThemeId = currentThemeId,
+                            onThemeSelected = { currentThemeId = it }
                         )
                     }
                 }
@@ -121,9 +126,11 @@ private data class ChildTab(
 private fun ChildSection(
     viewModel: MainViewModel,
     onSwitchProfile: () -> Unit,
-    onCycleTheme: () -> Unit = {}
+    currentThemeId: String = "COSMIC_BLUE",
+    onThemeSelected: (String) -> Unit = {}
 ) {
     val childNavController = rememberNavController()
+    var showThemeSheet by remember { mutableStateOf(false) }
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isSynced by viewModel.isSynced.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
@@ -217,7 +224,7 @@ private fun ChildSection(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
-                    IconButton(onClick = onCycleTheme) {
+                    IconButton(onClick = { showThemeSheet = true }) {
                         Text("🎨", fontSize = 18.sp)
                     }
                     OutlinedButton(
@@ -297,6 +304,13 @@ private fun ChildSection(
                         composable<ChildHistoryRoute> { HistoryScreen(viewModel = viewModel) }
                     }
                 }
+            }
+            if (showThemeSheet) {
+                ThemeSelectionBottomSheet(
+                    currentThemeId = currentThemeId,
+                    onThemeSelected = onThemeSelected,
+                    onDismissRequest = { showThemeSheet = false }
+                )
             }
         }
     }
