@@ -91,7 +91,7 @@ class MainViewModelTest {
     fun `submitHonestAdmission sets status to PENDING via copy`() {
         repository.children["user_1"] = createChild()
 
-        viewModel.submitHonestAdmission("user_1")
+        viewModel.submitHonestAdmission("user_1", "Тест")
 
         assertEquals(
             QuestStatus.PENDING,
@@ -206,15 +206,16 @@ class MainViewModelTest {
             lastHonestAdmissionDate = today.minusDays(3).toString()
         )
 
-        viewModel.submitHonestAdmission("user_1")
+        viewModel.submitHonestAdmission("user_1", "Я разбил вазу")
         assertEquals(QuestStatus.AVAILABLE, repository.children["user_1"]!!.honestAdmissionStatus)
 
         repository.children["user_1"] = repository.children["user_1"]!!.copy(
             lastHonestAdmissionDate = today.minusDays(8).toString()
         )
-        viewModel.submitHonestAdmission("user_1")
+        viewModel.submitHonestAdmission("user_1", "Я разбил вазу")
         val updated = repository.children["user_1"]!!
         assertEquals(QuestStatus.PENDING, updated.honestAdmissionStatus)
         assertEquals(today.toString(), updated.lastHonestAdmissionDate)
+        assertEquals("Я разбил вазу", updated.honestAdmissionText)
     }
 }

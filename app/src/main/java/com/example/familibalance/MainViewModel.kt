@@ -102,7 +102,7 @@ class MainViewModel(
     }
 
     /** Отправка честного признания на проверку папе. Кулдаун — 1 раз в 7 дней. */
-    fun submitHonestAdmission(childId: String) {
+    fun submitHonestAdmission(childId: String, text: String) {
         val child = familyRepository.getChild(childId) ?: return
         val today = LocalDate.now()
         val lastDate = runCatching { LocalDate.parse(child.lastHonestAdmissionDate) }.getOrNull()
@@ -110,6 +110,7 @@ class MainViewModel(
         updateChildProfile(
             child.copy(
                 honestAdmissionStatus = QuestStatus.PENDING,
+                honestAdmissionText = text.trim(),
                 lastHonestAdmissionDate = today.toString()
             )
         )

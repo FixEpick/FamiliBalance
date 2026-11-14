@@ -112,7 +112,8 @@ fun MainChildScreen(
             admissionText = catAdmissionText,
             onTextChange = { catAdmissionText = it },
             onSendClick = {
-                viewModel.submitHonestAdmission(child.id)
+                viewModel.submitHonestAdmission(child.id, catAdmissionText)
+                catAdmissionText = ""
                 showHonestCatScreen = false
             },
             onBackClick = {

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -291,7 +292,12 @@ fun VerificationAdminContent(
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("🐱 Честное признание от ${child.name}", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("«Папа, я хочу честно признаться в проступке...»", color = TextSecondary, fontSize = 13.sp)
+                        Text(
+                            text = "«${child.honestAdmissionText.ifBlank { "Ребенок не оставил комментария" }}»",
+                            color = TextSecondary,
+                            fontSize = 13.sp,
+                            fontStyle = FontStyle.Italic
+                        )
                         Spacer(modifier = Modifier.height(12.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
