@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import com.example.familibalance.*
 import com.example.familibalance.feature.child.QuestDeliveryScreen
 import com.example.familibalance.feature.child.QuestDeliveryTarget
+import com.example.familibalance.feature.child.components.*
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.components.*
 import com.example.familibalance.viewmodel.actions.*
@@ -366,9 +367,55 @@ fun AchievementsScreen(
         allAchievements.count { it.isCompleted }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current
+    var balanceBadgePosition by remember { mutableStateOf(Offset.Zero) }
+    var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
+    var showConfetti by remember { mutableStateOf(false) }
+
+    LaunchedEffect(showConfetti) {
+        if (showConfetti) {
+            delay(2500)
+            showConfetti = false
+        }
+    }
+
+    val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
+        showConfetti = true
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        scope.launch(Dispatchers.IO) {
+            val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
+            try {
+                toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 120)
+                delay(400)
+            } catch (_: Exception) {
+            } finally {
+                toneGen.release()
+            }
+        }
+
+        lateinit var flight: CoinFlightData
+        flight = CoinFlightData(
+            startX = if (buttonOffset != Offset.Zero) buttonOffset.x else 200f,
+            startY = if (buttonOffset != Offset.Zero) buttonOffset.y else 500f,
+            onFinished = {
+                onComplete()
+                activeCoinFlights = activeCoinFlights.filter { it != flight }
+            }
+        )
+        activeCoinFlights = activeCoinFlights + flight
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize()) {
         // Закреплённый мини-баланс — не скроллится
-        MiniBalanceBar(balance = currentChild.balance)
+        MiniBalanceBar(
+            balance = currentChild.balance,
+            modifier = Modifier.onGloballyPositioned { coordinates ->
+                val pos = coordinates.positionInRoot()
+                balanceBadgePosition = Offset(pos.x + coordinates.size.width - 80f, pos.y + coordinates.size.height / 2f)
+            }
+        )
 
         LazyColumn(
             modifier = Modifier
@@ -479,11 +526,25 @@ fun AchievementsScreen(
                 isReadyToClaim = item.isReadyToClaim,
                 onClaimClick = {
                     if (item.id.isNotBlank()) {
-                        viewModel.claimAchievementReward(currentChild.id, item.id)
+                        triggerCoinFlight(Offset.Zero) {
+                            viewModel.claimAchievementReward(currentChild.id, item.id)
+                        }
                     }
                 }
             )
         }
+        }
+    }
+
+        CoinFlightOverlay(
+            flights = activeCoinFlights,
+            badgePosition = balanceBadgePosition,
+            onFlightFinished = { flight ->
+                flight.onFinished()
+            }
+        )
+        if (showConfetti) {
+            ConfettiOverlay(modifier = Modifier.fillMaxSize())
         }
     }
 }

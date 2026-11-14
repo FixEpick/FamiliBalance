@@ -29,8 +29,10 @@ fun ThemeSelectionBottomSheet(
     onThemeSelected: (String) -> Unit,
     onDismissRequest: () -> Unit
 ) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
         containerColor = SpaceBgStart,
         scrimColor = Color.Black.copy(alpha = 0.6f),
         dragHandle = {
@@ -61,6 +63,7 @@ fun ThemeSelectionBottomSheet(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 32.dp),
                 modifier = Modifier.heightIn(max = 420.dp)
             ) {
                 items(AppThemes, key = { it.id }) { theme ->
@@ -72,6 +75,7 @@ fun ThemeSelectionBottomSheet(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(110.dp)
                             .border(
                                 width = if (isSelected) 2.dp else 1.dp,
                                 color = if (isSelected) theme.primaryNeon else GlassStroke,
@@ -88,7 +92,8 @@ fun ThemeSelectionBottomSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(14.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
                         ) {
                             // Превью: два цветных кружка палитры
                             Row(
@@ -115,6 +120,7 @@ fun ThemeSelectionBottomSheet(
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 textAlign = TextAlign.Center,
+                                minLines = 2,
                                 maxLines = 2
                             )
                             if (isSelected) {
