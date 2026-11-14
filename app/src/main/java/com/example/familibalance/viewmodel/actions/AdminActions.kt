@@ -1,7 +1,9 @@
 package com.example.familibalance.viewmodel.actions
 
+import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
+import kotlinx.coroutines.launch
 
 /** Админ одобряет квест (шкаф/комната/дневник): статус READY_TO_CLAIM. */
 fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
@@ -117,6 +119,66 @@ fun MainViewModel.adminRejectBonusQuest(userId: String, questId: String, reason:
             ) + profile.historyItems
         )
     )
+}
+
+/** Админ одобряет кастомный квест: READY_TO_CLAIM + запись в историю + удаление фото. */
+fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    val target = profile.customQuests.firstOrNull { it.id == questId } ?: return
+    val photoUrlToDelete = target.photoUrl
+    val updatedQuests = profile.customQuests.map { q ->
+        if (q.id == questId) q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, photoUrl = null) else q
+    }
+    updateChildProfile(
+        profile.copy(
+            customQuests = updatedQuests,
+            historyItems = listOf(
+                HistoryData(
+                    title = "Одобрен квест: ${target.title}",
+                    time = getCurrentTimeString(),
+                    date = getCurrentDateString(),
+                    amount = "+${target.reward} ₽",
+                    isIncome = true,
+                    category = "Кастомные квесты"
+                )
+            ) + profile.historyItems
+        )
+    )
+    if (!photoUrlToDelete.isNullOrBlank()) {
+        viewModelScope.launch {
+            SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
+        }
+    }
+}
+
+/** Админ отклоняет кастомный квест: AVAILABLE + причина + запись в историю + удаление фото. */
+fun MainViewModel.adminRejectCustomQuest(userId: String, questId: String, reason: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    val target = profile.customQuests.firstOrNull { it.id == questId } ?: return
+    val photoUrlToDelete = target.photoUrl
+    val updatedQuests = profile.customQuests.map { q ->
+        if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = reason, photoUrl = null) else q
+    }
+    updateChildProfile(
+        profile.copy(
+            customQuests = updatedQuests,
+            historyItems = listOf(
+                HistoryData(
+                    title = "Отклонен квест: ${target.title}",
+                    time = getCurrentTimeString(),
+                    date = getCurrentDateString(),
+                    amount = "0 ₽",
+                    isIncome = false,
+                    category = "Кастомные квесты"
+                )
+            ) + profile.historyItems
+        )
+    )
+    if (!photoUrlToDelete.isNullOrBlank()) {
+        viewModelScope.launch {
+            SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
+        }
+    }
 }
 
 /** Админ одобряет честное признание. */

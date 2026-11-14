@@ -9,6 +9,7 @@ import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.realtime.RealtimeChannel
 import io.github.jan.supabase.realtime.channel
 import io.github.jan.supabase.realtime.postgresChangeFlow
 import io.github.jan.supabase.realtime.realtime
@@ -95,13 +96,15 @@ object SupabaseManager {
             val maxRetryDelayMs = 30_000L
 
             while (true) {
+                var myChannel: RealtimeChannel? = null
                 try {
-                    val myChannel = supabase.realtime.channel("family_profiles_realtime")
-                    val changeFlow = myChannel.postgresChangeFlow<PostgresAction>(schema = "public") {
+                    val channel = supabase.realtime.channel("family_profiles_realtime")
+                    myChannel = channel
+                    val changeFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
                         table = "family_profiles"
                     }
 
-                    myChannel.subscribe()
+                    channel.subscribe()
                     retryDelayMs = 1_000L // сбрасываем задержку после успешной подписки
 
                     changeFlow.collect { action ->
@@ -129,6 +132,14 @@ object SupabaseManager {
                     throw e
                 } catch (e: Throwable) {
                     isSubscribed = false
+                    // Удаляем канал перед переподпиской, чтобы старые не копились в памяти
+                    myChannel?.let { channel ->
+                        try {
+                            supabase.realtime.removeChannel(channel)
+                        } catch (ex: Exception) {
+                            Log.w("SupabaseManager", "Не удалось удалить Realtime-канал: ${ex.message}")
+                        }
+                    }
                     Log.e("SupabaseManager", "Обрыв Realtime, переподписка через ${retryDelayMs}мс: ${e.message}", e)
                     kotlinx.coroutines.delay(retryDelayMs)
                     retryDelayMs = (retryDelayMs * 2).coerceAtMost(maxRetryDelayMs)

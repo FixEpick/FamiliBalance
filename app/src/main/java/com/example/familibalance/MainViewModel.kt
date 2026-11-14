@@ -9,6 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.DayOfWeek
@@ -49,10 +50,16 @@ class MainViewModel(
     }
 
     init {
-        // Парсинг JSON всех профилей — на IO, чтобы не фризить первый кадр
+        // Парсинг JSON всех профилей и дневные сбросы — на IO, чтобы не фризить первый кадр
         viewModelScope.launch(Dispatchers.IO) {
             familyRepository.loadState()
+            checkResets()
             emitFamilyState()
+        }
+        // Realtime/первичная загрузка из облака меняет AppSharedState напрямую —
+        // подписываемся, чтобы UI получил новый снимок состояния.
+        viewModelScope.launch {
+            familyRepository.onRemoteStateChanged.collect { emitFamilyState() }
         }
         SupabaseManager.startRealtimeSync(getApplication())
     }

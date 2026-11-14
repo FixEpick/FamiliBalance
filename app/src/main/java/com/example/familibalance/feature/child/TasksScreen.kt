@@ -173,7 +173,7 @@ fun TasksScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                items(child.bonusQuests) { bQuest ->
+                items(child.bonusQuests, key = { it.id }, contentType = { "bonus_quest" }) { bQuest ->
                     TaskCard(
                         title = bQuest.title,
                         description = bQuest.description.ifBlank { "Бонусное задание от папы" },

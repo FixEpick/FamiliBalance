@@ -2,6 +2,7 @@ package com.example.familibalance
 
 import android.content.Context
 import android.net.Uri
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.encodeToString
@@ -479,6 +480,9 @@ object AppSharedState {
     var selectedChildId: String = "user_1"
     var tempImageUri: Uri? = null
 
+    /** Событие: удалённое состояние применено к [children] (Realtime / первичная загрузка). */
+    val remoteStateChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
+
     val children = mutableMapOf(
         "user_1" to ChildProfileState(
             id = "user_1",
@@ -497,7 +501,10 @@ object AppSharedState {
     )
 
     val currentChild: ChildProfileState
-        get() = children[selectedChildId] ?: children["user_1"]!!
+        get() = children[selectedChildId]
+            ?: children["user_1"]
+            ?: children.values.firstOrNull()
+            ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
 
     val adminNotificationLog = mutableListOf<String>()
     var adminNotificationMessage: String? = null
@@ -559,6 +566,7 @@ object AppStateStorage {
             val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
             AppSharedState.children[userId] = ChildProfileState.fromDto(dto)
             saveLocalOnly(context)
+            AppSharedState.remoteStateChanged.tryEmit(Unit)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -577,6 +585,7 @@ object AppStateStorage {
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                 AppSharedState.children[userId] = ChildProfileState.fromDto(dto)
                 saveLocalOnly(context)
+                AppSharedState.remoteStateChanged.tryEmit(Unit)
             }
         } catch (e: Exception) {
             e.printStackTrace()

@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -87,8 +88,15 @@ fun AdminScreen(
     val adminNavController = rememberNavController()
     var showCashOutDialog by remember { mutableStateOf(false) }
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
+    val isSynced by viewModel.isSynced.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+        ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
+
+    var isRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(isSynced) {
+        if (isSynced) isRefreshing = false
+    }
 
     val navBackStackEntry by adminNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -275,7 +283,15 @@ fun AdminScreen(
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                NavHost(navController = adminNavController, startDestination = AdminVerificationRoute) {
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        isRefreshing = true
+                        viewModel.forceSync()
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    NavHost(navController = adminNavController, startDestination = AdminVerificationRoute) {
                     composable<AdminVerificationRoute> {
                         VerificationAdminContent(
                             onCashOutClick = { showCashOutDialog = true },
@@ -309,6 +325,7 @@ fun AdminScreen(
                             onBack = { adminNavController.popBackStack() },
                             viewModel = viewModel
                         )
+                    }
                     }
                 }
             }

@@ -430,7 +430,7 @@ fun AchievementsScreen(
             }
         }
 
-        items(displayList) { item ->
+        items(displayList, contentType = { "achievement" }) { item ->
             AchievementCard(
                 title = item.title,
                 condition = item.condition,

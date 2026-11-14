@@ -197,12 +197,18 @@ fun MainViewModel.approveBonusQuest(userId: String, questId: String, customRewar
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.bonusQuests.firstOrNull { it.id == questId } ?: return
     val finalReward = customReward ?: target.reward
+    val photoUrlToDelete = target.photoUrl
     val updatedQuests = profile.bonusQuests.map { q ->
         if (q.id == questId) {
-            q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, reward = finalReward)
+            q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, reward = finalReward, photoUrl = null)
         } else q
     }
     updateChildProfile(profile.copy(bonusQuests = updatedQuests))
+    if (!photoUrlToDelete.isNullOrBlank()) {
+        viewModelScope.launch {
+            SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
+        }
+    }
 }
 
 fun MainViewModel.rejectBonusQuest(userId: String, questId: String, reason: String) {

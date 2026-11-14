@@ -1,7 +1,9 @@
 package com.example.familibalance.viewmodel.actions
 
+import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 fun MainViewModel.addCustomQuest(userId: String, title: String, reward: Int, frequency: QuestFrequency, description: String = "") {
@@ -18,7 +20,13 @@ fun MainViewModel.addCustomQuest(userId: String, title: String, reward: Int, fre
 
 fun MainViewModel.deleteCustomQuest(userId: String, questId: String) {
     val profile = familyRepository.getChild(userId) ?: return
+    val photoUrlToDelete = profile.customQuests.firstOrNull { it.id == questId }?.photoUrl
     updateChildProfile(profile.copy(customQuests = profile.customQuests.filterNot { it.id == questId }))
+    if (!photoUrlToDelete.isNullOrBlank()) {
+        viewModelScope.launch {
+            SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
+        }
+    }
 }
 
 fun MainViewModel.updateCustomQuest(userId: String, questId: String, title: String, desc: String, reward: Int) {

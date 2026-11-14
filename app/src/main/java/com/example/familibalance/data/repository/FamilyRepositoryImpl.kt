@@ -5,6 +5,7 @@ import com.example.familibalance.AppSharedState
 import com.example.familibalance.AppStateStorage
 import com.example.familibalance.ChildProfileState
 import com.example.familibalance.SupabaseManager
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -16,6 +17,8 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
     private val appContext = context.applicationContext
 
     override val isSynced: StateFlow<Boolean> = SyncStatus.isSynced
+
+    override val onRemoteStateChanged: SharedFlow<Unit> = AppSharedState.remoteStateChanged
 
     init {
         // Восстанавливаем dirty-статусы с диска и запускаем монитор сети

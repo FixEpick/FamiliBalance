@@ -1,6 +1,7 @@
 package com.example.familibalance.data.repository
 
 import com.example.familibalance.ChildProfileState
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -14,6 +15,9 @@ interface FamilyRepository {
 
     /** Статус синхронизации с облаком: false — есть неподтверждённые локальные изменения. */
     val isSynced: StateFlow<Boolean>
+
+    /** Эмитится при применении удалённого состояния (Realtime / первичная загрузка). */
+    val onRemoteStateChanged: SharedFlow<Unit>
 
     /** Живой снимок профилей (snapshot-state), read-only view. */
     fun childrenSnapshot(): Map<String, ChildProfileState>

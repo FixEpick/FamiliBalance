@@ -786,7 +786,7 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
             ) { Text("➕ Создать новое достижение", fontWeight = FontWeight.Bold, fontSize = 15.sp) }
         }
-        items(child.achievements, key = { it.id }) { ach ->
+        items(child.achievements, key = { it.id }, contentType = { "achievement" }) { ach ->
             val branchLabel = when (ach.branch) {
                 AchievementBranch.DIARY -> "📚 Дневник"
                 AchievementBranch.WARDROBE -> "🚪 Шкаф"

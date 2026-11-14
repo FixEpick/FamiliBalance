@@ -6,7 +6,9 @@ import com.example.familibalance.*
 fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
     val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
 
-    if (amount <= 0 || amount > profile.balance) {
+    val pendingTotal = profile.cashoutRequests.sumOf { it.amount }
+    val availableBalance = profile.balance - pendingTotal
+    if (amount <= 0 || amount > availableBalance) {
         return
     }
 

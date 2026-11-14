@@ -67,6 +67,7 @@ fun VerificationAdminContent(
         child.roomStatus == QuestStatus.PENDING ||
         child.diaryStatus == QuestStatus.PENDING ||
         child.bonusQuests.any { it.status == QuestStatus.PENDING } ||
+        child.customQuests.any { it.status == QuestStatus.PENDING } ||
         child.cashoutRequests.isNotEmpty() ||
         child.honestAdmissionStatus == QuestStatus.PENDING
 
@@ -246,10 +247,26 @@ fun VerificationAdminContent(
             )
         }
 
+        items(child.customQuests.filter { it.status == QuestStatus.PENDING }, key = { it.id }, contentType = { "custom_quest" }) { cQuest ->
+            QuestVerificationCard(
+                title = "Квест: ${cQuest.title}",
+                reward = "+${cQuest.reward} ₽",
+                description = cQuest.description.ifBlank { "Кастомное задание" },
+                photoUrl = cQuest.photoUrl,
+                onApprove = {
+                    viewModel.adminApproveCustomQuest(child.id, cQuest.id)
+                },
+                onReject = { reason ->
+                    viewModel.adminRejectCustomQuest(child.id, cQuest.id, reason)
+                }
+            )
+        }
+
         if (child.closetStatus != QuestStatus.PENDING &&
             child.roomStatus != QuestStatus.PENDING &&
             child.diaryStatus != QuestStatus.PENDING &&
             child.bonusQuests.none { it.status == QuestStatus.PENDING } &&
+            child.customQuests.none { it.status == QuestStatus.PENDING } &&
             child.honestAdmissionStatus != QuestStatus.PENDING &&
             child.cashoutRequests.isEmpty()) {
             item {

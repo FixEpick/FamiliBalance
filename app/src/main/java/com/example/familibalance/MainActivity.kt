@@ -43,8 +43,6 @@ import com.example.familibalance.feature.child.TasksScreen
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.ui.screens.*
 import com.example.familibalance.ui.theme.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: MainViewModel
@@ -53,14 +51,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
-        viewModel.checkResets()
 
         enableEdgeToEdge()
         setContent {
             FamiliBalanceTheme {
                 val navController = rememberNavController()
-                val isRefreshing = remember { mutableStateOf(false) }
-                val coroutineScope = rememberCoroutineScope()
 
                 // При возврате приложения из фона — досылаем несинхронизированные данные
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -80,19 +75,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing.value,
-                    onRefresh = {
-                        isRefreshing.value = true
-                        viewModel.forceSync()
-                        coroutineScope.launch {
-                            delay(800)
-                            isRefreshing.value = false
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    NavHost(navController = navController, startDestination = LoginRoute) {
+                NavHost(navController = navController, startDestination = LoginRoute) {
                     composable<LoginRoute> {
                         LoginScreen(
                             onSelectRole = { role, childId ->
@@ -111,7 +94,6 @@ class MainActivity : ComponentActivity() {
                     composable<ChildRoute> {
                         ChildSection(viewModel = viewModel, onSwitchProfile = { backToLogin() })
                     }
-                    }
                 }
             }
         }
@@ -124,6 +106,7 @@ private data class ChildTab(
     val icon: String
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ChildSection(
     viewModel: MainViewModel,
@@ -133,7 +116,13 @@ private fun ChildSection(
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isSynced by viewModel.isSynced.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+        ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
+
+    var isRefreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(isSynced) {
+        if (isSynced) isRefreshing = false
+    }
 
     val navBackStackEntry by childNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -247,16 +236,25 @@ private fun ChildSection(
                     .fillMaxSize()
                     .padding(innerPadding)
             ) {
-                NavHost(navController = childNavController, startDestination = ChildMainRoute) {
-                    composable<ChildMainRoute> {
-                        MainChildScreen(
-                            onNavigateToTasks = { navigateToTab(ChildTasksRoute) },
-                            viewModel = viewModel
-                        )
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = {
+                        isRefreshing = true
+                        viewModel.forceSync()
+                    },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    NavHost(navController = childNavController, startDestination = ChildMainRoute) {
+                        composable<ChildMainRoute> {
+                            MainChildScreen(
+                                onNavigateToTasks = { navigateToTab(ChildTasksRoute) },
+                                viewModel = viewModel
+                            )
+                        }
+                        composable<ChildTasksRoute> { TasksScreen(viewModel = viewModel) }
+                        composable<ChildAchievementsRoute> { AchievementsScreen(viewModel = viewModel) }
+                        composable<ChildHistoryRoute> { HistoryScreen(viewModel = viewModel) }
                     }
-                    composable<ChildTasksRoute> { TasksScreen(viewModel = viewModel) }
-                    composable<ChildAchievementsRoute> { AchievementsScreen(viewModel = viewModel) }
-                    composable<ChildHistoryRoute> { HistoryScreen(viewModel = viewModel) }
                 }
             }
         }
