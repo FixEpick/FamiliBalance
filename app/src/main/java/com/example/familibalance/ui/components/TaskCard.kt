@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,6 +29,7 @@ fun TaskCard(
     rejectReason: String? = null,
     claimButtonText: String = "🎉 Получить награду",
     frequencyBadge: String? = null,
+    borderColor: Color = GlassStroke,
     onExecute: () -> Unit,
     onClaim: (Offset) -> Unit,
     modifier: Modifier = Modifier
@@ -35,7 +37,7 @@ fun TaskCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, GlassStroke, RoundedCornerShape(16.dp)),
+            .border(1.dp, borderColor, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {

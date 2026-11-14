@@ -157,13 +157,13 @@ private fun ChildSection(
         getAchievements(child).any { it.isReadyToClaim }
     }
 
-    // Пульсирующий бейдж на «Заданиях», если есть квесты на проверке
-    val hasPendingQuests = remember(child) {
-        child.closetStatus == QuestStatus.PENDING ||
-            child.roomStatus == QuestStatus.PENDING ||
-            child.diaryStatus == QuestStatus.PENDING ||
-            child.bonusQuests.any { it.status == QuestStatus.PENDING } ||
-            child.customQuests.any { it.status == QuestStatus.PENDING }
+    // Бейдж на «Заданиях» — только если есть квест, готовый к получению награды
+    val hasClaimableTasks = remember(child) {
+        child.closetStatus == QuestStatus.READY_TO_CLAIM ||
+            child.roomStatus == QuestStatus.READY_TO_CLAIM ||
+            child.diaryStatus == QuestStatus.READY_TO_CLAIM ||
+            child.bonusQuests.any { it.status == QuestStatus.READY_TO_CLAIM } ||
+            child.customQuests.any { it.status == QuestStatus.READY_TO_CLAIM }
     }
 
     fun navigateToTab(route: Any) {
@@ -246,7 +246,7 @@ private fun ChildSection(
                             onClick = { navigateToTab(tab.route) },
                             icon = {
                                 val showBadge = when (tab.route) {
-                                    ChildTasksRoute -> hasPendingQuests
+                                    ChildTasksRoute -> hasClaimableTasks
                                     ChildAchievementsRoute -> hasClaimableAchievements
                                     else -> false
                                 }

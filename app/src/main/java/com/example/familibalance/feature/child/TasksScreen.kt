@@ -94,7 +94,7 @@ fun TasksScreen(
                 val photoUrlStr = photoUri?.toString()
                 when (target.key) {
                     "closet", "room", "diary" -> {
-                        viewModel.submitQuestForReview(child.id, target.key, photoUrlStr)
+                        viewModel.submitQuestForReview(child.id, target.key, photoUrlStr, comment)
                     }
                     else -> {
                         when {
@@ -102,7 +102,7 @@ fun TasksScreen(
                                 viewModel.submitBonusQuestByChild(child.id, target.key.removePrefix("bonus:"), photoUri, comment)
                             }
                             target.key.startsWith("custom:") -> {
-                                viewModel.submitCustomQuestPhoto(child.id, target.key.removePrefix("custom:"), photoUrlStr.orEmpty())
+                                viewModel.submitCustomQuestPhoto(child.id, target.key.removePrefix("custom:"), photoUrlStr.orEmpty(), comment)
                             }
                         }
                     }
@@ -178,7 +178,8 @@ fun TasksScreen(
                 )
             }
 
-            if (child.bonusQuests.isNotEmpty()) {
+            val visibleBonusQuests = child.bonusQuests.filter { it.status != QuestStatus.CLAIMED }
+            if (visibleBonusQuests.isNotEmpty()) {
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -188,13 +189,14 @@ fun TasksScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                items(child.bonusQuests, key = { it.id }, contentType = { "bonus_quest" }) { bQuest ->
+                items(visibleBonusQuests, key = { it.id }, contentType = { "bonus_quest" }) { bQuest ->
                     TaskCard(
                         title = bQuest.title,
                         description = bQuest.description.ifBlank { "Бонусное задание от папы" },
                         reward = "+${bQuest.reward} ₽",
                         status = bQuest.status,
                         rejectReason = bQuest.rejectReason,
+                        borderColor = StatusYellow,
                         onExecute = {
                             activeDeliveryQuest = QuestDeliveryTarget(bQuest.title, "+${bQuest.reward} ₽", "bonus:${bQuest.id}")
                         },

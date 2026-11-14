@@ -533,13 +533,13 @@ fun HistoryScreen(
                 val photoUrlStr = photoUri?.toString()
                 when {
                     activeEdit.key == "closet" || activeEdit.key == "room" || activeEdit.key == "diary" -> {
-                        viewModel.submitQuestForReview(currentChild.id, activeEdit.key, photoUrlStr)
+                        viewModel.submitQuestForReview(currentChild.id, activeEdit.key, photoUrlStr, comment)
                     }
                     activeEdit.key.startsWith("bonus:") -> {
                         viewModel.submitBonusQuestByChild(currentChild.id, activeEdit.key.removePrefix("bonus:"), photoUri, comment)
                     }
                     activeEdit.key.startsWith("custom:") -> {
-                        viewModel.submitCustomQuestPhoto(currentChild.id, activeEdit.key.removePrefix("custom:"), photoUrlStr.orEmpty())
+                        viewModel.submitCustomQuestPhoto(currentChild.id, activeEdit.key.removePrefix("custom:"), photoUrlStr.orEmpty(), comment)
                     }
                 }
                 editingQuest = null

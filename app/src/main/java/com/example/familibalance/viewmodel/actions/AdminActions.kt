@@ -11,14 +11,17 @@ fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
             closetStatus = QuestStatus.READY_TO_CLAIM,
+            closetComment = "",
             closetRejectReason = null
         )
         "room", "комната" -> profile.copy(
             roomStatus = QuestStatus.READY_TO_CLAIM,
+            roomComment = "",
             roomRejectReason = null
         )
         "diary", "дневник", "итоги" -> profile.copy(
             diaryStatus = QuestStatus.READY_TO_CLAIM,
+            diaryComment = "",
             diaryRejectReason = null
         )
         else -> profile
@@ -32,14 +35,17 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
             closetStatus = QuestStatus.AVAILABLE,
+            closetComment = "",
             closetRejectReason = reason
         )
         "room", "комната" -> profile.copy(
             roomStatus = QuestStatus.AVAILABLE,
+            roomComment = "",
             roomRejectReason = reason
         )
         "diary", "дневник", "итоги" -> profile.copy(
             diaryStatus = QuestStatus.AVAILABLE,
+            diaryComment = "",
             diaryRejectReason = reason
         )
         else -> profile
@@ -97,6 +103,7 @@ fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, co
         profile.copy(
             balance = balance,
             diaryStatus = QuestStatus.CLAIMED,
+            diaryComment = "",
             diaryRejectReason = null,
             diaryApprovedReward = netReward,
             fivesCount = profile.fivesCount + count5.coerceAtLeast(0),

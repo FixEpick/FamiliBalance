@@ -155,9 +155,11 @@ class MainViewModel(
                     closetStatus = QuestStatus.AVAILABLE,
                     closetRejectReason = null,
                     closetPhotoUrl = null,
+                    closetComment = "",
                     roomStatus = QuestStatus.AVAILABLE,
                     roomRejectReason = null,
-                    roomPhotoUrl = null
+                    roomPhotoUrl = null,
+                    roomComment = ""
                 )
             }
 

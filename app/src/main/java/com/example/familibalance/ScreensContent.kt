@@ -48,7 +48,8 @@ data class CustomQuest(
     val status: QuestStatus = QuestStatus.AVAILABLE,
     val photoUrl: String? = null,
     val rejectReason: String? = null,
-    val lastResetDate: String = ""
+    val lastResetDate: String = "",
+    val comment: String = ""
 )
 
 
@@ -270,12 +271,15 @@ data class ChildProfileState(
     val closetStatus: QuestStatus = QuestStatus.AVAILABLE,
     val closetRejectReason: String? = null,
     val closetPhotoUrl: String? = null,
+    val closetComment: String = "",
     val roomStatus: QuestStatus = QuestStatus.AVAILABLE,
     val roomRejectReason: String? = null,
     val roomPhotoUrl: String? = null,
+    val roomComment: String = "",
     val diaryStatus: QuestStatus = QuestStatus.AVAILABLE,
     val diaryRejectReason: String? = null,
     val diaryPhotoUrl: String? = null,
+    val diaryComment: String = "",
     val diaryApprovedReward: Int = 100,
     val lastDailyResetDate: String = "",
     val dreamTitle: String = "",
@@ -336,12 +340,15 @@ data class ChildProfileState(
             closetStatus = dto.closetStatus,
             closetRejectReason = dto.closetRejectReason,
             closetPhotoUrl = dto.closetPhotoUrl,
+            closetComment = dto.closetComment,
             roomStatus = dto.roomStatus,
             roomRejectReason = dto.roomRejectReason,
             roomPhotoUrl = dto.roomPhotoUrl,
+            roomComment = dto.roomComment,
             diaryStatus = dto.diaryStatus,
             diaryRejectReason = dto.diaryRejectReason,
             diaryPhotoUrl = dto.diaryPhotoUrl,
+            diaryComment = dto.diaryComment,
             diaryApprovedReward = dto.diaryApprovedReward,
             lastDailyResetDate = dto.lastDailyResetDate,
             dreamTitle = dto.dreamTitle,
@@ -391,12 +398,15 @@ data class ChildProfileDto(
     val closetStatus: QuestStatus = QuestStatus.AVAILABLE,
     val closetRejectReason: String? = null,
     val closetPhotoUrl: String? = null,
+    val closetComment: String = "",
     val roomStatus: QuestStatus = QuestStatus.AVAILABLE,
     val roomRejectReason: String? = null,
     val roomPhotoUrl: String? = null,
+    val roomComment: String = "",
     val diaryStatus: QuestStatus = QuestStatus.AVAILABLE,
     val diaryRejectReason: String? = null,
     val diaryPhotoUrl: String? = null,
+    val diaryComment: String = "",
     val diaryApprovedReward: Int = 100,
     val lastDailyResetDate: String = "",
     val dreamTitle: String = "",
@@ -443,12 +453,15 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     closetStatus = closetStatus,
     closetRejectReason = closetRejectReason,
     closetPhotoUrl = closetPhotoUrl,
+    closetComment = closetComment,
     roomStatus = roomStatus,
     roomRejectReason = roomRejectReason,
     roomPhotoUrl = roomPhotoUrl,
+    roomComment = roomComment,
     diaryStatus = diaryStatus,
     diaryRejectReason = diaryRejectReason,
     diaryPhotoUrl = diaryPhotoUrl,
+    diaryComment = diaryComment,
     diaryApprovedReward = diaryApprovedReward,
     lastDailyResetDate = lastDailyResetDate,
     dreamTitle = dreamTitle,
@@ -657,8 +670,10 @@ object AppStateStorage {
                         boughtMinutesToday = 0,
                         closetStatus = if (resetCloset) QuestStatus.AVAILABLE else child.closetStatus,
                         closetRejectReason = if (resetCloset) null else child.closetRejectReason,
+                        closetComment = if (resetCloset) "" else child.closetComment,
                         roomStatus = if (resetRoom) QuestStatus.AVAILABLE else child.roomStatus,
                         roomRejectReason = if (resetRoom) null else child.roomRejectReason,
+                        roomComment = if (resetRoom) "" else child.roomComment,
                         bonusQuests = child.bonusQuests.filter { it.status != QuestStatus.CLAIMED }
                     )
                 }
@@ -671,7 +686,8 @@ object AppStateStorage {
                     val resetDiary = child.diaryStatus != QuestStatus.PENDING
                     child.copy(
                         diaryStatus = if (resetDiary) QuestStatus.AVAILABLE else child.diaryStatus,
-                        diaryRejectReason = if (resetDiary) null else child.diaryRejectReason
+                        diaryRejectReason = if (resetDiary) null else child.diaryRejectReason,
+                        diaryComment = if (resetDiary) "" else child.diaryComment
                     )
                 }
                 prefs.edit().putString(KEY_LAST_WEEKLY, currentWeekStr).apply()

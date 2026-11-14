@@ -19,16 +19,19 @@ fun MainViewModel.approveQuest(userId: String, questType: String, customReward: 
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
             closetPhotoUrl = null,
+            closetComment = "",
             closetStatus = QuestStatus.READY_TO_CLAIM,
             closetRejectReason = null
         )
         "room", "комната" -> profile.copy(
             roomPhotoUrl = null,
+            roomComment = "",
             roomStatus = QuestStatus.READY_TO_CLAIM,
             roomRejectReason = null
         )
         "diary", "дневник", "итоги" -> profile.copy(
             diaryPhotoUrl = null,
+            diaryComment = "",
             diaryStatus = QuestStatus.READY_TO_CLAIM,
             diaryRejectReason = null,
             diaryApprovedReward = customReward ?: profile.diaryApprovedReward
@@ -50,16 +53,19 @@ fun MainViewModel.rejectQuest(userId: String, questType: String, reason: String)
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
             closetPhotoUrl = null,
+            closetComment = "",
             closetStatus = QuestStatus.AVAILABLE,
             closetRejectReason = reason
         )
         "room", "комната" -> profile.copy(
             roomPhotoUrl = null,
+            roomComment = "",
             roomStatus = QuestStatus.AVAILABLE,
             roomRejectReason = reason
         )
         "diary", "дневник", "итоги" -> profile.copy(
             diaryPhotoUrl = null,
+            diaryComment = "",
             diaryStatus = QuestStatus.AVAILABLE,
             diaryRejectReason = reason
         )
@@ -90,24 +96,27 @@ private fun MainViewModel.clearQuestPhotoIfNeeded(profile: ChildProfileState, qu
 }
 
 /** Ребёнок отправляет фото квеста (шкаф/комната/дневник) на проверку папе. */
-fun MainViewModel.submitQuestForReview(userId: String, questType: String, photoUrl: String?) {
+fun MainViewModel.submitQuestForReview(userId: String, questType: String, photoUrl: String?, comment: String = "") {
     val profile = familyRepository.getChild(userId) ?: return
     val persistedPhotoUrl = PhotoStorage.persistIfNeeded(getApplication(), photoUrl)
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
             closetStatus = QuestStatus.PENDING,
             closetRejectReason = null,
-            closetPhotoUrl = persistedPhotoUrl
+            closetPhotoUrl = persistedPhotoUrl,
+            closetComment = comment.trim()
         )
         "room", "комната" -> profile.copy(
             roomStatus = QuestStatus.PENDING,
             roomRejectReason = null,
-            roomPhotoUrl = persistedPhotoUrl
+            roomPhotoUrl = persistedPhotoUrl,
+            roomComment = comment.trim()
         )
         "diary", "дневник", "итоги" -> profile.copy(
             diaryStatus = QuestStatus.PENDING,
             diaryRejectReason = null,
-            diaryPhotoUrl = persistedPhotoUrl
+            diaryPhotoUrl = persistedPhotoUrl,
+            diaryComment = comment.trim()
         )
         else -> profile
     }
@@ -165,16 +174,19 @@ fun MainViewModel.cancelPendingQuest(userId: String, questKey: String) {
                 "closet", "шкаф" -> profile.copy(
                     closetStatus = QuestStatus.AVAILABLE,
                     closetPhotoUrl = null,
+                    closetComment = "",
                     closetRejectReason = null
                 )
                 "room", "комната" -> profile.copy(
                     roomStatus = QuestStatus.AVAILABLE,
                     roomPhotoUrl = null,
+                    roomComment = "",
                     roomRejectReason = null
                 )
                 "diary", "дневник", "итоги" -> profile.copy(
                     diaryStatus = QuestStatus.AVAILABLE,
                     diaryPhotoUrl = null,
+                    diaryComment = "",
                     diaryRejectReason = null
                 )
                 else -> profile

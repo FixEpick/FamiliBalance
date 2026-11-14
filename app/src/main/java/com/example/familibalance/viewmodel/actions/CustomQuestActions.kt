@@ -58,7 +58,7 @@ fun MainViewModel.toggleQuestVisibility(userId: String, questId: String, isVisib
     updateChildProfile(updated)
 }
 
-fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoUrl: String) {
+fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoUrl: String, comment: String = "") {
     val profile = familyRepository.getChild(userId) ?: return
     val persistedPhotoUrl = PhotoStorage.persistIfNeeded(getApplication(), photoUrl)
     val updatedQuests = profile.customQuests.map { quest ->
@@ -66,7 +66,8 @@ fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoU
             quest.copy(
                 status = QuestStatus.PENDING,
                 photoUrl = persistedPhotoUrl.orEmpty(),
-                rejectReason = null
+                rejectReason = null,
+                comment = comment.trim()
             )
         } else quest
     }

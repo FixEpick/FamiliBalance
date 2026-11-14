@@ -118,7 +118,7 @@ fun VerificationAdminContent(
                 QuestVerificationCard(
                     title = "Фото шкафа",
                     reward = "+50 ₽",
-                    description = "Фотоотчёт шкафа",
+                    description = child.closetComment.ifBlank { "Без комментария" },
                     photoUrl = child.closetPhotoUrl,
                     onApprove = {
                         viewModel.adminApproveQuest(child.id, "closet")
@@ -206,7 +206,7 @@ fun VerificationAdminContent(
                 QuestVerificationCard(
                     title = "Фото комнаты",
                     reward = "+50 ₽",
-                    description = "Фотоотчёт комнаты",
+                    description = child.roomComment.ifBlank { "Без комментария" },
                     photoUrl = child.roomPhotoUrl,
                     onApprove = {
                         viewModel.adminApproveQuest(child.id, "room")
@@ -222,6 +222,7 @@ fun VerificationAdminContent(
             item {
                 DiaryVerificationCard(
                     title = "📚 Итоги недели (Дневник)",
+                    comment = child.diaryComment,
                     photoUrl = child.diaryPhotoUrl,
                     onApprove = { count5, count4, count3, count2 ->
                         viewModel.applyDiaryGrades(child.id, count5, count4, count3, count2)
@@ -237,7 +238,7 @@ fun VerificationAdminContent(
             QuestVerificationCard(
                 title = "Бонус: ${bQuest.title}",
                 reward = "+${bQuest.reward} ₽",
-                description = "Бонусное задание",
+                description = bQuest.comment.ifBlank { "Без комментария" },
                 photoUrl = bQuest.photoUrl,
                 onApprove = {
                     viewModel.adminApproveBonusQuest(child.id, bQuest.id)
@@ -252,7 +253,7 @@ fun VerificationAdminContent(
             QuestVerificationCard(
                 title = "Квест: ${cQuest.title}",
                 reward = "+${cQuest.reward} ₽",
-                description = cQuest.description.ifBlank { "Кастомное задание" },
+                description = cQuest.comment.ifBlank { "Без комментария" },
                 photoUrl = cQuest.photoUrl,
                 onApprove = {
                     viewModel.adminApproveCustomQuest(child.id, cQuest.id)
@@ -706,7 +707,8 @@ fun DiaryVerificationCard(
     title: String,
     photoUrl: String?,
     onApprove: (Int, Int, Int, Int) -> Unit,
-    onReject: (String) -> Unit
+    onReject: (String) -> Unit,
+    comment: String = ""
 ) {
     val context = LocalContext.current
     var showRejectDialog by remember { mutableStateOf(false) }
@@ -799,6 +801,14 @@ fun DiaryVerificationCard(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )
+                    if (comment.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Комментарий: $comment",
+                            color = TextSecondary,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
 

@@ -151,12 +151,15 @@ fun MainViewModel.resetActiveQuests(userId: String) {
             closetStatus = QuestStatus.AVAILABLE,
             closetRejectReason = null,
             closetPhotoUrl = null,
+            closetComment = "",
             roomStatus = QuestStatus.AVAILABLE,
             roomRejectReason = null,
             roomPhotoUrl = null,
+            roomComment = "",
             diaryStatus = QuestStatus.AVAILABLE,
             diaryRejectReason = null,
             diaryPhotoUrl = null,
+            diaryComment = "",
             customQuests = updatedQuests
         )
     )
@@ -209,17 +212,16 @@ fun MainViewModel.resetAllChildData(userId: String) {
             closetStatus = QuestStatus.AVAILABLE,
             closetRejectReason = null,
             closetPhotoUrl = null,
+            closetComment = "",
             roomStatus = QuestStatus.AVAILABLE,
             roomRejectReason = null,
             roomPhotoUrl = null,
+            roomComment = "",
             diaryStatus = QuestStatus.AVAILABLE,
             diaryRejectReason = null,
             diaryPhotoUrl = null,
-            customQuests = profile.customQuests.map { quest ->
-                if (quest.isVisible && quest.frequency != QuestFrequency.ONCE) {
-                    quest.copy(status = QuestStatus.AVAILABLE, photoUrl = null, rejectReason = null)
-                } else quest
-            }
+            diaryComment = "",
+            customQuests = emptyList()
         )
     )
 }

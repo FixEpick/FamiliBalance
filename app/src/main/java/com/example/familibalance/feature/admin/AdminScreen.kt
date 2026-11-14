@@ -68,7 +68,6 @@ sealed class AdminScreenType(val title: String, val icon: String) {
     object Verification : AdminScreenType("Проверка", "🛡️")
     object Progress : AdminScreenType("Прогресс", "📊")
     object History : AdminScreenType("История", "📜")
-    object Achievements : AdminScreenType("Достижения", "🏆")
     object Settings : AdminScreenType("Настройки", "⚙️")
 }
 
@@ -114,7 +113,6 @@ fun AdminScreen(
     val tabs = listOf(
         AdminTab(AdminScreenType.Verification, AdminVerificationRoute),
         AdminTab(AdminScreenType.Progress, AdminProgressRoute),
-        AdminTab(AdminScreenType.Achievements, AdminAchievementsRoute),
         AdminTab(AdminScreenType.History, AdminHistoryRoute),
         AdminTab(AdminScreenType.Settings, AdminSettingsRoute)
     )
