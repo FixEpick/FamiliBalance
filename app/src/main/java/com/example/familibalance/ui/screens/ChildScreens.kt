@@ -114,9 +114,9 @@ fun BuyTimeBottomSheet(
             Spacer(modifier = Modifier.height(20.dp))
 
             val tariffs = listOf(
-                TariffData("⏳ 30 минут", 50, 30),
-                TariffData("⏳ 60 минут", 100, 60),
-                TariffData("⏳ 90 минут", 150, 90)
+                TariffData("⏳ 30 минут", 100, 30),
+                TariffData("⏳ 60 минут", 200, 60),
+                TariffData("⏳ 90 минут", 300, 90)
             )
 
             tariffs.forEach { tariff ->
@@ -241,7 +241,7 @@ fun RulesBottomSheet(
 
             RuleBlock(
                 title = "📖 Как работает твой баланс",
-                text = "Все заработанные рубли падают в твой кошелёк. Ты можешь менять их на время в телефоне (50 ₽ = 30 минут) ИЛИ ты можешь в любой момент вывести все деньги — то есть забрать весь свой баланс настоящими бумажными деньгами на руки у папы!"
+                text = "Все заработанные рубли падают в твой кошелёк. Ты можешь менять их на время в телефоне (100 ₽ = 30 минут) ИЛИ ты можешь в любой момент вывести все деньги — то есть забрать весь свой баланс настоящими бумажными деньгами на руки у папы!"
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -269,7 +269,7 @@ fun RulesBottomSheet(
 
             RuleBlock(
                 title = "⏳ Экранное время",
-                text = "Лимит 90 минут в день. Тарифы: 30 мин = 50 ₽, 60 мин = 100 ₽, 90 мин = 150 ₽."
+                text = "Лимит 90 минут в день. Тарифы: 30 мин = 100 ₽, 60 мин = 200 ₽, 90 мин = 300 ₽."
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -820,5 +820,167 @@ internal fun PendingQuestsBottomSheet(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EconomyBottomSheet(
+    child: ChildProfileState,
+    onDismissRequest: () -> Unit
+) {
+    val achievements = remember(child) { getAchievements(child) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        containerColor = SpaceBgStart,
+        scrimColor = Color.Black.copy(alpha = 0.6f),
+        dragHandle = {
+            BottomSheetDefaults.DragHandle(color = GlassStroke)
+        }
+    ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                Text(
+                    text = "💰 Экономика",
+                    color = TextPrimary,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
+
+            // ===== Секция 1: Доходы =====
+            item {
+                EconomySectionTitle("💰 Как заработать")
+            }
+            item {
+                EconomyRow("📸 Фото шкафа", "+${child.wardrobeReward} ₽")
+            }
+            item {
+                EconomyRow("🛏️ Фото комнаты", "+${child.roomReward} ₽")
+            }
+            item {
+                EconomyRow("📓 Дневник: оценка 5", "+50 ₽")
+            }
+            item {
+                EconomyRow("📓 Дневник: оценка 4", "+30 ₽")
+            }
+            item {
+                EconomyRow("🔥 Стрик без штрафов", "+50 ₽ каждые 7 дней")
+            }
+            item {
+                EconomyRow("🎯 Цель-мечта", "сумма задаётся папой")
+            }
+
+            // ===== Секция 2: Расходы =====
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                EconomySectionTitle("💸 На что потратить")
+            }
+            item {
+                EconomyRow("⏳ 30 минут экранного времени", "100 ₽")
+            }
+            item {
+                EconomyRow("⏳ 60 минут экранного времени", "200 ₽")
+            }
+            item {
+                EconomyRow("⏳ 90 минут экранного времени", "300 ₽")
+            }
+            item {
+                EconomyRow("📓 Дневник: оценка 3", "−20 ₽")
+            }
+            item {
+                EconomyRow("📓 Дневник: оценка 2", "−50 ₽")
+            }
+            item {
+                EconomyRow("🐱 Честное признание", "скидка −50% на штраф")
+            }
+            item {
+                EconomyRow("👨‍👦 Штрафы от папы", "сумма задаётся папой")
+            }
+
+            // ===== Секция 3: Достижения =====
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                EconomySectionTitle("🏆 Достижения")
+            }
+            val branchTitles = mapOf(
+                AchievementBranch.DIARY to "📓 Дневник",
+                AchievementBranch.WARDROBE to "📸 Шкаф",
+                AchievementBranch.ROOM to "🛏️ Комната"
+            )
+            AchievementBranch.entries.forEach { branch ->
+                val branchItems = child.achievements
+                    .filter { it.isVisible && it.branch == branch }
+                    .sortedBy { it.targetCount }
+                if (branchItems.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = branchTitles[branch] ?: branch.name,
+                            color = LocalAppPalette.current.primaryNeon,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+                        )
+                    }
+                    branchItems.forEach { config ->
+                        val display = achievements.firstOrNull { it.id == config.id }
+                        val isLocked = display?.isLocked == true
+                        item {
+                            EconomyRow(
+                                title = config.title,
+                                value = if (isLocked) "??? ₽" else "+${config.reward} ₽",
+                                valueColor = if (isLocked) TextSecondary else StatusGreen
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun EconomySectionTitle(text: String) {
+    Text(
+        text = text,
+        color = TextPrimary,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+    )
+}
+
+@Composable
+private fun EconomyRow(
+    title: String,
+    value: String,
+    valueColor: Color = TextPrimary
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = title, color = TextSecondary, fontSize = 14.sp)
+        Text(
+            text = value,
+            color = valueColor,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
     }
 }

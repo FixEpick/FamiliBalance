@@ -106,6 +106,7 @@ fun MainChildScreen(
     }
 
     var showRulesSheet by remember { mutableStateOf(false) }
+    var showEconomySheet by remember { mutableStateOf(false) }
     var showBuyTimeSheet by remember { mutableStateOf(false) }
 
     if (showHonestCatScreen) {
@@ -130,6 +131,13 @@ fun MainChildScreen(
             wardrobeReward = child.wardrobeReward,
             roomReward = child.roomReward,
             onDismissRequest = { showRulesSheet = false }
+        )
+    }
+
+    if (showEconomySheet) {
+        EconomyBottomSheet(
+            child = child,
+            onDismissRequest = { showEconomySheet = false }
         )
     }
 
@@ -799,6 +807,20 @@ fun MainChildScreen(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
                 ) {
                     Text("📜 Свиток правил", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        showEconomySheet = true
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
+                ) {
+                    Text("💰 Экономика", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
