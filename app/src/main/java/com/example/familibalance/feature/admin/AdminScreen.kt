@@ -81,6 +81,7 @@ private data class AdminTab(
 fun AdminScreen(
     onSwitchProfile: () -> Unit,
     viewModel: MainViewModel,
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -309,7 +310,8 @@ fun AdminScreen(
                         AdminSettingsScreen(
                             viewModel = viewModel,
                             onOpenQuestsEditor = { adminNavController.navigate(AdminQuestsEditorRoute) },
-                            onOpenAchievementsEditor = { adminNavController.navigate(AdminAchievementsEditorRoute) }
+                            onOpenAchievementsEditor = { adminNavController.navigate(AdminAchievementsEditorRoute) },
+                            onLogout = onLogout
                         )
                     }
                     composable<AdminQuestsEditorRoute> {

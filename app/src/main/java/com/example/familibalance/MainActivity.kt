@@ -36,33 +36,44 @@ import com.example.familibalance.navigation.ChildHistoryRoute
 import com.example.familibalance.navigation.ChildMainRoute
 import com.example.familibalance.navigation.ChildRoute
 import com.example.familibalance.navigation.ChildTasksRoute
+import com.example.familibalance.navigation.PlayerLoginRoute
+import com.example.familibalance.navigation.RegisterParentRoute
+import com.example.familibalance.navigation.WelcomeRoute
 import com.example.familibalance.navigation.LoginRoute
 import com.example.familibalance.feature.admin.AdminScreen
 import com.example.familibalance.feature.child.MainChildScreen
 import com.example.familibalance.feature.child.TasksScreen
+import com.example.familibalance.ui.auth.PlayerLoginScreen
+import com.example.familibalance.ui.auth.RegisterParentScreen
+import com.example.familibalance.ui.auth.WelcomeScreen
+import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.ui.screens.*
 import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
 import com.example.familibalance.ui.theme.*
+import io.github.jan.supabase.auth.status.SessionStatus
 import com.example.familibalance.ui.update.UpdateDialog
 import com.example.familibalance.viewmodel.UpdateViewModel
 
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: MainViewModel
     private lateinit var updateViewModel: UpdateViewModel
+    private lateinit var authViewModel: AuthViewModel
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         updateViewModel = ViewModelProvider(this)[UpdateViewModel::class.java]
+        authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
 
         enableEdgeToEdge()
         setContent {
             val updateState by updateViewModel.uiState.collectAsStateWithLifecycle()
             LaunchedEffect(Unit) { updateViewModel.checkOnLaunch() }
             val familyState by viewModel.familyState.collectAsStateWithLifecycle()
+            val sessionStatus by authViewModel.sessionStatus.collectAsStateWithLifecycle()
             val themeChild = familyState.children[familyState.selectedChildId]
                 ?: familyState.children.values.firstOrNull()
             val currentThemeId = themeChild?.selectedThemeId ?: "COSMIC_BLUE"
@@ -82,12 +93,63 @@ class MainActivity : ComponentActivity() {
                 }
 
                 fun backToLogin() {
-                    navController.navigate(LoginRoute) {
+                    navController.navigate(WelcomeRoute) {
                         popUpTo(navController.graph.startDestinationId) { inclusive = true }
                     }
                 }
 
-                NavHost(navController = navController, startDestination = LoginRoute) {
+                // Если сессия Supabase уже активна — сразу в родительский кабинет
+                var autoNavigatedToAdmin by remember { mutableStateOf(false) }
+                LaunchedEffect(sessionStatus) {
+                    if (!autoNavigatedToAdmin && sessionStatus is SessionStatus.Authenticated) {
+                        autoNavigatedToAdmin = true
+                        navController.navigate(AdminRoute) {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        }
+                    }
+                }
+
+                NavHost(
+                    navController = navController,
+                    startDestination = if (sessionStatus is SessionStatus.NotAuthenticated) WelcomeRoute else AdminRoute
+                ) {
+                    composable<WelcomeRoute> {
+                        WelcomeScreen(
+                            onPlayerClick = { navController.navigate(PlayerLoginRoute) },
+                            onRegisterClick = { navController.navigate(RegisterParentRoute) },
+                            onParentGatePassed = { navController.navigate(RegisterParentRoute) }
+                        )
+                    }
+                    composable<PlayerLoginRoute> {
+                        PlayerLoginScreen(
+                            profiles = familyState.children.values.sortedBy { it.name },
+                            onBack = { navController.popBackStack() },
+                            onLoginSuccess = { childId ->
+                                viewModel.selectChild(childId)
+                                navController.navigate(ChildRoute) {
+                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                }
+                            },
+                            onCreateAccount = { navController.navigate(RegisterParentRoute) }
+                        )
+                    }
+                    composable<RegisterParentRoute> {
+                        RegisterParentScreen(
+                            viewModel = authViewModel,
+                            mainViewModel = viewModel,
+                            onPlayerSuccess = {
+                                navController.navigate(ChildRoute) {
+                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                }
+                            },
+                            onParentSuccess = {
+                                navController.navigate(AdminRoute) {
+                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                }
+                            },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                     composable<LoginRoute> {
                         LoginScreen(
                             onSelectRole = { role, childId ->
@@ -101,7 +163,17 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable<AdminRoute> {
-                        AdminScreen(onSwitchProfile = { backToLogin() }, viewModel = viewModel)
+                        AdminScreen(
+                            onSwitchProfile = { backToLogin() },
+                            viewModel = viewModel,
+                            onLogout = {
+                                authViewModel.signOut()
+                                viewModel.clearState()
+                                navController.navigate(WelcomeRoute) {
+                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                }
+                            }
+                        )
                     }
                     composable<ChildRoute> {
                         ChildSection(

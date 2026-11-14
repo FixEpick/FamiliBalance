@@ -6,6 +6,7 @@ import android.util.Log
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.SettingsSessionManager
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
@@ -28,7 +29,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 @Serializable
@@ -82,16 +85,21 @@ object SupabaseManager {
         if (isSubscribed) return
         isSubscribed = true
 
-        // 1. Первичная загрузка всех профилей из базы
+        // 1. Первичная загрузка профилей из базы (с фильтрацией по текущему родителю)
         scope.launch(exceptionHandler) {
             try {
                 val rows = supabase.from("family_profiles")
                     .select()
                     .decodeList<FamilyProfileRow>()
 
-                rows.forEach { row ->
-                    AppStateStorage.applyRemoteChildJsonAsync(context, row.user_id, row.state_json)
-                }
+                val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
+                val uid = currentUser?.id
+                val email = currentUser?.email
+
+                rows.filter { isRowVisibleToUser(it, uid, email) }
+                    .forEach { row ->
+                        AppStateStorage.applyRemoteChildJsonAsync(context, row.user_id, row.state_json)
+                    }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("SupabaseManager", "Ошибка первичной загрузки: ${e.message}")
@@ -125,8 +133,17 @@ object SupabaseManager {
                             if (record != null) {
                                 val userId = record["user_id"]?.jsonPrimitive?.contentOrNull
                                 val stateJson = record["state_json"]?.jsonPrimitive?.contentOrNull
+                                val parentUserId = record["parent_user_id"]?.jsonPrimitive?.contentOrNull
                                 if (!userId.isNullOrEmpty() && !stateJson.isNullOrEmpty()) {
-                                    AppStateStorage.applyRemoteChildJsonAsync(context, userId, stateJson)
+                                    val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
+                                    val row = FamilyProfileRow(
+                                        user_id = userId,
+                                        state_json = stateJson,
+                                        parentUserId = parentUserId
+                                    )
+                                    if (isRowVisibleToUser(row, currentUser?.id, currentUser?.email)) {
+                                        AppStateStorage.applyRemoteChildJsonAsync(context, userId, stateJson)
+                                    }
                                 }
                             }
                         } catch (e: Exception) {
@@ -154,6 +171,24 @@ object SupabaseManager {
                 }
             }
         }
+    }
+
+    /**
+     * Изоляция данных: авторизованный родитель видит только свои профили.
+     * Правило: parent_user_id == auth.uid(), либо (пока нет RLS) parentUserId пуст,
+     * но parentEmail внутри state_json совпадает с email текущего пользователя.
+     * Гость (uid == null) видит всё — как раньше.
+     */
+    private fun isRowVisibleToUser(row: FamilyProfileRow, uid: String?, email: String?): Boolean {
+        if (uid == null) return true
+        if (row.parentUserId == uid) return true
+        if (!row.parentUserId.isNullOrBlank()) return false
+        val parentEmail = runCatching {
+            Json.parseToJsonElement(row.state_json)
+                .jsonObject["parentEmail"]
+                ?.jsonPrimitive?.contentOrNull
+        }.getOrNull()
+        return !email.isNullOrBlank() && parentEmail.equals(email, ignoreCase = true)
     }
 
     /**
@@ -257,10 +292,15 @@ object SupabaseManager {
                 }
 
                 val jsonString = AppStateStorage.serializeSingleChild(updatedChild).toString()
+                val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
+                // Не затираем существующую привязку: берём parentUserId профиля,
+                // а если его нет — uid текущей сессии (для родителя)
+                val parentId = updatedChild.parentUserId.ifBlank { currentUser?.id.orEmpty() }
                 supabase.from("family_profiles").upsert(
                     FamilyProfileRow(
                         user_id = child.id,
-                        state_json = jsonString
+                        state_json = jsonString,
+                        parentUserId = parentId.ifBlank { null }
                     )
                 )
                 onResult?.invoke(true)

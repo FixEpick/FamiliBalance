@@ -385,6 +385,7 @@ fun AdminSettingsScreen(
     viewModel: MainViewModel,
     onOpenQuestsEditor: () -> Unit = {},
     onOpenAchievementsEditor: () -> Unit = {},
+    onLogout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -504,6 +505,16 @@ item {
         modifier = Modifier.fillMaxWidth().height(50.dp)
     ) {
         Text("Обнулить всё", color = Color.White, fontWeight = FontWeight.Bold)
+    }
+    Spacer(modifier = Modifier.height(20.dp))
+    OutlinedButton(
+        onClick = onLogout,
+        border = BorderStroke(1.dp, PenaltyRed),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier.fillMaxWidth().height(50.dp)
+    ) {
+        Text("🚪 Выйти из аккаунта", fontWeight = FontWeight.Bold)
     }
 }
 }

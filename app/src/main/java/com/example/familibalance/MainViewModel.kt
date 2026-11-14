@@ -3,6 +3,7 @@ package com.example.familibalance
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.familibalance.data.auth.AuthRepository
 import com.example.familibalance.data.repository.FamilyRepository
 import com.example.familibalance.data.repository.FamilyRepositoryImpl
 import kotlinx.coroutines.Dispatchers
@@ -131,6 +132,40 @@ class MainViewModel(
     /** Переключает активного ребёнка и эмитит новое состояние. pushRemote — полная синхронизация с Supabase. */
     fun selectChild(childId: String, pushRemote: Boolean = false) {
         familyRepository.selectChild(childId, pushRemote)
+        emitFamilyState()
+    }
+
+    /**
+     * Создаёт новый профиль ребёнка из формы регистрации:
+     * генерирует childId, сохраняет профиль (локально + push в Supabase),
+     * пытается связать с родителем по email и выбирает профиль активным.
+     */
+    fun createChildProfile(nickname: String, pin: String, avatar: String, parentEmail: String) {
+        val childId = "user_${System.currentTimeMillis()}"
+        val profile = ChildProfileState(
+            id = childId,
+            name = nickname.ifBlank { "Игрок" },
+            avatar = avatar.ifBlank { "🧒" },
+            pinCode = pin.ifBlank { "0000" },
+            parentEmail = parentEmail.trim()
+        )
+        // updateChildProfile кладёт профиль в AppSharedState и пушит в Supabase
+        updateChildProfile(profile)
+        selectChild(childId)
+
+        // Best-effort привязка к родителю по email (если RPC доступен)
+        val email = parentEmail.trim()
+        if (email.isNotBlank()) {
+            viewModelScope.launch {
+                runCatching { AuthRepository().linkChildToParent(childId, email) }
+            }
+        }
+    }
+
+    /** Очистка состояния при выходе из аккаунта: профили и выбор не должны «протекать» другой семье. */
+    fun clearState() {
+        AppSharedState.children.clear()
+        AppSharedState.selectedChildId = "user_1"
         emitFamilyState()
     }
 

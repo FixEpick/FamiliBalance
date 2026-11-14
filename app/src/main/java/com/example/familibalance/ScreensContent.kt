@@ -313,7 +313,9 @@ data class ChildProfileState(
     val diaryTitle: String = "📚 Дневник",
     val diaryDesc: String = "Квест выполняется раз в неделю. Папа проверяет все оценки в дневнике за прошедшую неделю.",
     val parentUserId: String = "",
-    val authUserId: String = ""
+    val authUserId: String = "",
+    val pinCode: String = "0000",
+    val parentEmail: String = ""
 ) {
     constructor(
         id: String,
@@ -384,7 +386,9 @@ data class ChildProfileState(
             diaryTitle = dto.diaryTitle,
             diaryDesc = dto.diaryDesc,
             parentUserId = dto.parentUserId,
-            authUserId = dto.authUserId
+            authUserId = dto.authUserId,
+            pinCode = dto.pinCode,
+            parentEmail = dto.parentEmail
         )
     }
 }
@@ -444,7 +448,9 @@ data class ChildProfileDto(
     val diaryTitle: String = "📚 Дневник",
     val diaryDesc: String = "Квест выполняется раз в неделю. Папа проверяет все оценки в дневнике за прошедшую неделю.",
     val parentUserId: String = "",
-    val authUserId: String = ""
+    val authUserId: String = "",
+    val pinCode: String = "0000",
+    val parentEmail: String = ""
 )
 
 fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
@@ -501,7 +507,9 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     diaryTitle = diaryTitle,
     diaryDesc = diaryDesc,
     parentUserId = parentUserId,
-    authUserId = authUserId
+    authUserId = authUserId,
+    pinCode = pinCode,
+    parentEmail = parentEmail
 )
 
 object AppSharedState {
