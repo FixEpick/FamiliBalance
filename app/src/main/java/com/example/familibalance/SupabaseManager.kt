@@ -193,32 +193,42 @@ object SupabaseManager {
                     } else index to uri
                 }
 
-                // Применяем результаты на Main
-                withContext(Dispatchers.Main) {
-                    child.closetPhotoUrl = newCloset
-                    child.roomPhotoUrl = newRoom
-                    child.diaryPhotoUrl = newDiary
+                // Применяем результаты на Main: собираем новый иммутабельный профиль
+                val updatedChild = withContext(Dispatchers.Main) {
+                    var updated = child.copy(
+                        closetPhotoUrl = newCloset,
+                        roomPhotoUrl = newRoom,
+                        diaryPhotoUrl = newDiary
+                    )
 
                     newBonus.forEach { (id, url) ->
-                        val idx = child.bonusQuests.indexOfFirst { it.id == id }
-                        if (idx != -1 && child.bonusQuests[idx].photoUrl != url) {
-                            child.bonusQuests[idx] = child.bonusQuests[idx].copy(photoUrl = url)
-                        }
+                        updated = updated.copy(
+                            bonusQuests = updated.bonusQuests.map {
+                                if (it.id == id) it.copy(photoUrl = url) else it
+                            }
+                        )
                     }
 
                     newCustom.forEach { (id, url) ->
-                        val idx = child.customQuests.indexOfFirst { it.id == id }
-                        if (idx != -1 && child.customQuests[idx].photoUrl != url) {
-                            child.customQuests[idx] = child.customQuests[idx].copy(photoUrl = url)
-                        }
+                        updated = updated.copy(
+                            customQuests = updated.customQuests.map {
+                                if (it.id == id) it.copy(photoUrl = url) else it
+                            }
+                        )
                     }
 
                     newPending.forEach { (index, uri) ->
-                        if (index < child.pendingQuests.size && child.pendingQuests[index].photoUri != uri) {
-                            val q = child.pendingQuests[index]
-                            child.pendingQuests[index] = q.copy(photoUri = uri)
+                        if (index < updated.pendingQuests.size && updated.pendingQuests[index].photoUri != uri) {
+                            updated = updated.copy(
+                                pendingQuests = updated.pendingQuests.mapIndexed { i, q ->
+                                    if (i == index) q.copy(photoUri = uri) else q
+                                }
+                            )
                         }
                     }
+
+                    AppSharedState.children[child.id] = updated
+                    updated
                 }
 
                 if (hasUploadedNewPhoto) {
@@ -227,7 +237,7 @@ object SupabaseManager {
                     }
                 }
 
-                val jsonString = AppStateStorage.serializeSingleChild(child).toString()
+                val jsonString = AppStateStorage.serializeSingleChild(updatedChild).toString()
                 supabase.from("family_profiles").upsert(
                     FamilyProfileRow(
                         user_id = child.id,

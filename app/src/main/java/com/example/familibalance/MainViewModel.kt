@@ -77,41 +77,39 @@ class MainViewModel(
     /** Покупка экранного времени: списывает баланс, добавляет минуты и запись в историю. */
     fun buyScreenTime(childId: String, cost: Int, minutes: Int) {
         val child = familyRepository.getChild(childId) ?: return
-        child.balance -= cost
-        child.boughtMinutesToday += minutes
-        child.historyItems.add(
-            0,
-            HistoryData(
-                title = "Покупка экранного времени ($minutes мин)",
-                time = getCurrentTimeString(),
-                date = getCurrentDateString(),
-                amount = "-$cost ₽",
-                isIncome = false,
-                category = "Экранное время"
-            )
+        val updated = child.copy(
+            balance = child.balance - cost,
+            boughtMinutesToday = child.boughtMinutesToday + minutes,
+            historyItems = listOf(
+                HistoryData(
+                    title = "Покупка экранного времени ($minutes мин)",
+                    time = getCurrentTimeString(),
+                    date = getCurrentDateString(),
+                    amount = "-$cost ₽",
+                    isIncome = false,
+                    category = "Экранное время"
+                )
+            ) + child.historyItems
         )
-        saveAndSync()
+        updateChildProfile(updated)
     }
 
     /** Отправка честного признания на проверку папе. */
     fun submitHonestAdmission(childId: String) {
         val child = familyRepository.getChild(childId) ?: return
-        child.honestAdmissionStatus = QuestStatus.PENDING
-        saveAndSync()
+        updateChildProfile(child.copy(honestAdmissionStatus = QuestStatus.PENDING))
     }
 
     /** Сброс купленных минут экранного времени при смене дня. */
     fun resetDailyScreenTime(childId: String) {
         val child = familyRepository.getChild(childId) ?: return
-        child.boughtMinutesToday = 0
-        saveAndSync()
+        updateChildProfile(child.copy(boughtMinutesToday = 0))
     }
 
     /** Скрытие баннера бонуса за стрик. */
     fun dismissStreakBonus(childId: String) {
         val child = familyRepository.getChild(childId) ?: return
-        child.streakBonusMessage = ""
-        saveAndSync()
+        updateChildProfile(child.copy(streakBonusMessage = ""))
     }
 
     /** Переключает активного ребёнка и эмитит новое состояние. pushRemote — полная синхронизация с Supabase. */
@@ -128,75 +126,61 @@ class MainViewModel(
 
     private fun resetDailyQuestsIfNeeded() {
         val today = LocalDate.now().toString()
+        val todayDate = LocalDate.now()
+        val weekStart = todayDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val children = familyRepository.getAllChildren()
 
         children.forEach { child ->
-            var childChanged = false
+            var updated = child
 
             if (child.lastDailyResetDate != today) {
-                child.lastDailyResetDate = today
-
-                child.closetStatus = QuestStatus.AVAILABLE
-                child.closetRejectReason = null
-                child.closetPhotoUrl = null
-
-                child.roomStatus = QuestStatus.AVAILABLE
-                child.roomRejectReason = null
-                child.roomPhotoUrl = null
-
-                childChanged = true
+                updated = updated.copy(
+                    lastDailyResetDate = today,
+                    closetStatus = QuestStatus.AVAILABLE,
+                    closetRejectReason = null,
+                    closetPhotoUrl = null,
+                    roomStatus = QuestStatus.AVAILABLE,
+                    roomRejectReason = null,
+                    roomPhotoUrl = null
+                )
             }
 
             // Auto-reset visible custom quests based on frequency
-            val todayDate = LocalDate.now()
-            val weekStart = todayDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-
-            child.customQuests.forEach { quest ->
-                if (!quest.isVisible) return@forEach
+            val newQuests = updated.customQuests.map { quest ->
+                if (!quest.isVisible) return@map quest
 
                 fun parseResetDate(): LocalDate? =
                     if (quest.lastResetDate.isBlank()) null
                     else runCatching { LocalDate.parse(quest.lastResetDate) }.getOrNull()
 
-                when (quest.frequency) {
+                val shouldReset = when (quest.frequency) {
                     QuestFrequency.DAILY -> {
                         val questResetDate = parseResetDate()
-                        if (questResetDate == null || questResetDate.isBefore(todayDate)) {
-                            val idx = child.customQuests.indexOfFirst { it.id == quest.id }
-                            if (idx != -1) {
-                                child.customQuests[idx] = quest.copy(
-                                    status = QuestStatus.AVAILABLE,
-                                    photoUrl = null,
-                                    rejectReason = null,
-                                    lastResetDate = today
-                                )
-                                childChanged = true
-                            }
-                        }
+                        questResetDate == null || questResetDate.isBefore(todayDate)
                     }
                     QuestFrequency.WEEKLY -> {
                         val questResetDate = parseResetDate()
-                        if (questResetDate == null || questResetDate.isBefore(weekStart)) {
-                            val idx = child.customQuests.indexOfFirst { it.id == quest.id }
-                            if (idx != -1) {
-                                child.customQuests[idx] = quest.copy(
-                                    status = QuestStatus.AVAILABLE,
-                                    photoUrl = null,
-                                    rejectReason = null,
-                                    lastResetDate = today
-                                )
-                                childChanged = true
-                            }
-                        }
+                        questResetDate == null || questResetDate.isBefore(weekStart)
                     }
-                    QuestFrequency.ONCE -> {
-                        // Do not reset
-                    }
+                    QuestFrequency.ONCE -> false
                 }
+
+                if (shouldReset) {
+                    quest.copy(
+                        status = QuestStatus.AVAILABLE,
+                        photoUrl = null,
+                        rejectReason = null,
+                        lastResetDate = today
+                    )
+                } else quest
             }
 
-            if (childChanged) {
-                familyRepository.saveAndSync()
+            if (newQuests != updated.customQuests) {
+                updated = updated.copy(customQuests = newQuests)
+            }
+
+            if (updated != child) {
+                updateChildProfile(updated)
             }
         }
     }

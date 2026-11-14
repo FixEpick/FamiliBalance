@@ -13,84 +13,79 @@ fun MainViewModel.addCustomQuest(userId: String, title: String, reward: Int, fre
         frequency = frequency,
         lastResetDate = LocalDate.now().toString()
     )
-    profile.customQuests.add(newQuest)
-    saveState()
-    familyRepository.pushChildProfile(profile)
+    updateChildProfile(profile.copy(customQuests = profile.customQuests + newQuest))
 }
 
 fun MainViewModel.deleteCustomQuest(userId: String, questId: String) {
     val profile = familyRepository.getChild(userId) ?: return
-    profile.customQuests.removeAll { it.id == questId }
-    saveState()
-    familyRepository.pushChildProfile(profile)
+    updateChildProfile(profile.copy(customQuests = profile.customQuests.filterNot { it.id == questId }))
 }
 
 fun MainViewModel.updateCustomQuest(userId: String, questId: String, title: String, desc: String, reward: Int) {
     val profile = familyRepository.getChild(userId) ?: return
-    val idx = profile.customQuests.indexOfFirst { it.id == questId }
-    if (idx != -1) {
-        profile.customQuests[idx] = profile.customQuests[idx].copy(
-            title = title,
-            description = desc,
-            reward = reward
-        )
-        saveState()
-        familyRepository.pushChildProfile(profile)
+    val updatedQuests = profile.customQuests.map { quest ->
+        if (quest.id == questId) {
+            quest.copy(title = title, description = desc, reward = reward)
+        } else quest
+    }
+    if (updatedQuests != profile.customQuests) {
+        updateChildProfile(profile.copy(customQuests = updatedQuests))
     }
 }
 
 fun MainViewModel.toggleQuestVisibility(userId: String, questId: String, isVisible: Boolean) {
     val profile = familyRepository.getChild(userId) ?: return
-    val questIndex = profile.customQuests.indexOfFirst { it.id == questId }
-    if (questIndex != -1) {
-        val quest = profile.customQuests[questIndex]
-        profile.customQuests[questIndex] = quest.copy(isVisible = isVisible)
-    } else {
-        when (questId) {
-            "closet", "шкаф" -> profile.isWardrobeVisible = isVisible
-            "room", "комната" -> profile.isRoomVisible = isVisible
-            "diary", "дневник", "итоги" -> profile.isDiaryVisible = isVisible
+    val updated = when (questId) {
+        "closet", "шкаф" -> profile.copy(isWardrobeVisible = isVisible)
+        "room", "комната" -> profile.copy(isRoomVisible = isVisible)
+        "diary", "дневник", "итоги" -> profile.copy(isDiaryVisible = isVisible)
+        else -> {
+            val updatedQuests = profile.customQuests.map { quest ->
+                if (quest.id == questId) quest.copy(isVisible = isVisible) else quest
+            }
+            profile.copy(customQuests = updatedQuests)
         }
     }
-    saveState()
-    familyRepository.pushChildProfile(profile)
+    updateChildProfile(updated)
 }
 
 fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoUrl: String) {
     val profile = familyRepository.getChild(userId) ?: return
-    val idx = profile.customQuests.indexOfFirst { it.id == questId }
-    if (idx != -1) {
-        val quest = profile.customQuests[idx]
-        profile.customQuests[idx] = quest.copy(
-            status = QuestStatus.PENDING,
-            photoUrl = photoUrl,
-            rejectReason = null
-        )
-        saveState()
-        familyRepository.pushChildProfile(profile)
+    val updatedQuests = profile.customQuests.map { quest ->
+        if (quest.id == questId) {
+            quest.copy(
+                status = QuestStatus.PENDING,
+                photoUrl = photoUrl,
+                rejectReason = null
+            )
+        } else quest
+    }
+    if (updatedQuests != profile.customQuests) {
+        updateChildProfile(profile.copy(customQuests = updatedQuests))
     }
 }
 
 fun MainViewModel.claimCustomQuestReward(userId: String, questId: String) {
     val profile = familyRepository.getChild(userId) ?: return
-    val idx = profile.customQuests.indexOfFirst { it.id == questId }
-    if (idx != -1) {
-        val quest = profile.customQuests[idx]
-        if (quest.status == QuestStatus.READY_TO_CLAIM) {
-            profile.customQuests[idx] = quest.copy(status = QuestStatus.CLAIMED)
-            profile.balance += quest.reward
-            profile.historyItems.add(
-                0,
+    val target = profile.customQuests.firstOrNull { it.id == questId } ?: return
+    if (target.status == QuestStatus.READY_TO_CLAIM) {
+        val updatedQuests = profile.customQuests.map { quest ->
+            if (quest.id == questId) quest.copy(status = QuestStatus.CLAIMED) else quest
+        }
+        val updated = profile.copy(
+            customQuests = updatedQuests,
+            balance = profile.balance + target.reward,
+            historyItems = listOf(
                 HistoryData(
-                    title = "Квест выполнен: ${quest.title}",
+                    title = "Квест выполнен: ${target.title}",
                     time = getCurrentTimeString(),
                     date = getCurrentDateString(),
-                    amount = "+${quest.reward} ₽",
+                    amount = "+${target.reward} ₽",
                     isIncome = true,
                     category = "Кастомные квесты"
                 )
-            )
-            updateChildProfile(profile)
-        }
+            ) + profile.historyItems
+        )
+        updateChildProfile(updated)
     }
 }

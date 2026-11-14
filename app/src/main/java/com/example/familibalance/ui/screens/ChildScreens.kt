@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import com.example.familibalance.*
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.components.*
+import com.example.familibalance.viewmodel.actions.*
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -441,23 +442,7 @@ fun AchievementsScreen(
                 isReadyToClaim = item.isReadyToClaim,
                 onClaimClick = {
                     if (item.id.isNotBlank()) {
-                        val idx = currentChild.achievements.indexOfFirst { it.id == item.id }
-                        if (idx != -1 && !currentChild.achievements[idx].isClaimed) {
-                            currentChild.achievements[idx] = currentChild.achievements[idx].copy(isClaimed = true)
-                            currentChild.balance += item.rewardInt
-                            currentChild.historyItems.add(
-                                0,
-                                HistoryData(
-                                    title = "Награда получена: ${item.title}",
-                                    time = getCurrentTimeString(),
-                                    date = getCurrentDateString(),
-                                    amount = "+${item.rewardInt} ₽",
-                                    isIncome = true,
-                                    category = "Достижения"
-                                )
-                            )
-                            viewModel.updateChildProfile(currentChild)
-                        }
+                        viewModel.claimAchievementReward(currentChild.id, item.id)
                     }
                 }
             )

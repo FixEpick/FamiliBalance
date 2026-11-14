@@ -2,8 +2,6 @@ package com.example.familibalance
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.runtime.*
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.encodeToString
@@ -106,7 +104,7 @@ data class AchievementConfig(
     val isClaimed: Boolean = false
 )
 
-fun defaultAchievements(): MutableList<AchievementConfig> = mutableListOf(
+fun defaultAchievements(): List<AchievementConfig> = listOf(
     AchievementConfig(
         title = "Первая кровь",
         description = "Нанес первый удар по скучной учебе. Дальше — больше.",
@@ -258,72 +256,121 @@ fun defaultAchievements(): MutableList<AchievementConfig> = mutableListOf(
 
 private const val MAX_HISTORY_ITEMS = 200
 
-class ChildProfileState(
+@Serializable
+data class ChildProfileState(
     val id: String,
     val name: String,
     val avatar: String,
-    initialBalance: Int = 40,
-    initialMinutes: Int = 0
+    val balance: Int = 40,
+    val boughtMinutesToday: Int = 0,
+    val honestAdmissionStatus: QuestStatus = QuestStatus.AVAILABLE,
+    val closetStatus: QuestStatus = QuestStatus.AVAILABLE,
+    val closetRejectReason: String? = null,
+    val closetPhotoUrl: String? = null,
+    val roomStatus: QuestStatus = QuestStatus.AVAILABLE,
+    val roomRejectReason: String? = null,
+    val roomPhotoUrl: String? = null,
+    val diaryStatus: QuestStatus = QuestStatus.AVAILABLE,
+    val diaryRejectReason: String? = null,
+    val diaryPhotoUrl: String? = null,
+    val diaryApprovedReward: Int = 100,
+    val lastDailyResetDate: String = "",
+    val dreamTitle: String = "",
+    val dreamTarget: Int = 0,
+    val streakDays: Int = 0,
+    val lastStreakDate: String = "",
+    val streakBonusMessage: String = "",
+    val fivesCount: Int = 0,
+    val wardrobeCount: Int = 0,
+    val roomCount: Int = 0,
+    val achievements: List<AchievementConfig> = defaultAchievements(),
+    val cashoutRequests: List<CashoutRequest> = emptyList(),
+    val pendingQuests: List<PendingQuestData> = emptyList(),
+    val bonusQuests: List<BonusQuest> = emptyList(),
+    val customQuests: List<CustomQuest> = emptyList(),
+    val historyItems: List<HistoryData> = emptyList(),
+    val selectedThemeId: String = "COSMIC_BLUE",
+    val unlockedThemes: List<String> = listOf("COSMIC_BLUE"),
+    val isWardrobeVisible: Boolean = true,
+    val isRoomVisible: Boolean = true,
+    val isDiaryVisible: Boolean = true,
+    val isWardrobeDeleted: Boolean = false,
+    val isRoomDeleted: Boolean = false,
+    val isDiaryDeleted: Boolean = false,
+    val wardrobeTitle: String = "Фото шкафа",
+    val wardrobeDesc: String = "Наведи идеальный порядок на полках и сфотографируй результат для папы",
+    val wardrobeReward: Int = 50,
+    val roomTitle: String = "Фото комнаты",
+    val roomDesc: String = "Заправь кровать без складок, собери игрушки и пришли фото",
+    val roomReward: Int = 50,
+    val diaryTitle: String = "📚 Дневник",
+    val diaryDesc: String = "Квест выполняется раз в неделю. Папа проверяет все оценки в дневнике за прошедшую неделю."
 ) {
-    var selectedThemeId by mutableStateOf("COSMIC_BLUE")
-    var unlockedThemes by mutableStateOf(listOf("COSMIC_BLUE"))
+    constructor(
+        id: String,
+        name: String,
+        avatar: String,
+        initialBalance: Int = 40,
+        initialMinutes: Int = 0
+    ) : this(
+        id = id,
+        name = name,
+        avatar = avatar,
+        balance = initialBalance,
+        boughtMinutesToday = initialMinutes
+    )
 
-    var balance by mutableIntStateOf(initialBalance)
-    var boughtMinutesToday by mutableIntStateOf(initialMinutes)
-    var honestAdmissionStatus by mutableStateOf(QuestStatus.AVAILABLE)
-
-    var closetStatus by mutableStateOf(QuestStatus.AVAILABLE)
-    var closetRejectReason by mutableStateOf<String?>(null)
-    var closetPhotoUrl by mutableStateOf<String?>(null)
-
-    var roomStatus by mutableStateOf(QuestStatus.AVAILABLE)
-    var roomRejectReason by mutableStateOf<String?>(null)
-    var roomPhotoUrl by mutableStateOf<String?>(null)
-
-    var diaryStatus by mutableStateOf(QuestStatus.AVAILABLE)
-    var diaryRejectReason by mutableStateOf<String?>(null)
-    var diaryPhotoUrl by mutableStateOf<String?>(null)
-    var diaryApprovedReward by mutableIntStateOf(100)
-
-    var lastDailyResetDate by mutableStateOf("")
-
-    var dreamTitle by mutableStateOf("")
-    var dreamTarget by mutableIntStateOf(0)
-
-    var streakDays by mutableIntStateOf(0)
-    var lastStreakDate by mutableStateOf("")
-    var streakBonusMessage by mutableStateOf("")
-
-    var fivesCount by mutableIntStateOf(0)
-    var wardrobeCount by mutableIntStateOf(0)
-    var roomCount by mutableIntStateOf(0)
-    val achievements = mutableStateListOf<AchievementConfig>().apply { addAll(defaultAchievements()) }
-
-    var cashoutRequests by mutableStateOf<List<CashoutRequest>>(emptyList())
-
-    val pendingQuests: SnapshotStateList<PendingQuestData> = mutableStateListOf()
-    val bonusQuests: SnapshotStateList<BonusQuest> = mutableStateListOf()
-    val customQuests: SnapshotStateList<CustomQuest> = mutableStateListOf()
-
-    var isWardrobeVisible by mutableStateOf(true)
-    var isRoomVisible by mutableStateOf(true)
-    var isDiaryVisible by mutableStateOf(true)
-
-    var isWardrobeDeleted by mutableStateOf(false)
-    var isRoomDeleted by mutableStateOf(false)
-    var isDiaryDeleted by mutableStateOf(false)
-
-    var wardrobeTitle by mutableStateOf("Фото шкафа")
-    var wardrobeDesc by mutableStateOf("Наведи идеальный порядок на полках и сфотографируй результат для папы")
-    var wardrobeReward by mutableIntStateOf(50)
-
-    var roomTitle by mutableStateOf("Фото комнаты")
-    var roomDesc by mutableStateOf("Заправь кровать без складок, собери игрушки и пришли фото")
-    var roomReward by mutableIntStateOf(50)
-
-    var diaryTitle by mutableStateOf("📚 Дневник")
-    var diaryDesc by mutableStateOf("Квест выполняется раз в неделю. Папа проверяет все оценки в дневнике за прошедшую неделю.")
-    val historyItems: SnapshotStateList<HistoryData> = mutableStateListOf()
+    companion object {
+        fun fromDto(dto: ChildProfileDto): ChildProfileState = ChildProfileState(
+            id = dto.id,
+            name = dto.name.ifBlank { "Ребёнок ${dto.id}" },
+            avatar = dto.avatar.ifBlank { "🧒" },
+            balance = dto.balance,
+            boughtMinutesToday = dto.boughtMinutesToday,
+            honestAdmissionStatus = dto.honestAdmissionStatus,
+            closetStatus = dto.closetStatus,
+            closetRejectReason = dto.closetRejectReason,
+            closetPhotoUrl = dto.closetPhotoUrl,
+            roomStatus = dto.roomStatus,
+            roomRejectReason = dto.roomRejectReason,
+            roomPhotoUrl = dto.roomPhotoUrl,
+            diaryStatus = dto.diaryStatus,
+            diaryRejectReason = dto.diaryRejectReason,
+            diaryPhotoUrl = dto.diaryPhotoUrl,
+            diaryApprovedReward = dto.diaryApprovedReward,
+            lastDailyResetDate = dto.lastDailyResetDate,
+            dreamTitle = dto.dreamTitle,
+            dreamTarget = dto.dreamTarget,
+            streakDays = dto.streakDays,
+            lastStreakDate = dto.lastStreakDate,
+            streakBonusMessage = dto.streakBonusMessage,
+            fivesCount = dto.fivesCount,
+            wardrobeCount = dto.wardrobeCount,
+            roomCount = dto.roomCount,
+            achievements = dto.achievements,
+            cashoutRequests = dto.cashoutRequests,
+            pendingQuests = dto.pendingQuests,
+            bonusQuests = dto.bonusQuests,
+            historyItems = dto.historyItems.takeLast(MAX_HISTORY_ITEMS),
+            selectedThemeId = dto.selectedThemeId,
+            unlockedThemes = dto.unlockedThemes,
+            customQuests = dto.customQuests,
+            isWardrobeVisible = dto.isWardrobeVisible,
+            isRoomVisible = dto.isRoomVisible,
+            isDiaryVisible = dto.isDiaryVisible,
+            isWardrobeDeleted = dto.isWardrobeDeleted,
+            isRoomDeleted = dto.isRoomDeleted,
+            isDiaryDeleted = dto.isDiaryDeleted,
+            wardrobeTitle = dto.wardrobeTitle,
+            wardrobeDesc = dto.wardrobeDesc,
+            wardrobeReward = dto.wardrobeReward,
+            roomTitle = dto.roomTitle,
+            roomDesc = dto.roomDesc,
+            roomReward = dto.roomReward,
+            diaryTitle = dto.diaryTitle,
+            diaryDesc = dto.diaryDesc
+        )
+    }
 }
 
 @Serializable
@@ -427,69 +474,12 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     diaryDesc = diaryDesc
 )
 
-fun ChildProfileState.updateFromDto(dto: ChildProfileDto) {
-    balance = dto.balance
-    boughtMinutesToday = dto.boughtMinutesToday
-    honestAdmissionStatus = dto.honestAdmissionStatus
-    closetStatus = dto.closetStatus
-    closetRejectReason = dto.closetRejectReason
-    closetPhotoUrl = dto.closetPhotoUrl
-    roomStatus = dto.roomStatus
-    roomRejectReason = dto.roomRejectReason
-    roomPhotoUrl = dto.roomPhotoUrl
-    diaryStatus = dto.diaryStatus
-    diaryRejectReason = dto.diaryRejectReason
-    diaryPhotoUrl = dto.diaryPhotoUrl
-    diaryApprovedReward = dto.diaryApprovedReward
-    lastDailyResetDate = dto.lastDailyResetDate
-    dreamTitle = dto.dreamTitle
-    dreamTarget = dto.dreamTarget
-    streakDays = dto.streakDays
-    lastStreakDate = dto.lastStreakDate
-    streakBonusMessage = dto.streakBonusMessage
-    fivesCount = dto.fivesCount
-    wardrobeCount = dto.wardrobeCount
-    roomCount = dto.roomCount
-    // Пустой список уважаем (админ мог удалить все ачивки); дефолт задаётся в DTO.
-    achievements.clear()
-    achievements.addAll(dto.achievements)
-    cashoutRequests = dto.cashoutRequests
-
-    pendingQuests.clear()
-    pendingQuests.addAll(dto.pendingQuests)
-
-    bonusQuests.clear()
-    bonusQuests.addAll(dto.bonusQuests)
-
-    historyItems.clear()
-    historyItems.addAll(dto.historyItems)
-    selectedThemeId = dto.selectedThemeId
-    unlockedThemes = dto.unlockedThemes
-
-    customQuests.clear()
-    customQuests.addAll(dto.customQuests)
-    isWardrobeVisible = dto.isWardrobeVisible
-    isRoomVisible = dto.isRoomVisible
-    isDiaryVisible = dto.isDiaryVisible
-    isWardrobeDeleted = dto.isWardrobeDeleted
-    isRoomDeleted = dto.isRoomDeleted
-    isDiaryDeleted = dto.isDiaryDeleted
-    wardrobeTitle = dto.wardrobeTitle
-    wardrobeDesc = dto.wardrobeDesc
-    wardrobeReward = dto.wardrobeReward
-    roomTitle = dto.roomTitle
-    roomDesc = dto.roomDesc
-    roomReward = dto.roomReward
-    diaryTitle = dto.diaryTitle
-    diaryDesc = dto.diaryDesc
-}
-
 object AppSharedState {
-    var currentRole by mutableStateOf<AppRole?>(null)
-    var selectedChildId by mutableStateOf("user_1")
+    var currentRole: AppRole? = null
+    var selectedChildId: String = "user_1"
     var tempImageUri: Uri? = null
 
-    val children = mutableStateMapOf(
+    val children = mutableMapOf(
         "user_1" to ChildProfileState(
             id = "user_1",
             name = "Пользователь 1",
@@ -509,8 +499,8 @@ object AppSharedState {
     val currentChild: ChildProfileState
         get() = children[selectedChildId] ?: children["user_1"]!!
 
-    val adminNotificationLog = mutableStateListOf<String>()
-    var adminNotificationMessage by mutableStateOf<String?>(null)
+    val adminNotificationLog = mutableListOf<String>()
+    var adminNotificationMessage: String? = null
 }
 
 object AppStateStorage {
@@ -566,8 +556,8 @@ object AppStateStorage {
     fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String) {
         if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) return
         try {
-            val profile = getOrCreateProfile(userId, jsonStr) ?: return
-            parseChildJsonIntoProfile(jsonStr, profile)
+            val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
+            AppSharedState.children[userId] = ChildProfileState.fromDto(dto)
             saveLocalOnly(context)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -575,35 +565,7 @@ object AppStateStorage {
     }
 
     /**
-     * Возвращает существующий профиль или создаёт новый для неизвестного userId,
-     * извлекая name/avatar из JSON (чтобы не было пустых имён у новых детей).
-     */
-    private fun getOrCreateProfile(userId: String, jsonStr: String): ChildProfileState? {
-        AppSharedState.children[userId]?.let { return it }
-        return try {
-            val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
-            getOrCreateProfileFromDto(userId, dto)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
-    private fun getOrCreateProfileFromDto(userId: String, dto: ChildProfileDto): ChildProfileState {
-        AppSharedState.children[userId]?.let { return it }
-        val newProfile = ChildProfileState(
-            id = userId,
-            name = dto.name.ifBlank { "Ребёнок $userId" },
-            avatar = dto.avatar.ifBlank { "🧒" },
-            initialBalance = dto.balance,
-            initialMinutes = dto.boughtMinutesToday
-        )
-        AppSharedState.children[userId] = newProfile
-        return newProfile
-    }
-
-    /**
-     * Suspend-вариант: парсит JSON на IO-потоке, применяет к snapshot-state на Main.
+     * Suspend-вариант: парсит JSON на IO-потоке, применяет на Main.
      * Используется из SupabaseManager (Realtime/первичная загрузка), чтобы не фризить UI.
      */
     suspend fun applyRemoteChildJsonAsync(context: Context, userId: String, jsonStr: String) {
@@ -613,19 +575,9 @@ object AppStateStorage {
                 jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
             }
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                val profile = getOrCreateProfileFromDto(userId, dto)
-                profile.updateFromDto(dto)
+                AppSharedState.children[userId] = ChildProfileState.fromDto(dto)
                 saveLocalOnly(context)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun parseChildJsonIntoProfile(jsonStr: String, profile: ChildProfileState) {
-        try {
-            val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
-            profile.updateFromDto(dto)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -646,8 +598,12 @@ object AppStateStorage {
                 childrenObj.keys().forEach { id ->
                     if (childrenObj.has(id)) {
                         val childObj = childrenObj.getJSONObject(id)
-                        val profile = getOrCreateProfile(id, childObj.toString()) ?: return@forEach
-                        parseChildJsonIntoProfile(childObj.toString(), profile)
+                        try {
+                            val dto = jsonFormat.decodeFromString<ChildProfileDto>(childObj.toString())
+                            AppSharedState.children[id] = ChildProfileState.fromDto(dto).copy(id = id)
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
                     }
                 }
             }
@@ -677,28 +633,29 @@ object AppStateStorage {
             var changed = false
 
             if (savedDaily != todayStr) {
-                AppSharedState.children.values.forEach { child ->
-                    child.boughtMinutesToday = 0
-                    if (child.closetStatus != QuestStatus.PENDING) {
-                        child.closetStatus = QuestStatus.AVAILABLE
-                        child.closetRejectReason = null
-                    }
-                    if (child.roomStatus != QuestStatus.PENDING) {
-                        child.roomStatus = QuestStatus.AVAILABLE
-                        child.roomRejectReason = null
-                    }
-                    child.bonusQuests.removeAll { it.status == QuestStatus.CLAIMED }
+                AppSharedState.children.replaceAll { _, child ->
+                    val resetCloset = child.closetStatus != QuestStatus.PENDING
+                    val resetRoom = child.roomStatus != QuestStatus.PENDING
+                    child.copy(
+                        boughtMinutesToday = 0,
+                        closetStatus = if (resetCloset) QuestStatus.AVAILABLE else child.closetStatus,
+                        closetRejectReason = if (resetCloset) null else child.closetRejectReason,
+                        roomStatus = if (resetRoom) QuestStatus.AVAILABLE else child.roomStatus,
+                        roomRejectReason = if (resetRoom) null else child.roomRejectReason,
+                        bonusQuests = child.bonusQuests.filter { it.status != QuestStatus.CLAIMED }
+                    )
                 }
                 prefs.edit().putString(KEY_LAST_DAILY, todayStr).apply()
                 changed = true
             }
 
             if (savedWeekly != currentWeekStr) {
-                AppSharedState.children.values.forEach { child ->
-                    if (child.diaryStatus != QuestStatus.PENDING) {
-                        child.diaryStatus = QuestStatus.AVAILABLE
-                        child.diaryRejectReason = null
-                    }
+                AppSharedState.children.replaceAll { _, child ->
+                    val resetDiary = child.diaryStatus != QuestStatus.PENDING
+                    child.copy(
+                        diaryStatus = if (resetDiary) QuestStatus.AVAILABLE else child.diaryStatus,
+                        diaryRejectReason = if (resetDiary) null else child.diaryRejectReason
+                    )
                 }
                 prefs.edit().putString(KEY_LAST_WEEKLY, currentWeekStr).apply()
                 changed = true

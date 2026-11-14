@@ -16,58 +16,53 @@ fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
         timestamp = System.currentTimeMillis()
     )
 
-    profile.cashoutRequests = profile.cashoutRequests + request
-    saveState()
-    familyRepository.pushChildProfile(profile)
+    updateChildProfile(profile.copy(cashoutRequests = profile.cashoutRequests + request))
 }
 
 fun MainViewModel.approveCashoutRequest(requestId: String) {
     val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
 
-    val index = profile.cashoutRequests.indexOfFirst { it.id == requestId }
-    if (index == -1) {
-        return
-    }
-
-    val request = profile.cashoutRequests[index]
+    val request = profile.cashoutRequests.firstOrNull { it.id == requestId } ?: return
 
     if (request.amount <= 0 || request.amount > profile.balance) {
         return
     }
 
-    profile.balance -= request.amount
-    profile.historyItems.add(
-        0,
-        HistoryData(
-            title = "Вывод средств (${request.comment})",
-            time = getCurrentTimeString(),
-            date = getCurrentDateString(),
-            amount = "-${request.amount} ₽",
-            isIncome = false,
-            category = "Вывод средств"
-        )
+    val updated = profile.copy(
+        balance = profile.balance - request.amount,
+        historyItems = listOf(
+            HistoryData(
+                title = "Вывод средств (${request.comment})",
+                time = getCurrentTimeString(),
+                date = getCurrentDateString(),
+                amount = "-${request.amount} ₽",
+                isIncome = false,
+                category = "Вывод средств"
+            )
+        ) + profile.historyItems,
+        cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId }
     )
-    profile.cashoutRequests = profile.cashoutRequests.minusElement(request)
-    updateChildProfile(profile)
+    updateChildProfile(updated)
 }
 
 fun MainViewModel.rejectCashoutRequest(requestId: String) {
     val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
 
-    profile.cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId }
-    saveState()
-    familyRepository.pushChildProfile(profile)
+    updateChildProfile(
+        profile.copy(cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId })
+    )
 }
 
 fun MainViewModel.setDreamGoal(userId: String, title: String, target: Int) {
     val profile = familyRepository.getChild(userId) ?: return
     if (target <= 0) return
 
-    profile.dreamTitle = title.ifBlank { profile.dreamTitle }
-    profile.dreamTarget = target
-
-    saveState()
-    familyRepository.pushChildProfile(profile)
+    updateChildProfile(
+        profile.copy(
+            dreamTitle = title.ifBlank { profile.dreamTitle },
+            dreamTarget = target
+        )
+    )
 }
 
 fun MainViewModel.claimDreamGoal(userId: String) {
@@ -78,25 +73,25 @@ fun MainViewModel.claimDreamGoal(userId: String) {
         return
     }
 
-    profile.balance -= target
     val claimedDreamTitle = profile.dreamTitle
-    profile.dreamTitle = ""
-    profile.dreamTarget = 0
-
-    profile.historyItems.add(
-        0,
-        HistoryData(
-            title = "Заложена цель: $claimedDreamTitle",
-            time = getCurrentTimeString(),
-            date = getCurrentDateString(),
-            amount = "-$target ₽",
-            isIncome = false,
-            category = "Цели/Мечты"
-        )
+    val updated = profile.copy(
+        balance = profile.balance - target,
+        dreamTitle = "",
+        dreamTarget = 0,
+        historyItems = listOf(
+            HistoryData(
+                title = "Заложена цель: $claimedDreamTitle",
+                time = getCurrentTimeString(),
+                date = getCurrentDateString(),
+                amount = "-$target ₽",
+                isIncome = false,
+                category = "Цели/Мечты"
+            )
+        ) + profile.historyItems
     )
 
     val message = "Ребёнок ${profile.name} осуществил цель «$claimedDreamTitle» на $target ₽."
     familyRepository.addAdminNotification(message)
 
-    updateChildProfile(profile)
+    updateChildProfile(updated)
 }

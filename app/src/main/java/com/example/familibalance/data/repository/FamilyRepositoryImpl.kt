@@ -109,6 +109,9 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
     }
 
     override fun updateChildProfile(profile: ChildProfileState) {
+        // Модель иммутабельна: заменяем экземпляр в shared state,
+        // чтобы UI и Repository видели актуальную версию профиля.
+        AppSharedState.children[profile.id] = profile
         AppStateStorage.saveLocalOnly(appContext)
         pushChildProfile(profile)
     }
