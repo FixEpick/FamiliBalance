@@ -316,7 +316,7 @@ fun MainChildScreen(
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = CardDefaults.cardColors(containerColor = Color(0xFF131B3A).copy(alpha = 0.6f)),
+                                    colors = CardDefaults.cardColors(containerColor = CardBgDark.copy(alpha = 0.6f)),
                                     border = BorderStroke(1.dp, GlassStroke)
                                 ) {
                                     Row(
@@ -411,7 +411,7 @@ fun MainChildScreen(
                         label = "dreamProgress"
                     )
 
-                    val progressBarColor = if (isGoalReached) Color(0xFFFFC107) else NeonCyan
+                    val progressBarColor = if (isGoalReached) StatusYellow else NeonCyan
 
                     Card(
                         modifier = Modifier
@@ -430,7 +430,7 @@ fun MainChildScreen(
                         ),
                         border = BorderStroke(
                             width = if (isGoalReached) 3.dp else 1.5.dp,
-                            color = if (isGoalReached) Color(0xFFFFC107) else NeonCyan.copy(alpha = 0.6f)
+                            color = if (isGoalReached) StatusYellow else NeonCyan.copy(alpha = 0.6f)
                         )
                     ) {
                         Column(
@@ -446,7 +446,7 @@ fun MainChildScreen(
                             ) {
                                 Text(
                                     text = dreamTitle,
-                                    color = if (isGoalReached) Color(0xFFFFC107) else NeonCyan,
+                                    color = if (isGoalReached) StatusYellow else NeonCyan,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 1
@@ -472,7 +472,7 @@ fun MainChildScreen(
                             if (isGoalReached) {
                                 Text(
                                     text = "Цель достигнута! Нажми, чтобы забрать ✨",
-                                    color = Color(0xFFFFC107),
+                                    color = StatusYellow,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     textAlign = TextAlign.Center,
@@ -645,7 +645,7 @@ fun MainChildScreen(
             item {
                 Spacer(modifier = Modifier.height(4.dp))
                 when (honestAdmissionStatus) {
-                    QuestStatus.AVAILABLE -> {
+                    QuestStatus.AVAILABLE, QuestStatus.APPROVED -> {
                         OutlinedButton(
                             onClick = { showHonestCatScreen = true },
                             modifier = Modifier
@@ -656,6 +656,28 @@ fun MainChildScreen(
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
                         ) {
                             Text("🐱 Честное признание", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                        if (honestAdmissionStatus == QuestStatus.APPROVED) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = StatusGreen.copy(alpha = 0.15f)
+                                ),
+                                border = BorderStroke(1.dp, StatusGreen.copy(alpha = 0.6f))
+                            ) {
+                                Text(
+                                    text = "✓ Штраф уменьшится вдвое при следующем нарушении",
+                                    color = StatusGreen,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                                )
+                            }
                         }
                     }
                     QuestStatus.PENDING -> {
@@ -675,7 +697,7 @@ fun MainChildScreen(
                             Text("• Признание на проверке у папы", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
-                    QuestStatus.APPROVED, QuestStatus.READY_TO_CLAIM, QuestStatus.CLAIMED -> {
+                    QuestStatus.READY_TO_CLAIM, QuestStatus.CLAIMED -> {
                         OutlinedButton(
                             onClick = { },
                             enabled = false,
@@ -757,8 +779,8 @@ fun MainChildScreen(
                             cursorColor = NeonCyan,
                             focusedBorderColor = NeonCyan,
                             unfocusedBorderColor = GlassStroke,
-                            focusedContainerColor = Color(0xFF131B3A).copy(alpha = 0.8f),
-                            unfocusedContainerColor = Color(0xFF131B3A).copy(alpha = 0.8f)
+                            focusedContainerColor = CardBgDark.copy(alpha = 0.8f),
+                            unfocusedContainerColor = CardBgDark.copy(alpha = 0.8f)
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -782,8 +804,8 @@ fun MainChildScreen(
                             cursorColor = NeonCyan,
                             focusedBorderColor = NeonCyan,
                             unfocusedBorderColor = GlassStroke,
-                            focusedContainerColor = Color(0xFF131B3A).copy(alpha = 0.8f),
-                            unfocusedContainerColor = Color(0xFF131B3A).copy(alpha = 0.8f)
+                            focusedContainerColor = CardBgDark.copy(alpha = 0.8f),
+                            unfocusedContainerColor = CardBgDark.copy(alpha = 0.8f)
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )

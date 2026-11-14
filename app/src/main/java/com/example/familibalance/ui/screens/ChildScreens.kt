@@ -59,6 +59,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.*
+import com.example.familibalance.feature.child.QuestDeliveryScreen
+import com.example.familibalance.feature.child.QuestDeliveryTarget
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.components.*
 import com.example.familibalance.viewmodel.actions.*
@@ -334,13 +336,18 @@ fun AchievementsScreen(
         allAchievements.count { it.isCompleted }
     }
 
-    LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
+    Column(modifier = modifier.fillMaxSize()) {
+        // Закреплённый мини-баланс — не скроллится
+        MiniBalanceBar(balance = currentChild.balance)
+
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
         item {
             Column {
                 Text(
@@ -370,7 +377,7 @@ fun AchievementsScreen(
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp)),
                         color = NeonCyan,
-                        trackColor = Color(0xFF131B3A).copy(alpha = 0.85f)
+                        trackColor = CardBgDark.copy(alpha = 0.85f)
                     )
 
                     Box(
@@ -379,8 +386,8 @@ fun AchievementsScreen(
                             .then(
                                 if (isAllCompleted) {
                                     Modifier
-                                        .border(1.5.dp, Color(0xFFFFD700), CircleShape)
-                                        .background(Color(0xFFFFD700).copy(alpha = 0.25f), CircleShape)
+                                        .border(1.5.dp, GoldBright, CircleShape)
+                                        .background(GoldBright.copy(alpha = 0.25f), CircleShape)
                                 } else {
                                     Modifier.alpha(0.3f)
                                 }
@@ -413,9 +420,9 @@ fun AchievementsScreen(
                         onClick = { selectedTab = index },
                         label = { Text(tabName, fontSize = 14.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = Color(0xFF0E2A3D).copy(alpha = 0.92f),
+                            selectedContainerColor = FilterSelectedBg.copy(alpha = 0.92f),
                             selectedLabelColor = NeonCyan,
-                            containerColor = Color(0xFF0E142D).copy(alpha = 0.85f),
+                            containerColor = FilterBg.copy(alpha = 0.85f),
                             labelColor = TextSecondary
                         ),
                         border = FilterChipDefaults.filterChipBorder(
@@ -447,6 +454,7 @@ fun AchievementsScreen(
                 }
             )
         }
+        }
     }
 }
 
@@ -457,6 +465,8 @@ fun HistoryScreen(
     showVerificationCard: Boolean = true
 ) {
     var selectedFilter by remember { mutableIntStateOf(0) }
+    var showPendingSheet by remember { mutableStateOf(false) }
+    var editingQuest by remember { mutableStateOf<QuestDeliveryTarget?>(null) }
     val filters = listOf("Все", "Квесты", "Достижения", "Экранное время", "Штрафы")
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val currentChild = familyState.children[familyState.selectedChildId]
@@ -475,6 +485,41 @@ fun HistoryScreen(
         }
     }
 
+    // Количество квестов, ожидающих проверки папой
+    val pendingCount = remember(currentChild) {
+        listOf(currentChild.closetStatus, currentChild.roomStatus, currentChild.diaryStatus)
+            .count { it == QuestStatus.PENDING } +
+            currentChild.bonusQuests.count { it.status == QuestStatus.PENDING } +
+            currentChild.customQuests.count { it.status == QuestStatus.PENDING }
+    }
+
+    // Полноэкранная отправка/пересъёмка квеста из BottomSheet
+    val activeEdit = editingQuest
+    if (activeEdit != null) {
+        QuestDeliveryScreen(
+            questName = activeEdit.displayName,
+            rewardText = activeEdit.rewardText,
+            onSendClick = { comment, photoUri ->
+                val photoUrlStr = photoUri?.toString()
+                when {
+                    activeEdit.key == "closet" || activeEdit.key == "room" || activeEdit.key == "diary" -> {
+                        viewModel.submitQuestForReview(currentChild.id, activeEdit.key, photoUrlStr)
+                    }
+                    activeEdit.key.startsWith("bonus:") -> {
+                        viewModel.submitBonusQuestByChild(currentChild.id, activeEdit.key.removePrefix("bonus:"), photoUri, comment)
+                    }
+                    activeEdit.key.startsWith("custom:") -> {
+                        viewModel.submitCustomQuestPhoto(currentChild.id, activeEdit.key.removePrefix("custom:"), photoUrlStr.orEmpty())
+                    }
+                }
+                editingQuest = null
+            },
+            onBackClick = { editingQuest = null },
+            modifier = modifier
+        )
+        return
+    }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -491,6 +536,7 @@ fun HistoryScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clickable { showPendingSheet = true }
                         .border(1.dp, GlassStroke, RoundedCornerShape(16.dp)),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = GlassBackground)
@@ -511,12 +557,22 @@ fun HistoryScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = "Ждет проверки папой",
-                                color = StatusYellow,
-                                fontSize = 14.sp
-                            )
+                            if (pendingCount > 0) {
+                                Text(
+                                    text = "$pendingCount ждёт проверки папой • Нажми, чтобы посмотреть",
+                                    color = StatusYellow,
+                                    fontSize = 14.sp
+                                )
+                            } else {
+                                Text(
+                                    text = "Нет заданий на проверке",
+                                    color = TextSecondary,
+                                    fontSize = 12.sp
+                                )
+                            }
                         }
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text("›", color = TextSecondary, fontSize = 20.sp)
                     }
                 }
             }
@@ -566,6 +622,173 @@ fun HistoryScreen(
                 amount = item.amount,
                 isIncome = item.isIncome
             )
+        }
+    }
+
+    if (showPendingSheet) {
+        PendingQuestsBottomSheet(
+            child = currentChild,
+            onDismiss = { showPendingSheet = false },
+            onEditQuest = { target ->
+                showPendingSheet = false
+                editingQuest = target
+            },
+            viewModel = viewModel
+        )
+    }
+}
+
+/** Элемент списка квестов на проверке внутри BottomSheet. */
+private data class PendingQuestItem(
+    val key: String,
+    val title: String,
+    val rewardText: String,
+    val photoUrl: String?,
+    val comment: String?
+)
+
+/** Собирает все квесты ребёнка в статусе PENDING из основных, бонусных и кастомных списков. */
+private fun collectPendingQuests(child: ChildProfileState): List<PendingQuestItem> {
+    val items = mutableListOf<PendingQuestItem>()
+
+    if (child.closetStatus == QuestStatus.PENDING) {
+        items += PendingQuestItem("closet", child.wardrobeTitle, "+${child.wardrobeReward} ₽", child.closetPhotoUrl, null)
+    }
+    if (child.roomStatus == QuestStatus.PENDING) {
+        items += PendingQuestItem("room", child.roomTitle, "+${child.roomReward} ₽", child.roomPhotoUrl, null)
+    }
+    if (child.diaryStatus == QuestStatus.PENDING) {
+        items += PendingQuestItem("diary", child.diaryTitle, "от +30 ₽ до ∞", child.diaryPhotoUrl, null)
+    }
+    child.bonusQuests.filter { it.status == QuestStatus.PENDING }.forEach { q ->
+        items += PendingQuestItem("bonus:${q.id}", q.title, "+${q.reward} ₽", q.photoUrl, q.comment.ifBlank { null })
+    }
+    child.customQuests.filter { it.isVisible && it.status == QuestStatus.PENDING }.forEach { q ->
+        items += PendingQuestItem("custom:${q.id}", q.title, "+${q.reward} ₽", q.photoUrl, q.description.ifBlank { null })
+    }
+    return items
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun PendingQuestsBottomSheet(
+    child: ChildProfileState,
+    onDismiss: () -> Unit,
+    onEditQuest: (QuestDeliveryTarget) -> Unit,
+    viewModel: MainViewModel
+) {
+    val pendingItems = remember(child) { collectPendingQuests(child) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = SpaceBgStart,
+        contentColor = TextPrimary
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = "⏳ Квесты на проверке",
+                color = TextPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Отправленные папе задания. Можно удалить или переснять.",
+                color = TextSecondary,
+                fontSize = 13.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (pendingItems.isEmpty()) {
+                Text(
+                    text = "Нет заданий на проверке",
+                    color = TextSecondary,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(vertical = 24.dp)
+                )
+            } else {
+                pendingItems.forEach { item ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = GlassBackground),
+                        border = BorderStroke(1.dp, GlassStroke)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Фото квеста
+                            if (!item.photoUrl.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = item.photoUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(RoundedCornerShape(10.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = item.title,
+                                    color = TextPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = item.rewardText,
+                                    color = NeonCyan,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                if (!item.comment.isNullOrBlank()) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = "💬 ${item.comment}",
+                                        color = TextSecondary,
+                                        fontSize = 12.sp,
+                                        maxLines = 2
+                                    )
+                                }
+                            }
+
+                            // Кнопка «Изменить» — открыть QuestDeliveryScreen для пересъёмки
+                            IconButton(
+                                onClick = {
+                                    onEditQuest(
+                                        QuestDeliveryTarget(
+                                            displayName = item.title,
+                                            rewardText = item.rewardText,
+                                            key = item.key
+                                        )
+                                    )
+                                }
+                            ) {
+                                Text("✏️", fontSize = 18.sp)
+                            }
+
+                            // Кнопка «Удалить» — отменить отправку на проверку
+                            IconButton(
+                                onClick = { viewModel.cancelPendingQuest(child.id, item.key) }
+                            ) {
+                                Text("🗑️", fontSize = 18.sp)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

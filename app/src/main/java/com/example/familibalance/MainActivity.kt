@@ -42,6 +42,7 @@ import com.example.familibalance.feature.child.MainChildScreen
 import com.example.familibalance.feature.child.TasksScreen
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.ui.screens.*
+import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.theme.*
 
 class MainActivity : ComponentActivity() {
@@ -141,6 +142,20 @@ private fun ChildSection(
         ChildTab(ChildHistoryRoute, "История", "📜")
     )
 
+    // Красная точка на «Достижениях», если есть награда, которую можно забрать
+    val hasClaimableAchievements = remember(child.achievements, child.fivesCount, child.wardrobeCount, child.roomCount, child.balance, child.streakDays) {
+        getAchievements(child).any { it.isReadyToClaim }
+    }
+
+    // Пульсирующий бейдж на «Заданиях», если есть квесты на проверке
+    val hasPendingQuests = remember(child) {
+        child.closetStatus == QuestStatus.PENDING ||
+            child.roomStatus == QuestStatus.PENDING ||
+            child.diaryStatus == QuestStatus.PENDING ||
+            child.bonusQuests.any { it.status == QuestStatus.PENDING } ||
+            child.customQuests.any { it.status == QuestStatus.PENDING }
+    }
+
     fun navigateToTab(route: Any) {
         childNavController.navigate(route) {
             popUpTo<ChildMainRoute> { saveState = true }
@@ -159,7 +174,7 @@ private fun ChildSection(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFF070B1E).copy(alpha = 0.55f))
+                .background(SpaceBgOverlay.copy(alpha = 0.55f))
         )
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -168,7 +183,7 @@ private fun ChildSection(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color(0xFF0B1026).copy(alpha = 0.85f))
+                        .background(TopBarBg.copy(alpha = 0.85f))
                         .statusBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -196,7 +211,7 @@ private fun ChildSection(
                         onClick = onSwitchProfile,
                         border = BorderStroke(1.dp, GlassStroke),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = Color(0xFF131B3A).copy(alpha = 0.8f),
+                            containerColor = CardBgDark.copy(alpha = 0.8f),
                             contentColor = TextPrimary
                         ),
                         shape = RoundedCornerShape(10.dp),
@@ -208,7 +223,7 @@ private fun ChildSection(
             },
             bottomBar = {
                 NavigationBar(
-                    containerColor = Color(0xFF0B1026).copy(alpha = 0.92f),
+                    containerColor = TopBarBg.copy(alpha = 0.92f),
                     tonalElevation = 0.dp
                 ) {
                     val items = tabs
@@ -216,7 +231,20 @@ private fun ChildSection(
                         NavigationBarItem(
                             selected = tab.route == selectedTabRoute,
                             onClick = { navigateToTab(tab.route) },
-                            icon = { Text(tab.icon, fontSize = 20.sp) },
+                            icon = {
+                                val showBadge = when (tab.route) {
+                                    ChildTasksRoute -> hasPendingQuests
+                                    ChildAchievementsRoute -> hasClaimableAchievements
+                                    else -> false
+                                }
+                                if (showBadge) {
+                                    BadgedBox(badge = { PulseBadge() }) {
+                                        Text(tab.icon, fontSize = 20.sp)
+                                    }
+                                } else {
+                                    Text(tab.icon, fontSize = 20.sp)
+                                }
+                            },
                             label = {
                                 Text(
                                     tab.title,

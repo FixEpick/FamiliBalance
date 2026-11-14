@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
+import com.example.familibalance.util.PhotoStorage
 import kotlinx.coroutines.launch
 
 fun MainViewModel.approveQuest(userId: String, questType: String, customReward: Int? = null) {
@@ -91,25 +92,99 @@ private fun MainViewModel.clearQuestPhotoIfNeeded(profile: ChildProfileState, qu
 /** Ребёнок отправляет фото квеста (шкаф/комната/дневник) на проверку папе. */
 fun MainViewModel.submitQuestForReview(userId: String, questType: String, photoUrl: String?) {
     val profile = familyRepository.getChild(userId) ?: return
+    val persistedPhotoUrl = PhotoStorage.persistIfNeeded(getApplication(), photoUrl)
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
             closetStatus = QuestStatus.PENDING,
             closetRejectReason = null,
-            closetPhotoUrl = photoUrl
+            closetPhotoUrl = persistedPhotoUrl
         )
         "room", "комната" -> profile.copy(
             roomStatus = QuestStatus.PENDING,
             roomRejectReason = null,
-            roomPhotoUrl = photoUrl
+            roomPhotoUrl = persistedPhotoUrl
         )
         "diary", "дневник", "итоги" -> profile.copy(
             diaryStatus = QuestStatus.PENDING,
             diaryRejectReason = null,
-            diaryPhotoUrl = photoUrl
+            diaryPhotoUrl = persistedPhotoUrl
         )
         else -> profile
     }
     updateChildProfile(updated)
+}
+
+/**
+ * Ребёнок отменяет отправку квеста на проверку (из BottomSheet в истории).
+ * questKey: "closet" | "room" | "diary" | "bonus:<id>" | "custom:<id>".
+ * Статус возвращается в AVAILABLE, фото и причина отклонения очищаются.
+ */
+fun MainViewModel.cancelPendingQuest(userId: String, questKey: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    val key = questKey.lowercase()
+
+    when {
+        key.startsWith("bonus:") -> {
+            val questId = key.removePrefix("bonus:")
+            val photoUrlToDelete = profile.bonusQuests.firstOrNull { it.id == questId }?.photoUrl
+            val updatedQuests = profile.bonusQuests.map { q ->
+                if (q.id == questId && q.status == QuestStatus.PENDING) {
+                    q.copy(status = QuestStatus.AVAILABLE, photoUrl = null, rejectReason = null)
+                } else q
+            }
+            if (updatedQuests != profile.bonusQuests) {
+                updateChildProfile(profile.copy(bonusQuests = updatedQuests))
+                if (!photoUrlToDelete.isNullOrBlank()) {
+                    viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
+                }
+            }
+        }
+        key.startsWith("custom:") -> {
+            val questId = key.removePrefix("custom:")
+            val photoUrlToDelete = profile.customQuests.firstOrNull { it.id == questId }?.photoUrl
+            val updatedQuests = profile.customQuests.map { q ->
+                if (q.id == questId && q.status == QuestStatus.PENDING) {
+                    q.copy(status = QuestStatus.AVAILABLE, photoUrl = null, rejectReason = null)
+                } else q
+            }
+            if (updatedQuests != profile.customQuests) {
+                updateChildProfile(profile.copy(customQuests = updatedQuests))
+                if (!photoUrlToDelete.isNullOrBlank()) {
+                    viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
+                }
+            }
+        }
+        else -> {
+            val photoUrlToDelete = when (key) {
+                "closet", "шкаф" -> profile.closetPhotoUrl.takeIf { profile.closetStatus == QuestStatus.PENDING }
+                "room", "комната" -> profile.roomPhotoUrl.takeIf { profile.roomStatus == QuestStatus.PENDING }
+                "diary", "дневник", "итоги" -> profile.diaryPhotoUrl.takeIf { profile.diaryStatus == QuestStatus.PENDING }
+                else -> null
+            }
+            val updated = when (key) {
+                "closet", "шкаф" -> profile.copy(
+                    closetStatus = QuestStatus.AVAILABLE,
+                    closetPhotoUrl = null,
+                    closetRejectReason = null
+                )
+                "room", "комната" -> profile.copy(
+                    roomStatus = QuestStatus.AVAILABLE,
+                    roomPhotoUrl = null,
+                    roomRejectReason = null
+                )
+                "diary", "дневник", "итоги" -> profile.copy(
+                    diaryStatus = QuestStatus.AVAILABLE,
+                    diaryPhotoUrl = null,
+                    diaryRejectReason = null
+                )
+                else -> profile
+            }
+            if (updated != profile) {
+                clearQuestPhotoIfNeeded(updated, key, photoUrlToDelete)
+                updateChildProfile(updated)
+            }
+        }
+    }
 }
 
 fun MainViewModel.claimQuestReward(userId: String, questType: String) {
@@ -178,12 +253,13 @@ fun MainViewModel.addBonusQuest(userId: String, title: String, reward: Int, desc
 
 fun MainViewModel.submitBonusQuestByChild(userId: String, questId: String, photoUri: Uri?, comment: String) {
     val profile = familyRepository.getChild(userId) ?: return
+    val persistedPhotoUrl = PhotoStorage.persistIfNeeded(getApplication(), photoUri?.toString())
     val updatedQuests = profile.bonusQuests.map { q ->
         if (q.id == questId) {
             q.copy(
                 status = QuestStatus.PENDING,
                 rejectReason = null,
-                photoUrl = photoUri?.toString() ?: q.photoUrl,
+                photoUrl = persistedPhotoUrl ?: q.photoUrl,
                 comment = comment
             )
         } else q

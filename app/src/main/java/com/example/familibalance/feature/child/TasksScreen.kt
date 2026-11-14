@@ -147,7 +147,13 @@ fun TasksScreen(
         activeCoinFlights = activeCoinFlights + flight
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Column(modifier = modifier.fillMaxSize()) {
+        // Закреплённый мини-баланс — не скроллится
+        MiniBalanceBar(balance = child.balance)
+
+        Box(modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -337,11 +343,12 @@ fun TasksScreen(
                 flight.onFinished()
             }
         )
+        }
     }
 }
 
 /** Цель доставки фото квеста: отображаемое имя, награда и стабильный ключ для идентификации. */
-private data class QuestDeliveryTarget(
+internal data class QuestDeliveryTarget(
     val displayName: String,
     val rewardText: String,
     val key: String
