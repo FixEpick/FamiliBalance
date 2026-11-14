@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.SettingsSessionManager
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
@@ -24,6 +26,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -31,7 +34,8 @@ import kotlinx.serialization.json.jsonPrimitive
 @Serializable
 data class FamilyProfileRow(
     val user_id: String,
-    val state_json: String
+    val state_json: String,
+    @SerialName("parent_user_id") val parentUserId: String? = null
 )
 
 object SupabaseManager {
@@ -56,6 +60,10 @@ object SupabaseManager {
                 ) {
                     httpEngine = OkHttp.create()
                     install(Postgrest)
+                    install(Auth) {
+                        // SharedPreferences для сохранения сессии (автовход)
+                        sessionManager = SettingsSessionManager()
+                    }
                     install(Realtime)
                     install(Storage)
                 }
