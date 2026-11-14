@@ -60,6 +60,54 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
     )
 }
 
+/**
+ * Применяет дневник по оценкам: каждая оценка — отдельная запись в истории.
+ * Положительные оценки (5, 4) начисляются сразу; штрафные (3, 2) проходят
+ * через [applyFine] — со скидкой за честное признание и сбросом стрика.
+ * Статус дневника сразу становится CLAIMED — награда уже применена.
+ */
+fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, count3: Int, count2: Int) {
+    val profile = familyRepository.getChild(childId) ?: return
+    val time = getCurrentTimeString()
+    val date = getCurrentDateString()
+
+    var balance = profile.balance
+    var netReward = 0
+    val entries = mutableListOf<HistoryData>()
+
+    fun addGrade(grade: Int, points: Int, count: Int) {
+        repeat(count.coerceAtLeast(0)) {
+            balance += points
+            netReward += points
+            entries += HistoryData(
+                title = "Оценка $grade",
+                time = time,
+                date = date,
+                amount = if (points >= 0) "+$points ₽" else "$points ₽",
+                isIncome = points >= 0,
+                category = "Дневник"
+            )
+        }
+    }
+
+    addGrade(5, 50, count5)
+    addGrade(4, 30, count4)
+
+    updateChildProfile(
+        profile.copy(
+            balance = balance,
+            diaryStatus = QuestStatus.CLAIMED,
+            diaryRejectReason = null,
+            diaryApprovedReward = netReward,
+            fivesCount = profile.fivesCount + count5.coerceAtLeast(0),
+            historyItems = entries + profile.historyItems
+        )
+    )
+
+    repeat(count3.coerceAtLeast(0)) { applyFine(childId, 20, "Оценка 3 (дневник)") }
+    repeat(count2.coerceAtLeast(0)) { applyFine(childId, 50, "Оценка 2 (дневник)") }
+}
+
 /** Админ одобряет дневник с рассчитанной наградой и числом пятёрок. */
 fun MainViewModel.adminApproveDiary(userId: String, calculatedReward: Int, fivesCount: Int) {
     val profile = familyRepository.getChild(userId) ?: return
@@ -235,15 +283,37 @@ fun MainViewModel.adminDeposit(userId: String, amount: Int, description: String)
     )
 }
 
-/** Админ списывает сумму с баланса (не ниже 0), сбрасывает стрик. */
+/**
+ * Штраф: если есть одобренное честное признание (APPROVED) — сумма делится
+ * пополам, статус становится CLAIMED и скидка больше не применяется повторно.
+ * Любой штраф обнуляет стрик. Обычные списания используйте [adminWithdraw].
+ */
+fun MainViewModel.applyFine(childId: String, amount: Int, reason: String) {
+    val profile = familyRepository.getChild(childId) ?: return
+    val discounted = profile.honestAdmissionStatus == QuestStatus.APPROVED
+    val finalAmount = if (discounted) amount / 2 else amount
+    val baseTitle = if (reason.isNotBlank()) "Штраф: ${reason.trim()}" else "Штраф от папы"
+    val title = if (discounted) "$baseTitle (Скидка 50% за честное признание)" else baseTitle
+    updateChildProfile(
+        profile.copy(
+            balance = (profile.balance - finalAmount).coerceAtLeast(0),
+            streakDays = 0,
+            lastStreakDate = "",
+            honestAdmissionStatus = if (discounted) QuestStatus.CLAIMED else profile.honestAdmissionStatus,
+            historyItems = listOf(
+                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "-$finalAmount ₽", false, "Штрафы")
+            ) + profile.historyItems
+        )
+    )
+}
+
+/** Админ списывает сумму с баланса (не ниже 0). Обычное списание — стрик не трогает. */
 fun MainViewModel.adminWithdraw(userId: String, amount: Int, description: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val title = if (description.isNotBlank()) "Списание: ${description.trim()}" else "Списание от папы"
     updateChildProfile(
         profile.copy(
             balance = (profile.balance - amount).coerceAtLeast(0),
-            streakDays = 0,
-            lastStreakDate = "",
             historyItems = listOf(
                 HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "-$amount ₽", false, "Штрафы")
             ) + profile.historyItems

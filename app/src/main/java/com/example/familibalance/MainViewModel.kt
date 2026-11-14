@@ -101,10 +101,18 @@ class MainViewModel(
         updateChildProfile(updated)
     }
 
-    /** Отправка честного признания на проверку папе. */
+    /** Отправка честного признания на проверку папе. Кулдаун — 1 раз в 7 дней. */
     fun submitHonestAdmission(childId: String) {
         val child = familyRepository.getChild(childId) ?: return
-        updateChildProfile(child.copy(honestAdmissionStatus = QuestStatus.PENDING))
+        val today = LocalDate.now()
+        val lastDate = runCatching { LocalDate.parse(child.lastHonestAdmissionDate) }.getOrNull()
+        if (lastDate != null && lastDate.isAfter(today.minusDays(7))) return
+        updateChildProfile(
+            child.copy(
+                honestAdmissionStatus = QuestStatus.PENDING,
+                lastHonestAdmissionDate = today.toString()
+            )
+        )
     }
 
     /** Сброс купленных минут экранного времени при смене дня. */
@@ -184,6 +192,19 @@ class MainViewModel(
 
             if (newQuests != updated.customQuests) {
                 updated = updated.copy(customQuests = newQuests)
+            }
+
+            // Затухание стрика: за каждый пропущенный день сгорает 1 огонёк.
+            // lastStreakDate очищается — стрик не горит, пока ребёнок не отметится.
+            if (updated.lastStreakDate.isNotBlank()) {
+                val lastStreak = runCatching { LocalDate.parse(updated.lastStreakDate) }.getOrNull()
+                if (lastStreak != null && lastStreak.isBefore(todayDate.minusDays(1))) {
+                    val missedDays = java.time.temporal.ChronoUnit.DAYS.between(lastStreak, todayDate).toInt()
+                    updated = updated.copy(
+                        streakDays = (updated.streakDays - missedDays).coerceAtLeast(0),
+                        lastStreakDate = ""
+                    )
+                }
             }
 
             if (updated != child) {

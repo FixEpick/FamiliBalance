@@ -63,6 +63,8 @@ import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.screens.*
 import com.example.familibalance.feature.child.components.*
 import com.example.familibalance.viewmodel.actions.*
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +81,13 @@ fun MainChildScreen(
     val balance = child.balance
     val boughtMinutesToday = child.boughtMinutesToday
     val honestAdmissionStatus = child.honestAdmissionStatus
+
+    // Кулдаун честного признания: 1 раз в 7 дней
+    val honestCooldownDaysLeft = remember(child.lastHonestAdmissionDate) {
+        val last = runCatching { LocalDate.parse(child.lastHonestAdmissionDate) }.getOrNull()
+        if (last == null) 0
+        else (7 - ChronoUnit.DAYS.between(last, LocalDate.now()).toInt()).coerceAtLeast(0)
+    }
 
     var showHonestCatScreen by remember { mutableStateOf(false) }
     var catAdmissionText by remember { mutableStateOf("") }
@@ -646,16 +655,38 @@ fun MainChildScreen(
                 Spacer(modifier = Modifier.height(4.dp))
                 when (honestAdmissionStatus) {
                     QuestStatus.AVAILABLE, QuestStatus.APPROVED -> {
-                        OutlinedButton(
-                            onClick = { showHonestCatScreen = true },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(50.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            border = BorderStroke(1.dp, NeonCyan),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
-                        ) {
-                            Text("🐱 Честное признание", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        if (honestCooldownDaysLeft > 0) {
+                            OutlinedButton(
+                                onClick = { },
+                                enabled = false,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.dp, GlassStroke),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    disabledContentColor = TextSecondary,
+                                    disabledContainerColor = GlassBackground
+                                )
+                            ) {
+                                Text(
+                                    "🐱 Честное признание • Доступно через $honestCooldownDaysLeft дн.",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = { showHonestCatScreen = true },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.dp, NeonCyan),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
+                            ) {
+                                Text("🐱 Честное признание", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            }
                         }
                         if (honestAdmissionStatus == QuestStatus.APPROVED) {
                             Spacer(modifier = Modifier.height(8.dp))
@@ -697,7 +728,28 @@ fun MainChildScreen(
                             Text("• Признание на проверке у папы", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
-                    QuestStatus.READY_TO_CLAIM, QuestStatus.CLAIMED -> {
+                    QuestStatus.CLAIMED -> {
+                        OutlinedButton(
+                            onClick = { },
+                            enabled = false,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, GlassStroke),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                disabledContentColor = TextSecondary,
+                                disabledContainerColor = GlassBackground
+                            )
+                        ) {
+                            Text(
+                                "✓ Скидка 50% уже применена",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                    QuestStatus.READY_TO_CLAIM -> {
                         OutlinedButton(
                             onClick = { },
                             enabled = false,

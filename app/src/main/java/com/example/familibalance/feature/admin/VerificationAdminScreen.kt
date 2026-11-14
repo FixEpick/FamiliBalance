@@ -222,8 +222,8 @@ fun VerificationAdminContent(
                 DiaryVerificationCard(
                     title = "📚 Итоги недели (Дневник)",
                     photoUrl = child.diaryPhotoUrl,
-                    onApprove = { calculatedReward, fivesCount ->
-                        viewModel.adminApproveDiary(child.id, calculatedReward, fivesCount)
+                    onApprove = { count5, count4, count3, count2 ->
+                        viewModel.applyDiaryGrades(child.id, count5, count4, count3, count2)
                     },
                     onReject = { reason ->
                         viewModel.adminRejectQuest(child.id, "diary", reason, "Итоги недели")
@@ -437,7 +437,7 @@ fun VerificationAdminContent(
                             onClick = {
                                 val amount = withdrawInput.toIntOrNull()
                                 if (amount != null && amount > 0) {
-                                    viewModel.adminWithdraw(child.id, amount, withdrawDesc)
+                                    viewModel.applyFine(child.id, amount, withdrawDesc)
                                     withdrawInput = ""
                                     withdrawDesc = ""
                                 }
@@ -672,7 +672,7 @@ fun QuestVerificationCard(
 fun DiaryVerificationCard(
     title: String,
     photoUrl: String?,
-    onApprove: (Int, Int) -> Unit,
+    onApprove: (Int, Int, Int, Int) -> Unit,
     onReject: (String) -> Unit
 ) {
     val context = LocalContext.current
@@ -861,7 +861,14 @@ fun DiaryVerificationCard(
                 horizontalArrangement = Arrangement.End
             ) {
                 Button(
-                    onClick = { onApprove(finalReward, gradeCounts[5] ?: 0) },
+                    onClick = {
+                        onApprove(
+                            gradeCounts[5] ?: 0,
+                            gradeCounts[4] ?: 0,
+                            gradeCounts[3] ?: 0,
+                            gradeCounts[2] ?: 0
+                        )
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)

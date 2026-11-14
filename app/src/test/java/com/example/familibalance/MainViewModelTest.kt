@@ -1,6 +1,7 @@
 package com.example.familibalance
 
 import com.example.familibalance.data.repository.FamilyRepository
+import com.example.familibalance.viewmodel.actions.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -127,5 +128,93 @@ class MainViewModelTest {
         assertEquals(QuestStatus.AVAILABLE, updated.roomStatus)
         assertEquals(QuestStatus.AVAILABLE, updated.customQuests.first().status)
         assertEquals(LocalDate.now().toString(), updated.customQuests.first().lastResetDate)
+    }
+
+    @Test
+    fun `checkResets decays streak by one flame per missed day`() {
+        val today = LocalDate.now()
+        // Последний чек-ин позавчера → сгорает 2 дня → 5 - 2 = 3
+        repository.children["user_1"] = createChild().copy(
+            streakDays = 5,
+            lastStreakDate = today.minusDays(2).toString()
+        )
+        // Стрик жив: чек-ин был вчера — серия продолжается
+        repository.children["user_2"] = createChild("user_2").copy(
+            streakDays = 3,
+            lastStreakDate = today.minusDays(1).toString()
+        )
+        // Длительный пропуск: стрик не уходит в минус
+        repository.children["user_3"] = createChild("user_3").copy(
+            streakDays = 2,
+            lastStreakDate = today.minusDays(10).toString()
+        )
+
+        viewModel.checkResets()
+
+        val decayed = repository.children["user_1"]!!
+        assertEquals(3, decayed.streakDays)
+        assertEquals("", decayed.lastStreakDate)
+
+        val alive = repository.children["user_2"]!!
+        assertEquals(3, alive.streakDays)
+        assertEquals(today.minusDays(1).toString(), alive.lastStreakDate)
+
+        val burnedOut = repository.children["user_3"]!!
+        assertEquals(0, burnedOut.streakDays)
+        assertEquals("", burnedOut.lastStreakDate)
+    }
+
+    @Test
+    fun `applyFine halves penalty when honest admission is APPROVED and consumes it`() {
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            streakDays = 4,
+            lastStreakDate = LocalDate.now().toString(),
+            honestAdmissionStatus = QuestStatus.APPROVED
+        )
+
+        viewModel.applyFine("user_1", amount = 40, reason = "Разбил вазу")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(80, updated.balance) // 40 / 2 = 20
+        assertEquals(QuestStatus.CLAIMED, updated.honestAdmissionStatus)
+        assertEquals(0, updated.streakDays)
+        assertEquals("", updated.lastStreakDate)
+        assertTrue(updated.historyItems.first().title.contains("Скидка 50%"))
+
+        // Повторный штраф — уже без скидки
+        viewModel.applyFine("user_1", amount = 40, reason = "Ещё раз")
+        assertEquals(40, repository.children["user_1"]!!.balance)
+    }
+
+    @Test
+    fun `applyFine charges full amount without approved admission`() {
+        repository.children["user_1"] = createChild().copy(balance = 100, streakDays = 4)
+
+        viewModel.applyFine("user_1", amount = 30, reason = "Штраф")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(70, updated.balance)
+        assertEquals(QuestStatus.AVAILABLE, updated.honestAdmissionStatus)
+        assertEquals(0, updated.streakDays)
+    }
+
+    @Test
+    fun `submitHonestAdmission respects 7 day cooldown`() {
+        val today = LocalDate.now()
+        repository.children["user_1"] = createChild().copy(
+            lastHonestAdmissionDate = today.minusDays(3).toString()
+        )
+
+        viewModel.submitHonestAdmission("user_1")
+        assertEquals(QuestStatus.AVAILABLE, repository.children["user_1"]!!.honestAdmissionStatus)
+
+        repository.children["user_1"] = repository.children["user_1"]!!.copy(
+            lastHonestAdmissionDate = today.minusDays(8).toString()
+        )
+        viewModel.submitHonestAdmission("user_1")
+        val updated = repository.children["user_1"]!!
+        assertEquals(QuestStatus.PENDING, updated.honestAdmissionStatus)
+        assertEquals(today.toString(), updated.lastHonestAdmissionDate)
     }
 }
