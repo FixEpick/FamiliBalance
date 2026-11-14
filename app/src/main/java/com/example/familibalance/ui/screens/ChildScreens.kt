@@ -184,6 +184,8 @@ private data class TariffData(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RulesBottomSheet(
+    wardrobeReward: Int,
+    roomReward: Int,
     onDismissRequest: () -> Unit
 ) {
     ModalBottomSheet(
@@ -246,7 +248,7 @@ fun RulesBottomSheet(
 
             RuleBlock(
                 title = "💰 Как заработать:",
-                text = "• Оценка «5» в дневнике: +50 ₽\n• Оценка «4» в дневнике: +30 ₽\n• Фото шкафа (идеальный порядок): +50 ₽\n• Фото комнаты (заправленная кровать и порядок): +50 ₽\n• Бонусы за Достижения: от 10 ₽ до 1000 ₽ за ранг «Гигачад Знаний» (+ Главный Секретный Подарок при выполнении всех достижений!)."
+                text = "• Оценка «5» в дневнике: +50 ₽\n• Оценка «4» в дневнике: +30 ₽\n• Фото шкафа (идеальный порядок): +$wardrobeReward ₽\n• Фото комнаты (заправленная кровать и порядок): +$roomReward ₽\n• Бонусы за Достижения: от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!"
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -259,8 +261,36 @@ fun RulesBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
+                title = "🔥 Дни без штрафов",
+                text = "Отмечайся каждый день и получай +50 ₽ каждые 7 дней без штрафов! Но любой штраф сжигает все накопленные дни — а за каждый пропущенный день гаснет один огонёк."
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RuleBlock(
+                title = "⏳ Экранное время",
+                text = "Лимит 90 минут в день. Тарифы: 30 мин = 50 ₽, 60 мин = 100 ₽, 90 мин = 150 ₽."
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RuleBlock(
+                title = "🐱 Честное признание",
+                text = "Скидка 50% на один штраф. Доступно раз в 7 дней — расскажи папе правду через кошечку!"
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RuleBlock(
+                title = "📓 Дневник",
+                text = "Сдаётся раз в неделю. Оценки: 5 (+50 ₽), 4 (+30 ₽), 3 (-20 ₽), 2 (-50 ₽)."
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RuleBlock(
                 title = "🏆 Достижения",
-                text = "Получай бонусы за новые ранги от 10 ₽ до 1000 ₽ за ранг Гигачад Знаний + Главный Секретный Подарок при выполнении всех достижений!"
+                text = "Получай бонусы за новые ранги от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!"
             )
 
             Spacer(modifier = Modifier.height(20.dp))

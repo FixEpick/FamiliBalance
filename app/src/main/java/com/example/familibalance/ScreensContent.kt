@@ -709,27 +709,6 @@ data class AchievementItemData(
     val isReadyToClaim: Boolean = false
 )
 
-fun getAchievements(completedQuests: Int, balance: Int, streakDays: Int): List<AchievementItemData> {
-    return listOf(
-        AchievementItemData("Случайный Крит", "Получить 5 пятерок", "Выбил критический урон по школьной программе", "+50 ₽", "${completedQuests.coerceAtMost(5)}/5", isLocked = false, isCompleted = completedQuests >= 5),
-        AchievementItemData("Первооткрыватель полок", "Уборка в шкафу 1 раз", "Нашел давно потерянный носок и навел порядок", "+10 ₽", "${completedQuests.coerceAtMost(1)}/1", isLocked = false, isCompleted = completedQuests >= 1),
-        AchievementItemData("Ранняя Пташка", "Задание до 9:00", "Выполни квест ранним утром", "+50 ₽", "${completedQuests.coerceAtMost(1)}/1", isLocked = false, isCompleted = completedQuests >= 1),
-        AchievementItemData("Босс Первой Парты", "Собрать 10 пятерок", "Твоя аура отличника отпугивает двойки. Списать у тебя — платный DLC", "+100 ₽", "${completedQuests.coerceAtMost(10)}/10", isLocked = false, isCompleted = completedQuests >= 10),
-        AchievementItemData("Укротитель носочного хаоса", "Уборка в шкафу 5 раз", "Вещи больше не вываливаются лавиной. Локация зачищена", "+50 ₽", "${completedQuests.coerceAtMost(5)}/5", isLocked = false, isCompleted = completedQuests >= 5),
-        AchievementItemData("Выживший в текстильной битве", "Уборка комнаты 1 раз", "Заправь кровать без скомканного одеяла", "+15 ₽", "${completedQuests.coerceAtMost(1)}/1", isLocked = false, isCompleted = completedQuests >= 1),
-        AchievementItemData("Душнила 80-го Уровня", "Набрать 20 пятерок", "Учитель вздыхает, когда ты поднимаешь руку", "+200 ₽", "${completedQuests.coerceAtMost(20)}/20", isLocked = completedQuests < 10, isCompleted = completedQuests >= 20),
-        AchievementItemData("Порядок в хаосе", "Чистый стол 5 дней", "Держи рабочий стол в идеальной чистоте", "+100 ₽", "${completedQuests.coerceAtMost(5)}/5", isLocked = completedQuests < 3, isCompleted = completedQuests >= 5),
-        AchievementItemData("Хранитель Времени", "Соблюдай лимит 5 дней", "Не превышай отведенное время в телефоне", "+200 ₽", "${streakDays.coerceAtMost(5)}/5", isLocked = streakDays < 2, isCompleted = streakDays >= 5),
-        AchievementItemData("Мастер Дисциплины", "Выполни 15 квестов", "Дисциплина — твое второе имя", "+250 ₽", "${completedQuests.coerceAtMost(15)}/15", isLocked = completedQuests < 8, isCompleted = completedQuests >= 15),
-        AchievementItemData("Гуру Экономии", "Накопи 1000 ₽", "Накопи финансовую подушку", "+500 ₽", "${balance.coerceAtMost(1000)}/1000", isLocked = balance < 500 && completedQuests < 10, isCompleted = balance >= 1000),
-        AchievementItemData("Повелитель Порядка", "Уборка шкафа и комнаты 10 раз", "Твой дом — зона абсолютной чистоты", "+350 ₽", "${completedQuests.coerceAtMost(10)}/10", isLocked = completedQuests < 5, isCompleted = completedQuests >= 10),
-        AchievementItemData("Несокрушимый Честняк", "5 честных признаний папе", "Папа гордится твоей абсолютной искренностью", "+400 ₽", "0/5", isLocked = true, isCompleted = false),
-        AchievementItemData("Стратег Бюджета", "Потрать 500 ₽ на экранное время", "Умело расходуешь ресурсы на тайм-менеджмент", "+300 ₽", "0/500", isLocked = true, isCompleted = false),
-        AchievementItemData("Легенда Баланса", "Выполни 100 квестов", "Стань истинным мастером баланса", "+750 ₽", "${completedQuests.coerceAtMost(100)}/100", isLocked = completedQuests < 20, isCompleted = completedQuests >= 100),
-        AchievementItemData("Гигачад Знаний", "Получить 50 пятерок", "Заверши все ветки квестов и забери Главный Секретный Подарок!", "+1000 ₽ + Главный Секретный Подарок", "${completedQuests.coerceAtMost(50)}/50", isLocked = completedQuests < 30, isCompleted = completedQuests >= 50)
-    )
-}
-
 /**
  * Проверяет, заблокирована ли ачивка: она разблокирована, только если все
  * предыдущие (по targetCount) видимые ачивки той же ветки уже получены.

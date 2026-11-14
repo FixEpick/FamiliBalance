@@ -416,6 +416,7 @@ fun VerificationAdminContent(
 
                     var withdrawInput by remember { mutableStateOf("") }
                     var withdrawDesc by remember { mutableStateOf("") }
+                    var isFine by remember { mutableStateOf(false) }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -443,9 +444,14 @@ fun VerificationAdminContent(
                             onClick = {
                                 val amount = withdrawInput.toIntOrNull()
                                 if (amount != null && amount > 0) {
-                                    viewModel.applyFine(child.id, amount, withdrawDesc)
+                                    if (isFine) {
+                                        viewModel.applyFine(child.id, amount, withdrawDesc)
+                                    } else {
+                                        viewModel.adminWithdraw(child.id, amount, withdrawDesc)
+                                    }
                                     withdrawInput = ""
                                     withdrawDesc = ""
+                                    isFine = false
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),
@@ -454,6 +460,27 @@ fun VerificationAdminContent(
                         ) {
                             Text("- Списать", fontWeight = FontWeight.Bold)
                         }
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Switch(
+                            checked = isFine,
+                            onCheckedChange = { isFine = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = PenaltyRed,
+                                checkedTrackColor = PenaltyRed.copy(alpha = 0.4f)
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Это штраф (сбросит стрик и применит скидку)",
+                            color = TextSecondary,
+                            fontSize = 12.sp
+                        )
                     }
                     OutlinedTextField(
                         value = withdrawDesc,

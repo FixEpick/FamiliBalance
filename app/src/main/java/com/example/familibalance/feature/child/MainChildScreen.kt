@@ -126,6 +126,8 @@ fun MainChildScreen(
 
     if (showRulesSheet) {
         RulesBottomSheet(
+            wardrobeReward = child.wardrobeReward,
+            roomReward = child.roomReward,
             onDismissRequest = { showRulesSheet = false }
         )
     }
