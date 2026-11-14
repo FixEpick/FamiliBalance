@@ -183,10 +183,12 @@ object SupabaseManager {
      * Изоляция данных: авторизованный родитель видит только свои профили.
      * Правило: parent_user_id == auth.uid(), либо (пока нет RLS) parentUserId пуст,
      * но parentEmail внутри state_json совпадает с email текущего пользователя.
-     * Гость (uid == null) видит всё — как раньше.
+     * Гость без сессии (uid == null) не видит ничего.
      */
     private fun isRowVisibleToUser(row: FamilyProfileRow, uid: String?, email: String?): Boolean {
-        if (uid == null) return true
+        // Без сессии (гость) чужие строки не показываем — строгая клиентская фильтрация.
+        // Анонимный пользователь Supabase имеет uid, поэтому собственный pending-профиль виден.
+        if (uid == null) return false
         // Собственный профиль виден всегда (в т.ч. анонимному ребёнку)
         if (row.user_id == uid) return true
         if (row.parentUserId == uid) return true

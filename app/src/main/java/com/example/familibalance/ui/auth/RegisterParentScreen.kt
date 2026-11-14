@@ -39,17 +39,20 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.familibalance.ChildProfileState
-import com.example.familibalance.FamilyProfileRow
 import com.example.familibalance.MainViewModel
-import com.example.familibalance.SupabaseManager
 import com.example.familibalance.ui.components.CyberBackground
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.currentStateAsState
 import com.example.familibalance.viewmodel.AuthEvent
 import com.example.familibalance.viewmodel.AuthViewModel
-import io.github.jan.supabase.postgrest.from
-import kotlinx.coroutines.delay
+import com.example.familibalance.viewmodel.PendingRequestsViewModel
+import com.example.familibalance.viewmodel.PendingState
 
 private val CyberTextPrimary = Color(0xFFE2E8F0)
 private val CyberTextSecondary = Color(0xFF94A3B8)
@@ -487,28 +490,22 @@ private fun PendingRequestScreen(
     mainViewModel: MainViewModel,
     onApproved: () -> Unit
 ) {
-    LaunchedEffect(child.id) {
-        while (true) {
-            val row = runCatching {
-                val supabase = SupabaseManager.client ?: return@runCatching null
-                supabase.from("family_profiles")
-                    .select()
-                    .decodeList<FamilyProfileRow>()
-                    .firstOrNull { it.user_id == child.id }
-            }.getOrNull()
+    // MVI: вся логика polling/backoff — в PendingRequestsViewModel.
+    // UI только транслирует lifecycle и реагирует на State.
+    val pendingVm: PendingRequestsViewModel = viewModel { PendingRequestsViewModel(mainViewModel) }
+    val pendingState by pendingVm.state.collectAsStateWithLifecycle()
 
-            if (row?.status == "active") {
-                mainViewModel.updateChildProfile(
-                    child.copy(
-                        status = "active",
-                        parentUserId = row.parentUserId ?: child.parentUserId
-                    )
-                )
-                onApproved()
-                break
-            }
-            delay(5000)
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
+    LaunchedEffect(lifecycleState) {
+        if (lifecycleState.isAtLeast(Lifecycle.State.RESUMED)) {
+            pendingVm.onResume(child)
+        } else {
+            pendingVm.onPause()
         }
+    }
+    LaunchedEffect(pendingState) {
+        if (pendingState is PendingState.Approved) onApproved()
     }
 
     Column(

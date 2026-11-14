@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.ChildProfileState
+import com.example.familibalance.data.PinHasher
 import com.example.familibalance.ui.components.CyberBackground
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
@@ -80,7 +81,7 @@ fun PlayerLoginScreen(
 
     fun checkPin() {
         val profile = selectedProfile ?: return
-        if (pin == profile.pinCode) {
+        if (PinHasher.matches(pin, profile.pinCode)) {
             onLoginSuccess(profile.id)
         } else {
             hasError = true
@@ -296,7 +297,7 @@ fun PlayerLoginScreen(
                         listOf("1", "2", "3"),
                         listOf("4", "5", "6"),
                         listOf("7", "8", "9"),
-                        listOf("⚡", "0", "⌫")
+                        listOf("00", "0", "⌫")
                     )
                     keys.forEach { rowKeys ->
                         Row(
@@ -304,7 +305,7 @@ fun PlayerLoginScreen(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             rowKeys.forEach { key ->
-                                val isSpecial = key == "⚡" || key == "⌫"
+                                val isSpecial = key == "⌫"
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
@@ -318,13 +319,9 @@ fun PlayerLoginScreen(
                                                     pin = pin.dropLast(1)
                                                     hasError = false
                                                 }
-                                                "⚡" -> {
-                                                    // Подставляем реальный PIN выбранного профиля (для тестирования)
-                                                    pin = selectedProfile?.pinCode?.take(4) ?: ""
-                                                }
                                                 else -> {
                                                     if (pin.length < 4) {
-                                                        pin += key
+                                                        pin = (pin + key).take(4)
                                                         hasError = false
                                                     }
                                                 }

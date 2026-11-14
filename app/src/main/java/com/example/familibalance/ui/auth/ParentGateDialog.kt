@@ -160,8 +160,7 @@ fun ParentGateDialog(
     val shakeScope = rememberCoroutineScope()
 
     fun checkPin() {
-        val expected = ParentPinManager.getPin(context)
-        if (pin == expected) {
+        if (ParentPinManager.verifyPin(context, pin)) {
             onSuccess()
         } else {
             hasError = true

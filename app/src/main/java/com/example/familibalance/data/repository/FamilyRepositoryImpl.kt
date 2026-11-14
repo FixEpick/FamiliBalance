@@ -7,6 +7,7 @@ import com.example.familibalance.ChildProfileState
 import com.example.familibalance.SupabaseManager
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Реализация [FamilyRepository] поверх текущего Storage Layer:
@@ -15,6 +16,9 @@ import kotlinx.coroutines.flow.StateFlow
 class FamilyRepositoryImpl(context: Context) : FamilyRepository {
 
     private val appContext = context.applicationContext
+
+    /** Защита от рекурсивного шторма: повторный вход в retryDirtyChildren игнорируется. */
+    private val isSyncing = AtomicBoolean(false)
 
     override val isSynced: StateFlow<Boolean> = SyncStatus.isSynced
 
@@ -91,7 +95,9 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
         SupabaseManager.pushChildProfile(appContext, child) { success ->
             if (success) {
                 SyncStatus.markClean(child.id)
-                retryDirtyChildren()
+                // НЕ вызываем retryDirtyChildren() здесь: иначе каждый успешный push
+                // запускает новый каскадный обход всех dirty-профилей (O(n²) запросов).
+                // Остальные dirty-профили подхватит текущий/следующий проход retryDirtyChildren.
             }
             // При неудаче профиль остаётся dirty — повторим при следующем push.
         }
@@ -106,8 +112,17 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
 
     /** Повторяет отправку всех профилей, у которых есть неподтверждённые изменения. */
     private fun retryDirtyChildren() {
-        SyncStatus.dirtyChildIdsSnapshot().forEach { id ->
-            AppSharedState.children[id]?.let { pushChildProfile(it) }
+        // Один проход за раз: если синхронизация уже идёт (старт приложения +
+        // NetworkMonitor + loadState могут вызвать её одновременно) — пропускаем.
+        if (!isSyncing.compareAndSet(false, true)) return
+        try {
+            // Снимок dirty-списка: новые dirty, появившиеся во время прохода,
+            // будут обработаны следующим триггером (network/push/forceSync).
+            SyncStatus.dirtyChildIdsSnapshot().forEach { id ->
+                AppSharedState.children[id]?.let { pushChildProfile(it) }
+            }
+        } finally {
+            isSyncing.set(false)
         }
     }
 

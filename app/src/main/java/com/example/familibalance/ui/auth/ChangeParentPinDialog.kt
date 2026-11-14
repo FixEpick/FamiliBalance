@@ -81,7 +81,7 @@ fun ChangeParentPinDialog(
         if (pin.length != 4) return@LaunchedEffect
         when (step) {
             1 -> {
-                if (pin == ParentPinManager.getPin(context)) {
+                if (ParentPinManager.verifyPin(context, pin)) {
                     pin = ""
                     hasError = false
                     statusMessage = null

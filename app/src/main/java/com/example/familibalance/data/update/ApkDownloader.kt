@@ -1,12 +1,19 @@
 package com.example.familibalance.data.update
 
 import android.content.Context
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
+import java.security.MessageDigest
 import java.util.concurrent.TimeUnit
+
+sealed interface DownloadResult {
+    data class Success(val file: File) : DownloadResult
+    data class Error(val message: String) : DownloadResult
+}
 
 /** Скачивает APK в cacheDir/updates/ с отчётом о прогрессе (0..100). */
 object ApkDownloader {
@@ -20,16 +27,19 @@ object ApkDownloader {
         context: Context,
         url: String,
         fileName: String,
+        expectedSha256: String? = null,
         onProgress: (Int) -> Unit
-    ): File? = withContext(Dispatchers.IO) {
+    ): DownloadResult = withContext(Dispatchers.IO) {
         try {
             val dir = File(context.cacheDir, "updates").apply { mkdirs() }
             val target = File(dir, fileName)
 
             val request = Request.Builder().url(url).build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@withContext null
-                val body = response.body ?: return@withContext null
+                if (!response.isSuccessful) {
+                    return@withContext DownloadResult.Error("Сервер вернул ошибку ${response.code}")
+                }
+                val body = response.body
                 val total = body.contentLength()
 
                 body.byteStream().use { input ->
@@ -47,10 +57,39 @@ object ApkDownloader {
                     }
                 }
             }
-            target.takeIf { it.exists() && it.length() > 0 }
+            if (!target.exists() || target.length() == 0L) {
+                target.delete()
+                return@withContext DownloadResult.Error("Скачанный файл пуст")
+            }
+
+            // Проверка целостности: если релиз публикует SHA-256 — сверяем.
+            if (!expectedSha256.isNullOrBlank()) {
+                val actual = sha256Hex(target)
+                if (!actual.equals(expectedSha256.trim(), ignoreCase = true)) {
+                    target.delete()
+                    android.util.Log.w("ApkDownloader", "SHA-256 mismatch: expected=$expectedSha256 actual=$actual")
+                    return@withContext DownloadResult.Error("Файл поврежден или подменен")
+                }
+            }
+
+            DownloadResult.Success(target)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             android.util.Log.w("ApkDownloader", "Download failed: ${e.message}")
-            null
+            DownloadResult.Error("Не удалось скачать обновление")
         }
+    }
+
+    private fun sha256Hex(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(64 * 1024)
+            var read: Int
+            while (input.read(buffer).also { read = it } != -1) {
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 }

@@ -63,7 +63,22 @@ fun VerificationAdminContent(
     val context = LocalContext.current
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+    if (child == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Нет данных для проверки",
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+        return
+    }
     val hasPending = child.closetStatus == QuestStatus.PENDING ||
         child.roomStatus == QuestStatus.PENDING ||
         child.diaryStatus == QuestStatus.PENDING ||
@@ -773,7 +788,7 @@ fun DiaryVerificationCard(
         }
     }
 
-    val total = (gradeCounts[5]!! * 50) + (gradeCounts[4]!! * 30) - (gradeCounts[3]!! * 20) - (gradeCounts[2]!! * 50)
+    val total = (gradeCounts[5] ?: 0) * 50 + (gradeCounts[4] ?: 0) * 30 - (gradeCounts[3] ?: 0) * 20 - (gradeCounts[2] ?: 0) * 50
     val finalReward = maxOf(0, total)
 
     Card(

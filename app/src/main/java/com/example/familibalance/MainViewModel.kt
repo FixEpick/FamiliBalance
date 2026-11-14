@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.data.auth.AuthRepository
+import com.example.familibalance.data.PinHasher
 import io.github.jan.supabase.auth.auth
 import com.example.familibalance.data.repository.FamilyRepository
 import com.example.familibalance.data.repository.FamilyRepositoryImpl
@@ -190,7 +191,7 @@ class MainViewModel(
                 id = childId,
                 name = nickname.ifBlank { "Игрок" },
                 avatar = avatar.ifBlank { "🧒" },
-                pinCode = pin.ifBlank { "0000" },
+                pinCode = PinHasher.hash(pin.ifBlank { "0000" }),
                 parentUserId = if (isParentSession) sessionUid else "",
                 parentEmail = email,
                 status = status
@@ -210,7 +211,7 @@ class MainViewModel(
     /** Смена ПИН-кода ребёнка из админки: copy() + updateChildProfile (push в Supabase). */
     fun updateChildPin(childId: String, newPin: String) {
         val child = familyRepository.getChild(childId) ?: return
-        updateChildProfile(child.copy(pinCode = newPin))
+        updateChildProfile(child.copy(pinCode = PinHasher.hash(newPin)))
     }
 
     /** Очистка состояния при выходе из аккаунта: профили и выбор не должны «протекать» другой семье. */

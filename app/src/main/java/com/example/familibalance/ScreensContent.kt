@@ -8,6 +8,7 @@ import kotlinx.serialization.Transient
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.Calendar
+import java.util.concurrent.ConcurrentHashMap
 
 @Serializable
 enum class QuestStatus {
@@ -527,7 +528,9 @@ object AppSharedState {
 
     // Профили загружаются из локального хранилища / Supabase.
     // Дефолтных «Пользователь 1/2» больше нет — первый запуск показывает пустой список.
-    val children = mutableMapOf<String, ChildProfileState>()
+    // ConcurrentHashMap: children мутируется из Realtime-потока (IO) и Main —
+    // обычный mutableMapOf давал ConcurrentModificationException.
+    val children = ConcurrentHashMap<String, ChildProfileState>()
 
     val currentChild: ChildProfileState
         get() = children[selectedChildId]

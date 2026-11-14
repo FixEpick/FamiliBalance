@@ -46,14 +46,19 @@ android {
         applicationId = "com.example.familibalance"
         minSdk = 24
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.2.0"
+        versionCode = 6
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         buildConfigField("String", "SUPABASE_URL", "\"$supabaseUrl\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
         buildConfigField("String", "GITHUB_REPO", "\"$githubRepo\"")
+
+        // Только 64-bit ARM + 64-bit x86 (эмуляторы): отсекаем 32-bit x86 (~11 МБ .so).
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
     }
 
     signingConfigs {
@@ -78,6 +83,11 @@ android {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {
@@ -115,7 +125,9 @@ dependencies {
     implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
-    implementation("com.google.mlkit:text-recognition:16.0.1")
+    // Unbundled ML Kit: модель OCR скачивается через Play Services — APK на ~35 МБ легче.
+    // API идентичен bundled-варианту (com.google.mlkit.vision.text.*), импорты не меняются.
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     implementation("androidx.biometric:biometric:1.1.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 

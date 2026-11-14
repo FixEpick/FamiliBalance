@@ -51,6 +51,12 @@ import com.example.familibalance.ui.auth.ChangeParentPinDialog
 import com.example.familibalance.ui.auth.SetChildPinDialog
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.currentStateAsState
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.familibalance.viewmodel.AdminEvent
+import com.example.familibalance.viewmodel.AdminViewModel
+import com.example.familibalance.viewmodel.PendingRequestUi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
@@ -409,71 +415,31 @@ fun AdminSettingsScreen(
     var pinTarget by remember { mutableStateOf<String?>(null) } // "parent" или childId
     var pendingResetAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-    // --- Запросы на добавление детей (status = "pending") ---
-    var pendingRequests by remember { mutableStateOf<List<FamilyProfileRow>>(emptyList()) }
-    val scope = rememberCoroutineScope()
+    // --- Запросы на добавление детей (status = "pending") — MVI через AdminViewModel ---
+    val adminVm: AdminViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
+        AdminViewModel(viewModel)
+    }
+    val pendingRequests by adminVm.pendingRequests.collectAsStateWithLifecycle()
 
-    suspend fun loadPendingRequests() {
-        val supabase = SupabaseManager.client ?: return
-        val me = runCatching { supabase.auth.currentUserOrNull() }.getOrNull() ?: return
-        val myEmail = me.email ?: return
-        val rows = runCatching {
-            supabase.from("family_profiles").select().decodeList<FamilyProfileRow>()
-        }.getOrNull() ?: return
-        pendingRequests = rows.filter {
-            it.status == "pending" && it.parentEmail.equals(myEmail, ignoreCase = true)
+    // Polling только пока экран настроек видим (RESUMED).
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateAsState()
+    LaunchedEffect(lifecycleState) {
+        if (lifecycleState.isAtLeast(Lifecycle.State.RESUMED)) {
+            adminVm.onResume()
+        } else {
+            adminVm.onPause()
         }
     }
 
+    // Одноразовые события (Toast) из ViewModel
     LaunchedEffect(Unit) {
-        loadPendingRequests()
-        // Периодическое обновление списка запросов
-        while (true) {
-            delay(10_000)
-            loadPendingRequests()
-        }
-    }
-
-    fun approveRequest(row: FamilyProfileRow) {
-        val supabase = SupabaseManager.client ?: return
-        scope.launch {
-            val me = runCatching { supabase.auth.currentUserOrNull() }.getOrNull() ?: return@launch
-            runCatching {
-                supabase.from("family_profiles").update({
-                    set("parent_user_id", me.id)
-                    set("parent_email", me.email)
-                    set("status", "active")
-                }) {
-                    filter { eq("user_id", row.user_id) }
-                }
+        adminVm.events.collect { event ->
+            when (event) {
+                is AdminEvent.ShowMessage ->
+                    android.widget.Toast.makeText(context, event.text, android.widget.Toast.LENGTH_SHORT).show()
             }
-            // Если профиль уже есть локально — сразу помечаем активным и привязываем
-            AppSharedState.children[row.user_id]?.let { child ->
-                viewModel.updateChildProfile(
-                    child.copy(parentUserId = me.id, status = "active")
-                )
-            }
-            pendingRequests = pendingRequests.filterNot { it.user_id == row.user_id }
-            android.widget.Toast.makeText(
-                context,
-                "Запрос одобрен — ребёнок добавлен в семью",
-                android.widget.Toast.LENGTH_SHORT
-            ).show()
         }
-    }
-
-    fun requestChildName(row: FamilyProfileRow): String {
-        return runCatching {
-            Json.parseToJsonElement(row.state_json)
-                .jsonObject["name"]?.jsonPrimitive?.contentOrNull
-        }.getOrNull() ?: "Игрок"
-    }
-
-    fun requestChildAvatar(row: FamilyProfileRow): String {
-        return runCatching {
-            Json.parseToJsonElement(row.state_json)
-                .jsonObject["avatar"]?.jsonPrimitive?.contentOrNull
-        }.getOrNull() ?: "🧒"
     }
 
     fun requestReset(action: () -> Unit) {
@@ -554,7 +520,7 @@ if (pendingRequests.isEmpty()) {
         Spacer(modifier = Modifier.height(12.dp))
     }
 } else {
-    items(pendingRequests, key = { it.user_id }) { row ->
+    items(pendingRequests, key = { it.id }) { row ->
         Surface(
             shape = RoundedCornerShape(14.dp),
             color = GlassBackground,
@@ -565,23 +531,23 @@ if (pendingRequests.isEmpty()) {
                 modifier = Modifier.padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(requestChildAvatar(row), fontSize = 28.sp)
+                Text(row.avatar, fontSize = 28.sp)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "${requestChildName(row)} хочет присоединиться к семье",
+                        text = "${row.name} хочет присоединиться к семье",
                         color = TextPrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Email: ${row.parentEmail}",
+                        text = "Email: ${row.email}",
                         color = TextSecondary,
                         fontSize = 11.sp
                     )
                 }
                 Button(
-                    onClick = { approveRequest(row) },
+                    onClick = { adminVm.approveRequest(row.id) },
                     colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
                     shape = RoundedCornerShape(10.dp)
                 ) {

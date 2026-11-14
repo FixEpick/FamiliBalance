@@ -1,5 +1,8 @@
 package com.example.familibalance.ui.update
 
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -89,6 +92,29 @@ fun UpdateDialog(
                 onDismiss()
             }
         }
+
+        is UpdateUiState.NeedInstallPermission -> AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text("Нужно разрешение", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "Чтобы установить обновление, разрешите приложению установку из неизвестных источников. Скачивание начнётся автоматически после возвращения в приложение.",
+                    fontSize = 13.sp
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    val intent = Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:${context.packageName}")
+                    )
+                    context.startActivity(intent)
+                }) { Text("Открыть настройки") }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = onDismiss) { Text("Отмена") }
+            }
+        )
 
         is UpdateUiState.NeedPermission -> AlertDialog(
             onDismissRequest = onDismiss,

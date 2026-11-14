@@ -47,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import android.graphics.drawable.BitmapDrawable
 import coil3.ImageLoader
@@ -115,6 +116,15 @@ fun AdminScreen(
     var isRefreshing by remember { mutableStateOf(false) }
     LaunchedEffect(isSynced) {
         if (isSynced) isRefreshing = false
+    }
+    // Страховка от «вечного» индикатора: forceSync() асинхронный,
+    // а isSynced (StateFlow) не эмитит, если значение не изменилось
+    // (всё уже синхронизировано или офлайн). Сбрасываем по таймауту.
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            delay(15_000)
+            isRefreshing = false
+        }
     }
 
     val navBackStackEntry by adminNavController.currentBackStackEntryAsState()
@@ -306,6 +316,10 @@ fun AdminScreen(
                     onRefresh = {
                         isRefreshing = true
                         viewModel.forceSync()
+                        // Если после forceSync нечего синхронизировать,
+                        // isSynced не изменится и LaunchedEffect не сработает —
+                        // сбрасываем индикатор сразу.
+                        if (viewModel.isSynced.value) isRefreshing = false
                     },
                     modifier = Modifier.fillMaxSize()
                 ) {

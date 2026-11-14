@@ -1,6 +1,12 @@
 package com.example.familibalance
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -73,6 +79,49 @@ class MainActivity : FragmentActivity() {
         setContent {
             val updateState by updateViewModel.uiState.collectAsStateWithLifecycle()
             LaunchedEffect(Unit) { updateViewModel.checkOnLaunch() }
+
+            // Запрос POST_NOTIFICATIONS (Android 13+) при первом запуске —
+            // уведомления нужны для квестов и статуса скачивания обновления.
+            val context = androidx.compose.ui.platform.LocalContext.current
+            var showNotifRationale by remember { mutableStateOf(false) }
+            val notifPermissionLauncher = rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { /* результат не критичен — уведомления просто не покажутся */ }
+            val notifPrefs = remember {
+                context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+            }
+            LaunchedEffect(Unit) {
+                val alreadyAsked = notifPrefs.getBoolean("notif_rationale_shown", false)
+                if (!alreadyAsked &&
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED
+                ) {
+                    notifPrefs.edit().putBoolean("notif_rationale_shown", true).apply()
+                    showNotifRationale = true
+                }
+            }
+            if (showNotifRationale) {
+                AlertDialog(
+                    onDismissRequest = { showNotifRationale = false },
+                    title = { Text("Уведомления", fontWeight = FontWeight.Bold) },
+                    text = {
+                        Text(
+                            "Разрешите уведомления, чтобы получать напоминания о квестах и статус скачивания обновлений.",
+                            fontSize = 13.sp
+                        )
+                    },
+                    confirmButton = {
+                        Button(onClick = {
+                            showNotifRationale = false
+                            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }) { Text("Разрешить") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showNotifRationale = false }) { Text("Не сейчас") }
+                    }
+                )
+            }
             val familyState by viewModel.familyState.collectAsStateWithLifecycle()
             val sessionStatus by authViewModel.sessionStatus.collectAsStateWithLifecycle()
             val themeChild = familyState.children[familyState.selectedChildId]
@@ -87,6 +136,8 @@ class MainActivity : FragmentActivity() {
                     val observer = LifecycleEventObserver { _, event ->
                         if (event == Lifecycle.Event.ON_RESUME) {
                             viewModel.forceSync()
+                            // Если ждали разрешения на установку — продолжаем обновление
+                            updateViewModel.onResume()
                         }
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)
@@ -233,6 +284,15 @@ private fun ChildSection(
     LaunchedEffect(isSynced) {
         if (isSynced) isRefreshing = false
     }
+    // Страховка от «вечного» индикатора: forceSync() асинхронный,
+    // а isSynced (StateFlow) не эмитит, если значение не изменилось
+    // (всё уже синхронизировано или офлайн). Сбрасываем по таймауту.
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            kotlinx.coroutines.delay(15_000)
+            isRefreshing = false
+        }
+    }
 
     val navBackStackEntry by childNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -369,6 +429,10 @@ private fun ChildSection(
                     onRefresh = {
                         isRefreshing = true
                         viewModel.forceSync()
+                        // Если после forceSync нечего синхронизировать,
+                        // isSynced не изменится и LaunchedEffect не сработает —
+                        // сбрасываем индикатор сразу.
+                        if (viewModel.isSynced.value) isRefreshing = false
                     },
                     modifier = Modifier.fillMaxSize()
                 ) {

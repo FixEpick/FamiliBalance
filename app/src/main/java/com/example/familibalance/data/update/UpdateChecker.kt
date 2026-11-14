@@ -2,6 +2,7 @@ package com.example.familibalance.data.update
 
 import android.util.Log
 import com.example.familibalance.BuildConfig
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -12,7 +13,9 @@ import java.util.concurrent.TimeUnit
 data class ReleaseInfo(
     val tagName: String,
     val body: String,
-    val apkUrl: String?
+    val apkUrl: String?,
+    /** Ожидаемый SHA-256 APK (парсится из тела релиза). null — проверка пропускается. */
+    val sha256: String? = null
 )
 
 sealed interface UpdateResult {
@@ -63,10 +66,18 @@ object UpdateChecker {
                     UpdateResult.NoUpdate
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "Ошибка проверки обновлений: ${e.message}")
             UpdateResult.Error(e.message ?: "network error")
         }
+    }
+
+    /** Ищет в теле релиза строку вида "SHA256: <64 hex>" / "sha256=<hex>". */
+    private fun parseSha256(body: String): String? {
+        val regex = Regex("(?i)sha-?256\\s*[:=]?\\s*([a-fA-F0-9]{64})")
+        return regex.find(body)?.groupValues?.get(1)?.lowercase()
     }
 
     private fun parseRelease(json: String): ReleaseInfo? {
@@ -87,7 +98,7 @@ object UpdateChecker {
                     }
                 }
             }
-            ReleaseInfo(tagName = tag, body = body, apkUrl = apkUrl)
+            ReleaseInfo(tagName = tag, body = body, apkUrl = apkUrl, sha256 = parseSha256(body))
         } catch (e: Exception) {
             Log.w(TAG, "JSON parse error: ${e.message}")
             null
