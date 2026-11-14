@@ -26,6 +26,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,12 +39,17 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.ChildProfileState
+import com.example.familibalance.FamilyProfileRow
 import com.example.familibalance.MainViewModel
+import com.example.familibalance.SupabaseManager
 import com.example.familibalance.ui.components.CyberBackground
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
 import com.example.familibalance.viewmodel.AuthEvent
 import com.example.familibalance.viewmodel.AuthViewModel
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.delay
 
 private val CyberTextPrimary = Color(0xFFE2E8F0)
 private val CyberTextSecondary = Color(0xFF94A3B8)
@@ -51,12 +59,20 @@ private val CyberSlateBorder = Color(0xFF334155)
 private val CyberLime = Color(0xFFA3E635)
 private val CyberRed = Color(0xFFEF4444)
 
-private val playerAvatars = listOf("🦊", "🧑‍🚀", "🤖", "🐉", "🥷", "🛸")
+private val playerAvatars = listOf(
+    "🦄", "🧚‍♀️", "🦸‍♀️", "🧜‍♀️", "🐱", "🐰",
+    "🦖", "🦸‍♂️", "🐉", "🐺", "🚀", "🤖",
+    "🦊", "👾", "🐼", "👽"
+)
 private val interestChips = listOf(
     "💻 Кодинг" to "coding",
     "🔬 Наука" to "science",
-    "🧠 Логика" to "logic",
-    "🎨 3D и Дизайн" to "design"
+    "🎮 Игры" to "games",
+    "🎨 Рисование" to "drawing",
+    "⚽ Спорт" to "sport",
+    "📚 Книги" to "books",
+    "🚀 Космос" to "space",
+    "🐶 Животные" to "animals"
 )
 
 private val CyberFieldColors
@@ -84,6 +100,8 @@ fun RegisterParentScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
+    // Профиль, отправленный на подтверждение родителю (status = "pending")
+    var pendingChild by remember { mutableStateOf<ChildProfileState?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
@@ -96,6 +114,16 @@ fun RegisterParentScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         CyberBackground()
+
+        val pending = pendingChild
+        if (pending != null) {
+            PendingRequestScreen(
+                child = pending,
+                mainViewModel = mainViewModel,
+                onApproved = onPlayerSuccess
+            )
+            return@Box
+        }
 
         Column(
             modifier = Modifier
@@ -152,7 +180,7 @@ fun RegisterParentScreen(
                                 } else Color.Transparent
                             )
                             .clickable {
-                                if (selected != isPlayer) viewModel.toggleAuthMode()
+                                if (!selected) viewModel.toggleAuthMode()
                             }
                             .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
@@ -180,9 +208,15 @@ fun RegisterParentScreen(
                             nickname = state.nickname,
                             pin = state.pin,
                             avatar = state.avatar,
-                            parentEmail = state.parentEmail
+                            parentEmail = state.parentEmail,
+                            onResult = { profile ->
+                                if (profile.status == "pending") {
+                                    pendingChild = profile
+                                } else {
+                                    onPlayerSuccess()
+                                }
+                            }
                         )
-                        onPlayerSuccess()
                     }
                 )
             } else {
@@ -198,7 +232,7 @@ private fun PlayerRegisterForm(
     viewModel: AuthViewModel,
     onSubmit: () -> Unit
 ) {
-    // Аватар — сетка 6 эмодзи
+    // Аватар — сетка 6 колонок
     Text(
         text = "АВАТАР",
         color = CyberTextSecondary,
@@ -207,29 +241,36 @@ private fun PlayerRegisterForm(
         letterSpacing = 2.sp
     )
     Spacer(modifier = Modifier.height(10.dp))
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        playerAvatars.forEach { avatar ->
-            val selected = state.avatar == avatar
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (selected) CyberLime.copy(alpha = 0.15f) else CyberPanelBg)
-                    .border(
-                        1.dp,
-                        if (selected) CyberLime else CyberSlateBorder,
-                        RoundedCornerShape(12.dp)
-                    )
-                    .clickable { viewModel.onAvatarSelected(avatar) },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(avatar, fontSize = 22.sp)
+    playerAvatars.chunked(6).forEach { rowAvatars ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            rowAvatars.forEach { avatar ->
+                val selected = state.avatar == avatar
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (selected) CyberLime.copy(alpha = 0.15f) else CyberPanelBg)
+                        .border(
+                            1.dp,
+                            if (selected) CyberLime else CyberSlateBorder,
+                            RoundedCornerShape(12.dp)
+                        )
+                        .clickable { viewModel.onAvatarSelected(avatar) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(avatar, fontSize = 22.sp)
+                }
+            }
+            // Пустые ячейки в последнем ряду, чтобы сетка не «плыла»
+            repeat(6 - rowAvatars.size) {
+                Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
             }
         }
+        Spacer(modifier = Modifier.height(8.dp))
     }
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -300,7 +341,7 @@ private fun PlayerRegisterForm(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Email родителя
+    // Email родителя — на него придёт запрос на подтверждение
     OutlinedTextField(
         value = state.parentEmail,
         onValueChange = viewModel::onParentEmailChange,
@@ -432,6 +473,81 @@ private fun ParentLoginForm(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
+
+/**
+ * Экран ожидания подтверждения родителем.
+ * Каждые 5 секунд опрашивает family_profiles: как только status станет "active" —
+ * обновляет локальный профиль и вызывает [onApproved] (переход в ChildRoute).
+ */
+@Composable
+private fun PendingRequestScreen(
+    child: ChildProfileState,
+    mainViewModel: MainViewModel,
+    onApproved: () -> Unit
+) {
+    LaunchedEffect(child.id) {
+        while (true) {
+            val row = runCatching {
+                val supabase = SupabaseManager.client ?: return@runCatching null
+                supabase.from("family_profiles")
+                    .select()
+                    .decodeList<FamilyProfileRow>()
+                    .firstOrNull { it.user_id == child.id }
+            }.getOrNull()
+
+            if (row?.status == "active") {
+                mainViewModel.updateChildProfile(
+                    child.copy(
+                        status = "active",
+                        parentUserId = row.parentUserId ?: child.parentUserId
+                    )
+                )
+                onApproved()
+                break
+            }
+            delay(5000)
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("⏳", fontSize = 64.sp)
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "ЗАПРОС ОТПРАВЛЕН!",
+            color = CyberLime,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 2.sp,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "${child.avatar} ${child.name} ждёт подтверждения родителя.",
+            color = CyberTextPrimary,
+            fontSize = 15.sp,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Как только родитель нажмёт «Одобрить» в своём приложении, этот экран откроется автоматически.",
+            color = CyberTextSecondary,
+            fontSize = 13.sp,
+            textAlign = TextAlign.Center
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Проверяем статус…",
+            color = CyberTextSecondary,
+            fontSize = 12.sp
+        )
     }
 }
 

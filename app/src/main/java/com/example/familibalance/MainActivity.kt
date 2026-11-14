@@ -1,7 +1,7 @@
 package com.example.familibalance
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
@@ -52,11 +52,12 @@ import com.example.familibalance.ui.screens.*
 import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
 import com.example.familibalance.ui.theme.*
+import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import com.example.familibalance.ui.update.UpdateDialog
 import com.example.familibalance.viewmodel.UpdateViewModel
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     private lateinit var viewModel: MainViewModel
     private lateinit var updateViewModel: UpdateViewModel
     private lateinit var authViewModel: AuthViewModel
@@ -98,10 +99,21 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Если сессия Supabase уже активна — сразу в родительский кабинет
-                var autoNavigatedToAdmin by remember { mutableStateOf(false) }
+                // Анонимная сессия (устройство ребёнка) не считается родительской:
+                // в AdminRoute пускаем только пользователей с email.
+                var isParentSession by remember { mutableStateOf(false) }
                 LaunchedEffect(sessionStatus) {
-                    if (!autoNavigatedToAdmin && sessionStatus is SessionStatus.Authenticated) {
+                    val user = runCatching {
+                        SupabaseManager.client?.auth?.currentUserOrNull()
+                    }.getOrNull()
+                    isParentSession = sessionStatus is SessionStatus.Authenticated &&
+                        !user?.email.isNullOrBlank()
+                }
+
+                // Если сессия родителя уже активна — сразу в родительский кабинет
+                var autoNavigatedToAdmin by remember { mutableStateOf(false) }
+                LaunchedEffect(isParentSession) {
+                    if (!autoNavigatedToAdmin && isParentSession) {
                         autoNavigatedToAdmin = true
                         navController.navigate(AdminRoute) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
@@ -111,13 +123,17 @@ class MainActivity : ComponentActivity() {
 
                 NavHost(
                     navController = navController,
-                    startDestination = if (sessionStatus is SessionStatus.NotAuthenticated) WelcomeRoute else AdminRoute
+                    startDestination = WelcomeRoute
                 ) {
                     composable<WelcomeRoute> {
                         WelcomeScreen(
                             onPlayerClick = { navController.navigate(PlayerLoginRoute) },
                             onRegisterClick = { navController.navigate(RegisterParentRoute) },
-                            onParentGatePassed = { navController.navigate(RegisterParentRoute) }
+                            onParentGatePassed = {
+                                navController.navigate(AdminRoute) {
+                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                }
+                            }
                         )
                     }
                     composable<PlayerLoginRoute> {
@@ -302,18 +318,6 @@ private fun ChildSection(
                     }
                     IconButton(onClick = { showThemeSheet = true }) {
                         Text("🎨", fontSize = 18.sp)
-                    }
-                    OutlinedButton(
-                        onClick = onSwitchProfile,
-                        border = BorderStroke(1.dp, GlassStroke),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = CardBgDark.copy(alpha = 0.8f),
-                            contentColor = TextPrimary
-                        ),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text("🔄 Сменить", fontSize = 12.sp)
                     }
                 }
             },

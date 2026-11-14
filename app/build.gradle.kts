@@ -46,8 +46,8 @@ android {
         applicationId = "com.example.familibalance"
         minSdk = 24
         targetSdk = 37
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 5
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -116,6 +116,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("com.google.mlkit:text-recognition:16.0.1")
+    implementation("androidx.biometric:biometric:1.1.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 
     testImplementation(libs.junit)

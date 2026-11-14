@@ -63,6 +63,8 @@ import com.example.familibalance.CashoutStatus
 
 import com.example.familibalance.*
 import com.example.familibalance.viewmodel.actions.*
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
 
 sealed class AdminScreenType(val title: String, val icon: String) {
     object Verification : AdminScreenType("Проверка", "🛡️")
@@ -89,8 +91,25 @@ fun AdminScreen(
     var showCashOutDialog by remember { mutableStateOf(false) }
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isSynced by viewModel.isSynced.collectAsStateWithLifecycle()
-    val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.firstOrNull()
+
+    // uid текущего родителя из сессии Supabase — для изоляции детей в админке
+    val currentUid by produceState<String?>(initialValue = null) {
+        val auth = SupabaseManager.client?.auth ?: return@produceState
+        auth.sessionStatus.collect { status ->
+            value = (status as? SessionStatus.Authenticated)?.session?.user?.id
+        }
+    }
+
+    // Показываем только детей, привязанных к текущему родителю.
+    // Гость (uid == null) видит всех — как раньше.
+    val visibleChildren = if (currentUid == null) {
+        familyState.children.values.toList()
+    } else {
+        familyState.children.values.filter { it.parentUserId == currentUid }
+    }
+
+    val child = visibleChildren.firstOrNull { it.id == familyState.selectedChildId }
+        ?: visibleChildren.firstOrNull()
         ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
 
     var isRefreshing by remember { mutableStateOf(false) }
@@ -232,7 +251,7 @@ fun AdminScreen(
                             .padding(horizontal = 16.dp, vertical = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        familyState.children.values.forEach { profile ->
+                        visibleChildren.forEach { profile ->
                             val isSelected = familyState.selectedChildId == profile.id
                             Surface(
                                 onClick = {

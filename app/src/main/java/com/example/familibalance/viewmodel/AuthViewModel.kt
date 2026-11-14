@@ -25,7 +25,7 @@ data class AuthUiState(
     val pin: String = "",
     val avatar: String = "🦊",
     val selectedInterests: Set<String> = emptySet(),
-    val parentEmail: String = "parent@questlab.ru",
+    val parentEmail: String = "",
     /** Вкладка «Родитель»: false — вход, true — регистрация. */
     val isParentRegisterMode: Boolean = false,
     val isLoading: Boolean = false,

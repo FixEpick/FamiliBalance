@@ -315,7 +315,9 @@ data class ChildProfileState(
     val parentUserId: String = "",
     val authUserId: String = "",
     val pinCode: String = "0000",
-    val parentEmail: String = ""
+    val parentEmail: String = "",
+    /** "active" — полноценный член семьи; "pending" — ждёт подтверждения родителя. */
+    val status: String = "active"
 ) {
     constructor(
         id: String,
@@ -388,7 +390,8 @@ data class ChildProfileState(
             parentUserId = dto.parentUserId,
             authUserId = dto.authUserId,
             pinCode = dto.pinCode,
-            parentEmail = dto.parentEmail
+            parentEmail = dto.parentEmail,
+            status = dto.status
         )
     }
 }
@@ -450,7 +453,8 @@ data class ChildProfileDto(
     val parentUserId: String = "",
     val authUserId: String = "",
     val pinCode: String = "0000",
-    val parentEmail: String = ""
+    val parentEmail: String = "",
+    val status: String = "active"
 )
 
 fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
@@ -509,7 +513,8 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     parentUserId = parentUserId,
     authUserId = authUserId,
     pinCode = pinCode,
-    parentEmail = parentEmail
+    parentEmail = parentEmail,
+    status = status
 )
 
 object AppSharedState {
@@ -520,22 +525,9 @@ object AppSharedState {
     /** Событие: удалённое состояние применено к [children] (Realtime / первичная загрузка). */
     val remoteStateChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
 
-    val children = mutableMapOf(
-        "user_1" to ChildProfileState(
-            id = "user_1",
-            name = "Пользователь 1",
-            avatar = "🐰",
-            initialBalance = 40,
-            initialMinutes = 0
-        ),
-        "user_2" to ChildProfileState(
-            id = "user_2",
-            name = "Пользователь 2",
-            avatar = "🦊",
-            initialBalance = 75,
-            initialMinutes = 20
-        )
-    )
+    // Профили загружаются из локального хранилища / Supabase.
+    // Дефолтных «Пользователь 1/2» больше нет — первый запуск показывает пустой список.
+    val children = mutableMapOf<String, ChildProfileState>()
 
     val currentChild: ChildProfileState
         get() = children[selectedChildId]
@@ -597,11 +589,17 @@ object AppStateStorage {
         return jsonFormat.encodeToString(child.toDto())
     }
 
-    fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String) {
+    fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null) {
         if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) return
         try {
             val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
-            AppSharedState.children[userId] = ChildProfileState.fromDto(dto)
+            // Колонка parent_user_id в БД важнее значения внутри state_json
+            val profile = ChildProfileState.fromDto(dto)
+                .copy(
+                    parentUserId = parentUserId?.takeIf { it.isNotBlank() } ?: dto.parentUserId,
+                    status = status?.takeIf { it.isNotBlank() } ?: dto.status
+                )
+            AppSharedState.children[userId] = profile
             saveLocalOnly(context)
             AppSharedState.remoteStateChanged.tryEmit(Unit)
         } catch (e: Exception) {
@@ -613,14 +611,19 @@ object AppStateStorage {
      * Suspend-вариант: парсит JSON на IO-потоке, применяет на Main.
      * Используется из SupabaseManager (Realtime/первичная загрузка), чтобы не фризить UI.
      */
-    suspend fun applyRemoteChildJsonAsync(context: Context, userId: String, jsonStr: String) {
+    suspend fun applyRemoteChildJsonAsync(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null) {
         if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) return
         try {
             val dto = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
             }
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                AppSharedState.children[userId] = ChildProfileState.fromDto(dto)
+                val profile = ChildProfileState.fromDto(dto)
+                    .copy(
+                        parentUserId = parentUserId?.takeIf { it.isNotBlank() } ?: dto.parentUserId,
+                        status = status?.takeIf { it.isNotBlank() } ?: dto.status
+                    )
+                AppSharedState.children[userId] = profile
                 saveLocalOnly(context)
                 AppSharedState.remoteStateChanged.tryEmit(Unit)
             }

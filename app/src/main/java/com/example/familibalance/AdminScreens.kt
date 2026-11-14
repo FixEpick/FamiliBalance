@@ -47,6 +47,16 @@ import com.example.familibalance.MainViewModel
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.CashoutStatus
 import com.example.familibalance.viewmodel.actions.*
+import com.example.familibalance.ui.auth.ChangeParentPinDialog
+import com.example.familibalance.ui.auth.SetChildPinDialog
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -391,10 +401,80 @@ fun AdminSettingsScreen(
     val context = LocalContext.current
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+        ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
     var showAddBonusDialog by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    var showPinPicker by remember { mutableStateOf(false) }
+    var pinTarget by remember { mutableStateOf<String?>(null) } // "parent" или childId
     var pendingResetAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    // --- Запросы на добавление детей (status = "pending") ---
+    var pendingRequests by remember { mutableStateOf<List<FamilyProfileRow>>(emptyList()) }
+    val scope = rememberCoroutineScope()
+
+    suspend fun loadPendingRequests() {
+        val supabase = SupabaseManager.client ?: return
+        val me = runCatching { supabase.auth.currentUserOrNull() }.getOrNull() ?: return
+        val myEmail = me.email ?: return
+        val rows = runCatching {
+            supabase.from("family_profiles").select().decodeList<FamilyProfileRow>()
+        }.getOrNull() ?: return
+        pendingRequests = rows.filter {
+            it.status == "pending" && it.parentEmail.equals(myEmail, ignoreCase = true)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        loadPendingRequests()
+        // Периодическое обновление списка запросов
+        while (true) {
+            delay(10_000)
+            loadPendingRequests()
+        }
+    }
+
+    fun approveRequest(row: FamilyProfileRow) {
+        val supabase = SupabaseManager.client ?: return
+        scope.launch {
+            val me = runCatching { supabase.auth.currentUserOrNull() }.getOrNull() ?: return@launch
+            runCatching {
+                supabase.from("family_profiles").update({
+                    set("parent_user_id", me.id)
+                    set("parent_email", me.email)
+                    set("status", "active")
+                }) {
+                    filter { eq("user_id", row.user_id) }
+                }
+            }
+            // Если профиль уже есть локально — сразу помечаем активным и привязываем
+            AppSharedState.children[row.user_id]?.let { child ->
+                viewModel.updateChildProfile(
+                    child.copy(parentUserId = me.id, status = "active")
+                )
+            }
+            pendingRequests = pendingRequests.filterNot { it.user_id == row.user_id }
+            android.widget.Toast.makeText(
+                context,
+                "Запрос одобрен — ребёнок добавлен в семью",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    fun requestChildName(row: FamilyProfileRow): String {
+        return runCatching {
+            Json.parseToJsonElement(row.state_json)
+                .jsonObject["name"]?.jsonPrimitive?.contentOrNull
+        }.getOrNull() ?: "Игрок"
+    }
+
+    fun requestChildAvatar(row: FamilyProfileRow): String {
+        return runCatching {
+            Json.parseToJsonElement(row.state_json)
+                .jsonObject["avatar"]?.jsonPrimitive?.contentOrNull
+        }.getOrNull() ?: "🧒"
+    }
 
     fun requestReset(action: () -> Unit) {
         pendingResetAction = action
@@ -461,6 +541,76 @@ fun AdminSettingsScreen(
 
 item {
     Spacer(modifier = Modifier.height(6.dp))
+    Text(text = "📨 Запросы на добавление", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+}
+if (pendingRequests.isEmpty()) {
+    item {
+        Text(
+            text = "Нет новых запросов",
+            color = TextSecondary,
+            fontSize = 13.sp,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+} else {
+    items(pendingRequests, key = { it.user_id }) { row ->
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = GlassBackground,
+            border = BorderStroke(1.dp, StatusYellow.copy(alpha = 0.5f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(requestChildAvatar(row), fontSize = 28.sp)
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "${requestChildName(row)} хочет присоединиться к семье",
+                        color = TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Email: ${row.parentEmail}",
+                        color = TextSecondary,
+                        fontSize = 11.sp
+                    )
+                }
+                Button(
+                    onClick = { approveRequest(row) },
+                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text("Одобрить", color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+    }
+    item { Spacer(modifier = Modifier.height(12.dp)) }
+}
+item {
+    Spacer(modifier = Modifier.height(6.dp))
+    Text(text = "🔐 Безопасность", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+}
+item {
+    OutlinedButton(
+        onClick = { showPinPicker = true },
+        border = BorderStroke(1.dp, NeonCyan),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan),
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier.fillMaxWidth().height(50.dp)
+    ) {
+        Text("🔐 Управление ПИН-кодами", fontWeight = FontWeight.Bold)
+    }
+    Spacer(modifier = Modifier.height(20.dp))
+}
+item {
+    Spacer(modifier = Modifier.height(6.dp))
     Text(text = "Очистка и сброс данных", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
 }
 item {
@@ -517,6 +667,70 @@ item {
         Text("🚪 Выйти из аккаунта", fontWeight = FontWeight.Bold)
     }
 }
+}
+// Выбор, чей ПИН-код менять
+if (showPinPicker) {
+    val childrenList = familyState.children.values.sortedBy { it.name }
+    AlertDialog(
+        onDismissRequest = { showPinPicker = false },
+        containerColor = SpaceBgStart,
+        title = { Text("🔐 Управление ПИН-кодами", color = NeonCyan, fontWeight = FontWeight.Bold) },
+        text = {
+            val options = listOf("parent" to "🛡️ Мой ПИН (Родитель)") +
+                childrenList.map { it.id to "👦 ${it.name}" }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                options.forEach { (target, label) ->
+                OutlinedButton(
+                    onClick = {
+                        showPinPicker = false
+                        pinTarget = target
+                    },
+                    border = BorderStroke(1.dp, GlassStroke),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(label, fontWeight = FontWeight.Bold)
+                }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = { showPinPicker = false }) {
+                Text("Отмена", color = TextSecondary)
+            }
+        }
+    )
+}
+
+// Родительский ПИН
+if (pinTarget == "parent") {
+    ChangeParentPinDialog(
+        onDismiss = { pinTarget = null },
+        onSaved = { pinTarget = null }
+    )
+}
+
+// Детский ПИН
+pinTarget?.let { targetId ->
+    val targetChild = familyState.children[targetId]
+    if (targetChild != null) {
+        SetChildPinDialog(
+            childName = targetChild.name,
+            onPinEntered = { newPin ->
+                viewModel.updateChildPin(targetId, newPin)
+                android.widget.Toast.makeText(
+                    context,
+                    "ПИН-код для ${targetChild.name} обновлён",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            },
+            onDismiss = { pinTarget = null }
+        )
+    } else {
+        pinTarget = null
+    }
 }
 if (showAddBonusDialog) {
     var bonusTitle by remember { mutableStateOf("") }

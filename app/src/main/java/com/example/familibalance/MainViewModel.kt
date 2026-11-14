@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.data.auth.AuthRepository
+import io.github.jan.supabase.auth.auth
 import com.example.familibalance.data.repository.FamilyRepository
 import com.example.familibalance.data.repository.FamilyRepositoryImpl
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +55,19 @@ class MainViewModel(
         // Парсинг JSON всех профилей и дневные сбросы — на IO, чтобы не фризить первый кадр
         viewModelScope.launch(Dispatchers.IO) {
             familyRepository.loadState()
+            // Разовая чистка легаси-дефолтов «Пользователь 1/2» из локального стейта.
+            // В Supabase такие строки удаляются вручную через дашборд.
+            val legacyIds = setOf("user_1", "user_2")
+            if (AppSharedState.children.keys.any { it in legacyIds }) {
+                AppSharedState.children.keys.removeAll(legacyIds)
+                if (AppSharedState.selectedChildId in legacyIds ||
+                    AppSharedState.children[AppSharedState.selectedChildId] == null
+                ) {
+                    AppSharedState.selectedChildId =
+                        AppSharedState.children.keys.firstOrNull() ?: "user_1"
+                }
+                AppStateStorage.saveLocalOnly(getApplication())
+            }
             checkResets()
             emitFamilyState()
         }
@@ -140,26 +154,63 @@ class MainViewModel(
      * генерирует childId, сохраняет профиль (локально + push в Supabase),
      * пытается связать с родителем по email и выбирает профиль активным.
      */
-    fun createChildProfile(nickname: String, pin: String, avatar: String, parentEmail: String) {
-        val childId = "user_${System.currentTimeMillis()}"
-        val profile = ChildProfileState(
-            id = childId,
-            name = nickname.ifBlank { "Игрок" },
-            avatar = avatar.ifBlank { "🧒" },
-            pinCode = pin.ifBlank { "0000" },
-            parentEmail = parentEmail.trim()
-        )
-        // updateChildProfile кладёт профиль в AppSharedState и пушит в Supabase
-        updateChildProfile(profile)
-        selectChild(childId)
+    fun createChildProfile(
+        nickname: String,
+        pin: String,
+        avatar: String,
+        parentEmail: String,
+        onResult: ((ChildProfileState) -> Unit)? = null
+    ) {
+        viewModelScope.launch {
+            // Если сессии нет (устройство ребёнка) — входим анонимно,
+            // чтобы у ребёнка был собственный auth.uid для своей строки в family_profiles.
+            var sessionUser = runCatching {
+                SupabaseManager.client?.auth?.currentUserOrNull()
+            }.getOrNull()
+            if (sessionUser == null) {
+                runCatching { SupabaseManager.client?.auth?.signInAnonymously() }
+                sessionUser = runCatching {
+                    SupabaseManager.client?.auth?.currentUserOrNull()
+                }.getOrNull()
+            }
 
-        // Best-effort привязка к родителю по email (если RPC доступен)
-        val email = parentEmail.trim()
-        if (email.isNotBlank()) {
-            viewModelScope.launch {
+            val sessionEmail = sessionUser?.email
+            val sessionUid = sessionUser?.id.orEmpty()
+            val email = sessionEmail?.trim().orEmpty().ifBlank { parentEmail.trim() }
+            // Родительская сессия (есть email) -> профиль сразу active.
+            // Анонимная сессия ребёнка -> pending, ждёт подтверждения родителя.
+            val isParentSession = !sessionEmail.isNullOrBlank()
+            val status = if (isParentSession) "active" else "pending"
+            if (email.isBlank()) {
+                android.util.Log.w("MainViewModel", "createChildProfile: нет email родителя — запрос не сможет быть подтверждён")
+            }
+
+            val childId = "user_${System.currentTimeMillis()}"
+            val profile = ChildProfileState(
+                id = childId,
+                name = nickname.ifBlank { "Игрок" },
+                avatar = avatar.ifBlank { "🧒" },
+                pinCode = pin.ifBlank { "0000" },
+                parentUserId = if (isParentSession) sessionUid else "",
+                parentEmail = email,
+                status = status
+            )
+            // updateChildProfile кладёт профиль в AppSharedState и пушит в Supabase
+            updateChildProfile(profile)
+            selectChild(childId)
+
+            // Best-effort привязка к родителю по email (только для родительской сессии)
+            if (isParentSession && email.isNotBlank()) {
                 runCatching { AuthRepository().linkChildToParent(childId, email) }
             }
+            onResult?.invoke(profile)
         }
+    }
+
+    /** Смена ПИН-кода ребёнка из админки: copy() + updateChildProfile (push в Supabase). */
+    fun updateChildPin(childId: String, newPin: String) {
+        val child = familyRepository.getChild(childId) ?: return
+        updateChildProfile(child.copy(pinCode = newPin))
     }
 
     /** Очистка состояния при выходе из аккаунта: профили и выбор не должны «протекать» другой семье. */
