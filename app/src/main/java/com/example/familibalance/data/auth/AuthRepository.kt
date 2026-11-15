@@ -113,14 +113,19 @@ class AuthRepository private constructor(private val client: SupabaseClient) {
         val name = childName.trim()
         if (email.isEmpty() || name.isEmpty() || pin.isEmpty()) return null
 
-        val result = client.postgrest.rpc(
-            "verify_child_login",
-            buildJsonObject {
-                put("p_email", JsonPrimitive(email))
-                put("p_name", JsonPrimitive(name))
-                put("p_pin", JsonPrimitive(pin))
-            }
-        )
+        val result = try {
+            client.postgrest.rpc(
+                "verify_child_login",
+                buildJsonObject {
+                    put("p_email", JsonPrimitive(email))
+                    put("p_name", JsonPrimitive(name))
+                    put("p_pin", JsonPrimitive(pin))
+                }
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("AuthRepository", "RPC verify_child_login failed", e)
+            throw e
+        }
         val element = runCatching {
             Json.parseToJsonElement(result.data)
         }.getOrNull() ?: return null

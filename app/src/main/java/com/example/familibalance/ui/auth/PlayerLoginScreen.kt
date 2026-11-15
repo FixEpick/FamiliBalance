@@ -33,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.LoginResult
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 import com.example.familibalance.ui.components.CyberBackground
@@ -75,25 +76,33 @@ fun PlayerLoginScreen(
     var childName by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var hasError by remember { mutableStateOf(false) }
+    var loginError by remember { mutableStateOf<LoginResult?>(null) }
 
     fun submit() {
         if (isLoading) return
         if (parentEmail.isBlank() || childName.isBlank() || pin.length != 4) {
-            hasError = true
+            loginError = LoginResult.InvalidCredentials
             return
         }
         isLoading = true
-        hasError = false
-        viewModel.loginChild(parentEmail, childName, pin) { success ->
+        loginError = null
+        viewModel.loginChild(parentEmail, childName, pin) { result ->
             isLoading = false
-            if (success) {
-                onLoginSuccess()
-            } else {
-                hasError = true
-                pin = ""
+            when (result) {
+                LoginResult.Success -> onLoginSuccess()
+                else -> {
+                    loginError = result
+                    pin = ""
+                }
             }
         }
+    }
+
+    val errorText = when (loginError) {
+        LoginResult.RateLimited -> stringResource(R.string.error_rate_limited)
+        LoginResult.NetworkError -> stringResource(R.string.error_network)
+        LoginResult.InvalidCredentials -> stringResource(R.string.error_invalid_credentials)
+        else -> null
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -143,7 +152,7 @@ fun PlayerLoginScreen(
                 Column(modifier = Modifier.padding(20.dp)) {
                     OutlinedTextField(
                         value = parentEmail,
-                        onValueChange = { parentEmail = it; hasError = false },
+                        onValueChange = { parentEmail = it; loginError = null },
                         label = { Text(stringResource(R.string.login_field_email)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
@@ -155,7 +164,7 @@ fun PlayerLoginScreen(
 
                     OutlinedTextField(
                         value = childName,
-                        onValueChange = { childName = it; hasError = false },
+                        onValueChange = { childName = it; loginError = null },
                         label = { Text(stringResource(R.string.login_field_name)) },
                         singleLine = true,
                         colors = CyberFieldColors,
@@ -166,7 +175,7 @@ fun PlayerLoginScreen(
 
                     OutlinedTextField(
                         value = pin,
-                        onValueChange = { pin = it.filter { c -> c.isDigit() }.take(4); hasError = false },
+                        onValueChange = { pin = it.filter { c -> c.isDigit() }.take(4); loginError = null },
                         label = { Text(stringResource(R.string.login_field_pin)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -174,10 +183,10 @@ fun PlayerLoginScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    if (hasError) {
+                    if (errorText != null) {
                         Spacer(modifier = Modifier.height(10.dp))
                         Text(
-                            text = stringResource(R.string.login_error),
+                            text = errorText,
                             color = CyberRed,
                             fontSize = 13.sp,
                             textAlign = TextAlign.Center,

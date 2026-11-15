@@ -24,7 +24,9 @@
     <string name="login_field_name">Child\'s name</string>
     <string name="login_field_pin">PIN code (4 digits)</string>
     <string name="login_submit">Log in</string>
-    <string name="login_error">Invalid credentials or PIN</string>
+    <string name="error_invalid_credentials">Invalid email, name or PIN code.</string>
+    <string name="error_rate_limited">Too many attempts. Please wait a minute.</string>
+    <string name="error_network">Network error. Check your connection.</string>
     <string name="login_loading">Logging in…</string>
     <string name="parent_area_link">👑 Parent login</string>
 

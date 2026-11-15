@@ -24,7 +24,9 @@
     <string name="login_field_name">Имя ребёнка</string>
     <string name="login_field_pin">PIN-код (4 цифры)</string>
     <string name="login_submit">Войти</string>
-    <string name="login_error">Неверные данные или PIN</string>
+    <string name="error_invalid_credentials">Неверный Email, имя или PIN-код.</string>
+    <string name="error_rate_limited">Слишком много попыток. Подождите минуту.</string>
+    <string name="error_network">Ошибка сети. Проверьте подключение.</string>
     <string name="login_loading">Входим…</string>
     <string name="parent_area_link">👑 Вход для родителей</string>
 

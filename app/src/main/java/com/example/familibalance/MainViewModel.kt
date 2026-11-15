@@ -30,6 +30,14 @@ sealed class DiaryScanState {
     data class Error(val message: String) : DiaryScanState()
 }
 
+/** Результат попытки входа ребёнка — для разных сообщений об ошибках в UI. */
+sealed class LoginResult {
+    object Success : LoginResult()
+    object InvalidCredentials : LoginResult()
+    object RateLimited : LoginResult()
+    object NetworkError : LoginResult()
+}
+
 class MainViewModel(
     application: Application,
     val familyRepository: FamilyRepository
@@ -307,14 +315,14 @@ class MainViewModel(
         parentEmail: String,
         childName: String,
         pin: String,
-        onResult: (Boolean) -> Unit
+        onResult: (LoginResult) -> Unit
     ) {
         // Локальный rate-limit: после LOGIN_MAX_ATTEMPTS неудач — блокировка.
         val rateKey = "${parentEmail.trim().lowercase()}|${childName.trim().lowercase()}"
         val now = System.currentTimeMillis()
         val lockedUntil = loginLockUntil[rateKey] ?: 0L
         if (now < lockedUntil) {
-            onResult(false)
+            onResult(LoginResult.RateLimited)
             return
         }
 
@@ -333,16 +341,19 @@ class MainViewModel(
         viewModelScope.launch {
             val repo = runCatching { AuthRepository() }.getOrNull()
             if (repo == null) {
-                registerFailure()
-                onResult(false)
+                onResult(LoginResult.NetworkError)
                 return@launch
             }
-            val profile = runCatching {
+            val profile = try {
                 repo.findChildProfile(parentEmail, childName, pin)
-            }.getOrNull()
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "loginChild: ошибка сети/RPC", e)
+                onResult(LoginResult.NetworkError)
+                return@launch
+            }
             if (profile == null) {
                 registerFailure()
-                onResult(false)
+                onResult(LoginResult.InvalidCredentials)
                 return@launch
             }
             // Успешный вход — сбрасываем счётчик и блокировку.
@@ -365,7 +376,7 @@ class MainViewModel(
                 .putString("logged_in_child_id", updated.id)
                 .putBoolean("is_admin_logged_in", false)
                 .apply()
-            onResult(true)
+            onResult(LoginResult.Success)
         }
     }
 
