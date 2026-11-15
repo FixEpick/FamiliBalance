@@ -3,6 +3,7 @@ package com.example.familibalance.ui.update
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -116,11 +117,23 @@ fun UpdateDialog(
             },
             confirmButton = {
                 Button(onClick = {
-                    val intent = Intent(
-                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                        Uri.parse("package:${context.packageName}")
-                    )
-                    context.startActivity(intent)
+                    try {
+                        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                            data = Uri.parse("package:${context.packageName}")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        Log.e("Update", "Failed to open install settings", e)
+                        try {
+                            val fallbackIntent = Intent(Settings.ACTION_SECURITY_SETTINGS).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            context.startActivity(fallbackIntent)
+                        } catch (e2: Exception) {
+                            Log.e("Update", "Failed to open fallback settings", e2)
+                        }
+                    }
                 }) { Text(stringResource(R.string.update_btn_open_settings)) }
             },
             dismissButton = {
