@@ -6,67 +6,6 @@ import com.example.familibalance.data.model.*
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 
-fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
-    if (!tryStartProcessingAction()) return
-    try {
-    val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
-
-    val pendingTotal = profile.cashoutRequests.sumOf { it.amount }
-    val availableBalance = profile.balance - pendingTotal
-    if (amount <= 0 || amount > availableBalance) {
-        return
-    }
-
-    val request = CashoutRequest(
-        amount = amount,
-        comment = comment.ifBlank { "Вывод наличных" },
-        timestamp = System.currentTimeMillis()
-    )
-
-    updateChildProfile(profile.copy(cashoutRequests = profile.cashoutRequests + request))
-    } finally {
-        endProcessingAction()
-    }
-}
-
-fun MainViewModel.approveCashoutRequest(requestId: String) {
-    if (!tryStartProcessingAction()) return
-    try {
-    val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
-
-    val request = profile.cashoutRequests.firstOrNull { it.id == requestId } ?: return
-
-    if (request.amount <= 0 || request.amount > profile.balance) {
-        return
-    }
-
-    val updated = profile.copy(
-        balance = profile.balance - request.amount,
-        historyItems = listOf(
-            HistoryData(
-                title = "Вывод средств (${request.comment})",
-                time = getCurrentTimeString(),
-                date = getCurrentDateString(),
-                amount = "-${request.amount} ₽",
-                isIncome = false,
-                category = "Вывод средств"
-            )
-        ) + profile.historyItems,
-        cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId }
-    )
-    updateChildProfile(updated)
-    } finally {
-        endProcessingAction()
-    }
-}
-
-fun MainViewModel.rejectCashoutRequest(requestId: String) {
-    val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
-
-    updateChildProfile(
-        profile.copy(cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId })
-    )
-}
 
 fun MainViewModel.setDreamGoal(userId: String, title: String, target: Int) {
     val profile = familyRepository.getChild(userId) ?: return

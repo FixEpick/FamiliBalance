@@ -400,23 +400,9 @@ private fun PlayerRegisterForm(
         text = stringResource(R.string.reg_submit),
         emoji = "🚀",
         variant = GameButtonVariant.Lime,
-        enabled = !state.isLoading && state.nickname.isNotBlank() && state.pin.length == 4,
+        enabled = isPlayerFormValid(state),
         onClick = onSubmit
     )
-}
-
-private fun saveRememberMe(context: Context, email: String, remember: Boolean) {
-    val prefs = SecurePrefs.get(context, "app_prefs")
-    prefs.edit()
-        .putBoolean("is_remember_me", remember)
-        .apply {
-            if (remember && email.isNotBlank()) {
-                putString("saved_admin_email", email)
-            } else {
-                remove("saved_admin_email")
-            }
-        }
-        .apply()
 }
 
 @Composable
@@ -529,7 +515,7 @@ private fun ParentLoginForm(
                 text = stringResource(if (state.isParentRegisterMode) R.string.parent_btn_register else R.string.parent_btn_login),
                 emoji = "🔑",
                 variant = GameButtonVariant.Electric,
-                enabled = !state.isLoading,
+                enabled = isParentFormEnabled(state),
                 onClick = {
                     if (state.isParentRegisterMode) viewModel.signUpParent() else viewModel.signIn()
                 }
