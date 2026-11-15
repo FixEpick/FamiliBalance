@@ -34,17 +34,6 @@ import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import android.graphics.drawable.BitmapDrawable
-import coil3.ImageLoader
-import coil3.asDrawable
-import coil3.request.ImageRequest
-import coil3.request.allowHardware
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-
 
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.ui.theme.*
@@ -52,7 +41,6 @@ import com.example.familibalance.CashoutStatus
 
 import com.example.familibalance.*
 
-import com.example.familibalance.util.parseGrades
 import com.example.familibalance.viewmodel.actions.*
 
 @Composable
@@ -62,6 +50,7 @@ fun VerificationAdminContent(
 ) {
     val context = LocalContext.current
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
+    val diaryScanState by viewModel.diaryScanState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.firstOrNull()
     if (child == null) {
@@ -239,11 +228,15 @@ fun VerificationAdminContent(
                     title = "📚 Итоги недели (Дневник)",
                     comment = child.diaryComment,
                     photoUrl = child.diaryPhotoUrl,
+                    scanState = diaryScanState,
+                    onScanRequested = { viewModel.scanDiaryPhoto(child.diaryPhotoUrl ?: "") },
                     onApprove = { count5, count4, count3, count2 ->
                         viewModel.applyDiaryGrades(child.id, count5, count4, count3, count2)
+                        viewModel.resetDiaryScanState()
                     },
                     onReject = { reason ->
                         viewModel.adminRejectQuest(child.id, "diary", reason, "Итоги недели")
+                        viewModel.resetDiaryScanState()
                     }
                 )
             }
@@ -721,71 +714,36 @@ fun QuestVerificationCard(
 fun DiaryVerificationCard(
     title: String,
     photoUrl: String?,
+    scanState: DiaryScanState,
+    onScanRequested: () -> Unit,
     onApprove: (Int, Int, Int, Int) -> Unit,
     onReject: (String) -> Unit,
     comment: String = ""
 ) {
-    val context = LocalContext.current
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReasonText by remember { mutableStateOf("") }
     var showFullScreenImage by remember { mutableStateOf(false) }
 
     val gradeCounts = remember { mutableStateMapOf(5 to 0, 4 to 0, 3 to 0, 2 to 0) }
-    var isScanning by remember { mutableStateOf(false) }
-    var scanStatusText by remember { mutableStateOf("Сканирование оценок...") }
 
+    // Запуск OCR — только через ViewModel; UI лишь сообщает о желании сканировать
     LaunchedEffect(photoUrl) {
-        if (photoUrl.isNullOrEmpty()) return@LaunchedEffect
-        isScanning = true
-        scanStatusText = "Сканирование оценок..."
-        try {
-            val bitmap = withContext(Dispatchers.IO) {
-                val loader = coil3.SingletonImageLoader.get(context)
-                val request = ImageRequest.Builder(context)
-                    .data(photoUrl)
-                    .allowHardware(false)
-                    .build()
-                val result = loader.execute(request)
-                (result.image?.asDrawable(context.resources) as? BitmapDrawable)?.bitmap
-            }
+        if (!photoUrl.isNullOrEmpty()) onScanRequested()
+    }
 
-            if (bitmap == null) {
-                isScanning = false
-                scanStatusText = "Не удалось загрузить фото"
-                return@LaunchedEffect
-            }
+    // Применение результата сканирования к локальным счётчикам (ручная корректировка остаётся в UI)
+    LaunchedEffect(scanState) {
+        val success = scanState as? DiaryScanState.Success ?: return@LaunchedEffect
+        gradeCounts.clear()
+        gradeCounts.putAll(success.gradeCounts)
+    }
 
-            val visionText = withContext(Dispatchers.IO) {
-                val recognizer = com.google.mlkit.vision.text.TextRecognition.getClient(
-                    com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS
-                )
-                try {
-                    val image = com.google.mlkit.vision.common.InputImage.fromBitmap(bitmap, 0)
-                    kotlinx.coroutines.suspendCancellableCoroutine<com.google.mlkit.vision.text.Text> { cont ->
-                        val task = recognizer.process(image)
-                        task.addOnSuccessListener { cont.resumeWith(Result.success(it)) }
-                        task.addOnFailureListener { e -> cont.resumeWith(Result.failure(e)) }
-                        cont.invokeOnCancellation { /* Task не отменяемый; результат просто проигнорируется */ }
-                    }
-                } finally {
-                    recognizer.close()
-                }
-            }
-
-            // Защита от устаревших результатов: photoUrl мог измениться во время сканирования
-            if (photoUrl != null) {
-                val parsed = parseGrades(visionText.text)
-                gradeCounts.clear()
-                gradeCounts.putAll(parsed)
-                isScanning = false
-                scanStatusText = "Оценки распознаны!"
-            }
-        } catch (e: kotlinx.coroutines.CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            isScanning = false
-            scanStatusText = "Ошибка сканирования: ${e.message}"
-        }
+    val isScanning = scanState is DiaryScanState.Loading
+    val scanStatusText = when (scanState) {
+        is DiaryScanState.Loading -> "Сканирование оценок..."
+        is DiaryScanState.Success -> "Оценки распознаны!"
+        is DiaryScanState.Error -> "Ошибка сканирования: ${scanState.message}"
+        DiaryScanState.Idle -> "Расчет награды по оценкам"
     }
 
     val total = (gradeCounts[5] ?: 0) * 50 + (gradeCounts[4] ?: 0) * 30 - (gradeCounts[3] ?: 0) * 20 - (gradeCounts[2] ?: 0) * 50

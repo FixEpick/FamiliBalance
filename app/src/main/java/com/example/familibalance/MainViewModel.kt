@@ -8,6 +8,7 @@ import com.example.familibalance.data.PinHasher
 import io.github.jan.supabase.auth.auth
 import com.example.familibalance.data.repository.FamilyRepository
 import com.example.familibalance.data.repository.FamilyRepositoryImpl
+import com.example.familibalance.util.ScanDiaryUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,13 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.DayOfWeek
 import java.time.temporal.TemporalAdjusters
+
+sealed class DiaryScanState {
+    object Idle : DiaryScanState()
+    object Loading : DiaryScanState()
+    data class Success(val gradeCounts: Map<Int, Int>) : DiaryScanState()
+    data class Error(val message: String) : DiaryScanState()
+}
 
 class MainViewModel(
     application: Application,
@@ -36,6 +44,27 @@ class MainViewModel(
 
     /** Статус синхронизации с Supabase: false — есть неподтверждённые локальные изменения. */
     val isSynced: StateFlow<Boolean> = familyRepository.isSynced
+
+    private val scanDiaryUseCase = ScanDiaryUseCase(application)
+
+    private val _diaryScanState = MutableStateFlow<DiaryScanState>(DiaryScanState.Idle)
+    val diaryScanState: StateFlow<DiaryScanState> = _diaryScanState.asStateFlow()
+
+    /** OCR-сканирование фото дневника: результат — только через diaryScanState. */
+    fun scanDiaryPhoto(photoUrl: String) {
+        viewModelScope.launch {
+            _diaryScanState.value = DiaryScanState.Loading
+            try {
+                _diaryScanState.value = DiaryScanState.Success(scanDiaryUseCase(photoUrl))
+            } catch (e: Exception) {
+                _diaryScanState.value = DiaryScanState.Error(e.message ?: "Ошибка распознавания")
+            }
+        }
+    }
+
+    fun resetDiaryScanState() {
+        _diaryScanState.value = DiaryScanState.Idle
+    }
 
     private fun snapshotFamilyState() = FamilyUiState(
         children = familyRepository.childrenSnapshot(),
