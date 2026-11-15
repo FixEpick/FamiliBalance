@@ -282,6 +282,12 @@ data class ChildProfileState(
     val diaryPhotoUrl: String? = null,
     val diaryComment: String = "",
     val diaryApprovedReward: Int = 100,
+    val wardrobeFrequency: QuestFrequency = QuestFrequency.DAILY,
+    val roomFrequency: QuestFrequency = QuestFrequency.DAILY,
+    val diaryFrequency: QuestFrequency = QuestFrequency.WEEKLY,
+    val closetResetDate: String = "",
+    val roomResetDate: String = "",
+    val diaryResetDate: String = "",
     val lastDailyResetDate: String = "",
     val dreamTitle: String = "",
     val dreamTarget: Int = 0,
@@ -318,7 +324,9 @@ data class ChildProfileState(
     val pinCode: String = "0000",
     val parentEmail: String = "",
     /** "active" — полноценный член семьи; "pending" — ждёт подтверждения родителя. */
-    val status: String = "active"
+    val status: String = "active",
+    /** ANDROID_ID устройства, с которого ребёнок последний раз входил (для будущих пушей). */
+    val deviceId: String = ""
 ) {
     constructor(
         id: String,
@@ -357,6 +365,12 @@ data class ChildProfileState(
             diaryPhotoUrl = dto.diaryPhotoUrl,
             diaryComment = dto.diaryComment,
             diaryApprovedReward = dto.diaryApprovedReward,
+            wardrobeFrequency = dto.wardrobeFrequency,
+            roomFrequency = dto.roomFrequency,
+            diaryFrequency = dto.diaryFrequency,
+            closetResetDate = dto.closetResetDate,
+            roomResetDate = dto.roomResetDate,
+            diaryResetDate = dto.diaryResetDate,
             lastDailyResetDate = dto.lastDailyResetDate,
             dreamTitle = dto.dreamTitle,
             dreamTarget = dto.dreamTarget,
@@ -392,7 +406,8 @@ data class ChildProfileState(
             authUserId = dto.authUserId,
             pinCode = dto.pinCode,
             parentEmail = dto.parentEmail,
-            status = dto.status
+            status = dto.status,
+            deviceId = dto.deviceId
         )
     }
 }
@@ -420,6 +435,12 @@ data class ChildProfileDto(
     val diaryPhotoUrl: String? = null,
     val diaryComment: String = "",
     val diaryApprovedReward: Int = 100,
+    val wardrobeFrequency: QuestFrequency = QuestFrequency.DAILY,
+    val roomFrequency: QuestFrequency = QuestFrequency.DAILY,
+    val diaryFrequency: QuestFrequency = QuestFrequency.WEEKLY,
+    val closetResetDate: String = "",
+    val roomResetDate: String = "",
+    val diaryResetDate: String = "",
     val lastDailyResetDate: String = "",
     val dreamTitle: String = "",
     val dreamTarget: Int = 0,
@@ -455,7 +476,8 @@ data class ChildProfileDto(
     val authUserId: String = "",
     val pinCode: String = "0000",
     val parentEmail: String = "",
-    val status: String = "active"
+    val status: String = "active",
+    val deviceId: String = ""
 )
 
 fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
@@ -480,6 +502,12 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     diaryPhotoUrl = diaryPhotoUrl,
     diaryComment = diaryComment,
     diaryApprovedReward = diaryApprovedReward,
+    wardrobeFrequency = wardrobeFrequency,
+    roomFrequency = roomFrequency,
+    diaryFrequency = diaryFrequency,
+    closetResetDate = closetResetDate,
+    roomResetDate = roomResetDate,
+    diaryResetDate = diaryResetDate,
     lastDailyResetDate = lastDailyResetDate,
     dreamTitle = dreamTitle,
     dreamTarget = dreamTarget,
@@ -515,11 +543,11 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     authUserId = authUserId,
     pinCode = pinCode,
     parentEmail = parentEmail,
-    status = status
+    status = status,
+    deviceId = deviceId
 )
 
 object AppSharedState {
-    var currentRole: AppRole? = null
     var selectedChildId: String = "user_1"
     var tempImageUri: Uri? = null
 
@@ -685,17 +713,11 @@ object AppStateStorage {
             var changed = false
 
             if (savedDaily != todayStr) {
+                // Сбросы встроенных квестов (шкаф/комната/дневник) выполняет
+                // MainViewModel.resetDailyQuestsIfNeeded с учётом frequency каждого квеста.
                 AppSharedState.children.replaceAll { _, child ->
-                    val resetCloset = child.closetStatus != QuestStatus.PENDING
-                    val resetRoom = child.roomStatus != QuestStatus.PENDING
                     child.copy(
                         boughtMinutesToday = 0,
-                        closetStatus = if (resetCloset) QuestStatus.AVAILABLE else child.closetStatus,
-                        closetRejectReason = if (resetCloset) null else child.closetRejectReason,
-                        closetComment = if (resetCloset) "" else child.closetComment,
-                        roomStatus = if (resetRoom) QuestStatus.AVAILABLE else child.roomStatus,
-                        roomRejectReason = if (resetRoom) null else child.roomRejectReason,
-                        roomComment = if (resetRoom) "" else child.roomComment,
                         bonusQuests = child.bonusQuests.filter { it.status != QuestStatus.CLAIMED }
                     )
                 }
@@ -704,16 +726,7 @@ object AppStateStorage {
             }
 
             if (savedWeekly != currentWeekStr) {
-                AppSharedState.children.replaceAll { _, child ->
-                    val resetDiary = child.diaryStatus != QuestStatus.PENDING
-                    child.copy(
-                        diaryStatus = if (resetDiary) QuestStatus.AVAILABLE else child.diaryStatus,
-                        diaryRejectReason = if (resetDiary) null else child.diaryRejectReason,
-                        diaryComment = if (resetDiary) "" else child.diaryComment
-                    )
-                }
                 prefs.edit().putString(KEY_LAST_WEEKLY, currentWeekStr).apply()
-                changed = true
             }
 
             if (changed) {

@@ -1,6 +1,10 @@
 package com.example.familibalance.data.auth
 
+import com.example.familibalance.ChildProfileDto
+import com.example.familibalance.ChildProfileState
+import com.example.familibalance.FamilyProfileRow
 import com.example.familibalance.SupabaseManager
+import com.example.familibalance.data.PinHasher
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
@@ -89,6 +93,37 @@ class AuthRepository private constructor(private val client: SupabaseClient) {
     /** Выход: очистка сессии. */
     suspend fun signOut() {
         client.auth.signOut()
+    }
+
+    private val profileJson = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+    }
+
+    /**
+     * Вход ребёнка по email родителя + имени + PIN.
+     * Профили хранятся в family_profiles.state_json (отдельной таблицы children нет):
+     * вытягиваем все строки, парсим state_json и сравниваем parentEmail/name/pinCode.
+     * Возвращает найденный профиль или null.
+     */
+    suspend fun findChildProfile(parentEmail: String, childName: String, pin: String): ChildProfileState? {
+        val email = parentEmail.trim()
+        val name = childName.trim()
+        if (email.isEmpty() || name.isEmpty() || pin.isEmpty()) return null
+
+        val rows = client.from("family_profiles").select().decodeList<FamilyProfileRow>()
+        return rows.firstNotNullOfOrNull { row ->
+            val dto = runCatching {
+                profileJson.decodeFromString<ChildProfileDto>(row.state_json)
+            }.getOrNull() ?: return@firstNotNullOfOrNull null
+            val profile = ChildProfileState.fromDto(dto).copy(id = row.user_id)
+            if (
+                profile.parentEmail.equals(email, ignoreCase = true) &&
+                profile.name.equals(name, ignoreCase = true) &&
+                PinHasher.matches(pin, profile.pinCode)
+            ) profile else null
+        }
     }
 
     /**

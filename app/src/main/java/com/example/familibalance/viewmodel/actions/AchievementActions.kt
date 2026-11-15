@@ -184,11 +184,6 @@ fun MainViewModel.resetDream(userId: String) {
     )
 }
 
-fun MainViewModel.resetBoughtTime(userId: String) {
-    val profile = familyRepository.getChild(userId) ?: return
-    updateChildProfile(profile.copy(boughtMinutesToday = 0))
-}
-
 fun MainViewModel.resetHonestAdmission(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     updateChildProfile(
@@ -196,17 +191,6 @@ fun MainViewModel.resetHonestAdmission(userId: String) {
             honestAdmissionStatus = QuestStatus.AVAILABLE,
             honestAdmissionText = "",
             lastHonestAdmissionDate = ""
-        )
-    )
-}
-
-fun MainViewModel.resetQuestPhotos(userId: String) {
-    val profile = familyRepository.getChild(userId) ?: return
-    updateChildProfile(
-        profile.copy(
-            closetPhotoUrl = null,
-            roomPhotoUrl = null,
-            diaryPhotoUrl = null
         )
     )
 }

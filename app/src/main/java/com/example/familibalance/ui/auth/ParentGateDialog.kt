@@ -32,11 +32,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.familibalance.R
 import com.example.familibalance.data.ParentPinManager
 import kotlinx.coroutines.launch
 
@@ -207,14 +209,14 @@ fun ParentGateDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "ПРОВЕРКА РОДИТЕЛЯ",
+                    text = stringResource(R.string.pin_parent_check_title),
                     color = CyberLime,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 2.sp
                 )
                 Text(
-                    text = "Введи родительский ПИН-код",
+                    text = stringResource(R.string.pin_parent_check_subtitle),
                     color = CyberTextSecondary,
                     fontSize = 13.sp
                 )
@@ -232,7 +234,7 @@ fun ParentGateDialog(
                     if (hasError) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "НЕВЕРНЫЙ ПИН-КОД",
+                            text = stringResource(R.string.login_pin_error),
                             color = CyberRed,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
@@ -257,7 +259,7 @@ fun ParentGateDialog(
                 }
 
                 TextButton(onClick = onDismiss) {
-                    Text("Отмена", color = CyberTextSecondary, fontSize = 13.sp)
+                    Text(stringResource(R.string.action_cancel), color = CyberTextSecondary, fontSize = 13.sp)
                 }
             }
         }

@@ -23,7 +23,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.annotation.StringRes
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -45,7 +47,6 @@ import com.example.familibalance.navigation.ChildTasksRoute
 import com.example.familibalance.navigation.PlayerLoginRoute
 import com.example.familibalance.navigation.RegisterParentRoute
 import com.example.familibalance.navigation.WelcomeRoute
-import com.example.familibalance.navigation.LoginRoute
 import com.example.familibalance.feature.admin.AdminScreen
 import com.example.familibalance.feature.child.MainChildScreen
 import com.example.familibalance.feature.child.TasksScreen
@@ -55,6 +56,8 @@ import com.example.familibalance.ui.auth.WelcomeScreen
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.ui.screens.*
+import com.example.familibalance.ui.components.DoubleBackToExitHandler
+import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
 import com.example.familibalance.ui.theme.*
@@ -74,6 +77,7 @@ class MainActivity : FragmentActivity() {
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         updateViewModel = ViewModelProvider(this)[UpdateViewModel::class.java]
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
+        AppLocaleState.init(this)
 
         enableEdgeToEdge()
         setContent {
@@ -124,9 +128,11 @@ class MainActivity : FragmentActivity() {
             }
             val familyState by viewModel.familyState.collectAsStateWithLifecycle()
             val sessionStatus by authViewModel.sessionStatus.collectAsStateWithLifecycle()
+            val autoLoginChildId by viewModel.autoLoginChildId.collectAsStateWithLifecycle()
             val themeChild = familyState.children[familyState.selectedChildId]
                 ?: familyState.children.values.firstOrNull()
             val currentThemeId = themeChild?.selectedThemeId ?: "COSMIC_BLUE"
+            LocalizedAppContent {
             FamiliBalanceTheme(themeId = currentThemeId) {
                 val navController = rememberNavController()
 
@@ -166,7 +172,26 @@ class MainActivity : FragmentActivity() {
                 LaunchedEffect(isParentSession) {
                     if (!autoNavigatedToAdmin && isParentSession) {
                         autoNavigatedToAdmin = true
+                        // Синхронизируем локальный флаг автовхода с Supabase-сессией
+                        context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                            .edit()
+                            .putBoolean("is_admin_logged_in", true)
+                            .putBoolean("is_logged_in", false)
+                            .remove("logged_in_child_id")
+                            .apply()
                         navController.navigate(AdminRoute) {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        }
+                    }
+                }
+
+                // Автовход ребёнка: MainViewModel выставляет autoLoginChildId
+                // после загрузки локального стейта, если стоит флаг is_logged_in.
+                var autoChildNavigated by remember { mutableStateOf(false) }
+                LaunchedEffect(autoLoginChildId) {
+                    if (!autoChildNavigated && autoLoginChildId != null) {
+                        autoChildNavigated = true
+                        navController.navigate(ChildRoute) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         }
                     }
@@ -179,20 +204,14 @@ class MainActivity : FragmentActivity() {
                     composable<WelcomeRoute> {
                         WelcomeScreen(
                             onPlayerClick = { navController.navigate(PlayerLoginRoute) },
-                            onRegisterClick = { navController.navigate(RegisterParentRoute) },
-                            onParentGatePassed = {
-                                navController.navigate(AdminRoute) {
-                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                }
-                            }
+                            onRegisterClick = { navController.navigate(RegisterParentRoute) }
                         )
                     }
                     composable<PlayerLoginRoute> {
                         PlayerLoginScreen(
-                            profiles = familyState.children.values.sortedBy { it.name },
+                            viewModel = viewModel,
                             onBack = { navController.popBackStack() },
-                            onLoginSuccess = { childId ->
-                                viewModel.selectChild(childId)
+                            onLoginSuccess = {
                                 navController.navigate(ChildRoute) {
                                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                 }
@@ -210,23 +229,19 @@ class MainActivity : FragmentActivity() {
                                 }
                             },
                             onParentSuccess = {
+                                // Флаг автовхода родителя: при перезапуске
+                                // isParentSession (Supabase) + этот флаг → AdminRoute
+                                context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                                    .edit()
+                                    .putBoolean("is_admin_logged_in", true)
+                                    .putBoolean("is_logged_in", false)
+                                    .remove("logged_in_child_id")
+                                    .apply()
                                 navController.navigate(AdminRoute) {
                                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                 }
                             },
                             onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<LoginRoute> {
-                        LoginScreen(
-                            onSelectRole = { role, childId ->
-                                if (childId.isNotEmpty()) {
-                                    viewModel.selectChild(childId)
-                                }
-                                navController.navigate(
-                                    if (role == AppRole.DAD) AdminRoute else ChildRoute
-                                )
-                            }
                         )
                     }
                     composable<AdminRoute> {
@@ -236,6 +251,12 @@ class MainActivity : FragmentActivity() {
                             onLogout = {
                                 authViewModel.signOut()
                                 viewModel.clearState()
+                                context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                                    .edit()
+                                    .putBoolean("is_admin_logged_in", false)
+                                    .putBoolean("is_logged_in", false)
+                                    .remove("logged_in_child_id")
+                                    .apply()
                                 navController.navigate(WelcomeRoute) {
                                     popUpTo(navController.graph.startDestinationId) { inclusive = true }
                                 }
@@ -245,7 +266,13 @@ class MainActivity : FragmentActivity() {
                     composable<ChildRoute> {
                         ChildSection(
                             viewModel = viewModel,
-                            onSwitchProfile = { backToLogin() }
+                            onSwitchProfile = { backToLogin() },
+                            onLogout = {
+                                viewModel.logoutChild()
+                                navController.navigate(WelcomeRoute) {
+                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                }
+                            }
                         )
                     }
                 }
@@ -256,13 +283,14 @@ class MainActivity : FragmentActivity() {
                     onDismiss = { updateViewModel.dismiss() }
                 )
             }
+            }
         }
     }
 }
 
 private data class ChildTab(
     val route: Any,
-    val title: String,
+    @StringRes val titleRes: Int,
     val icon: String
 )
 
@@ -270,7 +298,8 @@ private data class ChildTab(
 @Composable
 private fun ChildSection(
     viewModel: MainViewModel,
-    onSwitchProfile: () -> Unit
+    onSwitchProfile: () -> Unit,
+    onLogout: () -> Unit = {}
 ) {
     val childNavController = rememberNavController()
     var showThemeSheet by remember { mutableStateOf(false) }
@@ -304,11 +333,17 @@ private fun ChildSection(
         else -> ChildMainRoute
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    DoubleBackToExitHandler(
+        snackbarHostState = snackbarHostState,
+        message = stringResource(R.string.back_exit_hint)
+    )
+
     val tabs = listOf(
-        ChildTab(ChildMainRoute, "Главная", "🏠"),
-        ChildTab(ChildTasksRoute, "Задания", "✨"),
-        ChildTab(ChildAchievementsRoute, "Достижения", "🏆"),
-        ChildTab(ChildHistoryRoute, "История", "📜")
+        ChildTab(ChildMainRoute, R.string.nav_home, "🏠"),
+        ChildTab(ChildTasksRoute, R.string.nav_quests, "✨"),
+        ChildTab(ChildAchievementsRoute, R.string.nav_achievements, "🏆"),
+        ChildTab(ChildHistoryRoute, R.string.nav_history, "📜")
     )
 
     // Красная точка на «Достижениях», если есть награда, которую можно забрать
@@ -348,6 +383,7 @@ private fun ChildSection(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 Row(
                     modifier = Modifier
@@ -368,16 +404,19 @@ private fun ChildSection(
                             fontWeight = FontWeight.Bold
                         )
                     }
-                    if (!isSynced) {
-                        Text(
-                            text = "📴",
-                            fontSize = 16.sp,
-                            color = StatusYellow
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    IconButton(onClick = { showThemeSheet = true }) {
-                        Text("🎨", fontSize = 18.sp)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (!isSynced) {
+                            Text(
+                                text = "📴",
+                                fontSize = 16.sp,
+                                color = StatusYellow
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        LanguageSelectorButton()
+                        IconButton(onClick = { showThemeSheet = true }) {
+                            Text("🎨", fontSize = 18.sp)
+                        }
                     }
                 }
             },
@@ -407,7 +446,7 @@ private fun ChildSection(
                             },
                             label = {
                                 Text(
-                                    tab.title,
+                                    stringResource(tab.titleRes),
                                     color = if (tab.route == selectedTabRoute) LocalAppPalette.current.primaryNeon else TextSecondary
                                 )
                             },
@@ -440,6 +479,7 @@ private fun ChildSection(
                         composable<ChildMainRoute> {
                             MainChildScreen(
                                 onNavigateToTasks = { navigateToTab(ChildTasksRoute) },
+                                onLogout = onLogout,
                                 viewModel = viewModel
                             )
                         }

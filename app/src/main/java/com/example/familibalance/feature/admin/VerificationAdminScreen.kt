@@ -23,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.geometry.Offset
@@ -48,7 +47,6 @@ fun VerificationAdminContent(
     onCashOutClick: () -> Unit,
     viewModel: MainViewModel
 ) {
-    val context = LocalContext.current
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val diaryScanState by viewModel.diaryScanState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
@@ -146,7 +144,7 @@ fun VerificationAdminContent(
                     Column(modifier = Modifier.padding(14.dp)) {
                         Text(
                             text = "💵 Заявки на вывод",
-                            color = NeonCyan,
+                            color = AccentColor,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -383,7 +381,7 @@ fun VerificationAdminContent(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = SpaceBgStart,
                                 unfocusedContainerColor = SpaceBgStart,
-                                focusedBorderColor = NeonCyan,
+                                focusedBorderColor = AccentColor,
                                 unfocusedBorderColor = GlassStroke,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
@@ -414,7 +412,7 @@ fun VerificationAdminContent(
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedContainerColor = SpaceBgStart,
                             unfocusedContainerColor = SpaceBgStart,
-                            focusedBorderColor = NeonCyan,
+                            focusedBorderColor = AccentColor,
                             unfocusedBorderColor = GlassStroke,
                             focusedTextColor = Color.White,
                             unfocusedTextColor = Color.White
@@ -561,7 +559,7 @@ fun QuestVerificationCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(title, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text("Награда: $reward", color = NeonCyan, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Награда: $reward", color = AccentColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     if (description.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text("Комментарий: $description", color = TextSecondary, fontSize = 13.sp)
@@ -624,7 +622,7 @@ fun QuestVerificationCard(
                         unfocusedTextColor = Color.White,
                         focusedContainerColor = GlassBackground,
                         unfocusedContainerColor = GlassBackground,
-                        focusedBorderColor = NeonCyan,
+                        focusedBorderColor = AccentColor,
                         unfocusedBorderColor = GlassStroke
                     )
                 )
@@ -770,7 +768,7 @@ fun DiaryVerificationCard(
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = if (isScanning) scanStatusText else "Расчет награды по оценкам",
-                        color = NeonCyan,
+                        color = AccentColor,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -821,7 +819,7 @@ fun DiaryVerificationCard(
 
             val gradeConfigs = listOf(
                 Triple(5, "+50 ₽", StatusGreen),
-                Triple(4, "+30 ₽", NeonCyan),
+                Triple(4, "+30 ₽", AccentColor),
                 Triple(3, "-20 ₽", StatusYellow),
                 Triple(2, "-50 ₽", PenaltyRed)
             )
@@ -919,7 +917,7 @@ fun DiaryVerificationCard(
                         unfocusedTextColor = Color.White,
                         focusedContainerColor = GlassBackground,
                         unfocusedContainerColor = GlassBackground,
-                        focusedBorderColor = NeonCyan,
+                        focusedBorderColor = AccentColor,
                         unfocusedBorderColor = GlassStroke
                     )
                 )

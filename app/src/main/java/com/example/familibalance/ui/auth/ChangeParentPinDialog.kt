@@ -29,10 +29,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.familibalance.R
 import com.example.familibalance.data.ParentPinManager
 import kotlinx.coroutines.launch
 
@@ -54,6 +56,7 @@ fun ChangeParentPinDialog(
     onSaved: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val wrongCurrentPinMsg = stringResource(R.string.pin_wrong_current)
     var step by remember { mutableStateOf(1) } // 1 — текущий, 2 — новый
     var pin by remember { mutableStateOf("") }
     var hasError by remember { mutableStateOf(false) }
@@ -87,7 +90,7 @@ fun ChangeParentPinDialog(
                     statusMessage = null
                     step = 2
                 } else {
-                    shakeAndReset("НЕВЕРНЫЙ ТЕКУЩИЙ ПИН")
+                    shakeAndReset(wrongCurrentPinMsg)
                 }
             }
             2 -> {
@@ -124,14 +127,14 @@ fun ChangeParentPinDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "РОДИТЕЛЬСКИЙ ПИН-КОД",
+                    text = stringResource(R.string.pin_parent_title),
                     color = CyberLime,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 2.sp
                 )
                 Text(
-                    text = if (step == 1) "Введи текущий ПИН" else "Придумай новый ПИН (4 цифры)",
+                    text = stringResource(if (step == 1) R.string.pin_parent_step1 else R.string.pin_parent_step2),
                     color = CyberTextSecondary,
                     fontSize = 13.sp
                 )
@@ -182,12 +185,12 @@ fun ChangeParentPinDialog(
                         hasError = false
                         statusMessage = null
                     }) {
-                        Text("Назад", color = CyberTextSecondary, fontSize = 13.sp)
+                        Text(stringResource(R.string.action_back), color = CyberTextSecondary, fontSize = 13.sp)
                     }
                 }
 
                 TextButton(onClick = onDismiss) {
-                    Text("Отмена", color = CyberTextSecondary, fontSize = 13.sp)
+                    Text(stringResource(R.string.action_cancel), color = CyberTextSecondary, fontSize = 13.sp)
                 }
             }
         }

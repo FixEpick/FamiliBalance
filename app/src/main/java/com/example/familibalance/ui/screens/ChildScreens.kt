@@ -96,7 +96,7 @@ fun BuyTimeBottomSheet(
         ) {
             Text(
                 text = "⏳ Обмен коинов на время",
-                color = NeonCyan,
+                color = AccentColor,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -157,13 +157,13 @@ fun BuyTimeBottomSheet(
                             fontWeight = FontWeight.Bold
                         )
                         Surface(
-                            color = if (isAffordable) NeonCyan.copy(alpha = 0.2f) else Color.Transparent,
-                            border = BorderStroke(1.dp, if (isAffordable) NeonCyan else TextSecondary.copy(alpha = 0.4f)),
+                            color = if (isAffordable) AccentColor.copy(alpha = 0.2f) else Color.Transparent,
+                            border = BorderStroke(1.dp, if (isAffordable) AccentColor else TextSecondary.copy(alpha = 0.4f)),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
                                 text = "${tariff.cost} ₽",
-                                color = if (isAffordable) NeonCyan else TextSecondary.copy(alpha = 0.4f),
+                                color = if (isAffordable) AccentColor else TextSecondary.copy(alpha = 0.4f),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
@@ -208,7 +208,7 @@ fun RulesBottomSheet(
         ) {
             Text(
                 text = "📜 Свиток правил",
-                color = NeonCyan,
+                color = AccentColor,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -219,9 +219,9 @@ fun RulesBottomSheet(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, NeonCyan.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
+                    .border(1.dp, AccentColor.copy(alpha = 0.5f), RoundedCornerShape(12.dp)),
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = NeonCyan.copy(alpha = 0.08f))
+                colors = CardDefaults.cardColors(containerColor = AccentColor.copy(alpha = 0.08f))
             ) {
                 Row(
                     modifier = Modifier.padding(14.dp),
@@ -299,7 +299,7 @@ fun RulesBottomSheet(
             Button(
                 onClick = onDismissRequest,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = NeonCyan,
+                    containerColor = AccentColor,
                     contentColor = SpaceBgStart
                 ),
                 shape = RoundedCornerShape(12.dp),
@@ -453,7 +453,7 @@ fun AchievementsScreen(
                             .weight(1f)
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp)),
-                        color = NeonCyan,
+                        color = AccentColor,
                         trackColor = CardBgDark.copy(alpha = 0.85f)
                     )
 
@@ -498,7 +498,7 @@ fun AchievementsScreen(
                         label = { Text(tabName, fontSize = 14.sp) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = FilterSelectedBg.copy(alpha = 0.92f),
-                            selectedLabelColor = NeonCyan,
+                            selectedLabelColor = AccentColor,
                             containerColor = FilterBg.copy(alpha = 0.85f),
                             labelColor = TextSecondary
                         ),
@@ -506,7 +506,7 @@ fun AchievementsScreen(
                             enabled = true,
                             selected = selectedTab == index,
                             borderColor = GlassStroke,
-                            selectedBorderColor = NeonCyan
+                            selectedBorderColor = AccentColor
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -611,8 +611,9 @@ fun HistoryScreen(
         return
     }
 
+    Box(modifier = modifier.fillMaxSize()) {
     LazyColumn(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp),
@@ -684,8 +685,8 @@ fun HistoryScreen(
                         onClick = { selectedFilter = index },
                         label = { Text(filters[index], fontSize = 14.sp) },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = NeonCyan.copy(alpha = 0.2f),
-                            selectedLabelColor = NeonCyan,
+                            selectedContainerColor = AccentColor.copy(alpha = 0.2f),
+                            selectedLabelColor = AccentColor,
                             containerColor = GlassBackground,
                             labelColor = TextSecondary
                         ),
@@ -693,7 +694,7 @@ fun HistoryScreen(
                             enabled = true,
                             selected = selectedFilter == index,
                             borderColor = GlassStroke,
-                            selectedBorderColor = NeonCyan
+                            selectedBorderColor = AccentColor
                         ),
                         shape = RoundedCornerShape(12.dp)
                     )
@@ -714,6 +715,17 @@ fun HistoryScreen(
                 isIncome = item.isIncome
             )
         }
+
+    }
+
+    Text(
+        text = "Версия приложения: ${com.example.familibalance.BuildConfig.VERSION_NAME}",
+        color = TextSecondary.copy(alpha = 0.5f),
+        fontSize = 10.sp,
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = 8.dp)
+    )
     }
 
     if (showPendingSheet) {
@@ -840,7 +852,7 @@ internal fun PendingQuestsBottomSheet(
                                 )
                                 Text(
                                     text = item.rewardText,
-                                    color = NeonCyan,
+                                    color = AccentColor,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )

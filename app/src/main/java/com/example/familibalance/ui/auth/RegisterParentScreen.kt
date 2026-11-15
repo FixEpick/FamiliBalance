@@ -1,5 +1,6 @@
 package com.example.familibalance.ui.auth
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,6 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -33,6 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -44,9 +49,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.familibalance.ChildProfileState
 import com.example.familibalance.MainViewModel
+import com.example.familibalance.R
 import com.example.familibalance.ui.components.CyberBackground
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
+import com.example.familibalance.ui.components.LanguageSelectorButton
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import com.example.familibalance.viewmodel.AuthEvent
@@ -68,14 +75,14 @@ private val playerAvatars = listOf(
     "🦊", "👾", "🐼", "👽"
 )
 private val interestChips = listOf(
-    "💻 Кодинг" to "coding",
-    "🔬 Наука" to "science",
-    "🎮 Игры" to "games",
-    "🎨 Рисование" to "drawing",
-    "⚽ Спорт" to "sport",
-    "📚 Книги" to "books",
-    "🚀 Космос" to "space",
-    "🐶 Животные" to "animals"
+    R.string.interest_coding to "coding",
+    R.string.interest_science to "science",
+    R.string.interest_games to "games",
+    R.string.interest_drawing to "drawing",
+    R.string.interest_sport to "sport",
+    R.string.interest_books to "books",
+    R.string.interest_space to "space",
+    R.string.interest_animals to "animals"
 )
 
 private val CyberFieldColors
@@ -106,10 +113,29 @@ fun RegisterParentScreen(
     // Профиль, отправленный на подтверждение родителю (status = "pending")
     var pendingChild by remember { mutableStateOf<ChildProfileState?>(null) }
 
+    val context = LocalContext.current
+    var rememberMe by remember { mutableStateOf(false) }
+    // Вход родителя по email/паролю — доступен по ссылке внизу формы
+    var showParentLogin by remember { mutableStateOf(false) }
+
+    // Восстанавливаем «Запомнить меня»: подставляем сохранённый email
+    LaunchedEffect(Unit) {
+        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("is_remember_me", false)) {
+            rememberMe = true
+            prefs.getString("saved_admin_email", null)
+                ?.takeIf { it.isNotBlank() }
+                ?.let { viewModel.onEmailChange(it) }
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                AuthEvent.AuthSuccess -> onParentSuccess()
+                AuthEvent.AuthSuccess -> {
+                    saveRememberMe(context, viewModel.uiState.value.email.trim(), rememberMe)
+                    onParentSuccess()
+                }
                 AuthEvent.PlayerSuccess -> onPlayerSuccess()
             }
         }
@@ -149,60 +175,43 @@ fun RegisterParentScreen(
                         .clickable(onClick = onBack)
                         .padding(horizontal = 14.dp, vertical = 8.dp)
                 ) {
-                    Text("← Назад", color = CyberTextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.common_back), color = CyberTextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
                 Text(
-                    text = "Регистрация",
+                    text = stringResource(R.string.register_title),
                     color = CyberTextPrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.size(72.dp))
+                LanguageSelectorButton()
             }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Табы
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(CyberPanelBg)
-                    .border(1.dp, CyberSlateBorder, RoundedCornerShape(14.dp))
-                    .padding(4.dp)
-            ) {
-                listOf(true to "🚀 Новый игрок", false to "🛡️ Родитель").forEach { (isPlayer, label) ->
-                    val selected = state.isRegisterMode == isPlayer
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                if (selected) {
-                                    if (isPlayer) CyberLime.copy(alpha = 0.2f) else CyberSlate
-                                } else Color.Transparent
-                            )
-                            .clickable {
-                                if (!selected) viewModel.toggleAuthMode()
-                            }
-                            .padding(vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = label,
-                            color = if (selected) {
-                                if (isPlayer) CyberLime else CyberTextPrimary
-                            } else CyberTextSecondary,
-                            fontSize = 13.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
+            if (showParentLogin) {
+                ParentLoginForm(
+                    state = state,
+                    viewModel = viewModel,
+                    rememberMe = rememberMe,
+                    onRememberMeChange = { rememberMe = it }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { showParentLogin = false }
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.register_title),
+                        color = CyberLime,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            if (state.isRegisterMode) {
+            } else {
                 PlayerRegisterForm(
                     state = state,
                     viewModel = viewModel,
@@ -222,8 +231,25 @@ fun RegisterParentScreen(
                         )
                     }
                 )
-            } else {
-                ParentLoginForm(state = state, viewModel = viewModel)
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Скрытый вход для родителя (email/пароль Supabase Auth)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { showParentLogin = true }
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.parent_area_link),
+                        color = CyberTextSecondary,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
     }
@@ -237,7 +263,7 @@ private fun PlayerRegisterForm(
 ) {
     // Аватар — сетка 6 колонок
     Text(
-        text = "АВАТАР",
+        text = stringResource(R.string.reg_avatar),
         color = CyberTextSecondary,
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
@@ -283,7 +309,7 @@ private fun PlayerRegisterForm(
         OutlinedTextField(
             value = state.nickname,
             onValueChange = viewModel::onNicknameChange,
-            label = { Text("Никнейм") },
+            label = { Text(stringResource(R.string.reg_nickname)) },
             singleLine = true,
             colors = CyberFieldColors,
             modifier = Modifier.weight(1f)
@@ -291,7 +317,7 @@ private fun PlayerRegisterForm(
         OutlinedTextField(
             value = state.pin,
             onValueChange = viewModel::onPinChange,
-            label = { Text("ПИН") },
+            label = { Text(stringResource(R.string.reg_pin)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             colors = CyberFieldColors,
@@ -303,7 +329,7 @@ private fun PlayerRegisterForm(
 
     // Интересы — чипы мультивыбора
     Text(
-        text = "ИНТЕРЕСЫ",
+        text = stringResource(R.string.reg_interests),
         color = CyberTextSecondary,
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
@@ -313,7 +339,7 @@ private fun PlayerRegisterForm(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         interestChips.chunked(2).forEach { rowChips ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                rowChips.forEach { (label, id) ->
+                rowChips.forEach { (labelRes, id) ->
                     val selected = id in state.selectedInterests
                     Box(
                         modifier = Modifier
@@ -330,7 +356,7 @@ private fun PlayerRegisterForm(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = label,
+                            text = stringResource(labelRes),
                             color = if (selected) CyberLime else CyberTextPrimary,
                             fontSize = 13.sp,
                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
@@ -348,7 +374,7 @@ private fun PlayerRegisterForm(
     OutlinedTextField(
         value = state.parentEmail,
         onValueChange = viewModel::onParentEmailChange,
-        label = { Text("Email родителя") },
+        label = { Text(stringResource(R.string.reg_parent_email)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         colors = CyberFieldColors,
@@ -369,7 +395,7 @@ private fun PlayerRegisterForm(
     Spacer(modifier = Modifier.height(20.dp))
 
     GameButton(
-        text = "Создать героя и в бой!",
+        text = stringResource(R.string.reg_submit),
         emoji = "🚀",
         variant = GameButtonVariant.Lime,
         enabled = !state.isLoading && state.nickname.isNotBlank() && state.pin.length == 4,
@@ -377,10 +403,26 @@ private fun PlayerRegisterForm(
     )
 }
 
+private fun saveRememberMe(context: Context, email: String, remember: Boolean) {
+    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    prefs.edit()
+        .putBoolean("is_remember_me", remember)
+        .apply {
+            if (remember && email.isNotBlank()) {
+                putString("saved_admin_email", email)
+            } else {
+                remove("saved_admin_email")
+            }
+        }
+        .apply()
+}
+
 @Composable
 private fun ParentLoginForm(
     state: com.example.familibalance.viewmodel.AuthUiState,
-    viewModel: AuthViewModel
+    viewModel: AuthViewModel,
+    rememberMe: Boolean,
+    onRememberMeChange: (Boolean) -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(20.dp),
@@ -391,7 +433,7 @@ private fun ParentLoginForm(
             OutlinedTextField(
                 value = state.email,
                 onValueChange = viewModel::onEmailChange,
-                label = { Text("Email") },
+                label = { Text(stringResource(R.string.parent_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 colors = CyberFieldColors,
@@ -403,13 +445,38 @@ private fun ParentLoginForm(
             OutlinedTextField(
                 value = state.password,
                 onValueChange = viewModel::onPasswordChange,
-                label = { Text("Пароль") },
+                label = { Text(stringResource(R.string.parent_password)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 colors = CyberFieldColors,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // «Запомнить меня» — сохраняет email в SharedPreferences
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onRememberMeChange(!rememberMe) }
+                    .padding(vertical = 2.dp)
+            ) {
+                Checkbox(
+                    checked = rememberMe,
+                    onCheckedChange = onRememberMeChange,
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = CyberLime,
+                        uncheckedColor = CyberTextSecondary
+                    )
+                )
+                Text(
+                    text = stringResource(R.string.remember_me),
+                    color = CyberTextSecondary,
+                    fontSize = 13.sp
+                )
+            }
 
             state.errorMessage?.let { error ->
                 Spacer(modifier = Modifier.height(12.dp))
@@ -433,7 +500,7 @@ private fun ParentLoginForm(
                     .border(1.dp, CyberSlateBorder, RoundedCornerShape(10.dp))
                     .padding(3.dp)
             ) {
-                listOf(false to "🔑 Вход", true to "🚀 Регистрация").forEach { (isReg, label) ->
+                listOf(false to R.string.parent_login, true to R.string.parent_register).forEach { (isReg, labelRes) ->
                     val selected = state.isParentRegisterMode == isReg
                     Box(
                         modifier = Modifier
@@ -445,7 +512,7 @@ private fun ParentLoginForm(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = label,
+                            text = stringResource(labelRes),
                             color = if (selected) CyberLime else CyberTextSecondary,
                             fontSize = 12.sp,
                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
@@ -457,7 +524,7 @@ private fun ParentLoginForm(
             Spacer(modifier = Modifier.height(16.dp))
 
             GameButton(
-                text = if (state.isParentRegisterMode) "Создать аккаунт родителя" else "Войти",
+                text = stringResource(if (state.isParentRegisterMode) R.string.parent_btn_register else R.string.parent_btn_login),
                 emoji = "🔑",
                 variant = GameButtonVariant.Electric,
                 enabled = !state.isLoading,
@@ -469,7 +536,7 @@ private fun ParentLoginForm(
             Spacer(modifier = Modifier.height(10.dp))
 
             Text(
-                text = "Нет аккаунта? Зарегистрируйтесь через кнопку выше на вкладке «Новый игрок» или попросите администратора.",
+                text = stringResource(R.string.parent_no_account),
                 color = CyberTextSecondary,
                 fontSize = 11.sp,
                 textAlign = TextAlign.Center,
@@ -518,7 +585,7 @@ private fun PendingRequestScreen(
         Text("⏳", fontSize = 64.sp)
         Spacer(modifier = Modifier.height(20.dp))
         Text(
-            text = "ЗАПРОС ОТПРАВЛЕН!",
+            text = stringResource(R.string.pending_title),
             color = CyberLime,
             fontSize = 18.sp,
             fontWeight = FontWeight.Black,
@@ -527,21 +594,21 @@ private fun PendingRequestScreen(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "${child.avatar} ${child.name} ждёт подтверждения родителя.",
+            text = stringResource(R.string.pending_waiting, child.avatar, child.name),
             color = CyberTextPrimary,
             fontSize = 15.sp,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "Как только родитель нажмёт «Одобрить» в своём приложении, этот экран откроется автоматически.",
+            text = stringResource(R.string.pending_hint),
             color = CyberTextSecondary,
             fontSize = 13.sp,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         Text(
-            text = "Проверяем статус…",
+            text = stringResource(R.string.pending_checking),
             color = CyberTextSecondary,
             fontSize = 12.sp
         )

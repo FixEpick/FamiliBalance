@@ -3,7 +3,6 @@ package com.example.familibalance.ui.auth
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,10 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,13 +29,16 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.R
 import com.example.familibalance.ui.components.CyberBackground
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
+import com.example.familibalance.ui.components.LanguageSelectorButton
 
 private val CyberTextPrimary = Color(0xFFE2E8F0)
 private val CyberTextSecondary = Color(0xFF94A3B8)
@@ -178,11 +176,8 @@ private fun RobotMascot(modifier: Modifier = Modifier) {
 fun WelcomeScreen(
     onPlayerClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    onParentGatePassed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showParentGate by remember { mutableStateOf(false) }
-
     Box(modifier = modifier.fillMaxSize()) {
         CyberBackground()
 
@@ -197,7 +192,7 @@ fun WelcomeScreen(
             // Верх: логотип
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "КВЕСТЛАБ",
+                    text = stringResource(R.string.app_title_welcome),
                     color = CyberLime,
                     fontSize = 36.sp,
                     fontWeight = FontWeight.Black,
@@ -205,7 +200,7 @@ fun WelcomeScreen(
                 )
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = "Семейная квестовая вселенная",
+                    text = stringResource(R.string.welcome_subtitle),
                     color = CyberTextSecondary,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center
@@ -214,7 +209,7 @@ fun WelcomeScreen(
 
             // Центр: облачко + робот
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                SpeechBubble(text = "Привет, космический исследователь! Готов к новым квестам? 🚀")
+                SpeechBubble(text = stringResource(R.string.welcome_greeting))
                 Spacer(modifier = Modifier.height(14.dp))
                 RobotMascot()
             }
@@ -226,7 +221,7 @@ fun WelcomeScreen(
             ) {
                 // «Я Игрок» — неоновое свечение
                 GameButton(
-                    text = "Я Игрок",
+                    text = stringResource(R.string.welcome_btn_player),
                     emoji = "🎮",
                     variant = GameButtonVariant.Lime,
                     onClick = onPlayerClick,
@@ -242,41 +237,18 @@ fun WelcomeScreen(
 
                 // «Создать аккаунт» — тёмная с неоновой рамкой
                 GameButton(
-                    text = "Создать новый аккаунт игрока",
+                    text = stringResource(R.string.welcome_btn_create),
                     emoji = "➕",
                     variant = GameButtonVariant.Slate,
                     onClick = onRegisterClick
                 )
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                Row(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable { showParentGate = true }
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("🛡️", fontSize = 16.sp)
-                    Spacer(modifier = Modifier.size(8.dp))
-                    Text(
-                        text = "Для родителей",
-                        color = CyberTextSecondary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
             }
         }
-    }
 
-    if (showParentGate) {
-        ParentGateDialog(
-            onSuccess = {
-                showParentGate = false
-                onParentGatePassed()
-            },
-            onDismiss = { showParentGate = false }
+        LanguageSelectorButton(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 20.dp, end = 16.dp)
         )
     }
 }

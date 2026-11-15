@@ -3,9 +3,6 @@ package com.example.familibalance.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
-object LoginRoute
-
-@Serializable
 object WelcomeRoute
 
 @Serializable

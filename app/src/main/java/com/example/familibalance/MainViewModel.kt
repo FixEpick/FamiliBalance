@@ -1,6 +1,8 @@
 package com.example.familibalance
 
 import android.app.Application
+import android.content.Context
+import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.data.auth.AuthRepository
@@ -62,6 +64,15 @@ class MainViewModel(
         }
     }
 
+    /**
+     * ID ребёнка для автовхода при перезапуске приложения.
+     * Заполняется в init после загрузки локального стейта, если в app_prefs
+     * стоит флаг is_logged_in и профиль найден. MainActivity по этому
+     * значению сразу открывает ChildSection без WelcomeScreen.
+     */
+    private val _autoLoginChildId = MutableStateFlow<String?>(null)
+    val autoLoginChildId: StateFlow<String?> = _autoLoginChildId.asStateFlow()
+
     fun resetDiaryScanState() {
         _diaryScanState.value = DiaryScanState.Idle
     }
@@ -100,6 +111,26 @@ class MainViewModel(
             }
             checkResets()
             emitFamilyState()
+
+            // Автовход ребёнка: локальные флаги в app_prefs + профиль должен
+            // существовать в загруженном стейте. Иначе флаг сбрасываем.
+            val prefs = getApplication<Application>()
+                .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            val savedChildId = prefs.getString("logged_in_child_id", null)
+            if (prefs.getBoolean("is_logged_in", false)) {
+                if (!savedChildId.isNullOrBlank() &&
+                    AppSharedState.children.containsKey(savedChildId)
+                ) {
+                    AppSharedState.selectedChildId = savedChildId
+                    emitFamilyState()
+                    _autoLoginChildId.value = savedChildId
+                } else {
+                    prefs.edit()
+                        .putBoolean("is_logged_in", false)
+                        .remove("logged_in_child_id")
+                        .apply()
+                }
+            }
         }
         // Realtime/первичная загрузка из облака меняет AppSharedState напрямую —
         // подписываемся, чтобы UI получил новый снимок состояния.
@@ -176,6 +207,8 @@ class MainViewModel(
     /** Переключает активного ребёнка и эмитит новое состояние. pushRemote — полная синхронизация с Supabase. */
     fun selectChild(childId: String, pushRemote: Boolean = false) {
         familyRepository.selectChild(childId, pushRemote)
+        // Сбрасываем стейт OCR-дневника: результат скана привязан к конкретному ребёнку
+        _diaryScanState.value = DiaryScanState.Idle
         emitFamilyState()
     }
 
@@ -233,6 +266,16 @@ class MainViewModel(
             if (isParentSession && email.isNotBlank()) {
                 runCatching { AuthRepository().linkChildToParent(childId, email) }
             }
+            // Новый ребёнок сразу считается вошедшим (status = active)
+            if (status == "active") {
+                getApplication<Application>()
+                    .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    .edit()
+                    .putBoolean("is_logged_in", true)
+                    .putString("logged_in_child_id", childId)
+                    .putBoolean("is_admin_logged_in", false)
+                    .apply()
+            }
             onResult?.invoke(profile)
         }
     }
@@ -241,6 +284,65 @@ class MainViewModel(
     fun updateChildPin(childId: String, newPin: String) {
         val child = familyRepository.getChild(childId) ?: return
         updateChildProfile(child.copy(pinCode = PinHasher.hash(newPin)))
+    }
+
+    /**
+     * Вход ребёнка по email родителя + имени + PIN.
+     * При успехе: профиль импортируется в локальный стейт, сохраняется
+     * ANDROID_ID устройства (для будущих пушей) и выбирается активным.
+     */
+    fun loginChild(
+        parentEmail: String,
+        childName: String,
+        pin: String,
+        onResult: (Boolean) -> Unit
+    ) {
+        viewModelScope.launch {
+            val repo = runCatching { AuthRepository() }.getOrNull()
+            if (repo == null) {
+                onResult(false)
+                return@launch
+            }
+            val profile = runCatching {
+                repo.findChildProfile(parentEmail, childName, pin)
+            }.getOrNull()
+            if (profile == null) {
+                onResult(false)
+                return@launch
+            }
+            val deviceId = Settings.Secure.getString(
+                getApplication<Application>().contentResolver,
+                Settings.Secure.ANDROID_ID
+            ).orEmpty()
+            val updated = profile.copy(deviceId = deviceId)
+            AppSharedState.children[updated.id] = updated
+            selectChild(updated.id)
+            // Досылаем deviceId в Supabase (профиль пометится dirty до подтверждения)
+            familyRepository.pushChildProfile(updated)
+            // Флаги автовхода: при следующем запуске откроем ChildSection без Welcome
+            getApplication<Application>()
+                .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean("is_logged_in", true)
+                .putString("logged_in_child_id", updated.id)
+                .putBoolean("is_admin_logged_in", false)
+                .apply()
+            onResult(true)
+        }
+    }
+
+    /** Выход ребёнка: сбрасываем выбор активного профиля, UI-стейты и флаги автовхода. */
+    fun logoutChild() {
+        AppSharedState.selectedChildId = ""
+        _diaryScanState.value = DiaryScanState.Idle
+        getApplication<Application>()
+            .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("is_logged_in", false)
+            .remove("logged_in_child_id")
+            .apply()
+        familyRepository.saveLocal()
+        emitFamilyState()
     }
 
     /** Очистка состояния при выходе из аккаунта: профили и выбор не должны «протекать» другой семье. */
@@ -262,20 +364,77 @@ class MainViewModel(
         val weekStart = todayDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val children = familyRepository.getAllChildren()
 
+        fun parseResetDate(raw: String): LocalDate? =
+            if (raw.isBlank()) null
+            else runCatching { LocalDate.parse(raw) }.getOrNull()
+
+        /**
+         * Проверяет встроенный квест: истёк ли его период (день/неделя).
+         * Возвращает новую дату сброса и флаг очистки статуса.
+         * Пустая дата — первый запуск: только ставим метку, статус не трогаем.
+         * PENDING-квесты не сбрасываются (родитель ещё не проверил).
+         */
+        fun checkBuiltInQuest(
+            frequency: QuestFrequency,
+            lastResetDate: String,
+            status: QuestStatus
+        ): Pair<String, Boolean> {
+            val parsed = parseResetDate(lastResetDate)
+                ?: return today to false
+            val elapsed = when (frequency) {
+                QuestFrequency.DAILY -> parsed.isBefore(todayDate)
+                QuestFrequency.WEEKLY -> parsed.isBefore(weekStart)
+                QuestFrequency.ONCE -> false
+            }
+            return if (elapsed) today to (status != QuestStatus.PENDING) else lastResetDate to false
+        }
+
         children.forEach { child ->
             var updated = child
 
             if (child.lastDailyResetDate != today) {
+                updated = updated.copy(lastDailyResetDate = today)
+            }
+
+            // Шкаф
+            val (closetDate, closetClear) = checkBuiltInQuest(
+                child.wardrobeFrequency, child.closetResetDate, child.closetStatus
+            )
+            if (closetDate != child.closetResetDate || closetClear) {
                 updated = updated.copy(
-                    lastDailyResetDate = today,
-                    closetStatus = QuestStatus.AVAILABLE,
-                    closetRejectReason = null,
-                    closetPhotoUrl = null,
-                    closetComment = "",
-                    roomStatus = QuestStatus.AVAILABLE,
-                    roomRejectReason = null,
-                    roomPhotoUrl = null,
-                    roomComment = ""
+                    closetResetDate = closetDate,
+                    closetStatus = if (closetClear) QuestStatus.AVAILABLE else child.closetStatus,
+                    closetRejectReason = if (closetClear) null else child.closetRejectReason,
+                    closetPhotoUrl = if (closetClear) null else child.closetPhotoUrl,
+                    closetComment = if (closetClear) "" else child.closetComment
+                )
+            }
+
+            // Комната
+            val (roomDate, roomClear) = checkBuiltInQuest(
+                child.roomFrequency, child.roomResetDate, child.roomStatus
+            )
+            if (roomDate != child.roomResetDate || roomClear) {
+                updated = updated.copy(
+                    roomResetDate = roomDate,
+                    roomStatus = if (roomClear) QuestStatus.AVAILABLE else child.roomStatus,
+                    roomRejectReason = if (roomClear) null else child.roomRejectReason,
+                    roomPhotoUrl = if (roomClear) null else child.roomPhotoUrl,
+                    roomComment = if (roomClear) "" else child.roomComment
+                )
+            }
+
+            // Дневник
+            val (diaryDate, diaryClear) = checkBuiltInQuest(
+                child.diaryFrequency, child.diaryResetDate, child.diaryStatus
+            )
+            if (diaryDate != child.diaryResetDate || diaryClear) {
+                updated = updated.copy(
+                    diaryResetDate = diaryDate,
+                    diaryStatus = if (diaryClear) QuestStatus.AVAILABLE else child.diaryStatus,
+                    diaryRejectReason = if (diaryClear) null else child.diaryRejectReason,
+                    diaryPhotoUrl = if (diaryClear) null else child.diaryPhotoUrl,
+                    diaryComment = if (diaryClear) "" else child.diaryComment
                 )
             }
 

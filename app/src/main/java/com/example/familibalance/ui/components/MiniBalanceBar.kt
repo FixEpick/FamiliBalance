@@ -48,7 +48,7 @@ fun MiniBalanceBar(
             }
             Text(
                 text = "$balance ₽",
-                color = NeonCyan,
+                color = AccentColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )

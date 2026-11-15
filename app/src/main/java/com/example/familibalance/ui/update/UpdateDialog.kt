@@ -52,7 +52,7 @@ fun UpdateDialog(
                         .joinToString("\n")
                     if (notes.isNotBlank()) {
                         Text(
-                            notes + if (state.release.body.lines().size > 10) "\n..." else "",
+                            stripMarkdown(notes) + if (state.release.body.lines().size > 10) "\n..." else "",
                             fontSize = 13.sp,
                             lineHeight = 18.sp
                         )
@@ -145,4 +145,19 @@ fun UpdateDialog(
             }
         )
     }
+}
+
+/** Убирает базовую Markdown-разметку из Release Notes GitHub для чистого отображения. */
+private fun stripMarkdown(text: String): String {
+    return text
+        .replace(Regex("```[\\s\\S]*?```"), "")          // блоки кода
+        .replace(Regex("`([^`]+)`"), "$1")               // инлайн-код
+        .replace(Regex("^#{1,6}\\s*", RegexOption.MULTILINE), "") // заголовки
+        .replace(Regex("\\*\\*([^*]+)\\*\\*"), "$1")     // жирный **
+        .replace(Regex("__([^_]+)__"), "$1")             // жирный __
+        .replace(Regex("\\*([^*\\n]+)\\*"), "$1")        // курсив *
+        .replace(Regex("~~([^~]+)~~"), "$1")             // зачёркнутый
+        .replace(Regex("\\[([^\\]]+)\\]\\([^)]+\\)"), "$1") // ссылки [text](url)
+        .replace(Regex("^\\s*[-*+]\\s+", RegexOption.MULTILINE), "• ") // маркеры списков
+        .replace(Regex("^\\s*\\d+\\.\\s+", RegexOption.MULTILINE), "• ") // нумерованные списки
 }

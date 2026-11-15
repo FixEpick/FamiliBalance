@@ -78,11 +78,11 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = GlassBackground),
-                border = BorderStroke(1.dp, NeonCyan.copy(alpha = 0.6f))
+                border = BorderStroke(1.dp, AccentColor.copy(alpha = 0.6f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     if (child.dreamTarget > 0) {
-                        Text("🎯 Цель-мечта: ${child.dreamTitle}", color = NeonCyan, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text("🎯 Цель-мечта: ${child.dreamTitle}", color = AccentColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text("Накоплено: ${child.balance} ₽ из ${child.dreamTarget} ₽", color = TextPrimary, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(12.dp))
@@ -95,8 +95,8 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                         },
                         modifier = Modifier.fillMaxWidth().height(48.dp),
                         shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, NeonCyan),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
+                        border = BorderStroke(1.dp, AccentColor),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor)
                     ) {
                         Text(if (child.dreamTarget > 0) "✏️ Изменить цель" else "🎯 Задать цель", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
@@ -117,7 +117,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Выполнено квестов", color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text("$completedQuests", color = NeonCyan, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                            Text("$completedQuests", color = AccentColor, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         }
                         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Всего заработано", color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
@@ -138,8 +138,8 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                 onClick = { showAchievementsDialog = true },
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, NeonCyan),
-                colors = ButtonDefaults.outlinedButtonColors(containerColor = GlassBackground, contentColor = NeonCyan)
+                border = BorderStroke(1.dp, AccentColor),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = GlassBackground, contentColor = AccentColor)
             ) {
                 Text("🏅 Достижения (${allAchievements.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
@@ -149,7 +149,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
         AlertDialog(
             onDismissRequest = { showDreamGoalDialog = false },
             containerColor = SpaceBgStart,
-            title = { Text(if (child.dreamTarget > 0) "✏️ Изменить цель" else "🎯 Задать цель", color = NeonCyan, fontWeight = FontWeight.Bold) },
+            title = { Text(if (child.dreamTarget > 0) "✏️ Изменить цель" else "🎯 Задать цель", color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(value = dreamTitle, onValueChange = { dreamTitle = it }, label = { Text("Название цели", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
@@ -159,7 +159,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
             confirmButton = {
                 Button(
                     enabled = dreamTitle.isNotBlank() && dreamTargetVal > 0,
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = SpaceBgStart, disabledContainerColor = NeonCyan.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
                     onClick = { viewModel.setDreamGoal(child.id, dreamTitle.trim(), dreamTargetVal); showDreamGoalDialog = false }
                 ) { Text("Сохранить", fontWeight = FontWeight.Bold) }
             },
@@ -170,7 +170,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
         AlertDialog(
             onDismissRequest = { showAchievementsDialog = false },
             containerColor = SpaceBgStart,
-            title = { Text("🏅 Достижения (${allAchievements.size})", color = NeonCyan, fontWeight = FontWeight.Bold) },
+            title = { Text("🏅 Достижения (${allAchievements.size})", color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier
@@ -184,7 +184,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showAchievementsDialog = false }) { Text("Закрыть", color = NeonCyan, fontWeight = FontWeight.Bold) } }
+            confirmButton = { TextButton(onClick = { showAchievementsDialog = false }) { Text("Закрыть", color = AccentColor, fontWeight = FontWeight.Bold) } }
         )
     }
 }

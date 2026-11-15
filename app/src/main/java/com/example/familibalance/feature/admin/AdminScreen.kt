@@ -57,9 +57,13 @@ import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 
+import androidx.annotation.StringRes
+import androidx.compose.ui.res.stringResource
 import com.example.familibalance.R
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.ui.theme.*
+import com.example.familibalance.ui.components.DoubleBackToExitHandler
+import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.CashoutStatus
 
 import com.example.familibalance.*
@@ -67,11 +71,11 @@ import com.example.familibalance.viewmodel.actions.*
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 
-sealed class AdminScreenType(val title: String, val icon: String) {
-    object Verification : AdminScreenType("Проверка", "🛡️")
-    object Progress : AdminScreenType("Прогресс", "📊")
-    object History : AdminScreenType("История", "📜")
-    object Settings : AdminScreenType("Настройки", "⚙️")
+sealed class AdminScreenType(@StringRes val titleRes: Int, val icon: String) {
+    object Verification : AdminScreenType(R.string.nav_verify, "🛡️")
+    object Progress : AdminScreenType(R.string.nav_progress, "📊")
+    object History : AdminScreenType(R.string.nav_history, "📜")
+    object Settings : AdminScreenType(R.string.nav_settings, "⚙️")
 }
 
 private data class AdminTab(
@@ -155,6 +159,12 @@ fun AdminScreen(
         }
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    DoubleBackToExitHandler(
+        snackbarHostState = snackbarHostState,
+        message = stringResource(R.string.back_exit_hint)
+    )
+
     val hasPending = child.closetStatus == QuestStatus.PENDING
         || child.roomStatus == QuestStatus.PENDING
         || child.diaryStatus == QuestStatus.PENDING
@@ -166,7 +176,7 @@ fun AdminScreen(
         AlertDialog(
             onDismissRequest = { showCashOutDialog = false },
             containerColor = SpaceBgStart,
-            title = { Text("💵 Выдача наличных", color = NeonCyan, fontWeight = FontWeight.Bold) },
+            title = { Text("💵 Выдача наличных", color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     "Выдать ${child.name} ${child.balance} ₽ наличными и обнулить баланс в Космо-банке?",
@@ -179,7 +189,7 @@ fun AdminScreen(
                         viewModel.adminCashoutAll(child.id)
                         showCashOutDialog = false
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan, contentColor = SpaceBgStart),
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text("Выдать и обнулить", fontWeight = FontWeight.Bold)
@@ -215,6 +225,7 @@ fun AdminScreen(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
@@ -243,14 +254,17 @@ fun AdminScreen(
                             }
                         }
 
-                        OutlinedButton(
-                            onClick = onSwitchProfile,
-                            border = BorderStroke(1.dp, GlassStroke),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
-                            shape = RoundedCornerShape(10.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text("🔄 Сменить", fontSize = 12.sp)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            LanguageSelectorButton()
+                            OutlinedButton(
+                                onClick = onSwitchProfile,
+                                border = BorderStroke(1.dp, GlassStroke),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                            ) {
+                                Text("🔄 Сменить", fontSize = 12.sp)
+                            }
                         }
                     }
 
@@ -268,8 +282,8 @@ fun AdminScreen(
                                     viewModel.selectChild(profile.id, pushRemote = true)
                                 },
                                 shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) NeonCyan.copy(alpha = 0.25f) else GlassBackground,
-                                border = BorderStroke(1.dp, if (isSelected) NeonCyan else GlassStroke),
+                                color = if (isSelected) AccentColor.copy(alpha = 0.25f) else GlassBackground,
+                                border = BorderStroke(1.dp, if (isSelected) AccentColor else GlassStroke),
                                 modifier = Modifier
                                     .weight(1f)
                                     .height(42.dp)
@@ -277,7 +291,7 @@ fun AdminScreen(
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
                                         text = "${profile.avatar} ${profile.name}",
-                                        color = if (isSelected) NeonCyan else TextSecondary,
+                                        color = if (isSelected) AccentColor else TextSecondary,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
                                     )
@@ -299,7 +313,7 @@ fun AdminScreen(
                             icon = {
                                 Text(adminTab.tab.icon, fontSize = 20.sp)
                             },
-                            label = { Text(adminTab.tab.title, color = if (adminTab.route == selectedTabRoute) NeonCyan else TextSecondary) },
+                            label = { Text(stringResource(adminTab.tab.titleRes), color = if (adminTab.route == selectedTabRoute) AccentColor else TextSecondary) },
                             colors = NavigationBarItemDefaults.colors(indicatorColor = GlassStroke)
                         )
                     }

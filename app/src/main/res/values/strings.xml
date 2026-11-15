@@ -1,3 +1,98 @@
 <resources>
     <string name="app_name">FamiliBalance</string>
+
+    <!-- Welcome -->
+    <string name="welcome_subtitle">Семейная квестовая вселенная</string>
+    <string name="welcome_greeting">Привет, космический исследователь! Готов к новым квестам? 🚀</string>
+    <string name="welcome_btn_player">Войти</string>
+    <string name="welcome_btn_create">Зарегистрироваться</string>
+
+    <!-- Common -->
+    <string name="common_back">← Назад</string>
+    <string name="back_exit_hint">Нажмите «Назад» ещё раз, чтобы выйти из приложения</string>
+    <string name="remember_me">Запомнить меня</string>
+
+    <!-- Player login -->
+    <string name="login_title">Вход на станцию</string>
+    <string name="login_empty_title">Пока нет ни одного игрока</string>
+    <string name="login_empty_subtitle">Создай первый аккаунт, чтобы начать квесты</string>
+    <string name="login_create_account">Создать аккаунт</string>
+    <string name="login_level">Ур. %1$d • 🔥%2$d</string>
+    <string name="login_pin_title">Секретный ПИН-код</string>
+    <string name="login_pin_error">Неверный ПИН-код</string>
+    <string name="login_field_email">Email родителя</string>
+    <string name="login_field_name">Имя ребёнка</string>
+    <string name="login_field_pin">PIN-код (4 цифры)</string>
+    <string name="login_submit">Войти</string>
+    <string name="login_error">Неверные данные или PIN</string>
+    <string name="login_loading">Входим…</string>
+    <string name="parent_area_link">👑 Вход для родителей</string>
+
+    <!-- Register / auth -->
+    <string name="register_title">Регистрация</string>
+    <string name="tab_new_player">🚀 Новый игрок</string>
+    <string name="tab_parent">🛡️ Родитель</string>
+    <string name="reg_avatar">АВАТАР</string>
+    <string name="reg_nickname">Никнейм</string>
+    <string name="reg_pin">ПИН</string>
+    <string name="reg_interests">ИНТЕРЕСЫ</string>
+    <string name="interest_coding">💻 Кодинг</string>
+    <string name="interest_science">🔬 Наука</string>
+    <string name="interest_games">🎮 Игры</string>
+    <string name="interest_drawing">🎨 Рисование</string>
+    <string name="interest_sport">⚽ Спорт</string>
+    <string name="interest_books">📚 Книги</string>
+    <string name="interest_space">🚀 Космос</string>
+    <string name="interest_animals">🐶 Животные</string>
+    <string name="reg_parent_email">Email родителя</string>
+    <string name="reg_submit">Создать героя и в бой!</string>
+    <string name="parent_email">Email</string>
+    <string name="parent_password">Пароль</string>
+    <string name="parent_login">🔑 Вход</string>
+    <string name="parent_register">🚀 Регистрация</string>
+    <string name="parent_btn_register">Создать аккаунт родителя</string>
+    <string name="parent_btn_login">Войти</string>
+    <string name="parent_no_account">Нет аккаунта? Зарегистрируйтесь через кнопку выше на вкладке «Новый игрок» или попросите администратора.</string>
+
+    <!-- Pending request -->
+    <string name="pending_title">ЗАПРОС ОТПРАВЛЕН!</string>
+    <string name="pending_waiting">%1$s %2$s ждёт подтверждения родителя.</string>
+    <string name="pending_hint">Как только родитель нажмёт «Одобрить» в своём приложении, этот экран откроется автоматически.</string>
+    <string name="pending_checking">Проверяем статус…</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Главная</string>
+    <string name="nav_quests">Задания</string>
+    <string name="nav_achievements">Достижения</string>
+    <string name="nav_history">История</string>
+    <string name="nav_verify">Проверка</string>
+    <string name="nav_progress">Прогресс</string>
+    <string name="nav_settings">Настройки</string>
+
+    <!-- Settings -->
+    <string name="settings_language">🌐 Язык интерфейса</string>
+
+    <!-- Language selector -->
+    <string name="language_sheet_title">Выберите язык</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_en">English</string>
+
+    <!-- App title / PIN dialogs -->
+    <string name="app_title_welcome">КВЕСТЛАБ</string>
+    <string name="pin_parent_check_title">ПРОВЕРКА РОДИТЕЛЯ</string>
+    <string name="pin_parent_check_subtitle">Введи родительский ПИН-код</string>
+    <string name="pin_parent_title">РОДИТЕЛЬСКИЙ ПИН-КОД</string>
+    <string name="pin_parent_step1">Введи текущий ПИН</string>
+    <string name="pin_parent_step2">Придумай новый ПИН (4 цифры)</string>
+    <string name="pin_wrong_current">НЕВЕРНЫЙ ТЕКУЩИЙ ПИН</string>
+    <string name="pin_child_title">ПИН-КОД ИГРОКА</string>
+    <string name="pin_child_subtitle">Новый ПИН для %1$s</string>
+    <string name="action_back">Назад</string>
+    <string name="action_cancel">Отмена</string>
+
+    <!-- Logout -->
+    <string name="logout_button">Выйти / Сменить пользователя</string>
+    <string name="logout_title">Выход</string>
+    <string name="logout_message">Вы уверены, что хотите выйти? Вы сможете снова войти, используя email родителя, имя и PIN-код</string>
+    <string name="logout_confirm">Выйти</string>
 </resources>

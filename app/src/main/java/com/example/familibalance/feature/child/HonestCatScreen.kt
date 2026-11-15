@@ -135,13 +135,13 @@ fun HonestCatScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Surface(
-                    color = NeonCyan.copy(alpha = 0.2f),
-                    border = BorderStroke(1.dp, NeonCyan),
+                    color = AccentColor.copy(alpha = 0.2f),
+                    border = BorderStroke(1.dp, AccentColor),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
                         text = "✨ Бонус: Штраф в половину!",
-                        color = NeonCyan,
+                        color = AccentColor,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
@@ -173,7 +173,7 @@ fun HonestCatScreen(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = GlassBackground,
                 unfocusedContainerColor = GlassBackground,
-                focusedBorderColor = NeonCyan,
+                focusedBorderColor = AccentColor,
                 unfocusedBorderColor = GlassStroke,
                 focusedTextColor = TextPrimary,
                 unfocusedTextColor = TextPrimary
@@ -186,7 +186,7 @@ fun HonestCatScreen(
         Button(
             onClick = onSendClick,
             colors = ButtonDefaults.buttonColors(
-                containerColor = NeonCyan,
+                containerColor = AccentColor,
                 contentColor = SpaceBgStart
             ),
             shape = RoundedCornerShape(16.dp),

@@ -65,6 +65,12 @@ import com.example.familibalance.feature.child.components.*
 import com.example.familibalance.ui.components.*
 import com.example.familibalance.viewmodel.actions.*
 
+private fun builtInFreqBadge(frequency: QuestFrequency): String = when (frequency) {
+    QuestFrequency.DAILY -> "Ежедневный"
+    QuestFrequency.WEEKLY -> "Еженедельный"
+    QuestFrequency.ONCE -> "Разовый"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(
@@ -216,7 +222,7 @@ fun TasksScreen(
                         title = child.wardrobeTitle,
                         description = child.wardrobeDesc,
                         reward = "+${child.wardrobeReward} ₽",
-                        frequencyBadge = "Ежедневный",
+                        frequencyBadge = builtInFreqBadge(child.wardrobeFrequency),
                         status = closetStatus,
                         rejectReason = child.closetRejectReason,
                         onExecute = {
@@ -236,7 +242,7 @@ fun TasksScreen(
                         title = child.roomTitle,
                         description = child.roomDesc,
                         reward = "+${child.roomReward} ₽",
-                        frequencyBadge = "Ежедневный",
+                        frequencyBadge = builtInFreqBadge(child.roomFrequency),
                         status = roomStatus,
                         rejectReason = child.roomRejectReason,
                         onExecute = {
@@ -257,7 +263,7 @@ fun TasksScreen(
                         title = child.diaryTitle,
                         description = child.diaryDesc,
                         reward = "от +30 ₽ до ∞",
-                        frequencyBadge = "Еженедельный",
+                        frequencyBadge = builtInFreqBadge(child.diaryFrequency),
                         status = diaryStatus,
                         rejectReason = child.diaryRejectReason,
                         claimButtonText = diaryClaimText,

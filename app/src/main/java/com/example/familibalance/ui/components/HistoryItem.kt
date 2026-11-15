@@ -60,7 +60,7 @@ fun HistoryItem(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = amount,
-                    color = if (isIncome) NeonCyan else PenaltyRed,
+                    color = if (isIncome) AccentColor else PenaltyRed,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )

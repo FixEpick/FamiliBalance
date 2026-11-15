@@ -385,3 +385,15 @@ fun MainViewModel.updateBuiltInQuest(userId: String, kind: String, title: String
     }
     updateChildProfile(updated)
 }
+
+/** Админ меняет частоту встроенного квеста (шкаф/комната/дневник): DAILY / WEEKLY. */
+fun MainViewModel.updateBuiltInQuestFrequency(userId: String, kind: String, frequency: QuestFrequency) {
+    val profile = familyRepository.getChild(userId) ?: return
+    val updated = when (kind) {
+        "wardrobe", "closet", "шкаф" -> profile.copy(wardrobeFrequency = frequency)
+        "room", "комната" -> profile.copy(roomFrequency = frequency)
+        "diary", "дневник" -> profile.copy(diaryFrequency = frequency)
+        else -> profile
+    }
+    updateChildProfile(updated)
+}

@@ -57,7 +57,7 @@ object UpdateChecker {
                     Log.w(TAG, "GitHub API вернул ${response.code}")
                     return@withContext UpdateResult.Error("HTTP ${response.code}")
                 }
-                val json = response.body?.string() ?: return@withContext UpdateResult.Error("Пустой ответ")
+                val json = response.body.string()
                 val release = parseRelease(json) ?: return@withContext UpdateResult.Error("Не удалось разобрать релиз")
 
                 if (VersionComparator.isNewer(currentVersion, release.tagName)) {
@@ -93,7 +93,7 @@ object UpdateChecker {
                     val asset = assets.optJSONObject(i) ?: continue
                     val name = asset.optString("name", "")
                     if (name.endsWith(".apk", ignoreCase = true)) {
-                        apkUrl = asset.optString("browser_download_url", null)
+                        apkUrl = asset.optString("browser_download_url").ifEmpty { null }
                         break
                     }
                 }

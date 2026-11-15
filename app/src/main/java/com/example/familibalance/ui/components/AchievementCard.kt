@@ -79,7 +79,7 @@ fun AchievementCard(
                 ) {
                     Text(
                         text = displayReward,
-                        color = if (isLocked) TextSecondary else NeonCyan,
+                        color = if (isLocked) TextSecondary else AccentColor,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -104,10 +104,10 @@ fun AchievementCard(
         if (isReadyToClaim && onClaimClick != null) {
             Spacer(modifier = Modifier.height(8.dp))
             Button(
-                onClick = { onClaimClick?.invoke() },
+                onClick = { onClaimClick() },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = NeonCyan,
+                    containerColor = AccentColor,
                     contentColor = TextPrimary
                 ),
                 shape = RoundedCornerShape(12.dp)

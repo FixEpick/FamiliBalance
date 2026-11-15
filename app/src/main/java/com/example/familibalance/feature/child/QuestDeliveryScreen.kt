@@ -272,8 +272,8 @@ fun QuestDeliveryScreen(
                 onClick = { checkAndLaunchCamera() },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, NeonCyan),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = NeonCyan)
+                border = BorderStroke(1.dp, AccentColor),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor)
             ) {
                 Text("🔄 Переснять фото")
             }
@@ -298,7 +298,7 @@ fun QuestDeliveryScreen(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedContainerColor = GlassBackground,
                 unfocusedContainerColor = GlassBackground,
-                focusedBorderColor = NeonCyan,
+                focusedBorderColor = AccentColor,
                 unfocusedBorderColor = GlassStroke,
                 focusedTextColor = TextPrimary,
                 unfocusedTextColor = TextPrimary
@@ -312,7 +312,7 @@ fun QuestDeliveryScreen(
             onClick = { onSendClick(commentText, capturedImageUri) },
             enabled = capturedImageUri != null,
             colors = ButtonDefaults.buttonColors(
-                containerColor = NeonCyan,
+                containerColor = AccentColor,
                 contentColor = SpaceBgStart,
                 disabledContainerColor = GlassBackground,
                 disabledContentColor = TextSecondary

@@ -1,5 +1,6 @@
 package com.example.familibalance.ui.theme
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 val SpaceBgStart = Color(0xFF0F122B)
@@ -7,6 +8,10 @@ val SpaceBgEnd = Color(0xFF070919)
 val GlassBackground = Color(0xFF0D132B).copy(alpha = 0.82f)
 val GlassStroke = Color(0x4D4D90FF)
 val NeonCyan = Color(0xFF5CE1E6)
+
+/** Акцентный цвет текущей темы (primaryNeon палитры). Использовать вместо NeonCyan в Composable. */
+val AccentColor: Color
+    @Composable get() = LocalAppPalette.current.primaryNeon
 val TextPrimary = Color(0xFFFFFFFF)
 val TextSecondary = Color(0x99FFFFFF)
 val StatusGreen = Color(0xFF4CAF50)

@@ -21,10 +21,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.familibalance.R
 
 private val CyberTextPrimary = Color(0xFFE2E8F0)
 private val CyberTextSecondary = Color(0xFF94A3B8)
@@ -77,14 +79,14 @@ fun SetChildPinDialog(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
-                    text = "ПИН-КОД ИГРОКА",
+                    text = stringResource(R.string.pin_child_title),
                     color = CyberLime,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Black,
                     letterSpacing = 2.sp
                 )
                 Text(
-                    text = "Новый ПИН для $childName",
+                    text = stringResource(R.string.pin_child_subtitle, childName),
                     color = CyberTextSecondary,
                     fontSize = 13.sp
                 )
@@ -101,7 +103,7 @@ fun SetChildPinDialog(
                 )
 
                 TextButton(onClick = onDismiss) {
-                    Text("Отмена", color = CyberTextSecondary, fontSize = 13.sp)
+                    Text(stringResource(R.string.action_cancel), color = CyberTextSecondary, fontSize = 13.sp)
                 }
             }
         }

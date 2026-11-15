@@ -63,20 +63,20 @@ fun TaskCard(
             ) {
                 Text(
                     text = reward,
-                    color = NeonCyan,
+                    color = AccentColor,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
                 frequencyBadge?.let { badge ->
                     Spacer(modifier = Modifier.width(8.dp))
                     Surface(
-                        color = NeonCyan.copy(alpha = 0.15f),
-                        border = BorderStroke(1.dp, NeonCyan),
+                        color = AccentColor.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, AccentColor),
                         shape = RoundedCornerShape(6.dp)
                     ) {
                         Text(
                             text = badge,
-                            color = NeonCyan,
+                            color = AccentColor,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
@@ -119,10 +119,10 @@ fun TaskCard(
                         Button(
                             onClick = onExecute,
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = NeonCyan.copy(alpha = 0.2f),
-                                contentColor = NeonCyan
+                                containerColor = AccentColor.copy(alpha = 0.2f),
+                                contentColor = AccentColor
                             ),
-                            border = BorderStroke(1.dp, NeonCyan),
+                            border = BorderStroke(1.dp, AccentColor),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(text = "📷 Выполнить", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)

@@ -54,11 +54,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.*
+import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.screens.*
 import com.example.familibalance.feature.child.components.*
@@ -71,6 +73,7 @@ import java.time.temporal.ChronoUnit
 @Composable
 fun MainChildScreen(
     onNavigateToTasks: () -> Unit = {},
+    onLogout: () -> Unit = {},
     viewModel: MainViewModel,
     modifier: Modifier = Modifier
 ) {
@@ -108,6 +111,7 @@ fun MainChildScreen(
     var showRulesSheet by remember { mutableStateOf(false) }
     var showEconomySheet by remember { mutableStateOf(false) }
     var showBuyTimeSheet by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     if (showHonestCatScreen) {
         HonestCatScreen(
@@ -823,6 +827,25 @@ fun MainChildScreen(
                     Text("💰 Экономика", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
+
+            // ================= ВЫХОД / СМЕНА ПОЛЬЗОВАТЕЛЯ =================
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                TextButton(
+                    onClick = { showLogoutDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = "🚪 " + stringResource(R.string.logout_button),
+                        color = PenaltyRed,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
 
         CoinFlightOverlay(
@@ -919,6 +942,48 @@ fun MainChildScreen(
             dismissButton = {
                 TextButton(onClick = { showCashOutDialog = false }) {
                     Text("Отмена")
+                }
+            }
+        )
+    }
+
+    // Диалог выхода / смены пользователя
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            containerColor = SpaceBgStart,
+            title = {
+                Text(
+                    text = stringResource(R.string.logout_title),
+                    color = PenaltyRed,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.logout_message),
+                    color = TextPrimary,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PenaltyRed,
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(stringResource(R.string.logout_confirm), fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
                 }
             }
         )

@@ -306,7 +306,7 @@ object SupabaseManager {
                     }
                 }
 
-                val jsonString = AppStateStorage.serializeSingleChild(updatedChild).toString()
+                val jsonString = AppStateStorage.serializeSingleChild(updatedChild)
                 val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
                 // uid сессии считаем «родительским» только если у пользователя есть email
                 // (анонимный ребёнок не должен записываться в parent_user_id)
