@@ -2,6 +2,7 @@ package com.example.familibalance
 
 import android.content.Context
 import android.net.Uri
+import com.example.familibalance.data.SecurePrefs
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -585,7 +586,7 @@ object AppStateStorage {
 
     fun saveLocalOnly(context: Context) {
         try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val prefs = SecurePrefs.get(context, PREFS_NAME)
             val rootObj = org.json.JSONObject()
             val childrenObj = org.json.JSONObject()
 
@@ -600,19 +601,6 @@ object AppStateStorage {
                 .apply()
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }
-
-    fun saveState(context: Context, onlyChildId: String? = null) {
-        saveLocalOnly(context)
-        if (onlyChildId != null) {
-            AppSharedState.children[onlyChildId]?.let { child ->
-                SupabaseManager.pushChildProfile(context, child)
-            }
-        } else {
-            AppSharedState.children.values.forEach { child ->
-                SupabaseManager.pushChildProfile(context, child)
-            }
         }
     }
 
@@ -665,7 +653,7 @@ object AppStateStorage {
 
     fun loadState(context: Context) {
         try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val prefs = SecurePrefs.get(context, PREFS_NAME)
             val jsonStr = prefs.getString(KEY_STATE, null) ?: return
             val rootObj = org.json.JSONObject(jsonStr)
 
@@ -692,9 +680,15 @@ object AppStateStorage {
         }
     }
 
-    fun checkResets(context: Context) {
+    /**
+     * Дневной сброс boughtMinutesToday/bonusQuests.
+     * Возвращает список изменённых профилей — репозиторий сам пометит их
+     * dirty и отправит в Supabase (MVI-01: без прямого push в обход SyncStatus).
+     */
+    fun checkResets(context: Context): List<ChildProfileState> {
+        val changedChildren = mutableListOf<ChildProfileState>()
         try {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val prefs = SecurePrefs.get(context, PREFS_NAME)
             val calendar = Calendar.getInstance()
             val todayStr = getCurrentDateString()
             val currentWeekStr = "${calendar.get(Calendar.YEAR)}-W${calendar.get(Calendar.WEEK_OF_YEAR)}"
@@ -707,7 +701,7 @@ object AppStateStorage {
                     .putString(KEY_LAST_DAILY, todayStr)
                     .putString(KEY_LAST_WEEKLY, currentWeekStr)
                     .apply()
-                return
+                return changedChildren
             }
 
             var changed = false
@@ -716,10 +710,12 @@ object AppStateStorage {
                 // Сбросы встроенных квестов (шкаф/комната/дневник) выполняет
                 // MainViewModel.resetDailyQuestsIfNeeded с учётом frequency каждого квеста.
                 AppSharedState.children.replaceAll { _, child ->
-                    child.copy(
+                    val reset = child.copy(
                         boughtMinutesToday = 0,
                         bonusQuests = child.bonusQuests.filter { it.status != QuestStatus.CLAIMED }
                     )
+                    if (reset != child) changedChildren += reset
+                    reset
                 }
                 prefs.edit().putString(KEY_LAST_DAILY, todayStr).apply()
                 changed = true
@@ -730,11 +726,12 @@ object AppStateStorage {
             }
 
             if (changed) {
-                saveState(context)
+                saveLocalOnly(context)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        return changedChildren
     }
 }
 

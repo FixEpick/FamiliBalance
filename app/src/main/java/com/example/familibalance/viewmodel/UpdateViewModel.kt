@@ -12,6 +12,7 @@ import com.example.familibalance.data.update.DownloadResult
 import com.example.familibalance.data.update.InstallResult
 import com.example.familibalance.data.update.ReleaseInfo
 import com.example.familibalance.data.update.UpdateChecker
+import com.example.familibalance.data.update.UpdateError
 import com.example.familibalance.data.update.UpdateInstaller
 import com.example.familibalance.data.update.UpdateResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,7 +29,7 @@ sealed interface UpdateUiState {
     data class NeedPermission(val intent: Intent) : UpdateUiState
     /** Разрешение на установку нужно запросить ДО скачивания APK. */
     data object NeedInstallPermission : UpdateUiState
-    data class Error(val message: String) : UpdateUiState
+    data class Error(val error: UpdateError) : UpdateUiState
     data object Dismissed : UpdateUiState
 }
 
@@ -61,7 +62,7 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
         val release = state.release
         val url = release.apkUrl
         if (url.isNullOrBlank()) {
-            _uiState.value = UpdateUiState.Error("В релизе нет APK-файла")
+            _uiState.value = UpdateUiState.Error(UpdateError.NoApkInRelease)
             return
         }
         // Строгий порядок: разрешение на установку запрашиваем ДО скачивания.
@@ -105,11 +106,11 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
                         is InstallResult.NeedPermission ->
                             _uiState.value = UpdateUiState.NeedPermission(install.intent)
                         is InstallResult.Error ->
-                            _uiState.value = UpdateUiState.Error(install.message)
+                            _uiState.value = UpdateUiState.Error(install.error)
                     }
                 }
                 is DownloadResult.Error ->
-                    _uiState.value = UpdateUiState.Error(result.message)
+                    _uiState.value = UpdateUiState.Error(result.error)
             }
         }
     }

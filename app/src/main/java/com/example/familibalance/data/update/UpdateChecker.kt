@@ -21,7 +21,7 @@ data class ReleaseInfo(
 sealed interface UpdateResult {
     data object NoUpdate : UpdateResult
     data class Available(val release: ReleaseInfo) : UpdateResult
-    data class Error(val message: String) : UpdateResult
+    data class Error(val error: UpdateError) : UpdateResult
 }
 
 /**
@@ -55,10 +55,10 @@ object UpdateChecker {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
                     Log.w(TAG, "GitHub API вернул ${response.code}")
-                    return@withContext UpdateResult.Error("HTTP ${response.code}")
+                    return@withContext UpdateResult.Error(UpdateError.Unknown("HTTP ${response.code}"))
                 }
                 val json = response.body.string()
-                val release = parseRelease(json) ?: return@withContext UpdateResult.Error("Не удалось разобрать релиз")
+                val release = parseRelease(json) ?: return@withContext UpdateResult.Error(UpdateError.Unknown("unparseable release"))
 
                 if (VersionComparator.isNewer(currentVersion, release.tagName)) {
                     UpdateResult.Available(release)
@@ -70,7 +70,7 @@ object UpdateChecker {
             throw e
         } catch (e: Exception) {
             Log.w(TAG, "Ошибка проверки обновлений: ${e.message}")
-            UpdateResult.Error(e.message ?: "network error")
+            UpdateResult.Error(UpdateError.Unknown(e.message ?: "network error"))
         }
     }
 

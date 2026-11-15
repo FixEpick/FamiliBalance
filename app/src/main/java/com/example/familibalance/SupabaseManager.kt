@@ -7,9 +7,12 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.SettingsSessionManager
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.RealtimeChannel
@@ -24,6 +27,8 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -91,7 +96,7 @@ object SupabaseManager {
         scope.launch(exceptionHandler) {
             try {
                 val rows = supabase.from("family_profiles")
-                    .select()
+                    .select(columns = Columns.list("user_id", "state_json", "parent_user_id", "parent_email", "status"))
                     .decodeList<FamilyProfileRow>()
 
                 val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
@@ -112,15 +117,63 @@ object SupabaseManager {
         scope.launch(exceptionHandler) {
             var retryDelayMs = 1_000L
             val maxRetryDelayMs = 30_000L
+            // uid родителя на момент подписки — для серверного фильтра Realtime
+            var subscribedUid: String? = null
+            var activeChannel: RealtimeChannel? = null
+
+            // При смене сессии (login/logout) удаляем активный канал — collect упадёт,
+            // и цикл переподпишется уже с новым parent_user_id в фильтре.
+            launch {
+                supabase.auth.sessionStatus.collect { status ->
+                    val newUid = (status as? SessionStatus.Authenticated)?.session?.user?.id
+                    if (newUid != subscribedUid) {
+                        activeChannel?.let { ch ->
+                            runCatching { supabase.realtime.removeChannel(ch) }
+                        }
+                    }
+                }
+            }
 
             while (true) {
                 var myChannel: RealtimeChannel? = null
                 try {
+                    // UID берём свежим при каждой попытке подписки:
+                    // пользователь мог залогиниться/разлогиниться между retry.
+                    val currentUid = runCatching { supabase.auth.currentUserOrNull()?.id }.getOrNull()
+                    subscribedUid = currentUid
+
                     val channel = supabase.realtime.channel("family_profiles_realtime")
                     myChannel = channel
-                    val changeFlow = channel.postgresChangeFlow<PostgresAction>(schema = "public") {
-                        table = "family_profiles"
+                    activeChannel = channel
+
+                    // Серверные фильтры Realtime:
+                    //  - parent_user_id = uid  → профили детей этого родителя;
+                    //  - user_id = uid         → собственный профиль (важно для устройства
+                    //    ребёнка: его auth-uid отличается от child.id, но parent_user_id
+                    //    указывает на родителя, поэтому без второго фильтра он не получал
+                    //    бы обновления своего профиля).
+                    // Pending-строки (parent_user_id IS NULL) realtime не покрывает —
+                    // их подхватывает опрос loadPendingRequests в AdminViewModel.
+                    // Клиентская проверка isRowVisibleToUser остаётся как второй рубеж.
+                    val changeFlows: List<Flow<PostgresAction>> = if (currentUid.isNullOrBlank()) {
+                        listOf(
+                            channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+                                table = "family_profiles"
+                            }
+                        )
+                    } else {
+                        listOf(
+                            channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+                                table = "family_profiles"
+                                filter("parent_user_id", FilterOperator.EQ, currentUid)
+                            },
+                            channel.postgresChangeFlow<PostgresAction>(schema = "public") {
+                                table = "family_profiles"
+                                filter("user_id", FilterOperator.EQ, currentUid)
+                            }
+                        )
                     }
+                    val changeFlow = changeFlows.merge()
 
                     channel.subscribe()
                     retryDelayMs = 1_000L // сбрасываем задержку после успешной подписки

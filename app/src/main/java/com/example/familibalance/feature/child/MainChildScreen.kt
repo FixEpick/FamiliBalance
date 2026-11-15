@@ -55,6 +55,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -260,7 +262,7 @@ fun MainChildScreen(
                             }
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
-                                Text("Баланс", color = TextSecondary, fontSize = 12.sp)
+                                Text(stringResource(R.string.child_balance), color = TextSecondary, fontSize = 12.sp)
                                 Text(
                                     text = "$animatedBalance ₽",
                                     color = TextPrimary,
@@ -284,7 +286,7 @@ fun MainChildScreen(
                                 Text("🪙", fontSize = 16.sp)
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = "Космо-банк",
+                                    text = stringResource(R.string.child_bank_name),
                                     color = LocalAppPalette.current.primaryNeon,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
@@ -315,7 +317,7 @@ fun MainChildScreen(
                             .height(48.dp)
                     ) {
                         Text(
-                            text = "Вывести / Купить",
+                            text = stringResource(R.string.child_cashout_btn),
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp
                         )
@@ -324,7 +326,7 @@ fun MainChildScreen(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "*работает, когда вы с папой",
+                        text = stringResource(R.string.child_cashout_hint),
                         color = TextSecondary,
                         fontSize = 12.sp,
                         textAlign = TextAlign.Center
@@ -335,7 +337,7 @@ fun MainChildScreen(
                     val activeCashoutRequests = child.cashoutRequests
                     if (activeCashoutRequests.isEmpty()) {
                         Text(
-                            text = "Нет активных заявок на вывод",
+                            text = stringResource(R.string.child_no_cashout_requests),
                             color = TextSecondary,
                             fontSize = 13.sp,
                             modifier = Modifier.padding(vertical = 4.dp)
@@ -347,7 +349,7 @@ fun MainChildScreen(
                                 .padding(vertical = 4.dp)
                         ) {
                             Text(
-                                text = "💵 Активные заявки на вывод:",
+                                text = stringResource(R.string.child_cashout_requests_title),
                                 color = TextPrimary,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
@@ -369,21 +371,21 @@ fun MainChildScreen(
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text(
-                                                text = "Сумма: ${request.amount} ₽",
+                                                text = stringResource(R.string.child_cashout_amount, request.amount),
                                                 color = TextPrimary,
                                                 fontSize = 15.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
                                             Spacer(modifier = Modifier.height(2.dp))
                                             Text(
-                                                text = "Комментарий: ${request.comment}",
+                                                text = stringResource(R.string.child_cashout_comment, request.comment),
                                                 color = TextSecondary,
                                                 fontSize = 12.sp
                                             )
                                         }
                                         Column(horizontalAlignment = Alignment.End) {
                                             Text(
-                                                text = "⏳ Ждёт подтверждения папы",
+                                                text = stringResource(R.string.child_cashout_waiting),
                                                 color = StatusYellow,
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Medium
@@ -422,11 +424,15 @@ fun MainChildScreen(
                                 onClick = { viewModel.dismissStreakBonus(child.id) },
                                 modifier = Modifier.size(40.dp)
                             ) {
+                                val closeDesc = stringResource(R.string.a11y_close_button)
                                 Text(
                                     text = "✕",
                                     color = LocalAppPalette.current.primaryNeon,
                                     fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.semantics {
+                                        contentDescription = closeDesc
+                                    }
                                 )
                             }
                         }
@@ -437,7 +443,9 @@ fun MainChildScreen(
             // ================= БЛОК 2: ЦЕЛЬ-МЕЧТА (КОПИЛКА) =================
             if (child.dreamTarget > 0) {
                 item {
-                    val dreamTitle = child.dreamTitle.ifBlank { "Моя цель" }
+                    val dreamTitle = if (child.dreamTitle.isBlank()) {
+                        stringResource(R.string.child_dream_default_title)
+                    } else child.dreamTitle
                     val dreamTarget = child.dreamTarget
                     val progressFraction = (balance.toFloat() / dreamTarget).coerceIn(0f, 1f)
                     val isGoalReached = balance >= dreamTarget
@@ -512,7 +520,7 @@ fun MainChildScreen(
                             )
                             if (isGoalReached) {
                                 Text(
-                                    text = "Цель достигнута! Нажми, чтобы забрать ✨",
+                                    text = stringResource(R.string.child_dream_reached),
                                     color = StatusYellow,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
@@ -540,7 +548,7 @@ fun MainChildScreen(
                             .padding(20.dp)
                     ) {
                         Text(
-                            text = "⏳ Экранное время на сегодня",
+                            text = stringResource(R.string.child_screen_time_title),
                             color = TextPrimary,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
@@ -549,7 +557,7 @@ fun MainChildScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Куплено сегодня: $boughtMinutesToday / $dailyLimit мин",
+                            text = stringResource(R.string.child_bought_minutes, boughtMinutesToday, dailyLimit),
                             color = TextSecondary,
                             fontSize = 14.sp
                         )
@@ -582,13 +590,13 @@ fun MainChildScreen(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Купить время", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text(stringResource(R.string.child_buy_time_btn), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = "Дневной лимит 90 мин • Обновится завтра",
+                            text = stringResource(R.string.child_daily_limit_note, dailyLimit),
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
@@ -613,7 +621,7 @@ fun MainChildScreen(
                             .padding(20.dp)
                     ) {
                         Text(
-                            text = "Дни без штрафов",
+                            text = stringResource(R.string.child_streak_title),
                             color = TextPrimary,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
@@ -638,7 +646,7 @@ fun MainChildScreen(
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "$day дн",
+                                        text = stringResource(R.string.child_streak_day_label, day),
                                         fontSize = 11.sp,
                                         color = if (isActive) LocalAppPalette.current.primaryNeon else TextSecondary.copy(alpha = 0.4f),
                                         fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
@@ -657,11 +665,11 @@ fun MainChildScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-                                Text("🔥 Отметиться сегодня", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text(stringResource(R.string.child_streak_checkin), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             }
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Бонус +50 ₽ на 7-й день",
+                                text = stringResource(R.string.child_streak_bonus),
                                 color = LocalAppPalette.current.primaryNeon,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -670,7 +678,7 @@ fun MainChildScreen(
                             )
                         } else {
                             Text(
-                                text = "Бонус +50 ₽ на 7-й день",
+                                text = stringResource(R.string.child_streak_bonus),
                                 color = LocalAppPalette.current.primaryNeon,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -702,7 +710,7 @@ fun MainChildScreen(
                                 )
                             ) {
                                 Text(
-                                    "🐱 Честное признание • Доступно через $honestCooldownDaysLeft дн.",
+                                    stringResource(R.string.child_honest_cooldown, honestCooldownDaysLeft),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -717,7 +725,7 @@ fun MainChildScreen(
                                 border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
                                 colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
                             ) {
-                                Text("🐱 Честное признание", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.child_honest_btn), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
                         if (honestAdmissionStatus == QuestStatus.APPROVED) {
@@ -731,7 +739,7 @@ fun MainChildScreen(
                                 border = BorderStroke(1.dp, StatusGreen.copy(alpha = 0.6f))
                             ) {
                                 Text(
-                                    text = "✓ Штраф уменьшится вдвое при следующем нарушении",
+                                    text = stringResource(R.string.child_honest_approved_note),
                                     color = StatusGreen,
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.SemiBold,
@@ -757,7 +765,7 @@ fun MainChildScreen(
                                 disabledContainerColor = GlassBackground
                             )
                         ) {
-                            Text("• Признание на проверке у папы", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.child_honest_pending), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                     QuestStatus.CLAIMED -> {
@@ -775,7 +783,7 @@ fun MainChildScreen(
                             )
                         ) {
                             Text(
-                                "✓ Скидка 50% уже применена",
+                                stringResource(R.string.child_honest_claimed),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -796,7 +804,7 @@ fun MainChildScreen(
                             )
                         ) {
                             Text(
-                                "✓ Честное признание одобрено папой (Штраф уменьшен в половину)",
+                                stringResource(R.string.child_honest_ready),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -817,7 +825,7 @@ fun MainChildScreen(
                     border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
                 ) {
-                    Text("📜 Свиток правил", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.child_rules_btn), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedButton(
@@ -831,7 +839,7 @@ fun MainChildScreen(
                     border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
                 ) {
-                    Text("💰 Экономика", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.child_economy_btn), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
 
@@ -880,7 +888,7 @@ fun MainChildScreen(
             containerColor = SpaceBgStart,
             title = {
                 Text(
-                    text = "💵 Вывести наличные",
+                    text = stringResource(R.string.child_cashout_dialog_title),
                     color = LocalAppPalette.current.primaryNeon,
                     fontWeight = FontWeight.Bold
                 )
@@ -891,7 +899,7 @@ fun MainChildScreen(
                     OutlinedTextField(
                         value = cashOutAmountText,
                         onValueChange = { cashOutAmountText = it },
-                        label = { Text("Сумма (₽)") },
+                        label = { Text(stringResource(R.string.child_cashout_amount_label)) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = Color.White,
@@ -907,7 +915,7 @@ fun MainChildScreen(
                     if (isAmountExceeded) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Недостаточно средств на балансе",
+                            text = stringResource(R.string.child_cashout_insufficient),
                             color = PenaltyRed,
                             fontSize = 12.sp
                         )
@@ -916,7 +924,7 @@ fun MainChildScreen(
                     OutlinedTextField(
                         value = cashOutCommentText,
                         onValueChange = { cashOutCommentText = it },
-                        label = { Text("Комментарий") },
+                        label = { Text(stringResource(R.string.child_cashout_comment_label)) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = Color.White,
@@ -943,12 +951,12 @@ fun MainChildScreen(
                     },
                     enabled = canSubmit
                 ) {
-                    Text("Отправить заявку")
+                    Text(stringResource(R.string.child_cashout_submit))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCashOutDialog = false }) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )

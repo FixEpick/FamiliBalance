@@ -54,21 +54,24 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.*
+import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.screens.*
 import com.example.familibalance.feature.child.components.*
 import com.example.familibalance.ui.components.*
 import com.example.familibalance.viewmodel.actions.*
 
+@Composable
 private fun builtInFreqBadge(frequency: QuestFrequency): String = when (frequency) {
-    QuestFrequency.DAILY -> "Ежедневный"
-    QuestFrequency.WEEKLY -> "Еженедельный"
-    QuestFrequency.ONCE -> "Разовый"
+    QuestFrequency.DAILY -> stringResource(R.string.freq_daily)
+    QuestFrequency.WEEKLY -> stringResource(R.string.freq_weekly)
+    QuestFrequency.ONCE -> stringResource(R.string.freq_once)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -177,7 +180,7 @@ fun TasksScreen(
             item {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "✨ ЗАДАНИЯ НА СЕГОДНЯ",
+                    text = stringResource(R.string.tasks_title),
                     color = TextPrimary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
@@ -189,7 +192,7 @@ fun TasksScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "🎁 БОНУС-КВЕСТЫ ОТ ПАПЫ",
+                        text = stringResource(R.string.tasks_bonus_title),
                         color = TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -198,7 +201,7 @@ fun TasksScreen(
                 items(visibleBonusQuests, key = { it.id }, contentType = { "bonus_quest" }) { bQuest ->
                     TaskCard(
                         title = bQuest.title,
-                        description = bQuest.description.ifBlank { "Бонусное задание от папы" },
+                        description = bQuest.description.ifBlank { stringResource(R.string.tasks_bonus_default_desc) },
                         reward = "+${bQuest.reward} ₽",
                         status = bQuest.status,
                         rejectReason = bQuest.rejectReason,
@@ -258,17 +261,22 @@ fun TasksScreen(
             }
             if (isDiaryVisible && !child.isDiaryDeleted) {
                 item {
-                    val diaryClaimText = if (child.diaryApprovedReward >= 0) "Получить +${child.diaryApprovedReward} ₽" else "Получить ${child.diaryApprovedReward} ₽"
+                    val diaryClaimText = if (child.diaryApprovedReward >= 0) {
+                        stringResource(R.string.tasks_claim_reward, child.diaryApprovedReward)
+                    } else {
+                        stringResource(R.string.tasks_claim_reward_neg, child.diaryApprovedReward)
+                    }
+                    val diaryRewardText = stringResource(R.string.tasks_diary_reward)
                     TaskCard(
                         title = child.diaryTitle,
                         description = child.diaryDesc,
-                        reward = "от +30 ₽ до ∞",
+                        reward = diaryRewardText,
                         frequencyBadge = builtInFreqBadge(child.diaryFrequency),
                         status = diaryStatus,
                         rejectReason = child.diaryRejectReason,
                         claimButtonText = diaryClaimText,
                         onExecute = {
-                            activeDeliveryQuest = QuestDeliveryTarget(child.diaryTitle, "от +30 ₽ до ∞", "diary")
+                            activeDeliveryQuest = QuestDeliveryTarget(child.diaryTitle, diaryRewardText, "diary")
                         },
                         onClaim = { buttonOffset ->
                             triggerCoinFlight(buttonOffset) {
@@ -285,7 +293,7 @@ fun TasksScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "📋 Дополнительные задания",
+                        text = stringResource(R.string.tasks_custom_title),
                         color = TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -293,14 +301,18 @@ fun TasksScreen(
                 }
                 items(visibleCustomQuests) { quest ->
                     val badgeText = when (quest.frequency) {
-                        QuestFrequency.ONCE -> "Разовый"
-                        QuestFrequency.DAILY -> "Ежедневный"
-                        QuestFrequency.WEEKLY -> "Еженедельный"
+                        QuestFrequency.ONCE -> stringResource(R.string.freq_once)
+                        QuestFrequency.DAILY -> stringResource(R.string.freq_daily)
+                        QuestFrequency.WEEKLY -> stringResource(R.string.freq_weekly)
                     }
-                    val claimText = if (quest.status == QuestStatus.READY_TO_CLAIM) "Получить +${quest.reward} ₽" else "На проверке"
+                    val claimText = if (quest.status == QuestStatus.READY_TO_CLAIM) {
+                        stringResource(R.string.tasks_claim_reward, quest.reward)
+                    } else {
+                        stringResource(R.string.tasks_under_review)
+                    }
                     TaskCard(
                         title = quest.title,
-                        description = quest.description.ifBlank { "Задание от папы" },
+                        description = quest.description.ifBlank { stringResource(R.string.tasks_custom_default_desc) },
                         reward = "+${quest.reward} ₽",
                         frequencyBadge = badgeText,
                         status = quest.status,
@@ -336,14 +348,14 @@ fun TasksScreen(
                             Text(text = "📭", fontSize = 48.sp)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Пока нет активных заданий",
+                                text = stringResource(R.string.tasks_empty_title),
                                 color = TextPrimary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Обратитесь к папе, чтобы он добавил задания",
+                                text = stringResource(R.string.tasks_empty_subtitle),
                                 color = TextSecondary,
                                 fontSize = 14.sp
                             )

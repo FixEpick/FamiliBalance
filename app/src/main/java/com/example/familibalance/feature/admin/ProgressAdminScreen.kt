@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.geometry.Offset
@@ -50,6 +51,7 @@ import com.example.familibalance.ui.theme.*
 import com.example.familibalance.CashoutStatus
 
 import com.example.familibalance.*
+import com.example.familibalance.R
 import com.example.familibalance.ui.components.*
 import com.example.familibalance.viewmodel.actions.*
 
@@ -82,9 +84,9 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     if (child.dreamTarget > 0) {
-                        Text("🎯 Цель-мечта: ${child.dreamTitle}", color = AccentColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.admin_dream_title, child.dreamTitle), color = AccentColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Накоплено: ${child.balance} ₽ из ${child.dreamTarget} ₽", color = TextPrimary, fontSize = 14.sp)
+                        Text(stringResource(R.string.admin_dream_progress, child.balance, child.dreamTarget), color = TextPrimary, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                     OutlinedButton(
@@ -98,7 +100,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                         border = BorderStroke(1.dp, AccentColor),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor)
                     ) {
-                        Text(if (child.dreamTarget > 0) "✏️ Изменить цель" else "🎯 Задать цель", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                        Text(if (child.dreamTarget > 0) stringResource(R.string.admin_dream_edit) else stringResource(R.string.admin_dream_set), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                     }
                 }
             }
@@ -111,21 +113,21 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                 border = BorderStroke(1.dp, GlassStroke)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("📈 Статистика квестов", color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.admin_stats_title), color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Выполнено квестов", color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
+                            Text(stringResource(R.string.admin_stat_quests), color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text("$completedQuests", color = AccentColor, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         }
                         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Всего заработано", color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
+                            Text(stringResource(R.string.admin_stat_earned), color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text("+$totalEarned ₽", color = StatusGreen, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         }
                         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Текущий баланс", color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
+                            Text(stringResource(R.string.admin_stat_balance), color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text("${child.balance} ₽", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         }
@@ -141,7 +143,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = GlassBackground, contentColor = AccentColor)
             ) {
-                Text("🏅 Достижения (${allAchievements.size})", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(stringResource(R.string.admin_achievements_title, allAchievements.size), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }
@@ -149,11 +151,11 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
         AlertDialog(
             onDismissRequest = { showDreamGoalDialog = false },
             containerColor = SpaceBgStart,
-            title = { Text(if (child.dreamTarget > 0) "✏️ Изменить цель" else "🎯 Задать цель", color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { Text(if (child.dreamTarget > 0) stringResource(R.string.admin_dream_edit) else stringResource(R.string.admin_dream_set), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = dreamTitle, onValueChange = { dreamTitle = it }, label = { Text("Название цели", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = if (dreamTargetVal > 0) dreamTargetVal.toString() else "", onValueChange = { dreamTargetVal = it.toIntOrNull() ?: 0 }, label = { Text("Сумма (₽)", color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = editorFieldColors())
+                    OutlinedTextField(value = dreamTitle, onValueChange = { dreamTitle = it }, label = { Text(stringResource(R.string.admin_goal_name_label), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    OutlinedTextField(value = if (dreamTargetVal > 0) dreamTargetVal.toString() else "", onValueChange = { dreamTargetVal = it.toIntOrNull() ?: 0 }, label = { Text(stringResource(R.string.child_cashout_amount_label), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = editorFieldColors())
                 }
             },
             confirmButton = {
@@ -161,16 +163,16 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                     enabled = dreamTitle.isNotBlank() && dreamTargetVal > 0,
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
                     onClick = { viewModel.setDreamGoal(child.id, dreamTitle.trim(), dreamTargetVal); showDreamGoalDialog = false }
-                ) { Text("Сохранить", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { showDreamGoalDialog = false }) { Text("Отмена", color = TextSecondary) } }
+            dismissButton = { TextButton(onClick = { showDreamGoalDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
     if (showAchievementsDialog) {
         AlertDialog(
             onDismissRequest = { showAchievementsDialog = false },
             containerColor = SpaceBgStart,
-            title = { Text("🏅 Достижения (${allAchievements.size})", color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.admin_achievements_title, allAchievements.size), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier
@@ -184,7 +186,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showAchievementsDialog = false }) { Text("Закрыть", color = AccentColor, fontWeight = FontWeight.Bold) } }
+            confirmButton = { TextButton(onClick = { showAchievementsDialog = false }) { Text(stringResource(R.string.update_btn_close), color = AccentColor, fontWeight = FontWeight.Bold) } }
         )
     }
 }

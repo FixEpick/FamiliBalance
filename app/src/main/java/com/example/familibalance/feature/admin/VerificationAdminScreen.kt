@@ -33,8 +33,12 @@ import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 import com.example.familibalance.MainViewModel
+import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.CashoutStatus
 
@@ -701,7 +705,14 @@ fun QuestVerificationCard(
                         .size(48.dp)
                         .background(Color.Black.copy(alpha = 0.6f), CircleShape)
                 ) {
-                    Text("✕", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    val closeDesc = stringResource(R.string.a11y_close_button)
+                    Text(
+                        "✕",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.semantics { contentDescription = closeDesc }
+                    )
                 }
             }
         }
@@ -996,7 +1007,14 @@ fun DiaryVerificationCard(
                         .size(48.dp)
                         .background(Color.Black.copy(alpha = 0.6f), CircleShape)
                 ) {
-                    Text("✕", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                    val closeDesc = stringResource(R.string.a11y_close_button)
+                    Text(
+                        "✕",
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.semantics { contentDescription = closeDesc }
+                    )
                 }
             }
         }

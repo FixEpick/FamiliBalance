@@ -134,6 +134,31 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `checkResets unblocks CLAIMED built-in quest with empty reset date`() {
+        // BUG-02: пустая дата сброса + CLAIMED/READY_TO_CLAIM → квест зависал навсегда.
+        val stuckChild = createChild().copy(
+            closetResetDate = "",
+            roomResetDate = "",
+            diaryResetDate = "",
+            closetStatus = QuestStatus.CLAIMED,
+            roomStatus = QuestStatus.READY_TO_CLAIM,
+            diaryStatus = QuestStatus.AVAILABLE
+        )
+        repository.children["user_1"] = stuckChild
+
+        viewModel.checkResets()
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(QuestStatus.AVAILABLE, updated.closetStatus)
+        assertEquals(QuestStatus.AVAILABLE, updated.roomStatus)
+        assertEquals(QuestStatus.AVAILABLE, updated.diaryStatus)
+        assertEquals(LocalDate.now().toString(), updated.closetResetDate)
+        assertEquals(LocalDate.now().toString(), updated.roomResetDate)
+        // AVAILABLE без даты — статус не трогаем, дату не ставим.
+        assertEquals("", updated.diaryResetDate)
+    }
+
+    @Test
     fun `checkResets decays streak by one flame per missed day`() {
         val today = LocalDate.now()
         // Последний чек-ин позавчера → сгорает 2 дня → 5 - 2 = 3

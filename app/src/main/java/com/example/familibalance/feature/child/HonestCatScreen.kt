@@ -53,11 +53,13 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.*
+import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.screens.*
 
@@ -105,7 +107,7 @@ fun HonestCatScreen(
             Spacer(modifier = Modifier.width(12.dp))
 
             Text(
-                text = "🐱 Честное признание папе",
+                text = stringResource(R.string.honest_title),
                 color = TextPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -140,7 +142,7 @@ fun HonestCatScreen(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "✨ Бонус: Штраф в половину!",
+                        text = stringResource(R.string.honest_bonus),
                         color = AccentColor,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -150,7 +152,7 @@ fun HonestCatScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Если ты обманул или скрыл правду, или совершил проступок — поделись этим с папой сам через кошечку! Папа очень ценит честность, поэтому обязательно одобрит твоё признание и уменьшит штраф в половину.",
+                    text = stringResource(R.string.honest_text),
                     color = TextSecondary,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
@@ -165,7 +167,7 @@ fun HonestCatScreen(
         OutlinedTextField(
             value = admissionText,
             onValueChange = onTextChange,
-            placeholder = { Text("Папа, я хочу честно признаться в том, что...", color = TextSecondary.copy(alpha = 0.6f)) },
+            placeholder = { Text(stringResource(R.string.honest_placeholder), color = TextSecondary.copy(alpha = 0.6f)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(140.dp),
@@ -195,7 +197,7 @@ fun HonestCatScreen(
                 .height(54.dp)
         ) {
             Text(
-                text = "Отправить папе 🚀",
+                text = stringResource(R.string.honest_submit),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )

@@ -39,6 +39,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.input.pointer.pointerInput
@@ -70,11 +72,11 @@ import com.example.familibalance.viewmodel.actions.*
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 
-sealed class AdminScreenType(@StringRes val titleRes: Int, val icon: String) {
-    object Verification : AdminScreenType(R.string.nav_verify, "🛡️")
-    object Progress : AdminScreenType(R.string.nav_progress, "📊")
-    object History : AdminScreenType(R.string.nav_history, "📜")
-    object Settings : AdminScreenType(R.string.nav_settings, "⚙️")
+sealed class AdminScreenType(@StringRes val titleRes: Int, @StringRes val a11yRes: Int, val icon: String) {
+    object Verification : AdminScreenType(R.string.nav_verify, R.string.a11y_nav_verify, "🛡️")
+    object Progress : AdminScreenType(R.string.nav_progress, R.string.a11y_nav_progress, "📊")
+    object History : AdminScreenType(R.string.nav_history, R.string.a11y_nav_history, "📜")
+    object Settings : AdminScreenType(R.string.nav_settings, R.string.a11y_nav_settings, "⚙️")
 }
 
 private data class AdminTab(
@@ -91,6 +93,7 @@ fun AdminScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val parentPanelDesc = stringResource(R.string.a11y_parent_panel)
     val adminNavController = rememberNavController()
     var showCashOutDialog by remember { mutableStateOf(false) }
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
@@ -169,10 +172,10 @@ fun AdminScreen(
         AlertDialog(
             onDismissRequest = { showCashOutDialog = false },
             containerColor = SpaceBgStart,
-            title = { Text("💵 Выдача наличных", color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.admin_cashout_title), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "Выдать ${child.name} ${child.balance} ₽ наличными и обнулить баланс в Космо-банке?",
+                    stringResource(R.string.admin_cashout_message, child.name, child.balance),
                     color = TextPrimary
                 )
             },
@@ -185,7 +188,7 @@ fun AdminScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Выдать и обнулить", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.admin_cashout_confirm), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -195,7 +198,7 @@ fun AdminScreen(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -236,13 +239,19 @@ fun AdminScreen(
                                 modifier = Modifier.size(40.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Text("👑", fontSize = 20.sp)
+                                    Text(
+                                        "👑",
+                                        fontSize = 20.sp,
+                                        modifier = Modifier.semantics {
+                                            contentDescription = parentPanelDesc
+                                        }
+                                    )
                                 }
                             }
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                Text("Панель Папы", color = TextSecondary, fontSize = 11.sp)
-                                Text("Администратор", color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.admin_panel_title), color = TextSecondary, fontSize = 11.sp)
+                                Text(stringResource(R.string.admin_role), color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             }
                         }
 
@@ -255,7 +264,7 @@ fun AdminScreen(
                                 shape = RoundedCornerShape(10.dp),
                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                             ) {
-                                Text("🔄 Сменить", fontSize = 12.sp)
+                                Text(stringResource(R.string.admin_switch), fontSize = 12.sp)
                             }
                         }
                     }
@@ -303,7 +312,14 @@ fun AdminScreen(
                             selected = adminTab.route == selectedTabRoute,
                             onClick = { navigateToTab(adminTab.route) },
                             icon = {
-                                Text(adminTab.tab.icon, fontSize = 20.sp)
+                                val tabA11y = stringResource(adminTab.tab.a11yRes)
+                                Text(
+                                    adminTab.tab.icon,
+                                    fontSize = 20.sp,
+                                    modifier = Modifier.semantics {
+                                        contentDescription = tabA11y
+                                    }
+                                )
                             },
                             label = { Text(stringResource(adminTab.tab.titleRes), color = if (adminTab.route == selectedTabRoute) AccentColor else TextSecondary) },
                             colors = NavigationBarItemDefaults.colors(indicatorColor = GlassStroke)

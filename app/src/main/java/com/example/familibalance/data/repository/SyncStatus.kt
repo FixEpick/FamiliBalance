@@ -1,7 +1,8 @@
-﻿package com.example.familibalance.data.repository
+package com.example.familibalance.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.example.familibalance.data.SecurePrefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,7 +34,7 @@ object SyncStatus {
     @Synchronized
     fun attach(context: Context) {
         if (prefs != null) return
-        prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs = SecurePrefs.get(context.applicationContext, PREFS_NAME)
         dirtyChildIds.addAll(prefs?.getStringSet(KEY_DIRTY_CHILD_IDS, emptySet()) ?: emptySet())
         _isSynced.value = dirtyChildIds.isEmpty()
     }

@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.data.auth.AuthRepository
 import com.example.familibalance.data.PinHasher
+import com.example.familibalance.data.SecurePrefs
 import io.github.jan.supabase.auth.auth
 import com.example.familibalance.data.repository.FamilyRepository
 import com.example.familibalance.data.repository.FamilyRepositoryImpl
@@ -126,7 +127,7 @@ class MainViewModel(
             // Автовход ребёнка: локальные флаги в app_prefs + профиль должен
             // существовать в загруженном стейте. Иначе флаг сбрасываем.
             val prefs = getApplication<Application>()
-                .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                .let { SecurePrefs.get(it, "app_prefs") }
             val savedChildId = prefs.getString("logged_in_child_id", null)
             if (prefs.getBoolean("is_logged_in", false)) {
                 if (!savedChildId.isNullOrBlank() &&
@@ -280,7 +281,7 @@ class MainViewModel(
             // Новый ребёнок сразу считается вошедшим (status = active)
             if (status == "active") {
                 getApplication<Application>()
-                    .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                    .let { SecurePrefs.get(it, "app_prefs") }
                     .edit()
                     .putBoolean("is_logged_in", true)
                     .putString("logged_in_child_id", childId)
@@ -352,13 +353,13 @@ class MainViewModel(
                 Settings.Secure.ANDROID_ID
             ).orEmpty()
             val updated = profile.copy(deviceId = deviceId)
-            AppSharedState.children[updated.id] = updated
+            // updateChildProfile: запись в AppSharedState + локальное сохранение
+            // + pushChildProfile (markDirty в SyncStatus + отправка в Supabase).
+            familyRepository.updateChildProfile(updated)
             selectChild(updated.id)
-            // Досылаем deviceId в Supabase (профиль пометится dirty до подтверждения)
-            familyRepository.pushChildProfile(updated)
             // Флаги автовхода: при следующем запуске откроем ChildSection без Welcome
             getApplication<Application>()
-                .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+                .let { SecurePrefs.get(it, "app_prefs") }
                 .edit()
                 .putBoolean("is_logged_in", true)
                 .putString("logged_in_child_id", updated.id)
@@ -373,7 +374,7 @@ class MainViewModel(
         AppSharedState.selectedChildId = ""
         _diaryScanState.value = DiaryScanState.Idle
         getApplication<Application>()
-            .getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+            .let { SecurePrefs.get(it, "app_prefs") }
             .edit()
             .putBoolean("is_logged_in", false)
             .remove("logged_in_child_id")
@@ -408,7 +409,9 @@ class MainViewModel(
         /**
          * Проверяет встроенный квест: истёк ли его период (день/неделя).
          * Возвращает новую дату сброса и флаг очистки статуса.
-         * Пустая дата — первый запуск: только ставим метку, статус не трогаем.
+         * Пустая/битая дата + CLAIMED/READY_TO_CLAIM — квест завис: сбрасываем
+         * в AVAILABLE и ставим сегодняшнюю метку (BUG-02).
+         * Пустая дата + AVAILABLE — ничего не меняем.
          * PENDING-квесты не сбрасываются (родитель ещё не проверил).
          */
         fun checkBuiltInQuest(
@@ -417,7 +420,13 @@ class MainViewModel(
             status: QuestStatus
         ): Pair<String, Boolean> {
             val parsed = parseResetDate(lastResetDate)
-                ?: return today to false
+            if (parsed == null) {
+                return when (status) {
+                    QuestStatus.CLAIMED, QuestStatus.READY_TO_CLAIM -> today to true
+                    QuestStatus.AVAILABLE -> lastResetDate to false
+                    else -> today to false
+                }
+            }
             val elapsed = when (frequency) {
                 QuestFrequency.DAILY -> parsed.isBefore(todayDate)
                 QuestFrequency.WEEKLY -> parsed.isBefore(weekStart)

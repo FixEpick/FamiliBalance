@@ -85,7 +85,9 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
     }
 
     override fun checkResets() {
-        AppStateStorage.checkResets(appContext)
+        // Изменённые профили отправляем через pushChildProfile: он помечает
+        // их dirty в SyncStatus и повторяет отправку при неудаче (MVI-01).
+        AppStateStorage.checkResets(appContext).forEach { pushChildProfile(it) }
     }
 
     override fun pushChildProfile(child: ChildProfileState) {

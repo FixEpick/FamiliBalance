@@ -19,8 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.R
+import com.example.familibalance.data.update.UpdateError
 import com.example.familibalance.viewmodel.UpdateUiState
 
 @Composable
@@ -40,7 +43,7 @@ fun UpdateDialog(
             onDismissRequest = onDismiss,
             title = {
                 Text(
-                    "Доступно обновление ${state.release.tagName}",
+                    stringResource(R.string.update_title, state.release.tagName),
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -57,21 +60,24 @@ fun UpdateDialog(
                             lineHeight = 18.sp
                         )
                     } else {
-                        Text("Вышла новая версия приложения.", fontSize = 13.sp)
+                        Text(
+                            stringResource(R.string.update_no_notes),
+                            fontSize = 13.sp
+                        )
                     }
                 }
             },
             confirmButton = {
-                Button(onClick = onUpdate) { Text("Обновить") }
+                Button(onClick = onUpdate) { Text(stringResource(R.string.update_btn_update)) }
             },
             dismissButton = {
-                TextButton(onClick = onDismiss) { Text("Позже") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.update_btn_later)) }
             }
         )
 
         is UpdateUiState.Downloading -> AlertDialog(
             onDismissRequest = {},
-            title = { Text("Загрузка обновления", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.update_downloading_title), fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     LinearProgressIndicator(
@@ -95,10 +101,10 @@ fun UpdateDialog(
 
         is UpdateUiState.NeedInstallPermission -> AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Нужно разрешение", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.update_permission_title), fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "Чтобы установить обновление, разрешите приложению установку из неизвестных источников. Скачивание начнётся автоматически после возвращения в приложение.",
+                    stringResource(R.string.update_install_permission_text),
                     fontSize = 13.sp
                 )
             },
@@ -109,19 +115,19 @@ fun UpdateDialog(
                         Uri.parse("package:${context.packageName}")
                     )
                     context.startActivity(intent)
-                }) { Text("Открыть настройки") }
+                }) { Text(stringResource(R.string.update_btn_open_settings)) }
             },
             dismissButton = {
-                OutlinedButton(onClick = onDismiss) { Text("Отмена") }
+                OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
             }
         )
 
         is UpdateUiState.NeedPermission -> AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Нужно разрешение", fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.update_permission_title), fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    "Разрешите установку приложений из этого источника в настройках.",
+                    stringResource(R.string.update_permission_text),
                     fontSize = 13.sp
                 )
             },
@@ -129,22 +135,36 @@ fun UpdateDialog(
                 Button(onClick = {
                     context.startActivity(state.intent)
                     onDismiss()
-                }) { Text("Открыть настройки") }
+                }) { Text(stringResource(R.string.update_btn_open_settings)) }
             },
             dismissButton = {
-                OutlinedButton(onClick = onDismiss) { Text("Отмена") }
+                OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
             }
         )
 
         is UpdateUiState.Error -> AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text("Обновление", fontWeight = FontWeight.Bold) },
-            text = { Text(state.message, fontSize = 13.sp) },
+            title = { Text(stringResource(R.string.update_error_title), fontWeight = FontWeight.Bold) },
+            text = { Text(updateErrorMessage(state.error), fontSize = 13.sp) },
             confirmButton = {
-                Button(onClick = onDismiss) { Text("Закрыть") }
+                Button(onClick = onDismiss) { Text(stringResource(R.string.update_btn_close)) }
             }
         )
     }
+}
+
+/** Маппит типизированную ошибку data-слоя в локализованную строку. */
+@Composable
+private fun updateErrorMessage(error: UpdateError): String = when (error) {
+    UpdateError.SignatureMismatch -> stringResource(R.string.error_signature_mismatch)
+    UpdateError.DownloadFailed -> stringResource(R.string.error_download_failed)
+    UpdateError.ChecksumMismatch -> stringResource(R.string.error_checksum_mismatch)
+    UpdateError.NoApkInRelease -> stringResource(R.string.error_no_apk_in_release)
+    UpdateError.PermissionDenied -> stringResource(R.string.error_permission_denied)
+    is UpdateError.Unknown -> error.message
+        ?.takeIf { it.isNotBlank() }
+        ?.let { stringResource(R.string.error_unknown_with_detail, it) }
+        ?: stringResource(R.string.error_unknown)
 }
 
 /** Убирает базовую Markdown-разметку из Release Notes GitHub для чистого отображения. */

@@ -28,6 +28,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.annotation.StringRes
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +42,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.navigation.AdminRoute
 import com.example.familibalance.navigation.ChildAchievementsRoute
 import com.example.familibalance.navigation.ChildHistoryRoute
@@ -75,6 +78,11 @@ class MainActivity : FragmentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Защита от скриншотов и записи экрана
+        window.setFlags(
+            android.view.WindowManager.LayoutParams.FLAG_SECURE,
+            android.view.WindowManager.LayoutParams.FLAG_SECURE
+        )
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         updateViewModel = ViewModelProvider(this)[UpdateViewModel::class.java]
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
@@ -93,7 +101,7 @@ class MainActivity : FragmentActivity() {
                 ActivityResultContracts.RequestPermission()
             ) { /* результат не критичен — уведомления просто не покажутся */ }
             val notifPrefs = remember {
-                context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                SecurePrefs.get(context, "app_prefs")
             }
             LaunchedEffect(Unit) {
                 val alreadyAsked = notifPrefs.getBoolean("notif_rationale_shown", false)
@@ -188,7 +196,7 @@ class MainActivity : FragmentActivity() {
                     if (!autoNavigatedToAdmin && isParentSession) {
                         autoNavigatedToAdmin = true
                         // Синхронизируем локальный флаг автовхода с Supabase-сессией
-                        context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                        SecurePrefs.get(context, "app_prefs")
                             .edit()
                             .putBoolean("is_admin_logged_in", true)
                             .putBoolean("is_logged_in", false)
@@ -246,7 +254,7 @@ class MainActivity : FragmentActivity() {
                             onParentSuccess = {
                                 // Флаг автовхода родителя: при перезапуске
                                 // isParentSession (Supabase) + этот флаг → AdminRoute
-                                context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                                SecurePrefs.get(context, "app_prefs")
                                     .edit()
                                     .putBoolean("is_admin_logged_in", true)
                                     .putBoolean("is_logged_in", false)
@@ -266,7 +274,7 @@ class MainActivity : FragmentActivity() {
                             onLogout = {
                                 authViewModel.signOut()
                                 viewModel.clearState()
-                                context.getSharedPreferences("app_prefs", android.content.Context.MODE_PRIVATE)
+                                SecurePrefs.get(context, "app_prefs")
                                     .edit()
                                     .putBoolean("is_admin_logged_in", false)
                                     .putBoolean("is_logged_in", false)
@@ -353,6 +361,7 @@ class MainActivity : FragmentActivity() {
 private data class ChildTab(
     val route: Any,
     @StringRes val titleRes: Int,
+    @StringRes val a11yRes: Int,
     val icon: String
 )
 
@@ -396,11 +405,14 @@ private fun ChildSection(
     }
 
     val tabs = listOf(
-        ChildTab(ChildMainRoute, R.string.nav_home, "🏠"),
-        ChildTab(ChildTasksRoute, R.string.nav_quests, "✨"),
-        ChildTab(ChildAchievementsRoute, R.string.nav_achievements, "🏆"),
-        ChildTab(ChildHistoryRoute, R.string.nav_history, "📜")
+        ChildTab(ChildMainRoute, R.string.nav_home, R.string.a11y_nav_home, "🏠"),
+        ChildTab(ChildTasksRoute, R.string.nav_quests, R.string.a11y_nav_quests, "✨"),
+        ChildTab(ChildAchievementsRoute, R.string.nav_achievements, R.string.a11y_nav_achievements, "🏆"),
+        ChildTab(ChildHistoryRoute, R.string.nav_history, R.string.a11y_nav_history, "📜")
     )
+
+    val offlineDesc = stringResource(R.string.a11y_offline_status)
+    val themeDesc = stringResource(R.string.a11y_theme_button)
 
     // Красная точка на «Достижениях», если есть награда, которую можно забрать
     val hasClaimableAchievements = remember(child.achievements, child.fivesCount, child.wardrobeCount, child.roomCount, child.balance, child.streakDays) {
@@ -464,13 +476,22 @@ private fun ChildSection(
                             Text(
                                 text = "📴",
                                 fontSize = 16.sp,
-                                color = StatusYellow
+                                color = StatusYellow,
+                                modifier = Modifier.semantics {
+                                    contentDescription = offlineDesc
+                                }
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
                         LanguageSelectorButton()
                         IconButton(onClick = { showThemeSheet = true }) {
-                            Text("🎨", fontSize = 18.sp)
+                            Text(
+                                "🎨",
+                                fontSize = 18.sp,
+                                modifier = Modifier.semantics {
+                                    contentDescription = themeDesc
+                                }
+                            )
                         }
                     }
                 }
@@ -486,6 +507,7 @@ private fun ChildSection(
                             selected = tab.route == selectedTabRoute,
                             onClick = { navigateToTab(tab.route) },
                             icon = {
+                                val tabA11y = stringResource(tab.a11yRes)
                                 val showBadge = when (tab.route) {
                                     ChildTasksRoute -> hasClaimableTasks
                                     ChildAchievementsRoute -> hasClaimableAchievements
@@ -493,10 +515,22 @@ private fun ChildSection(
                                 }
                                 if (showBadge) {
                                     BadgedBox(badge = { PulseBadge() }) {
-                                        Text(tab.icon, fontSize = 20.sp)
+                                        Text(
+                                            tab.icon,
+                                            fontSize = 20.sp,
+                                            modifier = Modifier.semantics {
+                                                contentDescription = tabA11y
+                                            }
+                                        )
                                     }
                                 } else {
-                                    Text(tab.icon, fontSize = 20.sp)
+                                    Text(
+                                        tab.icon,
+                                        fontSize = 20.sp,
+                                        modifier = Modifier.semantics {
+                                            contentDescription = tabA11y
+                                        }
+                                    )
                                 }
                             },
                             label = {

@@ -53,11 +53,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.*
+import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.screens.*
 
@@ -134,7 +138,7 @@ fun QuestDeliveryScreen(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Toast.makeText(context, "Ошибка обработки фото: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.delivery_error_photo, e.message), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -152,7 +156,7 @@ fun QuestDeliveryScreen(
             takePictureLauncher.launch(uri)
         } catch (e: Exception) {
             e.printStackTrace()
-            Toast.makeText(context, "Не удалось запустить камеру: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.delivery_error_camera, e.message), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -162,7 +166,7 @@ fun QuestDeliveryScreen(
         if (isGranted) {
             launchCamera()
         } else {
-            Toast.makeText(context, "Требуется разрешение на использование камеры", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.delivery_camera_permission), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -226,11 +230,13 @@ fun QuestDeliveryScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         // Зона камеры / предпросмотра фото
+        val cameraDesc = stringResource(R.string.a11y_camera_hint)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(240.dp)
                 .border(1.dp, GlassStroke, RoundedCornerShape(20.dp))
+                .semantics { contentDescription = cameraDesc }
                 .clickable { checkAndLaunchCamera() },
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = GlassBackground)
@@ -242,7 +248,7 @@ fun QuestDeliveryScreen(
                 if (capturedImageUri != null) {
                     AsyncImage(
                         model = capturedImageUri,
-                        contentDescription = "Фото результата",
+                        contentDescription = stringResource(R.string.delivery_photo_desc),
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
                     )
@@ -255,7 +261,7 @@ fun QuestDeliveryScreen(
                         Text(text = "📷", fontSize = 54.sp)
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Нажми, чтобы сфотографировать результат.\nНикаких ограничений по времени!",
+                            text = stringResource(R.string.delivery_camera_hint),
                             color = TextSecondary,
                             fontSize = 14.sp,
                             lineHeight = 20.sp,
@@ -275,7 +281,7 @@ fun QuestDeliveryScreen(
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor)
             ) {
-                Text("🔄 Переснять фото")
+                Text(stringResource(R.string.delivery_retake))
             }
         }
 
@@ -287,7 +293,7 @@ fun QuestDeliveryScreen(
             onValueChange = { commentText = it },
             placeholder = {
                 Text(
-                    "Напиши папе пару слов к фото, если хочешь (например: «Всё сложил по местам!»)",
+                    stringResource(R.string.delivery_comment_hint),
                     color = TextSecondary.copy(alpha = 0.6f),
                     fontSize = 13.sp
                 )
@@ -323,7 +329,7 @@ fun QuestDeliveryScreen(
                 .height(54.dp)
         ) {
             Text(
-                text = "Прикрепить фото и отправить на проверку",
+                text = stringResource(R.string.delivery_submit),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )

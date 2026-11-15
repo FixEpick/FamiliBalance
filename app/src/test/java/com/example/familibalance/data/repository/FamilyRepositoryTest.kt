@@ -3,6 +3,7 @@ package com.example.familibalance.data.repository
 import android.content.Context
 import com.example.familibalance.AppSharedState
 import com.example.familibalance.ChildProfileState
+import com.example.familibalance.data.SecurePrefs
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -60,7 +61,7 @@ class FamilyRepositoryTest {
         repository.updateChildProfile(child)
 
         // Локальное сохранение: состояние записано в SharedPreferences
-        val prefs = context.getSharedPreferences("familibalance_prefs", Context.MODE_PRIVATE)
+        val prefs = SecurePrefs.get(context, "familibalance_prefs")
         val savedJson = prefs.getString("app_state_json", "") ?: ""
         assertTrue("Локальное состояние должно содержать ребёнка", savedJson.contains("user_1"))
 

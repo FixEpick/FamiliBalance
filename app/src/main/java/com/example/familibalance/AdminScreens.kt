@@ -14,6 +14,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,8 +56,14 @@ internal fun EditorItemRow(
         modifier = Modifier.fillMaxWidth().background(GlassBackground, RoundedCornerShape(16.dp)).border(1.dp, GlassStroke, RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) { Text("✏️", fontSize = 15.sp) }
-        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) { Text("🗑️", fontSize = 15.sp) }
+        val editDesc = stringResource(R.string.a11y_edit_button)
+        val deleteDesc = stringResource(R.string.a11y_delete_button)
+        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+            Text("✏️", fontSize = 15.sp, modifier = Modifier.semantics { contentDescription = editDesc })
+        }
+        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+            Text("🗑️", fontSize = 15.sp, modifier = Modifier.semantics { contentDescription = deleteDesc })
+        }
         Spacer(Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 15.sp)

@@ -14,7 +14,7 @@ import java.io.File
 sealed interface InstallResult {
     data class ReadyToInstall(val intent: Intent) : InstallResult
     data class NeedPermission(val intent: Intent) : InstallResult
-    data class Error(val message: String) : InstallResult
+    data class Error(val error: UpdateError) : InstallResult
 }
 
 object UpdateInstaller {
@@ -35,7 +35,7 @@ object UpdateInstaller {
         // что и установленное приложение. Иначе — удаляем файл и прерываемся.
         if (!hasSameSignature(context, apk)) {
             apk.delete()
-            return InstallResult.Error("Подпись APK не совпадает с текущим приложением")
+            return InstallResult.Error(UpdateError.SignatureMismatch)
         }
 
         val uri = FileProvider.getUriForFile(

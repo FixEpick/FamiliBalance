@@ -50,6 +50,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.familibalance.ChildProfileState
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
+import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.ui.components.CyberBackground
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
@@ -120,7 +121,7 @@ fun RegisterParentScreen(
 
     // Восстанавливаем «Запомнить меня»: подставляем сохранённый email
     LaunchedEffect(Unit) {
-        val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        val prefs = SecurePrefs.get(context, "app_prefs")
         if (prefs.getBoolean("is_remember_me", false)) {
             rememberMe = true
             prefs.getString("saved_admin_email", null)
@@ -404,7 +405,7 @@ private fun PlayerRegisterForm(
 }
 
 private fun saveRememberMe(context: Context, email: String, remember: Boolean) {
-    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    val prefs = SecurePrefs.get(context, "app_prefs")
     prefs.edit()
         .putBoolean("is_remember_me", remember)
         .apply {

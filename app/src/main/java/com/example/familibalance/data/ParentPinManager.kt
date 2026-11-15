@@ -24,7 +24,7 @@ object ParentPinManager {
 
     /** true, если пользователь хотя бы раз задал родительский PIN на этом устройстве. */
     fun isPinSet(context: Context): Boolean {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = SecurePrefs.get(context, PREFS_NAME)
         return prefs.getBoolean(KEY_PIN_SET, false)
     }
 
@@ -34,7 +34,7 @@ object ParentPinManager {
      */
     fun getPin(context: Context): String? {
         if (!isPinSet(context)) return null
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = SecurePrefs.get(context, PREFS_NAME)
         return prefs.getString(pinKey(), null)
     }
 
@@ -45,7 +45,7 @@ object ParentPinManager {
     }
 
     fun setPin(context: Context, pin: String) {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val prefs = SecurePrefs.get(context, PREFS_NAME)
         prefs.edit()
             .putString(pinKey(), PinHasher.hash(pin, PinHasher.generateSalt()))
             .putBoolean(KEY_PIN_SET, true)

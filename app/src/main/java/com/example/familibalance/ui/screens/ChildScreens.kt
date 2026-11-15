@@ -54,11 +54,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.*
+import com.example.familibalance.R
 import com.example.familibalance.feature.child.QuestDeliveryScreen
 import com.example.familibalance.feature.child.QuestDeliveryTarget
 import com.example.familibalance.feature.child.components.*
@@ -95,7 +99,7 @@ fun BuyTimeBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "⏳ Обмен коинов на время",
+                text = stringResource(R.string.child_buytime_title),
                 color = AccentColor,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
@@ -105,7 +109,7 @@ fun BuyTimeBottomSheet(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Дневной лимит: $dailyLimit минут. Осталось доступно сегодня: $minutesLeftToday мин.",
+                text = stringResource(R.string.child_buytime_limit, dailyLimit, minutesLeftToday),
                 color = TextSecondary,
                 fontSize = 14.sp,
                 textAlign = TextAlign.Center,
@@ -115,9 +119,9 @@ fun BuyTimeBottomSheet(
             Spacer(modifier = Modifier.height(20.dp))
 
             val tariffs = listOf(
-                TariffData("⏳ 30 минут", 100, 30),
-                TariffData("⏳ 60 минут", 200, 60),
-                TariffData("⏳ 90 минут", 300, 90)
+                TariffData(stringResource(R.string.child_tariff_title, 30), 100, 30),
+                TariffData(stringResource(R.string.child_tariff_title, 60), 200, 60),
+                TariffData(stringResource(R.string.child_tariff_title, 90), 300, 90)
             )
 
             tariffs.forEach { tariff ->
@@ -189,6 +193,7 @@ fun RulesBottomSheet(
     roomReward: Int,
     onDismissRequest: () -> Unit
 ) {
+    val offlineDesc = stringResource(R.string.a11y_offline_status)
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
         containerColor = SpaceBgStart,
@@ -207,7 +212,7 @@ fun RulesBottomSheet(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                text = "📜 Свиток правил",
+                text = stringResource(R.string.rules_title),
                 color = AccentColor,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
@@ -227,10 +232,16 @@ fun RulesBottomSheet(
                     modifier = Modifier.padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "📴", fontSize = 22.sp)
+                    Text(
+                        text = "📴",
+                        fontSize = 22.sp,
+                        modifier = Modifier.semantics {
+                            contentDescription = offlineDesc
+                        }
+                    )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Нет интернета? Не переживай! Все твои квесты и награды сохранены на телефоне. Как только появится сеть, они сами отправятся в облако.",
+                        text = stringResource(R.string.rules_offline),
                         color = TextSecondary,
                         fontSize = 13.sp,
                         lineHeight = 18.sp
@@ -241,57 +252,57 @@ fun RulesBottomSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             RuleBlock(
-                title = "📖 Как работает твой баланс",
-                text = "Все заработанные рубли падают в твой кошелёк. Ты можешь менять их на время в телефоне (100 ₽ = 30 минут) ИЛИ ты можешь в любой момент вывести все деньги — то есть забрать весь свой баланс настоящими бумажными деньгами на руки у папы!"
+                title = stringResource(R.string.rules_balance_title),
+                text = stringResource(R.string.rules_balance_text)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = "💰 Как заработать:",
-                text = "• Оценка «5» в дневнике: +50 ₽\n• Оценка «4» в дневнике: +30 ₽\n• Фото шкафа (идеальный порядок): +$wardrobeReward ₽\n• Фото комнаты (заправленная кровать и порядок): +$roomReward ₽\n• Бонусы за Достижения: от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!"
+                title = stringResource(R.string.rules_earn_title),
+                text = stringResource(R.string.rules_earn_text, wardrobeReward, roomReward)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = "🔴 За что вычитается денежка (Штрафы)",
-                text = "За оценку «3» списывается -20 ₽, за оценку «2» списывается -50 ₽. Но если ты обманул или скрыл правду, но сам честно рассказал об этом папе через кошечку — папа одобрит признание и уменьшит штраф за этот проступок ровно в половину! (до -10 ₽ за тройку и до -25 ₽ за двойку)."
+                title = stringResource(R.string.rules_penalty_title),
+                text = stringResource(R.string.rules_penalty_text)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = "🔥 Дни без штрафов",
-                text = "Отмечайся каждый день и получай +50 ₽ каждые 7 дней без штрафов! Но любой штраф сжигает все накопленные дни — а за каждый пропущенный день гаснет один огонёк."
+                title = stringResource(R.string.rules_streak_title),
+                text = stringResource(R.string.rules_streak_text)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = "⏳ Экранное время",
-                text = "Лимит 90 минут в день. Тарифы: 30 мин = 100 ₽, 60 мин = 200 ₽, 90 мин = 300 ₽."
+                title = stringResource(R.string.rules_screentime_title),
+                text = stringResource(R.string.rules_screentime_text)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = "🐱 Честное признание",
-                text = "Скидка 50% на один штраф. Доступно раз в 7 дней — расскажи папе правду через кошечку!"
+                title = stringResource(R.string.rules_honest_title),
+                text = stringResource(R.string.rules_honest_text)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = "📓 Дневник",
-                text = "Сдаётся раз в неделю. Оценки: 5 (+50 ₽), 4 (+30 ₽), 3 (-20 ₽), 2 (-50 ₽)."
+                title = stringResource(R.string.rules_diary_title),
+                text = stringResource(R.string.rules_diary_text)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = "🏆 Достижения",
-                text = "Получай бонусы за новые ранги от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!"
+                title = stringResource(R.string.rules_achievements_title),
+                text = stringResource(R.string.rules_achievements_text)
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -305,7 +316,7 @@ fun RulesBottomSheet(
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Понятно!", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(stringResource(R.string.rules_understood), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
     }
@@ -347,12 +358,17 @@ fun AchievementsScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(1) }
-    val tabs = listOf("Все", "В процессе", "Зал славы")
+    val tabs = listOf(
+        stringResource(R.string.ach_tab_all),
+        stringResource(R.string.ach_tab_in_progress),
+        stringResource(R.string.ach_tab_hall)
+    )
 
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val currentChild = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.first()
     val context = LocalContext.current
+    val giftDesc = stringResource(R.string.a11y_gift_icon)
     val allAchievements = getAchievements(currentChild)
 
     val displayList = remember(selectedTab, allAchievements) {
@@ -428,14 +444,14 @@ fun AchievementsScreen(
         item {
             Column {
                 Text(
-                    text = "Достижения",
+                    text = stringResource(R.string.ach_title),
                     color = TextPrimary,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Разблокировано $completedCount из ${allAchievements.size} рангов",
+                    text = stringResource(R.string.ach_progress, completedCount, allAchievements.size),
                     color = TextSecondary,
                     fontSize = 14.sp
                 )
@@ -472,13 +488,19 @@ fun AchievementsScreen(
                             .clickable {
                                 Toast.makeText(
                                     context,
-                                    "Главный Секретный Подарок от папы за открытие всех 16 рангов!",
+                                    context.getString(R.string.ach_gift_toast),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("🎁", fontSize = 20.sp)
+                        Text(
+                            "🎁",
+                            fontSize = 20.sp,
+                            modifier = Modifier.semantics {
+                                contentDescription = giftDesc
+                            }
+                        )
                     }
                 }
             }
@@ -558,7 +580,15 @@ fun HistoryScreen(
     var selectedFilter by remember { mutableIntStateOf(0) }
     var showPendingSheet by remember { mutableStateOf(false) }
     var editingQuest by remember { mutableStateOf<QuestDeliveryTarget?>(null) }
-    val filters = listOf("Все", "Квесты", "Достижения", "Экранное время", "Штрафы")
+    val filterLabels = listOf(
+        stringResource(R.string.history_filter_all),
+        stringResource(R.string.history_filter_quests),
+        stringResource(R.string.ach_title),
+        stringResource(R.string.history_filter_screentime),
+        stringResource(R.string.history_filter_fines)
+    )
+    // Категории в historyItems хранятся на русском — маппинг для фильтрации.
+    val filterCategories = listOf<String?>(null, "Квесты", "Достижения", "Экранное время", "Штрафы")
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val currentChild = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.first()
@@ -571,7 +601,7 @@ fun HistoryScreen(
         if (selectedFilter == 0) {
             historyItems
         } else {
-            val category = filters[selectedFilter]
+            val category = filterCategories[selectedFilter]
             historyItems.filter { it.category == category }
         }
     }
@@ -643,7 +673,7 @@ fun HistoryScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Квесты на проверке",
+                                text = stringResource(R.string.child_pending_title),
                                 color = TextPrimary,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
@@ -651,13 +681,13 @@ fun HistoryScreen(
                             Spacer(modifier = Modifier.height(2.dp))
                             if (pendingCount > 0) {
                                 Text(
-                                    text = "$pendingCount ждёт проверки папой • Нажми, чтобы посмотреть",
+                                    text = stringResource(R.string.history_pending_count, pendingCount),
                                     color = StatusYellow,
                                     fontSize = 14.sp
                                 )
                             } else {
                                 Text(
-                                    text = "Нет заданий на проверке",
+                                    text = stringResource(R.string.child_pending_empty),
                                     color = TextSecondary,
                                     fontSize = 12.sp
                                 )
@@ -679,11 +709,11 @@ fun HistoryScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                items(filters.size) { index ->
+                items(filterLabels.size) { index ->
                     FilterChip(
                         selected = selectedFilter == index,
                         onClick = { selectedFilter = index },
-                        label = { Text(filters[index], fontSize = 14.sp) },
+                        label = { Text(filterLabels[index], fontSize = 14.sp) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = AccentColor.copy(alpha = 0.2f),
                             selectedLabelColor = AccentColor,
@@ -719,7 +749,7 @@ fun HistoryScreen(
     }
 
     Text(
-        text = "Версия приложения: ${com.example.familibalance.BuildConfig.VERSION_NAME}",
+        text = stringResource(R.string.history_version, com.example.familibalance.BuildConfig.VERSION_NAME),
         color = TextSecondary.copy(alpha = 0.5f),
         fontSize = 10.sp,
         modifier = Modifier
@@ -781,6 +811,8 @@ internal fun PendingQuestsBottomSheet(
     viewModel: MainViewModel
 ) {
     val pendingItems = remember(child) { collectPendingQuests(child) }
+    val editDesc = stringResource(R.string.a11y_edit_button)
+    val deleteDesc = stringResource(R.string.a11y_delete_button)
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -794,14 +826,14 @@ internal fun PendingQuestsBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "⏳ Квесты на проверке",
+                text = stringResource(R.string.child_pending_title),
                 color = TextPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Отправленные папе задания. Можно удалить или переснять.",
+                text = stringResource(R.string.child_pending_subtitle),
                 color = TextSecondary,
                 fontSize = 13.sp
             )
@@ -809,7 +841,7 @@ internal fun PendingQuestsBottomSheet(
 
             if (pendingItems.isEmpty()) {
                 Text(
-                    text = "Нет заданий на проверке",
+                    text = stringResource(R.string.child_pending_empty),
                     color = TextSecondary,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(vertical = 24.dp)
@@ -879,14 +911,26 @@ internal fun PendingQuestsBottomSheet(
                                     )
                                 }
                             ) {
-                                Text("✏️", fontSize = 18.sp)
+                                Text(
+                                    "✏️",
+                                    fontSize = 18.sp,
+                                    modifier = Modifier.semantics {
+                                        contentDescription = editDesc
+                                    }
+                                )
                             }
 
                             // Кнопка «Удалить» — отменить отправку на проверку
                             IconButton(
                                 onClick = { viewModel.cancelPendingQuest(child.id, item.key) }
                             ) {
-                                Text("🗑️", fontSize = 18.sp)
+                                Text(
+                                    "🗑️",
+                                    fontSize = 18.sp,
+                                    modifier = Modifier.semantics {
+                                        contentDescription = deleteDesc
+                                    }
+                                )
                             }
                         }
                     }
@@ -903,6 +947,11 @@ fun EconomyBottomSheet(
     onDismissRequest: () -> Unit
 ) {
     val achievements = remember(child) { getAchievements(child) }
+    val branchTitles = mapOf(
+        AchievementBranch.DIARY to stringResource(R.string.eco_branch_diary),
+        AchievementBranch.WARDROBE to stringResource(R.string.eco_branch_wardrobe),
+        AchievementBranch.ROOM to stringResource(R.string.eco_branch_room)
+    )
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -921,7 +970,7 @@ fun EconomyBottomSheet(
         ) {
             item {
                 Text(
-                    text = "💰 Экономика",
+                    text = stringResource(R.string.economy_title),
                     color = TextPrimary,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
@@ -931,64 +980,59 @@ fun EconomyBottomSheet(
 
             // ===== Секция 1: Доходы =====
             item {
-                EconomySectionTitle("💰 Как заработать")
+                EconomySectionTitle(stringResource(R.string.economy_earn_section))
             }
             item {
-                EconomyRow("📸 Фото шкафа", "+${child.wardrobeReward} ₽")
+                EconomyRow(stringResource(R.string.eco_wardrobe_photo), "+${child.wardrobeReward} ₽")
             }
             item {
-                EconomyRow("🛏️ Фото комнаты", "+${child.roomReward} ₽")
+                EconomyRow(stringResource(R.string.eco_room_photo), "+${child.roomReward} ₽")
             }
             item {
-                EconomyRow("📓 Дневник: оценка 5", "+50 ₽")
+                EconomyRow(stringResource(R.string.eco_diary_grade5), "+50 ₽")
             }
             item {
-                EconomyRow("📓 Дневник: оценка 4", "+30 ₽")
+                EconomyRow(stringResource(R.string.eco_diary_grade4), "+30 ₽")
             }
             item {
-                EconomyRow("🔥 Стрик без штрафов", "+50 ₽ каждые 7 дней")
+                EconomyRow(stringResource(R.string.eco_streak), stringResource(R.string.eco_streak_value))
             }
             item {
-                EconomyRow("🎯 Цель-мечта", "сумма задаётся папой")
+                EconomyRow(stringResource(R.string.eco_dream), stringResource(R.string.eco_set_by_dad))
             }
 
             // ===== Секция 2: Расходы =====
             item {
                 Spacer(modifier = Modifier.height(12.dp))
-                EconomySectionTitle("💸 На что потратить")
+                EconomySectionTitle(stringResource(R.string.economy_spend_section))
             }
             item {
-                EconomyRow("⏳ 30 минут экранного времени", "100 ₽")
+                EconomyRow(stringResource(R.string.eco_time30), "100 ₽")
             }
             item {
-                EconomyRow("⏳ 60 минут экранного времени", "200 ₽")
+                EconomyRow(stringResource(R.string.eco_time60), "200 ₽")
             }
             item {
-                EconomyRow("⏳ 90 минут экранного времени", "300 ₽")
+                EconomyRow(stringResource(R.string.eco_time90), "300 ₽")
             }
             item {
-                EconomyRow("📓 Дневник: оценка 3", "−20 ₽")
+                EconomyRow(stringResource(R.string.eco_diary_grade3), "−20 ₽")
             }
             item {
-                EconomyRow("📓 Дневник: оценка 2", "−50 ₽")
+                EconomyRow(stringResource(R.string.eco_diary_grade2), "−50 ₽")
             }
             item {
-                EconomyRow("🐱 Честное признание", "скидка −50% на штраф")
+                EconomyRow(stringResource(R.string.eco_honest), stringResource(R.string.eco_honest_discount))
             }
             item {
-                EconomyRow("👨‍👦 Штрафы от папы", "сумма задаётся папой")
+                EconomyRow(stringResource(R.string.eco_parent_fine), stringResource(R.string.eco_set_by_dad))
             }
 
             // ===== Секция 3: Достижения =====
             item {
                 Spacer(modifier = Modifier.height(12.dp))
-                EconomySectionTitle("🏆 Достижения")
+                EconomySectionTitle(stringResource(R.string.economy_achievements_section))
             }
-            val branchTitles = mapOf(
-                AchievementBranch.DIARY to "📓 Дневник",
-                AchievementBranch.WARDROBE to "📸 Шкаф",
-                AchievementBranch.ROOM to "🛏️ Комната"
-            )
             AchievementBranch.entries.forEach { branch ->
                 val branchItems = child.achievements
                     .filter { it.isVisible && it.branch == branch }
