@@ -52,7 +52,9 @@ class AuthViewModel : ViewModel() {
         authRepository?.sessionStatus?.stateIn(
             viewModelScope,
             SharingStarted.Eagerly,
-            SessionStatus.NotAuthenticated(isSignOut = false)
+            // Initializing — пока Supabase восстанавливает сохранённую сессию;
+            // UI по этому значению показывает splash вместо экрана входа.
+            SessionStatus.Initializing
         ) ?: MutableStateFlow(SessionStatus.NotAuthenticated(isSignOut = false))
 
     private val _uiState = MutableStateFlow(AuthUiState())

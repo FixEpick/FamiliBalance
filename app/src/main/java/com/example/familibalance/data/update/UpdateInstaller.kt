@@ -57,8 +57,10 @@ object UpdateInstaller {
      */
     private fun hasSameSignature(context: Context, apk: File): Boolean {
         val pm = context.packageManager
+        // На API 28+ запрашиваем оба флага: signingInfo может быть null
+        // (например, для архивного APK), тогда подписанты берём из signatures.
         val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            PackageManager.GET_SIGNING_CERTIFICATES
+            PackageManager.GET_SIGNING_CERTIFICATES or PackageManager.GET_SIGNATURES
         } else {
             @Suppress("DEPRECATION")
             PackageManager.GET_SIGNATURES
@@ -85,11 +87,15 @@ object UpdateInstaller {
     }
 
     private fun signingCertificates(info: PackageInfo): List<Signature> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            info.signingInfo?.apkContentsSigners?.toList().orEmpty()
-        } else {
-            @Suppress("DEPRECATION")
-            info.signatures?.toList().orEmpty()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            info.signingInfo?.apkContentsSigners
+                ?.toList()
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { return it }
         }
+        // Fallback: signingInfo отсутствует (архивный APK на части устройств) —
+        // берём устаревшее поле signatures, чтобы не получить ложный mismatch.
+        @Suppress("DEPRECATION")
+        return info.signatures?.toList().orEmpty()
     }
 }

@@ -138,11 +138,23 @@ class MainActivity : FragmentActivity() {
             val familyState by viewModel.familyState.collectAsStateWithLifecycle()
             val sessionStatus by authViewModel.sessionStatus.collectAsStateWithLifecycle()
             val autoLoginChildId by viewModel.autoLoginChildId.collectAsStateWithLifecycle()
+            val isInitializing by viewModel.isInitializing.collectAsStateWithLifecycle()
             val themeChild = familyState.children[familyState.selectedChildId]
                 ?: familyState.children.values.firstOrNull()
             val currentThemeId = themeChild?.selectedThemeId ?: "COSMIC_BLUE"
             LocalizedAppContent {
             FamiliBalanceTheme(themeId = currentThemeId) {
+                // Пока грузится локальный стейт и Supabase восстанавливает сессию —
+                // показываем splash, чтобы не мигал экран входа перед админкой.
+                if (isInitializing || sessionStatus is SessionStatus.Initializing) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                    return@FamiliBalanceTheme
+                }
                 val navController = rememberNavController()
 
                 // «Назад» на главных разделах (ChildRoute / AdminRoute) —
@@ -159,14 +171,26 @@ class MainActivity : FragmentActivity() {
                     showExitDialog = true
                 }
 
-                // При возврате приложения из фона — досылаем несинхронизированные данные
+                // Жизненный цикл Realtime и синхронизации:
+                //  - ON_STOP: закрываем WebSocket — в фоне он не нужен (батарея);
+                //  - ON_START: возобновляем подписку, если есть авторизованная сессия;
+                //  - ON_RESUME: досылаем несинхронизированные данные и обновления.
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->
-                        if (event == Lifecycle.Event.ON_RESUME) {
-                            viewModel.forceSync()
-                            // Если ждали разрешения на установку — продолжаем обновление
-                            updateViewModel.onResume()
+                        when (event) {
+                            Lifecycle.Event.ON_STOP -> SupabaseManager.stopRealtimeSync()
+                            Lifecycle.Event.ON_START -> {
+                                if (sessionStatus is SessionStatus.Authenticated) {
+                                    SupabaseManager.startRealtimeSync(context)
+                                }
+                            }
+                            Lifecycle.Event.ON_RESUME -> {
+                                viewModel.forceSync()
+                                // Если ждали разрешения на установку — продолжаем обновление
+                                updateViewModel.onResume()
+                            }
+                            else -> {}
                         }
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)

@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,16 +46,18 @@ fun AdminSettingsScreen(
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.firstOrNull()
         ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
-    var showAddBonusDialog by remember { mutableStateOf(false) }
-    var showConfirmDialog by remember { mutableStateOf(false) }
-    var showResets by remember { mutableStateOf(false) }
-    var showPinPicker by remember { mutableStateOf(false) }
-    var pinTarget by remember { mutableStateOf<String?>(null) } // "parent" или childId
+    var showAddBonusDialog by rememberSaveable { mutableStateOf(false) }
+    var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
+    var showDeleteAccountDialog by rememberSaveable { mutableStateOf(false) }
+    var isDeletingAccount by rememberSaveable { mutableStateOf(false) }
+    var showResets by rememberSaveable { mutableStateOf(false) }
+    var showPinPicker by rememberSaveable { mutableStateOf(false) }
+    var pinTarget by rememberSaveable { mutableStateOf<String?>(null) } // "parent" или childId
     var pendingResetAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     // --- Ручная синхронизация: индикатор + Toast по завершении ---
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
-    var syncRequested by remember { mutableStateOf(false) }
+    var syncRequested by rememberSaveable { mutableStateOf(false) }
 
     // Ждём реального старта синхронизации (до 3 сек — на случай мгновенного
     // завершения/офлайна), затем её окончания (до 25 сек). В любом случае
@@ -326,6 +330,14 @@ item {
             ) {
                 Text("🚪 Выйти из аккаунта", fontWeight = FontWeight.Bold)
             }
+            Spacer(modifier = Modifier.height(10.dp))
+            TextButton(
+                onClick = { showDeleteAccountDialog = true },
+                enabled = !isDeletingAccount,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("🗑 Удалить аккаунт", color = PenaltyRed, fontWeight = FontWeight.Bold)
+            }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Версия приложения: ${BuildConfig.VERSION_NAME}",
@@ -380,8 +392,9 @@ if (pinTarget == "parent") {
     )
 }
 
-// Детский ПИН
+// Детский ПИН (для "parent" диалог уже открыт выше — не сбрасываем pinTarget)
 pinTarget?.let { targetId ->
+    if (targetId == "parent") return@let
     val targetChild = familyState.children[targetId]
     if (targetChild != null) {
         SetChildPinDialog(
@@ -401,15 +414,19 @@ pinTarget?.let { targetId ->
     }
 }
 if (showAddBonusDialog) {
-    var bonusTitle by remember { mutableStateOf("") }
-    var bonusDesc by remember { mutableStateOf("") }
-    var bonusReward by remember { mutableStateOf("50") }
+    var bonusTitle by rememberSaveable { mutableStateOf("") }
+    var bonusDesc by rememberSaveable { mutableStateOf("") }
+    var bonusReward by rememberSaveable { mutableStateOf("50") }
     AlertDialog(
         onDismissRequest = { showAddBonusDialog = false },
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         containerColor = SpaceBgStart,
         title = { Text("🎁 Новый бонус-квест для ${child.name}", color = AccentColor, fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.imePadding(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 OutlinedTextField(value = bonusTitle, onValueChange = { bonusTitle = it }, label = { Text("Название квеста", color = TextPrimary) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
                 OutlinedTextField(value = bonusDesc, onValueChange = { bonusDesc = it }, label = { Text("Описание квеста", color = TextPrimary) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
                 OutlinedTextField(value = bonusReward, onValueChange = { bonusReward = it }, label = { Text("Награда (₽)", color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
@@ -444,6 +461,61 @@ if (showConfirmDialog && pendingResetAction != null) {
             }
         },
         dismissButton = { TextButton(onClick = { showConfirmDialog = false; pendingResetAction = null }) { Text("Отмена", color = TextSecondary) } }
+    )
+}
+// Удаление аккаунта (Google Play): необратимо, с подтверждением и спиннером
+if (showDeleteAccountDialog) {
+    AlertDialog(
+        onDismissRequest = { if (!isDeletingAccount) showDeleteAccountDialog = false },
+        containerColor = SpaceBgStart,
+        title = { Text("Удалить аккаунт", color = PenaltyRed, fontWeight = FontWeight.Bold) },
+        text = {
+            Text(
+                "Вы уверены? Все данные, включая профили детей и фото, будут удалены навсегда. Это действие нельзя отменить.",
+                color = TextPrimary
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    isDeletingAccount = true
+                    viewModel.deleteAccount { success ->
+                        isDeletingAccount = false
+                        showDeleteAccountDialog = false
+                        if (success) {
+                            onLogout()
+                        } else {
+                            android.widget.Toast.makeText(
+                                context,
+                                "Не удалось удалить аккаунт. Проверьте подключение и попробуйте ещё раз.",
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                },
+                enabled = !isDeletingAccount,
+                colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed, contentColor = Color.White),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                if (isDeletingAccount) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text("Удалить", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = { showDeleteAccountDialog = false },
+                enabled = !isDeletingAccount
+            ) {
+                Text("Отмена", color = TextSecondary)
+            }
+        }
     )
 }
 }

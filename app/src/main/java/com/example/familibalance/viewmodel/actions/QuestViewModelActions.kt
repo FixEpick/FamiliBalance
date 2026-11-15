@@ -8,73 +8,6 @@ import com.example.familibalance.*
 import com.example.familibalance.util.PhotoStorage
 import kotlinx.coroutines.launch
 
-fun MainViewModel.approveQuest(userId: String, questType: String, customReward: Int? = null) {
-    val profile = familyRepository.getChild(userId) ?: return
-    val photoUrlToDelete = when (questType.lowercase()) {
-        "closet", "шкаф" -> profile.closetPhotoUrl
-        "room", "комната" -> profile.roomPhotoUrl
-        "diary", "дневник", "итоги" -> profile.diaryPhotoUrl
-        else -> null
-    }
-    val updated = when (questType.lowercase()) {
-        "closet", "шкаф" -> profile.copy(
-            closetPhotoUrl = null,
-            closetComment = "",
-            closetStatus = QuestStatus.READY_TO_CLAIM,
-            closetRejectReason = null
-        )
-        "room", "комната" -> profile.copy(
-            roomPhotoUrl = null,
-            roomComment = "",
-            roomStatus = QuestStatus.READY_TO_CLAIM,
-            roomRejectReason = null
-        )
-        "diary", "дневник", "итоги" -> profile.copy(
-            diaryPhotoUrl = null,
-            diaryComment = "",
-            diaryStatus = QuestStatus.READY_TO_CLAIM,
-            diaryRejectReason = null,
-            diaryApprovedReward = customReward ?: profile.diaryApprovedReward
-        )
-        else -> profile
-    }
-    clearQuestPhotoIfNeeded(updated, questType, photoUrlToDelete)
-    updateChildProfile(updated)
-}
-
-fun MainViewModel.rejectQuest(userId: String, questType: String, reason: String) {
-    val profile = familyRepository.getChild(userId) ?: return
-    val photoUrlToDelete = when (questType.lowercase()) {
-        "closet", "шкаф" -> profile.closetPhotoUrl
-        "room", "комната" -> profile.roomPhotoUrl
-        "diary", "дневник", "итоги" -> profile.diaryPhotoUrl
-        else -> null
-    }
-    val updated = when (questType.lowercase()) {
-        "closet", "шкаф" -> profile.copy(
-            closetPhotoUrl = null,
-            closetComment = "",
-            closetStatus = QuestStatus.AVAILABLE,
-            closetRejectReason = reason
-        )
-        "room", "комната" -> profile.copy(
-            roomPhotoUrl = null,
-            roomComment = "",
-            roomStatus = QuestStatus.AVAILABLE,
-            roomRejectReason = reason
-        )
-        "diary", "дневник", "итоги" -> profile.copy(
-            diaryPhotoUrl = null,
-            diaryComment = "",
-            diaryStatus = QuestStatus.AVAILABLE,
-            diaryRejectReason = reason
-        )
-        else -> profile
-    }
-    clearQuestPhotoIfNeeded(updated, questType, photoUrlToDelete)
-    updateChildProfile(updated)
-}
-
 private fun MainViewModel.clearQuestPhotoIfNeeded(profile: ChildProfileState, questType: String, photoUrl: String?) {
     if (photoUrl.isNullOrBlank()) {
         return
@@ -200,6 +133,8 @@ fun MainViewModel.cancelPendingQuest(userId: String, questKey: String) {
 }
 
 fun MainViewModel.claimQuestReward(userId: String, questType: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
     var updated = profile
     var rewardAmount = 50
@@ -248,6 +183,9 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
             ) + updated.historyItems
         )
         updateChildProfile(updated)
+    }
+    } finally {
+        endProcessingAction()
     }
 }
 
@@ -317,6 +255,8 @@ fun MainViewModel.rejectBonusQuest(userId: String, questId: String, reason: Stri
 }
 
 fun MainViewModel.claimBonusQuestReward(userId: String, questId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.bonusQuests.firstOrNull { it.id == questId } ?: return
     if (target.status == QuestStatus.READY_TO_CLAIM) {
@@ -338,6 +278,9 @@ fun MainViewModel.claimBonusQuestReward(userId: String, questId: String) {
             ) + profile.historyItems
         )
         updateChildProfile(updated)
+    }
+    } finally {
+        endProcessingAction()
     }
 }
 

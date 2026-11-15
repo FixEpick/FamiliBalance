@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,22 +35,22 @@ fun AdminAchievementsScreen(
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.first()
 
-    var newTitle by remember { mutableStateOf("") }
-    var newDescription by remember { mutableStateOf("") }
-    var newTarget by remember { mutableStateOf("") }
-    var newReward by remember { mutableStateOf("") }
-    var newBranch by remember { mutableStateOf(AchievementBranch.DIARY) }
+    var newTitle by rememberSaveable { mutableStateOf("") }
+    var newDescription by rememberSaveable { mutableStateOf("") }
+    var newTarget by rememberSaveable { mutableStateOf("") }
+    var newReward by rememberSaveable { mutableStateOf("") }
+    var newBranch by rememberSaveable { mutableStateOf(AchievementBranch.DIARY) }
 
-    var showEditDialog by remember { mutableStateOf(false) }
+    var showEditDialog by rememberSaveable { mutableStateOf(false) }
     var editAchievement by remember { mutableStateOf<AchievementConfig?>(null) }
-    var editTitle by remember { mutableStateOf("") }
-    var editDescription by remember { mutableStateOf("") }
-    var editTarget by remember { mutableStateOf("") }
-    var editReward by remember { mutableStateOf("") }
-    var editBranch by remember { mutableStateOf(AchievementBranch.DIARY) }
+    var editTitle by rememberSaveable { mutableStateOf("") }
+    var editDescription by rememberSaveable { mutableStateOf("") }
+    var editTarget by rememberSaveable { mutableStateOf("") }
+    var editReward by rememberSaveable { mutableStateOf("") }
+    var editBranch by rememberSaveable { mutableStateOf(AchievementBranch.DIARY) }
 
-    var showDeleteConfirm by remember { mutableStateOf(false) }
-    var deleteTargetId by remember { mutableStateOf<String?>(null) }
+    var showDeleteConfirm by rememberSaveable { mutableStateOf(false) }
+    var deleteTargetId by rememberSaveable { mutableStateOf<String?>(null) }
 
     fun startEdit(ach: AchievementConfig) {
         editAchievement = ach
@@ -218,12 +220,13 @@ fun AdminAchievementsScreen(
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { cancelEdit() },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
             title = {
                 Text("✏️ Редактирование достижения", color = AccentColor, fontWeight = FontWeight.Bold)
             },
             text = {
-                Column {
+                Column(modifier = Modifier.imePadding()) {
                     OutlinedTextField(
                         value = editTitle,
                         onValueChange = { editTitle = it },
@@ -369,18 +372,18 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.first()
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var newTitle by remember { mutableStateOf("") }
-    var newDesc by remember { mutableStateOf("") }
-    var newTarget by remember { mutableStateOf("5") }
-    var newReward by remember { mutableStateOf("50") }
-    var newBranch by remember { mutableStateOf(AchievementBranch.DIARY) }
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    var newTitle by rememberSaveable { mutableStateOf("") }
+    var newDesc by rememberSaveable { mutableStateOf("") }
+    var newTarget by rememberSaveable { mutableStateOf("5") }
+    var newReward by rememberSaveable { mutableStateOf("50") }
+    var newBranch by rememberSaveable { mutableStateOf(AchievementBranch.DIARY) }
     var editingAch by remember { mutableStateOf<AchievementConfig?>(null) }
-    var editTitle by remember { mutableStateOf("") }
-    var editDesc by remember { mutableStateOf("") }
-    var editTarget by remember { mutableStateOf("") }
-    var editReward by remember { mutableStateOf("") }
-    var editBranch by remember { mutableStateOf(AchievementBranch.DIARY) }
+    var editTitle by rememberSaveable { mutableStateOf("") }
+    var editDesc by rememberSaveable { mutableStateOf("") }
+    var editTarget by rememberSaveable { mutableStateOf("") }
+    var editReward by rememberSaveable { mutableStateOf("") }
+    var editBranch by rememberSaveable { mutableStateOf(AchievementBranch.DIARY) }
     var deletingAch by remember { mutableStateOf<AchievementConfig?>(null) }
     val switchColors = SwitchDefaults.colors(
         checkedThumbColor = AccentColor,
@@ -429,10 +432,14 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     if (showCreateDialog) {
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
             title = { Text("Новое достижение", color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text("Название", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
                     OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text("Описание", color = TextPrimary) }, colors = editorFieldColors())
                     OutlinedTextField(value = newTarget, onValueChange = { newTarget = it }, label = { Text("Цель (кол-во)", color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
@@ -463,10 +470,14 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     editingAch?.let { ach ->
         AlertDialog(
             onDismissRequest = { editingAch = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
             title = { Text("Редактировать достижение", color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     OutlinedTextField(value = editTitle, onValueChange = { editTitle = it }, label = { Text("Название", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
                     OutlinedTextField(value = editDesc, onValueChange = { editDesc = it }, label = { Text("Описание", color = TextPrimary) }, colors = editorFieldColors())
                     OutlinedTextField(value = editTarget, onValueChange = { editTarget = it }, label = { Text("Цель (кол-во)", color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())

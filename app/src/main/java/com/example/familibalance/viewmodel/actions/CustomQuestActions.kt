@@ -65,7 +65,9 @@ fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoU
         if (quest.id == questId) {
             quest.copy(
                 status = QuestStatus.PENDING,
-                photoUrl = persistedPhotoUrl.orEmpty(),
+                // Не затираем фото пустой строкой: если persist не дал результата —
+                // оставляем прежний URL, чтобы не потерять уже сохранённое фото.
+                photoUrl = persistedPhotoUrl?.takeIf { it.isNotBlank() } ?: quest.photoUrl,
                 rejectReason = null,
                 comment = comment.trim()
             )
@@ -77,6 +79,8 @@ fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoU
 }
 
 fun MainViewModel.claimCustomQuestReward(userId: String, questId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.customQuests.firstOrNull { it.id == questId } ?: return
     if (target.status == QuestStatus.READY_TO_CLAIM) {
@@ -98,5 +102,8 @@ fun MainViewModel.claimCustomQuestReward(userId: String, questId: String) {
             ) + profile.historyItems
         )
         updateChildProfile(updated)
+    }
+    } finally {
+        endProcessingAction()
     }
 }

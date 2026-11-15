@@ -11,8 +11,10 @@ import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.filter.FilterOperator
+import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.realtime.PostgresAction
 import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.realtime.RealtimeChannel
@@ -26,6 +28,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
@@ -35,6 +38,7 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -45,6 +49,8 @@ data class FamilyProfileRow(
     val state_json: String,
     @SerialName("parent_user_id") val parentUserId: String? = null,
     @SerialName("parent_email") val parentEmail: String? = null,
+    /** auth.uid анонимной сессии ребёнка — нужен Realtime/RLS на устройстве ребёнка. */
+    @SerialName("auth_user_id") val authUserId: String? = null,
     val status: String? = null
 )
 
@@ -57,6 +63,10 @@ object SupabaseManager {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
     private var isSubscribed = false
+    /** Job Realtime-подписки: null/неактивен — канал закрыт (экономия батареи в фоне). */
+    private var realtimeJob: Job? = null
+    /** Активный Realtime-канал — нужен для removeChannel при остановке. */
+    private var realtimeChannel: RealtimeChannel? = null
 
     val client: SupabaseClient? by lazy {
         if (!SupabaseConfig.isConfigured()) {
@@ -89,7 +99,8 @@ object SupabaseManager {
      */
     fun startRealtimeSync(context: Context) {
         val supabase = client ?: return
-        if (isSubscribed) return
+        // Дубликаты запрещены: если подписка уже активна — выходим.
+        if (realtimeJob?.isActive == true) return
         isSubscribed = true
 
         // 1. Первичная загрузка профилей из базы (с фильтрацией по текущему родителю)
@@ -98,12 +109,11 @@ object SupabaseManager {
         }
 
         // 2. Подписка на изменения в реальном времени (Realtime) с авто-переподпиской
-        scope.launch(exceptionHandler) {
+        realtimeJob = scope.launch(exceptionHandler) {
             var retryDelayMs = 1_000L
             val maxRetryDelayMs = 30_000L
             // uid родителя на момент подписки — для серверного фильтра Realtime
             var subscribedUid: String? = null
-            var activeChannel: RealtimeChannel? = null
 
             // При смене сессии (login/logout) удаляем активный канал — collect упадёт,
             // и цикл переподпишется уже с новым parent_user_id в фильтре.
@@ -111,7 +121,7 @@ object SupabaseManager {
                 supabase.auth.sessionStatus.collect { status ->
                     val newUid = (status as? SessionStatus.Authenticated)?.session?.user?.id
                     if (newUid != subscribedUid) {
-                        activeChannel?.let { ch ->
+                        realtimeChannel?.let { ch ->
                             runCatching { supabase.realtime.removeChannel(ch) }
                         }
                     }
@@ -128,14 +138,13 @@ object SupabaseManager {
 
                     val channel = supabase.realtime.channel("family_profiles_realtime")
                     myChannel = channel
-                    activeChannel = channel
+                    realtimeChannel = channel
 
                     // Серверные фильтры Realtime:
                     //  - parent_user_id = uid  → профили детей этого родителя;
-                    //  - user_id = uid         → собственный профиль (важно для устройства
-                    //    ребёнка: его auth-uid отличается от child.id, но parent_user_id
-                    //    указывает на родителя, поэтому без второго фильтра он не получал
-                    //    бы обновления своего профиля).
+                    //  - auth_user_id   = uid  → собственный профиль ребёнка
+                    //    (его auth-uid хранится в auth_user_id, а user_id — это child.id,
+                    //    поэтому фильтр по user_id для ребёнка не работал).
                     // Pending-строки (parent_user_id IS NULL) realtime не покрывает —
                     // их подхватывает опрос loadPendingRequests в AdminViewModel.
                     // Клиентская проверка isRowVisibleToUser остаётся как второй рубеж.
@@ -153,7 +162,7 @@ object SupabaseManager {
                             },
                             channel.postgresChangeFlow<PostgresAction>(schema = "public") {
                                 table = "family_profiles"
-                                filter("user_id", FilterOperator.EQ, currentUid)
+                                filter("auth_user_id", FilterOperator.EQ, currentUid)
                             }
                         )
                     }
@@ -174,6 +183,7 @@ object SupabaseManager {
                                 val stateJson = record["state_json"]?.jsonPrimitive?.contentOrNull
                                 val parentUserId = record["parent_user_id"]?.jsonPrimitive?.contentOrNull
                                 val parentEmail = record["parent_email"]?.jsonPrimitive?.contentOrNull
+                                val authUserId = record["auth_user_id"]?.jsonPrimitive?.contentOrNull
                                 val status = record["status"]?.jsonPrimitive?.contentOrNull
                                 if (!userId.isNullOrEmpty() && !stateJson.isNullOrEmpty()) {
                                     val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
@@ -182,10 +192,11 @@ object SupabaseManager {
                                         state_json = stateJson,
                                         parentUserId = parentUserId,
                                         parentEmail = parentEmail,
+                                        authUserId = authUserId,
                                         status = status
                                     )
                                     if (isRowVisibleToUser(row, currentUser?.id, currentUser?.email)) {
-                                        AppStateStorage.applyRemoteChildJsonAsync(context, userId, stateJson, parentUserId, status)
+                                        AppStateStorage.applyRemoteChildJsonAsync(context, userId, stateJson, parentUserId, status, authUserId)
                                     }
                                 }
                             }
@@ -194,8 +205,19 @@ object SupabaseManager {
                             Log.e("SupabaseManager", "Ошибка обработки записи Realtime: ${e.message}")
                         }
                     }
-                    // collect завершился без исключения — выходим из цикла
-                    break
+                    // collect завершился без исключения — не выходим из цикла,
+                    // а переподписываемся: канал мог быть закрыт сервером.
+                    Log.w("SupabaseManager", "Realtime flow завершился, переподписка через ${retryDelayMs}мс")
+                    isSubscribed = false
+                    myChannel?.let { channel ->
+                        try {
+                            supabase.realtime.removeChannel(channel)
+                        } catch (ex: Exception) {
+                            Log.w("SupabaseManager", "Не удалось удалить Realtime-канал: ${ex.message}")
+                        }
+                    }
+                    kotlinx.coroutines.delay(retryDelayMs)
+                    retryDelayMs = (retryDelayMs * 2).coerceAtMost(maxRetryDelayMs)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Throwable) {
@@ -217,6 +239,24 @@ object SupabaseManager {
     }
 
     /**
+     * Останавливает Realtime-подписку: отменяет job и закрывает канал.
+     * Вызывается при ON_STOP — в фоне WebSocket не нужен (экономия батареи).
+     * Повторный startRealtimeSync после этого создаст подписку заново.
+     */
+    fun stopRealtimeSync() {
+        realtimeJob?.cancel()
+        realtimeJob = null
+        isSubscribed = false
+        val channel = realtimeChannel
+        realtimeChannel = null
+        if (channel != null) {
+            scope.launch {
+                runCatching { client?.realtime?.removeChannel(channel) }
+            }
+        }
+    }
+
+    /**
      * Ручная перезагрузка всех видимых профилей из облака.
      * Вызывается кнопкой «Синхронизировать с сервером» — pull-часть синхронизации.
      */
@@ -232,7 +272,7 @@ object SupabaseManager {
         val supabase = client ?: return
         try {
             val rows = supabase.from("family_profiles")
-                .select(columns = Columns.list("user_id", "state_json", "parent_user_id", "parent_email", "status"))
+                .select(columns = Columns.list("user_id", "state_json", "parent_user_id", "parent_email", "auth_user_id", "status"))
                 .decodeList<FamilyProfileRow>()
 
             val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
@@ -241,7 +281,7 @@ object SupabaseManager {
 
             rows.filter { isRowVisibleToUser(it, uid, email) }
                 .forEach { row ->
-                    AppStateStorage.applyRemoteChildJsonAsync(context, row.user_id, row.state_json, row.parentUserId, row.status)
+                    AppStateStorage.applyRemoteChildJsonAsync(context, row.user_id, row.state_json, row.parentUserId, row.status, row.authUserId)
                 }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
@@ -257,11 +297,13 @@ object SupabaseManager {
      */
     private fun isRowVisibleToUser(row: FamilyProfileRow, uid: String?, email: String?): Boolean {
         // Без сессии (гость) чужие строки не показываем — строгая клиентская фильтрация.
-        // Анонимный пользователь Supabase имеет uid, поэтому собственный pending-профиль виден.
+        // Анонимный пользователь Supabase имеет uid, поэтому собственный профиль виден.
         if (uid == null) return false
         // Собственный профиль виден всегда (в т.ч. анонимному ребёнку)
         if (row.user_id == uid) return true
         if (row.parentUserId == uid) return true
+        // Профиль ребёнка на его устройстве: auth.uid анонимной сессии == auth_user_id.
+        if (!row.authUserId.isNullOrBlank() && row.authUserId == uid) return true
         if (!row.parentUserId.isNullOrBlank()) return false
         // Pending-запрос: виден родителю по parent_email (колонка или state_json)
         val rowParentEmail = row.parentEmail
@@ -332,6 +374,13 @@ object SupabaseManager {
                     } else index to uri
                 }
 
+                // Пользователь мог выйти из аккаунта, пока шла загрузка фото —
+                // не воскрешаем профиль в AppSharedState и не пишем в облако.
+                if (runCatching { supabase.auth.currentUserOrNull() }.getOrNull() == null) {
+                    onResult?.invoke(false)
+                    return@launch
+                }
+
                 // Применяем результаты на Main: собираем новый иммутабельный профиль
                 val updatedChild = withContext(Dispatchers.Main) {
                     var updated = child.copy(
@@ -381,6 +430,11 @@ object SupabaseManager {
                 // uid сессии считаем «родительским» только если у пользователя есть email
                 // (анонимный ребёнок не должен записываться в parent_user_id)
                 val sessionParentUid = currentUser?.id?.takeIf { !currentUser.email.isNullOrBlank() }
+                // auth_user_id — uid анонимной сессии ребёнка. Берём из профиля,
+                // а если пусто и текущая сессия анонимная — подставляем её uid
+                // (самолечение старых профилей без authUserId).
+                val sessionAuthUid = currentUser?.id?.takeIf { currentUser.email.isNullOrBlank() }
+                val authId = updatedChild.authUserId.ifBlank { sessionAuthUid.orEmpty() }
                 // Не затираем существующую привязку: берём parentUserId профиля,
                 // а если его нет — uid родительской сессии
                 val parentId = updatedChild.parentUserId.ifBlank { sessionParentUid.orEmpty() }
@@ -390,6 +444,7 @@ object SupabaseManager {
                         state_json = jsonString,
                         parentUserId = parentId.ifBlank { null },
                         parentEmail = updatedChild.parentEmail.ifBlank { null },
+                        authUserId = authId.ifBlank { null },
                         status = updatedChild.status.ifBlank { "active" }
                     )
                 )
@@ -439,6 +494,44 @@ object SupabaseManager {
             Log.e("SupabaseManager", "Ошибка загрузки фото в Storage: ${e.message}")
             null
         }
+    }
+
+    /**
+     * Полное удаление аккаунта родителя (Google Play requirement).
+     * Порядок: 1) чистим Storage от фото квестов всех детей,
+     * 2) RPC delete_my_account удаляет family_profiles и auth.users,
+     * 3) локальный signOut. Возвращает true при успехе RPC.
+     */
+    suspend fun deleteAccount(context: Context): Boolean {
+        val supabase = client ?: return false
+
+        // 1. Storage: собираем все http(s) URL фото из локальных профилей.
+        val photoUrls = AppSharedState.children.values.flatMap { child ->
+            buildList {
+                add(child.closetPhotoUrl)
+                add(child.roomPhotoUrl)
+                add(child.diaryPhotoUrl)
+                child.bonusQuests.forEach { add(it.photoUrl) }
+                child.customQuests.forEach { add(it.photoUrl) }
+            }
+        }.filterNotNull().filter { it.startsWith("http://") || it.startsWith("https://") }
+
+        photoUrls.forEach { url ->
+            runCatching { deleteQuestPhoto(url) }
+        }
+
+        // 2. RPC: удаляет строки family_profiles и самого auth.users.
+        try {
+            supabase.postgrest.rpc("delete_my_account", buildJsonObject { })
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("SupabaseManager", "delete_my_account RPC failed: ${e.message}", e)
+            return false
+        }
+
+        // 3. Локальный signOut — best-effort: пользователь на сервере уже удалён.
+        runCatching { supabase.auth.signOut() }
+        return true
     }
 
     suspend fun deleteQuestPhoto(photoUrl: String): Boolean {

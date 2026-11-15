@@ -74,67 +74,62 @@ fun QuestDeliveryScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var commentText by remember { mutableStateOf("") }
+    var commentText by rememberSaveable { mutableStateOf("") }
     var capturedImageUri by rememberSaveable { mutableStateOf<Uri?>(null) }
-    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    // URI и имя файла камеры храним строками: переживают process death
+    // без кастомного Saver'а. Камера пишет сразу в filesDir/quest_photos/ —
+    // файл не зависит от очистки cacheDir.
+    var tempCameraUriString by rememberSaveable { mutableStateOf<String?>(null) }
+    var tempPhotoName by rememberSaveable { mutableStateOf<String?>(null) }
 
     val takePictureLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
             try {
-                val currentTempUri = tempCameraUri
-                if (currentTempUri != null) {
-                    val permanentFile = java.io.File(context.filesDir, "quest_${System.currentTimeMillis()}.jpg")
-                    
-                    val inputStream = context.contentResolver.openInputStream(currentTempUri)
-                    if (inputStream != null) {
-                        val options = BitmapFactory.Options().apply {
-                            inJustDecodeBounds = true
-                        }
-                        BitmapFactory.decodeStream(inputStream, null, options)
-                        inputStream.close()
+                val uriString = tempCameraUriString
+                val fileName = tempPhotoName
+                if (uriString != null && fileName != null) {
+                    // Файл уже лежит в filesDir/quest_photos — камера писала
+                    // сразу в постоянное хранилище. Здесь только даунскейл
+                    // до 1080px JPEG перезаписью того же файла.
+                    val photosDir = java.io.File(context.filesDir, "quest_photos")
+                    val photoFile = java.io.File(photosDir, fileName)
+                    val uri = Uri.parse(uriString)
 
-                        val maxDimension = 1080
-                        var sampleSize = 1
-                        while (options.outWidth / sampleSize > maxDimension || options.outHeight / sampleSize > maxDimension) {
-                            sampleSize *= 2
-                        }
-
-                        val decodeOptions = BitmapFactory.Options().apply {
-                            inSampleSize = sampleSize
-                        }
-                        val secondInput = context.contentResolver.openInputStream(currentTempUri)
-                        val bitmap = BitmapFactory.decodeStream(secondInput, null, decodeOptions)
-                        secondInput?.close()
-
-                        if (bitmap != null) {
-                            permanentFile.outputStream().use { out ->
-                                bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out)
-                            }
-                            bitmap.recycle()
-                        } else {
-                            context.contentResolver.openInputStream(currentTempUri)?.use { input ->
-                                permanentFile.outputStream().use { output ->
-                                    input.copyTo(output)
-                                }
-                            }
-                        }
+                    val options = BitmapFactory.Options().apply {
+                        inJustDecodeBounds = true
+                    }
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        BitmapFactory.decodeStream(input, null, options)
                     }
 
-                    val permanentUri = FileProvider.getUriForFile(
+                    val maxDimension = 1080
+                    var sampleSize = 1
+                    while (options.outWidth / sampleSize > maxDimension || options.outHeight / sampleSize > maxDimension) {
+                        sampleSize *= 2
+                    }
+
+                    val decodeOptions = BitmapFactory.Options().apply {
+                        inSampleSize = sampleSize
+                    }
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val bitmap = BitmapFactory.decodeStream(inputStream, null, decodeOptions)
+                    inputStream?.close()
+
+                    if (bitmap != null) {
+                        photoFile.outputStream().use { out ->
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out)
+                        }
+                        bitmap.recycle()
+                    }
+                    // bitmap == null — оставляем оригинал камеры как есть.
+
+                    capturedImageUri = FileProvider.getUriForFile(
                         context,
                         "${context.packageName}.fileprovider",
-                        permanentFile
+                        photoFile
                     )
-                    capturedImageUri = permanentUri
-
-                    // Удаляем временный файл камеры из cacheDir — он больше не нужен
-                    try {
-                        if (currentTempUri.scheme == "file") {
-                            currentTempUri.path?.let { java.io.File(it).delete() }
-                        }
-                    } catch (_: Exception) {}
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -145,14 +140,19 @@ fun QuestDeliveryScreen(
 
     val launchCamera = {
         try {
-            context.cacheDir.mkdirs()
-            val photoFile = java.io.File.createTempFile("quest_", ".jpg", context.cacheDir)
+            // Целевой файл создаётся в filesDir/quest_photos ДО вызова камеры:
+            // системная камера пишет сразу в постоянное хранилище, и фото
+            // не зависит от очистки cacheDir или смерти процесса.
+            val photosDir = java.io.File(context.filesDir, "quest_photos").apply { mkdirs() }
+            val fileName = "quest_${System.currentTimeMillis()}.jpg"
+            val photoFile = java.io.File(photosDir, fileName)
             val uri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",
                 photoFile
             )
-            tempCameraUri = uri
+            tempCameraUriString = uri.toString()
+            tempPhotoName = fileName
             takePictureLauncher.launch(uri)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -186,6 +186,7 @@ fun QuestDeliveryScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
+            .imePadding()
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 

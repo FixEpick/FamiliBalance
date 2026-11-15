@@ -322,7 +322,8 @@ data class ChildProfileState(
     val diaryDesc: String = "Квест выполняется раз в неделю. Папа проверяет все оценки в дневнике за прошедшую неделю.",
     val parentUserId: String = "",
     val authUserId: String = "",
-    val pinCode: String = "0000",
+    /** Хэш PIN (salt:hex). Пустая строка — PIN ещё не установлен. */
+    val pinCode: String = "",
     val parentEmail: String = "",
     /** "active" — полноценный член семьи; "pending" — ждёт подтверждения родителя. */
     val status: String = "active",
@@ -475,7 +476,7 @@ data class ChildProfileDto(
     val diaryDesc: String = "Квест выполняется раз в неделю. Папа проверяет все оценки в дневнике за прошедшую неделю.",
     val parentUserId: String = "",
     val authUserId: String = "",
-    val pinCode: String = "0000",
+    val pinCode: String = "",
     val parentEmail: String = "",
     val status: String = "active",
     val deviceId: String = ""
@@ -608,7 +609,7 @@ object AppStateStorage {
         return jsonFormat.encodeToString(child.toDto())
     }
 
-    fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null) {
+    fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null) {
         if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) return
         try {
             val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
@@ -616,6 +617,7 @@ object AppStateStorage {
             val profile = ChildProfileState.fromDto(dto)
                 .copy(
                     parentUserId = parentUserId?.takeIf { it.isNotBlank() } ?: dto.parentUserId,
+                    authUserId = authUserId?.takeIf { it.isNotBlank() } ?: dto.authUserId,
                     status = status?.takeIf { it.isNotBlank() } ?: dto.status
                 )
             AppSharedState.children[userId] = profile
@@ -630,7 +632,7 @@ object AppStateStorage {
      * Suspend-вариант: парсит JSON на IO-потоке, применяет на Main.
      * Используется из SupabaseManager (Realtime/первичная загрузка), чтобы не фризить UI.
      */
-    suspend fun applyRemoteChildJsonAsync(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null) {
+    suspend fun applyRemoteChildJsonAsync(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null) {
         if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) return
         try {
             val dto = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -640,6 +642,7 @@ object AppStateStorage {
                 val profile = ChildProfileState.fromDto(dto)
                     .copy(
                         parentUserId = parentUserId?.takeIf { it.isNotBlank() } ?: dto.parentUserId,
+                        authUserId = authUserId?.takeIf { it.isNotBlank() } ?: dto.authUserId,
                         status = status?.takeIf { it.isNotBlank() } ?: dto.status
                     )
                 AppSharedState.children[userId] = profile
@@ -706,7 +709,19 @@ object AppStateStorage {
 
             var changed = false
 
-            if (savedDaily != todayStr) {
+            // Хронологическое сравнение: сбрасываем только если сегодня
+            // строго позже сохранённой даты. При откате времени/часового
+            // пояса (сегодня «раньше» вчерашнего) сброс не срабатывает.
+            val savedDailyDate = runCatching {
+                java.time.LocalDate.parse(
+                    savedDaily,
+                    java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")
+                )
+            }.getOrNull()
+            val todayDate = java.time.LocalDate.now()
+            val isNewDay = savedDailyDate == null || todayDate.isAfter(savedDailyDate)
+
+            if (isNewDay) {
                 // Сбросы встроенных квестов (шкаф/комната/дневник) выполняет
                 // MainViewModel.resetDailyQuestsIfNeeded с учётом frequency каждого квеста.
                 AppSharedState.children.replaceAll { _, child ->

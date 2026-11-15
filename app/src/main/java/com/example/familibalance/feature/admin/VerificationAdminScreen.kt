@@ -53,6 +53,7 @@ fun VerificationAdminContent(
 ) {
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val diaryScanState by viewModel.diaryScanState.collectAsStateWithLifecycle()
+    val isProcessingAction by viewModel.isProcessingAction.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.firstOrNull()
     if (child == null) {
@@ -126,6 +127,7 @@ fun VerificationAdminContent(
                     reward = "+50 ₽",
                     description = child.closetComment.ifBlank { "Без комментария" },
                     photoUrl = child.closetPhotoUrl,
+                    actionEnabled = !isProcessingAction,
                     onApprove = {
                         viewModel.adminApproveQuest(child.id, "closet")
                     },
@@ -183,6 +185,7 @@ fun VerificationAdminContent(
                                         onClick = {
                                             viewModel.approveCashoutRequest(request.id)
                                         },
+                                        enabled = !isProcessingAction,
                                         colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
                                         shape = RoundedCornerShape(12.dp),
                                         modifier = Modifier.height(36.dp)
@@ -193,6 +196,7 @@ fun VerificationAdminContent(
                                         onClick = {
                                             viewModel.rejectCashoutRequest(request.id)
                                         },
+                                        enabled = !isProcessingAction,
                                         colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),
                                         shape = RoundedCornerShape(12.dp),
                                         modifier = Modifier.height(36.dp)
@@ -214,6 +218,7 @@ fun VerificationAdminContent(
                     reward = "+50 ₽",
                     description = child.roomComment.ifBlank { "Без комментария" },
                     photoUrl = child.roomPhotoUrl,
+                    actionEnabled = !isProcessingAction,
                     onApprove = {
                         viewModel.adminApproveQuest(child.id, "room")
                     },
@@ -231,6 +236,7 @@ fun VerificationAdminContent(
                     comment = child.diaryComment,
                     photoUrl = child.diaryPhotoUrl,
                     scanState = diaryScanState,
+                    actionEnabled = !isProcessingAction,
                     onScanRequested = { viewModel.scanDiaryPhoto(child.diaryPhotoUrl ?: "") },
                     onApprove = { count5, count4, count3, count2 ->
                         viewModel.applyDiaryGrades(child.id, count5, count4, count3, count2)
@@ -250,6 +256,7 @@ fun VerificationAdminContent(
                 reward = "+${bQuest.reward} ₽",
                 description = bQuest.comment.ifBlank { "Без комментария" },
                 photoUrl = bQuest.photoUrl,
+                actionEnabled = !isProcessingAction,
                 onApprove = {
                     viewModel.adminApproveBonusQuest(child.id, bQuest.id)
                 },
@@ -265,6 +272,7 @@ fun VerificationAdminContent(
                 reward = "+${cQuest.reward} ₽",
                 description = cQuest.comment.ifBlank { "Без комментария" },
                 photoUrl = cQuest.photoUrl,
+                actionEnabled = !isProcessingAction,
                 onApprove = {
                     viewModel.adminApproveCustomQuest(child.id, cQuest.id)
                 },
@@ -318,6 +326,7 @@ fun VerificationAdminContent(
                                 onClick = {
                                     viewModel.adminApproveHonestAdmission(child.id)
                                 },
+                                enabled = !isProcessingAction,
                                 colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
@@ -400,6 +409,7 @@ fun VerificationAdminContent(
                                     depositDesc = ""
                                 }
                             },
+                            enabled = !isProcessingAction,
                             colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.height(56.dp)
@@ -465,6 +475,7 @@ fun VerificationAdminContent(
                                     isFine = false
                                 }
                             },
+                            enabled = !isProcessingAction,
                             colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.height(56.dp)
@@ -518,6 +529,7 @@ fun VerificationAdminContent(
         item {
             OutlinedButton(
                 onClick = onCashOutClick,
+                enabled = !isProcessingAction,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -537,6 +549,7 @@ fun QuestVerificationCard(
     reward: String,
     description: String,
     photoUrl: String?,
+    actionEnabled: Boolean = true,
     onApprove: () -> Unit,
     onReject: (String) -> Unit
 ) {
@@ -592,6 +605,7 @@ fun QuestVerificationCard(
             ) {
                 Button(
                     onClick = onApprove,
+                    enabled = actionEnabled,
                     colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
@@ -601,6 +615,7 @@ fun QuestVerificationCard(
                 Spacer(modifier = Modifier.width(8.dp))
                 OutlinedButton(
                     onClick = { showRejectDialog = true },
+                    enabled = actionEnabled,
                     border = BorderStroke(1.dp, PenaltyRed),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
                     shape = RoundedCornerShape(8.dp),
@@ -636,7 +651,7 @@ fun QuestVerificationCard(
                     val reason = if (rejectReasonText.isNotBlank()) rejectReasonText else "Требуется доработка"
                     onReject(reason)
                     showRejectDialog = false
-                }) {
+                }, enabled = actionEnabled) {
                     Text("Отклонить")
                 }
             },
@@ -724,6 +739,7 @@ fun DiaryVerificationCard(
     title: String,
     photoUrl: String?,
     scanState: DiaryScanState,
+    actionEnabled: Boolean = true,
     onScanRequested: () -> Unit,
     onApprove: (Int, Int, Int, Int) -> Unit,
     onReject: (String) -> Unit,
@@ -790,6 +806,11 @@ fun DiaryVerificationCard(
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
+                    }
+                    if (scanState is DiaryScanState.Error) {
+                        TextButton(onClick = onScanRequested) {
+                            Text("🔄 Сканировать заново", color = AccentColor, fontSize = 13.sp)
+                        }
                     }
                 }
             }
@@ -894,6 +915,7 @@ fun DiaryVerificationCard(
                             gradeCounts[2] ?: 0
                         )
                     },
+                    enabled = actionEnabled,
                     colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
@@ -903,6 +925,7 @@ fun DiaryVerificationCard(
                 Spacer(modifier = Modifier.width(8.dp))
                 OutlinedButton(
                     onClick = { showRejectDialog = true },
+                    enabled = actionEnabled,
                     border = BorderStroke(1.dp, PenaltyRed),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
                     shape = RoundedCornerShape(8.dp),
@@ -938,7 +961,7 @@ fun DiaryVerificationCard(
                     val reason = if (rejectReasonText.isNotBlank()) rejectReasonText else "Требуется доработка"
                     onReject(reason)
                     showRejectDialog = false
-                }) {
+                }, enabled = actionEnabled) {
                     Text("Отклонить")
                 }
             },

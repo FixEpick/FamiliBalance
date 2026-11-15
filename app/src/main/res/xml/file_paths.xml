@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <cache-path name="my_images" path="." />
+    <!-- APK обновлений: cacheDir/updates/ (ApkDownloader) -->
     <cache-path name="updates" path="updates/" />
-    <files-path name="my_internal_images" path="." />
-    <external-files-path name="my_external_images" path="." />
+    <!-- Постоянные фото квестов: filesDir/quest_photos/ (PhotoStorage, QuestDeliveryScreen) -->
+    <files-path name="quest_photos" path="quest_photos/" />
 </paths>

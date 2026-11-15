@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,6 +23,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.viewmodel.actions.*
 
@@ -77,17 +79,17 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.first()
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var newTitle by remember { mutableStateOf("") }
-    var newDesc by remember { mutableStateOf("") }
-    var newReward by remember { mutableStateOf("50") }
-    var newFreq by remember { mutableStateOf(QuestFrequency.DAILY) }
-    var editKind by remember { mutableStateOf<String?>(null) }
-    var editQuestId by remember { mutableStateOf("") }
-    var editTitle by remember { mutableStateOf("") }
-    var editDesc by remember { mutableStateOf("") }
-    var editReward by remember { mutableStateOf("") }
-    var editFreq by remember { mutableStateOf(QuestFrequency.DAILY) }
+    var showCreateDialog by rememberSaveable { mutableStateOf(false) }
+    var newTitle by rememberSaveable { mutableStateOf("") }
+    var newDesc by rememberSaveable { mutableStateOf("") }
+    var newReward by rememberSaveable { mutableStateOf("50") }
+    var newFreq by rememberSaveable { mutableStateOf(QuestFrequency.DAILY) }
+    var editKind by rememberSaveable { mutableStateOf<String?>(null) }
+    var editQuestId by rememberSaveable { mutableStateOf("") }
+    var editTitle by rememberSaveable { mutableStateOf("") }
+    var editDesc by rememberSaveable { mutableStateOf("") }
+    var editReward by rememberSaveable { mutableStateOf("") }
+    var editFreq by rememberSaveable { mutableStateOf(QuestFrequency.DAILY) }
     var deleteConfirmAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     val switchColors = SwitchDefaults.colors(
         checkedThumbColor = AccentColor,
@@ -169,10 +171,14 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     if (showCreateDialog) {
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
             title = { Text("Новое задание", color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text("Название", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
                     OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text("Описание", color = TextPrimary) }, colors = editorFieldColors())
                     OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text("Награда ₽", color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
@@ -202,10 +208,14 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     if (editKind != null) {
         AlertDialog(
             onDismissRequest = { editKind = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
             title = { Text("Редактировать задание", color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     OutlinedTextField(value = editTitle, onValueChange = { editTitle = it }, label = { Text("Название", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
                     OutlinedTextField(value = editDesc, onValueChange = { editDesc = it }, label = { Text("Описание", color = TextPrimary) }, colors = editorFieldColors())
                     if (editKind != "diary") {

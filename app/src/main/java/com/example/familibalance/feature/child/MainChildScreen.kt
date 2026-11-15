@@ -82,6 +82,7 @@ fun MainChildScreen(
     val context = LocalContext.current
     val dailyLimit = 90
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
+    val isProcessingAction by viewModel.isProcessingAction.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.first()
     val balance = child.balance
@@ -92,7 +93,9 @@ fun MainChildScreen(
     val honestCooldownDaysLeft = remember(child.lastHonestAdmissionDate) {
         val last = runCatching { LocalDate.parse(child.lastHonestAdmissionDate) }.getOrNull()
         if (last == null) 0
-        else (7 - ChronoUnit.DAYS.between(last, LocalDate.now()).toInt()).coerceAtLeast(0)
+        // coerceIn(0,7): при откате времени last может быть «в будущем»
+        // и разница стать отрицательной — не показываем >7 дней кулдауна.
+        else (7 - ChronoUnit.DAYS.between(last, LocalDate.now()).toInt()).coerceIn(0, 7)
     }
 
     var showHonestCatScreen by remember { mutableStateOf(false) }
@@ -105,9 +108,16 @@ fun MainChildScreen(
     var lastRecordedDate by remember { mutableStateOf(getCurrentDateString()) }
 
     val currentDate = getCurrentDateString()
-    if (currentDate != lastRecordedDate) {
-        viewModel.resetDailyScreenTime(child.id)
-        lastRecordedDate = currentDate
+    LaunchedEffect(currentDate) {
+        // Хронологическое сравнение: сбрасываем минуты только если текущая
+        // дата строго позже последней записанной (защита от отката TZ).
+        val fmt = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")
+        val lastParsed = runCatching { LocalDate.parse(lastRecordedDate, fmt) }.getOrNull()
+        val currentParsed = runCatching { LocalDate.parse(currentDate, fmt) }.getOrNull()
+        if (currentParsed != null && (lastParsed == null || currentParsed.isAfter(lastParsed))) {
+            viewModel.resetDailyScreenTime(child.id)
+            lastRecordedDate = currentDate
+        }
     }
 
     var showRulesSheet by remember { mutableStateOf(false) }
@@ -159,6 +169,7 @@ fun MainChildScreen(
             currentBalance = child.balance,
             boughtMinutesToday = child.boughtMinutesToday,
             dailyLimit = dailyLimit,
+            isProcessing = isProcessingAction,
             onBuyTime = { cost: Int, minutes: Int ->
                 viewModel.buyScreenTime(child.id, cost, minutes)
                 showBuyTimeSheet = false
@@ -466,7 +477,7 @@ fun MainChildScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable(
-                                enabled = isGoalReached,
+                                enabled = isGoalReached && !isProcessingAction,
                                 onClick = {
                                     triggerCoinFlight(Offset.Zero) {
                                         viewModel.claimDreamGoal(child.id)
@@ -949,7 +960,7 @@ fun MainChildScreen(
                             showCashOutDialog = false
                         }
                     },
-                    enabled = canSubmit
+                    enabled = canSubmit && !isProcessingAction
                 ) {
                     Text(stringResource(R.string.child_cashout_submit))
                 }

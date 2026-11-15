@@ -4,6 +4,8 @@ import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
 
 fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
 
     val pendingTotal = profile.cashoutRequests.sumOf { it.amount }
@@ -19,9 +21,14 @@ fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
     )
 
     updateChildProfile(profile.copy(cashoutRequests = profile.cashoutRequests + request))
+    } finally {
+        endProcessingAction()
+    }
 }
 
 fun MainViewModel.approveCashoutRequest(requestId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
 
     val request = profile.cashoutRequests.firstOrNull { it.id == requestId } ?: return
@@ -45,6 +52,9 @@ fun MainViewModel.approveCashoutRequest(requestId: String) {
         cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId }
     )
     updateChildProfile(updated)
+    } finally {
+        endProcessingAction()
+    }
 }
 
 fun MainViewModel.rejectCashoutRequest(requestId: String) {
@@ -68,6 +78,8 @@ fun MainViewModel.setDreamGoal(userId: String, title: String, target: Int) {
 }
 
 fun MainViewModel.claimDreamGoal(userId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
 
     val target = profile.dreamTarget
@@ -96,4 +108,7 @@ fun MainViewModel.claimDreamGoal(userId: String) {
     familyRepository.addAdminNotification(message)
 
     updateChildProfile(updated)
+    } finally {
+        endProcessingAction()
+    }
 }

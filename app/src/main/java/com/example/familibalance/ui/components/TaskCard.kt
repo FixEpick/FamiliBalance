@@ -30,6 +30,7 @@ fun TaskCard(
     claimButtonText: String = "🎉 Получить награду",
     frequencyBadge: String? = null,
     borderColor: Color = GlassStroke,
+    actionEnabled: Boolean = true,
     onExecute: () -> Unit,
     onClaim: (Offset) -> Unit,
     modifier: Modifier = Modifier
@@ -118,6 +119,7 @@ fun TaskCard(
                     QuestStatus.AVAILABLE -> {
                         Button(
                             onClick = onExecute,
+                            enabled = actionEnabled,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = AccentColor.copy(alpha = 0.2f),
                                 contentColor = AccentColor
@@ -147,6 +149,7 @@ fun TaskCard(
                         var buttonOffset by remember { mutableStateOf(Offset.Zero) }
                         Button(
                             onClick = { onClaim(buttonOffset) },
+                            enabled = actionEnabled,
                             modifier = Modifier.onGloballyPositioned { coordinates ->
                                 val pos = coordinates.positionInRoot()
                                 buttonOffset = Offset(

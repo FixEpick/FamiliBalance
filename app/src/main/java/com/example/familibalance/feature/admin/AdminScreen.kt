@@ -98,6 +98,7 @@ fun AdminScreen(
     var showCashOutDialog by remember { mutableStateOf(false) }
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isSynced by viewModel.isSynced.collectAsStateWithLifecycle()
+    val isProcessingAction by viewModel.isProcessingAction.collectAsStateWithLifecycle()
 
     // uid текущего родителя из сессии Supabase — для изоляции детей в админке
     val currentUid by produceState<String?>(initialValue = null) {
@@ -185,6 +186,7 @@ fun AdminScreen(
                         viewModel.adminCashoutAll(child.id)
                         showCashOutDialog = false
                     },
+                    enabled = !isProcessingAction,
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
                     shape = RoundedCornerShape(12.dp)
                 ) {

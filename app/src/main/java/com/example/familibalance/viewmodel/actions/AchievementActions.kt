@@ -1,7 +1,9 @@
 package com.example.familibalance.viewmodel.actions
 
+import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 fun MainViewModel.checkInStreak(userId: String) {
@@ -11,6 +13,9 @@ fun MainViewModel.checkInStreak(userId: String) {
     if (profile.lastStreakDate != todayString) {
         // Если с прошлого чек-ина прошёл больше суток — стрик прерывается
         val lastDate = runCatching { LocalDate.parse(profile.lastStreakDate) }.getOrNull()
+        // Откат времени/часового пояса: lastStreakDate «в будущем» —
+        // не трогаем стрик и не регрессируем маркер даты.
+        if (lastDate != null && lastDate.isAfter(today)) return
         val yesterday = today.minusDays(1)
         val streakDays = if (lastDate == null || lastDate.isBefore(yesterday)) 1 else profile.streakDays + 1
 
@@ -112,6 +117,13 @@ fun MainViewModel.toggleAchievementVisibility(userId: String, achievementId: Str
 fun MainViewModel.claimAchievementReward(userId: String, achievementId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.achievements.firstOrNull { it.id == achievementId } ?: return
+    // Защита от прямого вызова в обход UI: награда только при достигнутом targetCount.
+    val progress = when (target.branch) {
+        AchievementBranch.DIARY -> profile.fivesCount
+        AchievementBranch.WARDROBE -> profile.wardrobeCount
+        AchievementBranch.ROOM -> profile.roomCount
+    }
+    if (progress < target.targetCount) return
     if (!target.isClaimed && !isAchievementLocked(profile, target)) {
         val updatedAchievements = profile.achievements.map { ach ->
             if (ach.id == achievementId) ach.copy(isClaimed = true) else ach
@@ -134,6 +146,13 @@ fun MainViewModel.claimAchievementReward(userId: String, achievementId: String) 
     }
 }
 
+/** Удаляет фото квестов профиля из Supabase Storage (best-effort, fire-and-forget). */
+private fun MainViewModel.deleteQuestPhotos(urls: List<String?>) {
+    urls.filterNot { it.isNullOrBlank() }.forEach { url ->
+        viewModelScope.launch { SupabaseManager.deleteQuestPhoto(url!!) }
+    }
+}
+
 fun MainViewModel.resetActiveQuests(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val updatedQuests = profile.customQuests.map { quest ->
@@ -146,6 +165,12 @@ fun MainViewModel.resetActiveQuests(userId: String) {
             )
         } else quest
     }
+    // Чистим фото, которые сбрасываются ниже (built-in + custom), из Storage.
+    deleteQuestPhotos(
+        listOf(profile.closetPhotoUrl, profile.roomPhotoUrl, profile.diaryPhotoUrl) +
+            updatedQuests.filter { it.status == QuestStatus.AVAILABLE && it.photoUrl == null }
+                .mapNotNull { q -> profile.customQuests.firstOrNull { it.id == q.id }?.photoUrl }
+    )
     updateChildProfile(
         profile.copy(
             closetStatus = QuestStatus.AVAILABLE,
@@ -237,6 +262,12 @@ fun MainViewModel.resetBalance(userId: String) {
 
 fun MainViewModel.resetAllChildData(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
+    // Удаляем все фото квестов из Storage до обнуления профиля.
+    deleteQuestPhotos(
+        listOf(profile.closetPhotoUrl, profile.roomPhotoUrl, profile.diaryPhotoUrl) +
+            profile.bonusQuests.map { it.photoUrl } +
+            profile.customQuests.map { it.photoUrl }
+    )
     updateChildProfile(
         profile.copy(
             balance = 0,
@@ -263,6 +294,14 @@ fun MainViewModel.resetAllChildData(userId: String) {
             roomCount = 0,
             streakDays = 0,
             lastStreakDate = "",
+            streakBonusMessage = "",
+            honestAdmissionStatus = QuestStatus.AVAILABLE,
+            honestAdmissionText = "",
+            lastHonestAdmissionDate = "",
+            pendingQuests = emptyList(),
+            closetResetDate = "",
+            roomResetDate = "",
+            diaryResetDate = "",
             closetStatus = QuestStatus.AVAILABLE,
             closetRejectReason = null,
             closetPhotoUrl = null,

@@ -7,9 +7,10 @@ import java.util.UUID
  * Хэширование PIN-кодов (SHA-256 -> Hex).
  * В хранилище и Supabase сохраняется только хэш — открытый PIN не покидает устройство.
  * Поддерживает два формата:
- *  - legacy: чистый SHA-256 hex (без соли) или открытый текст;
+ *  - legacy: чистый SHA-256 hex (без соли) или открытый текст —
+ *    принимается только для обратной совместимости, при успешном
+ *    входе PIN перехэшируется в salted-формат;
  *  - salted: "salt:sha256(salt:pin)" — защищает от rainbow-таблиц.
- * [matches] обратно совместим со старыми профилями.
  */
 object PinHasher {
 
@@ -30,16 +31,17 @@ object PinHasher {
 
     /**
      * Проверка введённого PIN против сохранённого значения.
-     * Формат "salt:hash" — сверка по salted-хэшу; иначе legacy:
-     * чистый SHA-256 или открытый текст.
+     * Формат "salt:hash" — сверка по salted-хэшу.
+     * Без ':' — legacy: чистый SHA-256 hex или открытый текст
+     * (совместимость со старыми профилями; при успешном входе
+     * MainViewModel.loginChild перехэширует PIN в новый формат).
      */
     fun matches(input: String, stored: String): Boolean {
         if (stored.isBlank()) return false
-        if (stored == input) return true // legacy: открытый текст
         return if (stored.contains(':')) {
             stored == hash(input, stored.substringBefore(':'))
         } else {
-            stored == hash(input)
+            stored == input || stored == hash(input)
         }
     }
 }

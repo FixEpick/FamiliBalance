@@ -7,6 +7,18 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+// GitHub repo для проверки обновлений (owner/name). Замените на реальный.
+// Читается на уровне скрипта: значение нужно и в defaultConfig, и в guard release-задач.
+val githubRepoProps = Properties().apply {
+    val localPropsFile = rootProject.file("local.properties")
+    if (localPropsFile.exists()) {
+        localPropsFile.inputStream().use { load(it) }
+    }
+}
+val githubRepo = githubRepoProps.getProperty("GITHUB_REPO")
+    ?: (project.findProperty("GITHUB_REPO") as? String)
+    ?: "user/familibalance"
+
 android {
     namespace = "com.example.familibalance"
     compileSdk = 37
@@ -37,11 +49,6 @@ android {
     val hasReleaseKey = keyPropsFile.exists() &&
         !keyProps.getProperty("storePassword").isNullOrBlank() &&
         !keyProps.getProperty("keyPassword").isNullOrBlank()
-
-    // GitHub repo для проверки обновлений (owner/name). Замените на реальный.
-    val githubRepo = localProps.getProperty("GITHUB_REPO")
-        ?: (project.findProperty("GITHUB_REPO") as? String)
-        ?: "user/familibalance"
 
     defaultConfig {
         applicationId = "com.example.familibalance"
@@ -131,6 +138,14 @@ tasks.matching {
             throw GradleException(
                 "Файл key.properties отсутствует! Сборка release запрещена. " +
                     "Создайте key.properties или используйте assembleDebug."
+            )
+        }
+        // REL-02: дефолтный/пустой GITHUB_REPO ломает автообновление —
+        // релиз с заглушкой опубликовать нельзя.
+        if (githubRepo.isBlank() || githubRepo == "user/familibalance") {
+            throw GradleException(
+                "Укажите реальный GITHUB_REPO для работы автообновления " +
+                    "(local.properties или -PGITHUB_REPO=owner/name)."
             )
         }
     }

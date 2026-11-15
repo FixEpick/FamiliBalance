@@ -77,6 +77,7 @@ fun BuyTimeBottomSheet(
     currentBalance: Int,
     boughtMinutesToday: Int,
     dailyLimit: Int,
+    isProcessing: Boolean = false,
     onBuyTime: (cost: Int, minutes: Int) -> Unit,
     onDismissRequest: () -> Unit
 ) {
@@ -125,7 +126,7 @@ fun BuyTimeBottomSheet(
             )
 
             tariffs.forEach { tariff ->
-                val isAffordable = (currentBalance >= tariff.cost) && (boughtMinutesToday + tariff.minutes <= dailyLimit)
+                val isAffordable = !isProcessing && (currentBalance >= tariff.cost) && (boughtMinutesToday + tariff.minutes <= dailyLimit)
                 Card(
                     onClick = {
                         if (isAffordable) {

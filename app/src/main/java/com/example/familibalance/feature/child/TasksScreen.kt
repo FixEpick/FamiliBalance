@@ -83,6 +83,7 @@ fun TasksScreen(
 ) {
     val context = LocalContext.current
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
+    val isProcessingAction by viewModel.isProcessingAction.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.first()
     val closetStatus = child.closetStatus
@@ -206,6 +207,7 @@ fun TasksScreen(
                         status = bQuest.status,
                         rejectReason = bQuest.rejectReason,
                         borderColor = StatusYellow,
+                        actionEnabled = !isProcessingAction,
                         onExecute = {
                             activeDeliveryQuest = QuestDeliveryTarget(bQuest.title, "+${bQuest.reward} ₽", "bonus:${bQuest.id}")
                         },
@@ -228,6 +230,7 @@ fun TasksScreen(
                         frequencyBadge = builtInFreqBadge(child.wardrobeFrequency),
                         status = closetStatus,
                         rejectReason = child.closetRejectReason,
+                        actionEnabled = !isProcessingAction,
                         onExecute = {
                             activeDeliveryQuest = QuestDeliveryTarget(child.wardrobeTitle, "+${child.wardrobeReward} ₽", "closet")
                         },
@@ -248,6 +251,7 @@ fun TasksScreen(
                         frequencyBadge = builtInFreqBadge(child.roomFrequency),
                         status = roomStatus,
                         rejectReason = child.roomRejectReason,
+                        actionEnabled = !isProcessingAction,
                         onExecute = {
                             activeDeliveryQuest = QuestDeliveryTarget(child.roomTitle, "+${child.roomReward} ₽", "room")
                         },
@@ -275,6 +279,7 @@ fun TasksScreen(
                         status = diaryStatus,
                         rejectReason = child.diaryRejectReason,
                         claimButtonText = diaryClaimText,
+                        actionEnabled = !isProcessingAction,
                         onExecute = {
                             activeDeliveryQuest = QuestDeliveryTarget(child.diaryTitle, diaryRewardText, "diary")
                         },
@@ -318,6 +323,7 @@ fun TasksScreen(
                         status = quest.status,
                         rejectReason = quest.rejectReason,
                         claimButtonText = claimText,
+                        actionEnabled = !isProcessingAction,
                         onExecute = {
                             activeDeliveryQuest = QuestDeliveryTarget(quest.title, "+${quest.reward} ₽", "custom:${quest.id}")
                         },

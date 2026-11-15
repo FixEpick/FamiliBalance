@@ -7,45 +7,71 @@ import kotlinx.coroutines.launch
 
 /** Админ одобряет квест (шкаф/комната/дневник): статус READY_TO_CLAIM. */
 fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
+    val photoUrlToDelete = when (questType.lowercase()) {
+        "closet", "шкаф" -> profile.closetPhotoUrl
+        "room", "комната" -> profile.roomPhotoUrl
+        "diary", "дневник", "итоги" -> profile.diaryPhotoUrl
+        else -> null
+    }
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
             closetStatus = QuestStatus.READY_TO_CLAIM,
             closetComment = "",
+            closetPhotoUrl = null,
             closetRejectReason = null
         )
         "room", "комната" -> profile.copy(
             roomStatus = QuestStatus.READY_TO_CLAIM,
             roomComment = "",
+            roomPhotoUrl = null,
             roomRejectReason = null
         )
         "diary", "дневник", "итоги" -> profile.copy(
             diaryStatus = QuestStatus.READY_TO_CLAIM,
             diaryComment = "",
+            diaryPhotoUrl = null,
             diaryRejectReason = null
         )
         else -> profile
     }
     updateChildProfile(updated)
+    if (!photoUrlToDelete.isNullOrBlank()) {
+        viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
+    }
+    } finally {
+        endProcessingAction()
+    }
 }
 
 /** Админ отклоняет квест (шкаф/комната/дневник): статус AVAILABLE + запись в историю. */
 fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: String, questTitle: String) {
     val profile = familyRepository.getChild(userId) ?: return
+    val photoUrlToDelete = when (questType.lowercase()) {
+        "closet", "шкаф" -> profile.closetPhotoUrl
+        "room", "комната" -> profile.roomPhotoUrl
+        "diary", "дневник", "итоги" -> profile.diaryPhotoUrl
+        else -> null
+    }
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
             closetStatus = QuestStatus.AVAILABLE,
             closetComment = "",
+            closetPhotoUrl = null,
             closetRejectReason = reason
         )
         "room", "комната" -> profile.copy(
             roomStatus = QuestStatus.AVAILABLE,
             roomComment = "",
+            roomPhotoUrl = null,
             roomRejectReason = reason
         )
         "diary", "дневник", "итоги" -> profile.copy(
             diaryStatus = QuestStatus.AVAILABLE,
             diaryComment = "",
+            diaryPhotoUrl = null,
             diaryRejectReason = reason
         )
         else -> profile
@@ -64,6 +90,9 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
             ) + updated.historyItems
         )
     )
+    if (!photoUrlToDelete.isNullOrBlank()) {
+        viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
+    }
 }
 
 /**
@@ -73,6 +102,8 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
  * Статус дневника сразу становится CLAIMED — награда уже применена.
  */
 fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, count3: Int, count2: Int) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(childId) ?: return
     val time = getCurrentTimeString()
     val date = getCurrentDateString()
@@ -99,41 +130,39 @@ fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, co
     addGrade(5, 50, count5)
     addGrade(4, 30, count4)
 
+    val photoUrlToDelete = profile.diaryPhotoUrl
     updateChildProfile(
         profile.copy(
             balance = balance,
             diaryStatus = QuestStatus.CLAIMED,
             diaryComment = "",
+            diaryPhotoUrl = null,
             diaryRejectReason = null,
             diaryApprovedReward = netReward,
             fivesCount = profile.fivesCount + count5.coerceAtLeast(0),
             historyItems = entries + profile.historyItems
         )
     )
+    if (!photoUrlToDelete.isNullOrBlank()) {
+        viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
+    }
 
-    repeat(count3.coerceAtLeast(0)) { applyFine(childId, 20, "Оценка 3 (дневник)") }
-    repeat(count2.coerceAtLeast(0)) { applyFine(childId, 50, "Оценка 2 (дневник)") }
-}
-
-/** Админ одобряет дневник с рассчитанной наградой и числом пятёрок. */
-fun MainViewModel.adminApproveDiary(userId: String, calculatedReward: Int, fivesCount: Int) {
-    val profile = familyRepository.getChild(userId) ?: return
-    updateChildProfile(
-        profile.copy(
-            diaryStatus = QuestStatus.READY_TO_CLAIM,
-            diaryRejectReason = null,
-            diaryApprovedReward = calculatedReward,
-            fivesCount = profile.fivesCount + fivesCount
-        )
-    )
+    repeat(count3.coerceAtLeast(0)) { applyFineInternal(childId, 20, "Оценка 3 (дневник)") }
+    repeat(count2.coerceAtLeast(0)) { applyFineInternal(childId, 50, "Оценка 2 (дневник)") }
+    } finally {
+        endProcessingAction()
+    }
 }
 
 /** Админ одобряет бонус-квест: READY_TO_CLAIM + запись в историю. */
 fun MainViewModel.adminApproveBonusQuest(userId: String, questId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.bonusQuests.firstOrNull { it.id == questId } ?: return
+    val photoUrlToDelete = target.photoUrl
     val updatedQuests = profile.bonusQuests.map { q ->
-        if (q.id == questId) q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null) else q
+        if (q.id == questId) q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, photoUrl = null) else q
     }
     updateChildProfile(
         profile.copy(
@@ -150,14 +179,21 @@ fun MainViewModel.adminApproveBonusQuest(userId: String, questId: String) {
             ) + profile.historyItems
         )
     )
+    if (!photoUrlToDelete.isNullOrBlank()) {
+        viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
+    }
+    } finally {
+        endProcessingAction()
+    }
 }
 
 /** Админ отклоняет бонус-квест: AVAILABLE + причина + запись в историю. */
 fun MainViewModel.adminRejectBonusQuest(userId: String, questId: String, reason: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.bonusQuests.firstOrNull { it.id == questId } ?: return
+    val photoUrlToDelete = target.photoUrl
     val updatedQuests = profile.bonusQuests.map { q ->
-        if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = reason) else q
+        if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = reason, photoUrl = null) else q
     }
     updateChildProfile(
         profile.copy(
@@ -174,10 +210,15 @@ fun MainViewModel.adminRejectBonusQuest(userId: String, questId: String, reason:
             ) + profile.historyItems
         )
     )
+    if (!photoUrlToDelete.isNullOrBlank()) {
+        viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
+    }
 }
 
 /** Админ одобряет кастомный квест: READY_TO_CLAIM + запись в историю + удаление фото. */
 fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.customQuests.firstOrNull { it.id == questId } ?: return
     val photoUrlToDelete = target.photoUrl
@@ -203,6 +244,9 @@ fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
         viewModelScope.launch {
             SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
         }
+    }
+    } finally {
+        endProcessingAction()
     }
 }
 
@@ -238,6 +282,8 @@ fun MainViewModel.adminRejectCustomQuest(userId: String, questId: String, reason
 
 /** Админ одобряет честное признание. */
 fun MainViewModel.adminApproveHonestAdmission(userId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
     updateChildProfile(
         profile.copy(
@@ -254,6 +300,9 @@ fun MainViewModel.adminApproveHonestAdmission(userId: String) {
             ) + profile.historyItems
         )
     )
+    } finally {
+        endProcessingAction()
+    }
 }
 
 /** Админ отклоняет честное признание. */
@@ -278,6 +327,8 @@ fun MainViewModel.adminRejectHonestAdmission(userId: String) {
 
 /** Админ начисляет сумму на баланс с описанием. */
 fun MainViewModel.adminDeposit(userId: String, amount: Int, description: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
     val title = if (description.isNotBlank()) "Пополнение: ${description.trim()}" else "Пополнение от папы"
     updateChildProfile(
@@ -288,6 +339,9 @@ fun MainViewModel.adminDeposit(userId: String, amount: Int, description: String)
             ) + profile.historyItems
         )
     )
+    } finally {
+        endProcessingAction()
+    }
 }
 
 /**
@@ -296,6 +350,16 @@ fun MainViewModel.adminDeposit(userId: String, amount: Int, description: String)
  * Любой штраф обнуляет стрик. Обычные списания используйте [adminWithdraw].
  */
 fun MainViewModel.applyFine(childId: String, amount: Int, reason: String) {
+    if (!tryStartProcessingAction()) return
+    try {
+        applyFineInternal(childId, amount, reason)
+    } finally {
+        endProcessingAction()
+    }
+}
+
+/** Тело штрафа без guard'а — вызывается из applyDiaryGrades, который уже держит слот. */
+private fun MainViewModel.applyFineInternal(childId: String, amount: Int, reason: String) {
     val profile = familyRepository.getChild(childId) ?: return
     val discounted = profile.honestAdmissionStatus == QuestStatus.APPROVED
     val finalAmount = if (discounted) amount / 2 else amount
@@ -316,6 +380,8 @@ fun MainViewModel.applyFine(childId: String, amount: Int, reason: String) {
 
 /** Админ списывает сумму с баланса (не ниже 0). Обычное списание — стрик не трогает. */
 fun MainViewModel.adminWithdraw(userId: String, amount: Int, description: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
     val title = if (description.isNotBlank()) "Списание: ${description.trim()}" else "Списание от папы"
     updateChildProfile(
@@ -326,16 +392,25 @@ fun MainViewModel.adminWithdraw(userId: String, amount: Int, description: String
             ) + profile.historyItems
         )
     )
+    } finally {
+        endProcessingAction()
+    }
 }
 
-/** Админ выдаёт наличные: обнуляет баланс и пишет в историю. */
+/** Админ выдаёт наличные: обнуляет баланс, гасит все заявки на вывод и пишет в историю. */
 fun MainViewModel.adminCashoutAll(userId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(userId) ?: return
     val amount = profile.balance
     if (amount > 0) {
         updateChildProfile(
             profile.copy(
                 balance = 0,
+                // Заявки на вывод гасим: после обнуления баланса их нельзя
+                // ни одобрить (amount > balance), ни оставить — они бы блокировали
+                // новые заявки (availableBalance ушёл бы в минус).
+                cashoutRequests = emptyList(),
                 historyItems = listOf(
                     HistoryData(
                         title = "Выдача наличных папой (${profile.name})",
@@ -343,11 +418,17 @@ fun MainViewModel.adminCashoutAll(userId: String) {
                         date = getCurrentDateString(),
                         amount = "-$amount ₽",
                         isIncome = false,
-                        category = "Штрафы"
+                        category = "Вывод средств"
                     )
                 ) + profile.historyItems
             )
         )
+    } else if (profile.cashoutRequests.isNotEmpty()) {
+        // Баланс уже 0, но висят заявки — просто очищаем их.
+        updateChildProfile(profile.copy(cashoutRequests = emptyList()))
+    }
+    } finally {
+        endProcessingAction()
     }
 }
 
