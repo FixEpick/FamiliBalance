@@ -22,6 +22,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.familibalance.ui.theme.*
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import com.example.familibalance.ui.auth.ChangeParentPinDialog
 import com.example.familibalance.ui.auth.SetChildPinDialog
 import com.example.familibalance.viewmodel.AdminEvent
@@ -48,6 +50,29 @@ fun AdminSettingsScreen(
     var showPinPicker by remember { mutableStateOf(false) }
     var pinTarget by remember { mutableStateOf<String?>(null) } // "parent" или childId
     var pendingResetAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    // --- Ручная синхронизация: индикатор + Toast по завершении ---
+    val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
+    var syncRequested by remember { mutableStateOf(false) }
+
+    // Ждём реального старта синхронизации (до 3 сек — на случай мгновенного
+    // завершения/офлайна), затем её окончания (до 25 сек). В любом случае
+    // показываем Toast, чтобы пользователь получил обратную связь.
+    LaunchedEffect(syncRequested) {
+        if (!syncRequested) return@LaunchedEffect
+        withTimeoutOrNull(25_000) {
+            withTimeoutOrNull(3_000) {
+                snapshotFlow { isSyncing }.first { it }
+            }
+            snapshotFlow { isSyncing }.first { !it }
+        }
+        syncRequested = false
+        android.widget.Toast.makeText(
+            context,
+            context.getString(R.string.sync_success),
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
+    }
 
     // --- Запросы на добавление детей (status = "pending") — MVI через AdminViewModel ---
     val adminVm: AdminViewModel = androidx.lifecycle.viewmodel.compose.viewModel {
@@ -268,12 +293,26 @@ item {
         }
         item {
             OutlinedButton(
-                onClick = { viewModel.forceSync() },
+                onClick = {
+                    if (!isSyncing && !syncRequested) {
+                        syncRequested = true
+                        viewModel.forceSync()
+                    }
+                },
+                enabled = !isSyncing && !syncRequested,
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor),
                 shape = RoundedCornerShape(10.dp),
                 modifier = Modifier.fillMaxWidth().height(46.dp)
             ) {
+                if (isSyncing || syncRequested) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = AccentColor
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
                 Text("🔄 Синхронизировать с сервером", fontWeight = FontWeight.Bold)
             }
         }

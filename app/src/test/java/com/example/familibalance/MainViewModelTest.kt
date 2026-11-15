@@ -33,6 +33,7 @@ class MainViewModelTest {
         var checkResetsCalled = false
 
         override val isSynced: StateFlow<Boolean> = MutableStateFlow(true)
+        override val isSyncing: StateFlow<Boolean> = MutableStateFlow(false)
         override val onRemoteStateChanged: SharedFlow<Unit> = MutableSharedFlow()
         override var selectedChildId: String = "user_1"
 

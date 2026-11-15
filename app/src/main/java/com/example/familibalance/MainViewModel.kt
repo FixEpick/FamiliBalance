@@ -57,6 +57,9 @@ class MainViewModel(
     /** Статус синхронизации с Supabase: false — есть неподтверждённые локальные изменения. */
     val isSynced: StateFlow<Boolean> = familyRepository.isSynced
 
+    /** Идёт ли сетевая отправка профилей в Supabase прямо сейчас. */
+    val isSyncing: StateFlow<Boolean> = familyRepository.isSyncing
+
     private val scanDiaryUseCase = ScanDiaryUseCase(application)
 
     private val _diaryScanState = MutableStateFlow<DiaryScanState>(DiaryScanState.Idle)

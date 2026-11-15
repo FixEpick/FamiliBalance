@@ -29,6 +29,7 @@
     <string name="error_network">Network error. Check your connection.</string>
     <string name="login_loading">Logging in…</string>
     <string name="parent_area_link">👑 Parent login</string>
+    <string name="sync_success">Data synced successfully</string>
 
     <!-- Register / auth -->
     <string name="register_title">Registration</string>

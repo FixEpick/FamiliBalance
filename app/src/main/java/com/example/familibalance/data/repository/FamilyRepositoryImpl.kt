@@ -5,9 +5,12 @@ import com.example.familibalance.AppSharedState
 import com.example.familibalance.AppStateStorage
 import com.example.familibalance.ChildProfileState
 import com.example.familibalance.SupabaseManager
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Реализация [FamilyRepository] поверх текущего Storage Layer:
@@ -18,9 +21,14 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
     private val appContext = context.applicationContext
 
     /** Защита от рекурсивного шторма: повторный вход в retryDirtyChildren игнорируется. */
-    private val isSyncing = AtomicBoolean(false)
+    private val retryInProgress = AtomicBoolean(false)
+
+    /** Число push-запросов в полёте — для UI-статуса «синхронизация идёт». */
+    private val pendingPushes = AtomicInteger(0)
+    private val _isSyncing = MutableStateFlow(false)
 
     override val isSynced: StateFlow<Boolean> = SyncStatus.isSynced
+    override val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
     override val onRemoteStateChanged: SharedFlow<Unit> = AppSharedState.remoteStateChanged
 
@@ -94,19 +102,31 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
         // Помечаем dirty до отправки: входящие Realtime-обновления для этого
         // профиля будут игнорироваться, пока локальные правки не подтверждены.
         SyncStatus.markDirty(child.id)
+        pendingPushes.incrementAndGet()
+        _isSyncing.value = true
         SupabaseManager.pushChildProfile(appContext, child) { success ->
-            if (success) {
-                SyncStatus.markClean(child.id)
-                // НЕ вызываем retryDirtyChildren() здесь: иначе каждый успешный push
-                // запускает новый каскадный обход всех dirty-профилей (O(n²) запросов).
-                // Остальные dirty-профили подхватит текущий/следующий проход retryDirtyChildren.
+            try {
+                if (success) {
+                    SyncStatus.markClean(child.id)
+                    // НЕ вызываем retryDirtyChildren() здесь: иначе каждый успешный push
+                    // запускает новый каскадный обход всех dirty-профилей (O(n²) запросов).
+                    // Остальные dirty-профили подхватит текущий/следующий проход retryDirtyChildren.
+                }
+                // При неудаче профиль остаётся dirty — повторим при следующем push.
+            } finally {
+                if (pendingPushes.decrementAndGet() <= 0) {
+                    pendingPushes.set(0)
+                    _isSyncing.value = false
+                }
             }
-            // При неудаче профиль остаётся dirty — повторим при следующем push.
         }
     }
 
     override fun syncNow(childId: String?) {
         AppStateStorage.saveLocalOnly(appContext)
+        // Pull: подтягиваем свежие данные из облака (изменения с других устройств),
+        // затем push: отправляем выбранного ребёнка и все dirty-профили.
+        SupabaseManager.refreshFromCloud(appContext)
         val targetId = childId ?: selectedChildId
         AppSharedState.children[targetId]?.let { pushChildProfile(it) }
         retryDirtyChildren()
@@ -116,7 +136,7 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
     private fun retryDirtyChildren() {
         // Один проход за раз: если синхронизация уже идёт (старт приложения +
         // NetworkMonitor + loadState могут вызвать её одновременно) — пропускаем.
-        if (!isSyncing.compareAndSet(false, true)) return
+        if (!retryInProgress.compareAndSet(false, true)) return
         try {
             // Снимок dirty-списка: новые dirty, появившиеся во время прохода,
             // будут обработаны следующим триггером (network/push/forceSync).
@@ -124,7 +144,7 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
                 AppSharedState.children[id]?.let { pushChildProfile(it) }
             }
         } finally {
-            isSyncing.set(false)
+            retryInProgress.set(false)
         }
     }
 

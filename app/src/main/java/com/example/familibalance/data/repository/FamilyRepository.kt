@@ -16,6 +16,9 @@ interface FamilyRepository {
     /** Статус синхронизации с облаком: false — есть неподтверждённые локальные изменения. */
     val isSynced: StateFlow<Boolean>
 
+    /** Идёт ли сейчас сетевая отправка профилей в Supabase (push в полёте). */
+    val isSyncing: StateFlow<Boolean>
+
     /** Эмитится при применении удалённого состояния (Realtime / первичная загрузка). */
     val onRemoteStateChanged: SharedFlow<Unit>
 

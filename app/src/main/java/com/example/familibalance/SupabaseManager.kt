@@ -94,23 +94,7 @@ object SupabaseManager {
 
         // 1. Первичная загрузка профилей из базы (с фильтрацией по текущему родителю)
         scope.launch(exceptionHandler) {
-            try {
-                val rows = supabase.from("family_profiles")
-                    .select(columns = Columns.list("user_id", "state_json", "parent_user_id", "parent_email", "status"))
-                    .decodeList<FamilyProfileRow>()
-
-                val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
-                val uid = currentUser?.id
-                val email = currentUser?.email
-
-                rows.filter { isRowVisibleToUser(it, uid, email) }
-                    .forEach { row ->
-                        AppStateStorage.applyRemoteChildJsonAsync(context, row.user_id, row.state_json, row.parentUserId, row.status)
-                    }
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("SupabaseManager", "Ошибка первичной загрузки: ${e.message}")
-            }
+            loadProfilesFromCloud(context)
         }
 
         // 2. Подписка на изменения в реальном времени (Realtime) с авто-переподпиской
@@ -229,6 +213,39 @@ object SupabaseManager {
                     retryDelayMs = (retryDelayMs * 2).coerceAtMost(maxRetryDelayMs)
                 }
             }
+        }
+    }
+
+    /**
+     * Ручная перезагрузка всех видимых профилей из облака.
+     * Вызывается кнопкой «Синхронизировать с сервером» — pull-часть синхронизации.
+     */
+    fun refreshFromCloud(context: Context) {
+        if (client == null) return
+        scope.launch(exceptionHandler) {
+            loadProfilesFromCloud(context)
+        }
+    }
+
+    /** Загружает строки family_profiles и применяет видимые текущему пользователю. */
+    private suspend fun loadProfilesFromCloud(context: Context) {
+        val supabase = client ?: return
+        try {
+            val rows = supabase.from("family_profiles")
+                .select(columns = Columns.list("user_id", "state_json", "parent_user_id", "parent_email", "status"))
+                .decodeList<FamilyProfileRow>()
+
+            val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
+            val uid = currentUser?.id
+            val email = currentUser?.email
+
+            rows.filter { isRowVisibleToUser(it, uid, email) }
+                .forEach { row ->
+                    AppStateStorage.applyRemoteChildJsonAsync(context, row.user_id, row.state_json, row.parentUserId, row.status)
+                }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("SupabaseManager", "Ошибка загрузки профилей из облака: ${e.message}")
         }
     }
 
