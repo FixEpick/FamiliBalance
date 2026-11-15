@@ -2,7 +2,6 @@ package com.example.familibalance.data.auth
 
 import com.example.familibalance.ChildProfileDto
 import com.example.familibalance.ChildProfileState
-import com.example.familibalance.FamilyProfileRow
 import com.example.familibalance.SupabaseManager
 import com.example.familibalance.data.PinHasher
 import io.github.jan.supabase.SupabaseClient
@@ -103,8 +102,10 @@ class AuthRepository private constructor(private val client: SupabaseClient) {
 
     /**
      * Вход ребёнка по email родителя + имени + PIN.
-     * Профили хранятся в family_profiles.state_json (отдельной таблицы children нет):
-     * вытягиваем все строки, парсим state_json и сравниваем parentEmail/name/pinCode.
+     * Поиск выполняется на сервере через RPC verify_child_login —
+     * клиент больше не выгружает всю таблицу family_profiles.
+     * PIN дополнительно проверяется на клиенте ([PinHasher.matches])
+     * на случай, если RPC возвращает кандидата без проверки PIN.
      * Возвращает найденный профиль или null.
      */
     suspend fun findChildProfile(parentEmail: String, childName: String, pin: String): ChildProfileState? {
@@ -112,17 +113,38 @@ class AuthRepository private constructor(private val client: SupabaseClient) {
         val name = childName.trim()
         if (email.isEmpty() || name.isEmpty() || pin.isEmpty()) return null
 
-        val rows = client.from("family_profiles").select().decodeList<FamilyProfileRow>()
-        return rows.firstNotNullOfOrNull { row ->
+        val result = client.postgrest.rpc(
+            "verify_child_login",
+            buildJsonObject {
+                put("p_email", JsonPrimitive(email))
+                put("p_name", JsonPrimitive(name))
+                put("p_pin", JsonPrimitive(pin))
+            }
+        )
+        val element = runCatching {
+            Json.parseToJsonElement(result.data)
+        }.getOrNull() ?: return null
+
+        // RPC возвращает массив из 0 или 1 строки { user_id, state_json }.
+        val rows = when (element) {
+            is JsonArray -> element
+            is JsonObject -> JsonArray(listOf(element))
+            else -> return null
+        }
+        return rows.firstNotNullOfOrNull { rowEl ->
+            val row = rowEl as? JsonObject ?: return@firstNotNullOfOrNull null
+            val userId = row["user_id"]?.jsonPrimitive?.contentOrNull
+                ?: row["userId"]?.jsonPrimitive?.contentOrNull
+                ?: return@firstNotNullOfOrNull null
+            val stateJson = row["state_json"]?.jsonPrimitive?.contentOrNull
+                ?: row["stateJson"]?.jsonPrimitive?.contentOrNull
+                ?: return@firstNotNullOfOrNull null
             val dto = runCatching {
-                profileJson.decodeFromString<ChildProfileDto>(row.state_json)
+                profileJson.decodeFromString<ChildProfileDto>(stateJson)
             }.getOrNull() ?: return@firstNotNullOfOrNull null
-            val profile = ChildProfileState.fromDto(dto).copy(id = row.user_id)
-            if (
-                profile.parentEmail.equals(email, ignoreCase = true) &&
-                profile.name.equals(name, ignoreCase = true) &&
-                PinHasher.matches(pin, profile.pinCode)
-            ) profile else null
+            val profile = ChildProfileState.fromDto(dto).copy(id = userId)
+            // Defense in depth: даже если RPC не проверяет PIN — отсекаем здесь.
+            if (PinHasher.matches(pin, profile.pinCode)) profile else null
         }
     }
 

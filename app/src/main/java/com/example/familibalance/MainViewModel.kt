@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.DayOfWeek
 import java.time.temporal.TemporalAdjusters
+import java.util.concurrent.ConcurrentHashMap
 
 sealed class DiaryScanState {
     object Idle : DiaryScanState()
@@ -72,6 +73,16 @@ class MainViewModel(
      */
     private val _autoLoginChildId = MutableStateFlow<String?>(null)
     val autoLoginChildId: StateFlow<String?> = _autoLoginChildId.asStateFlow()
+
+    // Rate-limit входа ребёнка: ключ "email|childName" -> число неудачных попыток,
+    // и время (epoch ms), до которого вход для ключа заблокирован.
+    private val loginAttempts = ConcurrentHashMap<String, Int>()
+    private val loginLockUntil = ConcurrentHashMap<String, Long>()
+
+    private companion object {
+        const val LOGIN_MAX_ATTEMPTS = 5
+        const val LOGIN_LOCK_BASE_MS = 60_000L
+    }
 
     fun resetDiaryScanState() {
         _diaryScanState.value = DiaryScanState.Idle
@@ -253,7 +264,7 @@ class MainViewModel(
                 id = childId,
                 name = nickname.ifBlank { "Игрок" },
                 avatar = avatar.ifBlank { "🧒" },
-                pinCode = PinHasher.hash(pin.ifBlank { "0000" }),
+                pinCode = PinHasher.hash(pin.ifBlank { "0000" }, PinHasher.generateSalt()),
                 parentUserId = if (isParentSession) sessionUid else "",
                 parentEmail = email,
                 status = status
@@ -283,7 +294,7 @@ class MainViewModel(
     /** Смена ПИН-кода ребёнка из админки: copy() + updateChildProfile (push в Supabase). */
     fun updateChildPin(childId: String, newPin: String) {
         val child = familyRepository.getChild(childId) ?: return
-        updateChildProfile(child.copy(pinCode = PinHasher.hash(newPin)))
+        updateChildProfile(child.copy(pinCode = PinHasher.hash(newPin, PinHasher.generateSalt())))
     }
 
     /**
@@ -297,9 +308,31 @@ class MainViewModel(
         pin: String,
         onResult: (Boolean) -> Unit
     ) {
+        // Локальный rate-limit: после LOGIN_MAX_ATTEMPTS неудач — блокировка.
+        val rateKey = "${parentEmail.trim().lowercase()}|${childName.trim().lowercase()}"
+        val now = System.currentTimeMillis()
+        val lockedUntil = loginLockUntil[rateKey] ?: 0L
+        if (now < lockedUntil) {
+            onResult(false)
+            return
+        }
+
+        fun registerFailure() {
+            val attempts = (loginAttempts[rateKey] ?: 0) + 1
+            if (attempts >= LOGIN_MAX_ATTEMPTS) {
+                // Блокировка растёт с каждой новой серией неудач: 60с, 120с, ...
+                val lockMs = LOGIN_LOCK_BASE_MS * attempts.coerceAtMost(10)
+                loginLockUntil[rateKey] = System.currentTimeMillis() + lockMs
+                loginAttempts.remove(rateKey)
+            } else {
+                loginAttempts[rateKey] = attempts
+            }
+        }
+
         viewModelScope.launch {
             val repo = runCatching { AuthRepository() }.getOrNull()
             if (repo == null) {
+                registerFailure()
                 onResult(false)
                 return@launch
             }
@@ -307,9 +340,13 @@ class MainViewModel(
                 repo.findChildProfile(parentEmail, childName, pin)
             }.getOrNull()
             if (profile == null) {
+                registerFailure()
                 onResult(false)
                 return@launch
             }
+            // Успешный вход — сбрасываем счётчик и блокировку.
+            loginAttempts.remove(rateKey)
+            loginLockUntil.remove(rateKey)
             val deviceId = Settings.Secure.getString(
                 getApplication<Application>().contentResolver,
                 Settings.Secure.ANDROID_ID

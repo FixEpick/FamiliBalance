@@ -146,7 +146,8 @@ internal fun PinSlots(
 
 /**
  * Родительский «замок» в стиле КвестЛаб: 4-значный ПИН-код.
- * ПИН хранится в [ParentPinManager] (по умолчанию "0000").
+ * ПИН хранится в [ParentPinManager]; если PIN ещё не задан —
+ * показывается диалог создания ([ChangeParentPinDialog]).
  * Верный ПИН -> [onSuccess], неверный -> тряска + очистка.
  */
 @Composable
@@ -155,6 +156,15 @@ fun ParentGateDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    // PIN не задан — доступа нет: сначала создаём родительский PIN.
+    val pinExists = remember { ParentPinManager.getPin(context) != null }
+    if (!pinExists) {
+        ChangeParentPinDialog(
+            onDismiss = onDismiss,
+            onSaved = { onSuccess() }
+        )
+        return
+    }
     var pin by remember { mutableStateOf("") }
     var hasError by remember { mutableStateOf(false) }
 

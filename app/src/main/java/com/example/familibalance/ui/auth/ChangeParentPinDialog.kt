@@ -46,9 +46,10 @@ private val CyberLime = Color(0xFFA3E635)
 private val CyberRed = Color(0xFFEF4444)
 
 /**
- * Диалог смены родительского ПИН-кода.
- * Шаг 1: ввести текущий ПИН (сверка с [ParentPinManager]).
- * Шаг 2: ввести новый 4-значный ПИН -> сохранение.
+ * Диалог смены/создания родительского ПИН-кода.
+ * Если PIN уже задан: шаг 1 — ввод текущего (сверка с [ParentPinManager]),
+ * шаг 2 — новый 4-значный ПИН -> сохранение.
+ * Если PIN не задан — сразу шаг создания (без проверки текущего).
  */
 @Composable
 fun ChangeParentPinDialog(
@@ -57,7 +58,9 @@ fun ChangeParentPinDialog(
 ) {
     val context = LocalContext.current
     val wrongCurrentPinMsg = stringResource(R.string.pin_wrong_current)
-    var step by remember { mutableStateOf(1) } // 1 — текущий, 2 — новый
+    // PIN ещё не задан — пропускаем шаг проверки текущего и сразу создаём новый.
+    val pinExists = remember { ParentPinManager.getPin(context) != null }
+    var step by remember { mutableStateOf(if (pinExists) 1 else 2) } // 1 — текущий, 2 — новый
     var pin by remember { mutableStateOf("") }
     var hasError by remember { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf<String?>(null) }
@@ -178,7 +181,7 @@ fun ChangeParentPinDialog(
                     )
                 }
 
-                if (step == 2) {
+                if (step == 2 && pinExists) {
                     TextButton(onClick = {
                         step = 1
                         pin = ""

@@ -1,3 +1,4 @@
+import java.io.File
 import java.util.Properties
 
 plugins {
@@ -46,8 +47,8 @@ android {
         applicationId = "com.example.familibalance"
         minSdk = 24
         targetSdk = 37
-        versionCode = 8
-        versionName = "1.4.1"
+        versionCode = 10
+        versionName = "1.5.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -77,6 +78,8 @@ android {
             signingConfig = if (hasReleaseKey) {
                 signingConfigs.getByName("release")
             } else {
+                // Не используется: release-задачи падают раньше (см. guard ниже),
+                // но signingConfig обязателен для DSL — указываем debug как заглушку.
                 signingConfigs.getByName("debug")
             }
             optimization {
@@ -98,6 +101,38 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+// Запрет release-сборки без ключей: проверка на уровне задач,
+// чтобы assembleDebug не падал (блок buildTypes выполняется при любой конфигурации).
+// Путь вычисляем на этапе конфигурации: doFirst не должен захватывать
+// Project (иначе configuration cache не может сериализовать задачу).
+val keyPropertiesPath = rootProject.file("key.properties").absolutePath
+
+tasks.matching {
+    it.name.contains("Release", ignoreCase = true) &&
+        (it.name.startsWith("assemble") || it.name.startsWith("bundle") || it.name.startsWith("package"))
+}.configureEach {
+    // Локальная копия: doFirst захватывает только String (сериализуемо для
+    // configuration cache), а не ссылку на script object.
+    val kpPath = keyPropertiesPath
+    doFirst {
+        // hasReleaseKey объявлен внутри android {} и здесь недоступен —
+        // повторяем проверку key.properties напрямую.
+        val kpFile = File(kpPath)
+        val kp = Properties().apply {
+            if (kpFile.exists()) kpFile.inputStream().use { load(it) }
+        }
+        val releaseKeyPresent = kpFile.exists() &&
+            !kp.getProperty("storePassword").isNullOrBlank() &&
+            !kp.getProperty("keyPassword").isNullOrBlank()
+        if (!releaseKeyPresent) {
+            throw GradleException(
+                "Файл key.properties отсутствует! Сборка release запрещена. " +
+                    "Создайте key.properties или используйте assembleDebug."
+            )
+        }
     }
 }
 

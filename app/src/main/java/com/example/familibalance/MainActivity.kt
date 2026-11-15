@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -56,7 +58,6 @@ import com.example.familibalance.ui.auth.WelcomeScreen
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.ui.screens.*
-import com.example.familibalance.ui.components.DoubleBackToExitHandler
 import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
@@ -135,6 +136,20 @@ class MainActivity : FragmentActivity() {
             LocalizedAppContent {
             FamiliBalanceTheme(themeId = currentThemeId) {
                 val navController = rememberNavController()
+
+                // «Назад» на главных разделах (ChildRoute / AdminRoute) —
+                // диалог подтверждения выхода вместо двойного нажатия.
+                // На экранах входа/регистрации и внутренних маршрутах
+                // работает обычная навигация (popBackStack).
+                val topBackStackEntry by navController.currentBackStackEntryAsState()
+                val isMainSection = topBackStackEntry?.destination?.let {
+                    it.hasRoute<ChildRoute>() || it.hasRoute<AdminRoute>()
+                } == true
+                var showExitDialog by remember { mutableStateOf(false) }
+                val activity = LocalActivity.current
+                BackHandler(enabled = isMainSection) {
+                    showExitDialog = true
+                }
 
                 // При возврате приложения из фона — досылаем несинхронизированные данные
                 val lifecycleOwner = LocalLifecycleOwner.current
@@ -277,6 +292,53 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
+                // Строки диалога выхода вычисляем здесь, а не внутри AlertDialog:
+                // Dialog создаёт отдельное окно и может потерять локализованный контекст.
+                val exitDialogTitle = stringResource(R.string.exit_dialog_title)
+                val exitDialogMessage = stringResource(R.string.exit_dialog_message)
+                val exitDialogConfirm = stringResource(R.string.exit_dialog_confirm)
+                val exitDialogCancel = stringResource(R.string.action_cancel)
+
+                if (showExitDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showExitDialog = false },
+                        containerColor = SpaceBgStart,
+                        title = {
+                            Text(
+                                text = exitDialogTitle,
+                                color = AccentColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = exitDialogMessage,
+                                color = TextPrimary,
+                                fontSize = 14.sp
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                showExitDialog = false
+                                activity?.finishAffinity()
+                                // Гарантированный выход, если finishAffinity не сработал
+                                android.os.Process.killProcess(android.os.Process.myPid())
+                            }) {
+                                Text(
+                                    exitDialogConfirm,
+                                    color = Color.Red,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showExitDialog = false }) {
+                                Text(exitDialogCancel, color = TextSecondary)
+                            }
+                        }
+                    )
+                }
+
                 UpdateDialog(
                     state = updateState,
                     onUpdate = { updateViewModel.startDownload() },
@@ -333,12 +395,6 @@ private fun ChildSection(
         else -> ChildMainRoute
     }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    DoubleBackToExitHandler(
-        snackbarHostState = snackbarHostState,
-        message = stringResource(R.string.back_exit_hint)
-    )
-
     val tabs = listOf(
         ChildTab(ChildMainRoute, R.string.nav_home, "🏠"),
         ChildTab(ChildTasksRoute, R.string.nav_quests, "✨"),
@@ -383,7 +439,6 @@ private fun ChildSection(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
-            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 Row(
                     modifier = Modifier

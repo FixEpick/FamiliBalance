@@ -95,4 +95,9 @@
     <string name="logout_title">Выход</string>
     <string name="logout_message">Вы уверены, что хотите выйти? Вы сможете снова войти, используя email родителя, имя и PIN-код</string>
     <string name="logout_confirm">Выйти</string>
+
+    <!-- Exit app dialog -->
+    <string name="exit_dialog_title">Выход из приложения</string>
+    <string name="exit_dialog_message">Вы уверены, что хотите закрыть FamiliBalance?</string>
+    <string name="exit_dialog_confirm">Выйти</string>
 </resources>

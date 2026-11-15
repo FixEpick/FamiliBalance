@@ -113,6 +113,13 @@ fun MainChildScreen(
     var showBuyTimeSheet by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
+    // Строки диалога выхода резолвим здесь, а не внутри AlertDialog:
+    // Dialog создаёт отдельное окно и может потерять локализованный LocalContext.
+    val logoutDialogTitle = stringResource(R.string.logout_title)
+    val logoutDialogMessage = stringResource(R.string.logout_message)
+    val logoutDialogConfirm = stringResource(R.string.logout_confirm)
+    val logoutDialogCancel = stringResource(R.string.action_cancel)
+
     if (showHonestCatScreen) {
         HonestCatScreen(
             admissionText = catAdmissionText,
@@ -954,14 +961,14 @@ fun MainChildScreen(
             containerColor = SpaceBgStart,
             title = {
                 Text(
-                    text = stringResource(R.string.logout_title),
+                    text = logoutDialogTitle,
                     color = PenaltyRed,
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Text(
-                    text = stringResource(R.string.logout_message),
+                    text = logoutDialogMessage,
                     color = TextPrimary,
                     fontSize = 14.sp
                 )
@@ -978,12 +985,12 @@ fun MainChildScreen(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(stringResource(R.string.logout_confirm), fontWeight = FontWeight.Bold)
+                    Text(logoutDialogConfirm, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showLogoutDialog = false }) {
-                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
+                    Text(logoutDialogCancel, color = TextSecondary)
                 }
             }
         )

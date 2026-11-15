@@ -62,7 +62,6 @@ import androidx.compose.ui.res.stringResource
 import com.example.familibalance.R
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.ui.theme.*
-import com.example.familibalance.ui.components.DoubleBackToExitHandler
 import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.CashoutStatus
 
@@ -159,12 +158,6 @@ fun AdminScreen(
         }
     }
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    DoubleBackToExitHandler(
-        snackbarHostState = snackbarHostState,
-        message = stringResource(R.string.back_exit_hint)
-    )
-
     val hasPending = child.closetStatus == QuestStatus.PENDING
         || child.roomStatus == QuestStatus.PENDING
         || child.diaryStatus == QuestStatus.PENDING
@@ -225,7 +218,6 @@ fun AdminScreen(
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
-            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(

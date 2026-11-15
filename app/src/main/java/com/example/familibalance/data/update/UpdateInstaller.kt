@@ -2,6 +2,9 @@ package com.example.familibalance.data.update
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
+import android.content.pm.Signature
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
@@ -11,6 +14,7 @@ import java.io.File
 sealed interface InstallResult {
     data class ReadyToInstall(val intent: Intent) : InstallResult
     data class NeedPermission(val intent: Intent) : InstallResult
+    data class Error(val message: String) : InstallResult
 }
 
 object UpdateInstaller {
@@ -27,6 +31,13 @@ object UpdateInstaller {
             return InstallResult.NeedPermission(settingsIntent)
         }
 
+        // Проверка подписи: обновление обязано быть подписано тем же ключом,
+        // что и установленное приложение. Иначе — удаляем файл и прерываемся.
+        if (!hasSameSignature(context, apk)) {
+            apk.delete()
+            return InstallResult.Error("Подпись APK не совпадает с текущим приложением")
+        }
+
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -38,5 +49,47 @@ object UpdateInstaller {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         return InstallResult.ReadyToInstall(intent)
+    }
+
+    /**
+     * Сравнивает сертификаты подписанта скачанного APK и текущего приложения.
+     * На API 28+ используется GET_SIGNING_CERTIFICATES, на более старых — GET_SIGNATURES.
+     */
+    private fun hasSameSignature(context: Context, apk: File): Boolean {
+        val pm = context.packageManager
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            PackageManager.GET_SIGNING_CERTIFICATES
+        } else {
+            @Suppress("DEPRECATION")
+            PackageManager.GET_SIGNATURES
+        }
+
+        val archiveInfo = runCatching {
+            pm.getPackageArchiveInfo(apk.absolutePath, flags)
+        }.getOrNull() ?: return false
+
+        val currentInfo = runCatching {
+            pm.getPackageInfo(context.packageName, flags)
+        }.getOrNull() ?: return false
+
+        val archiveSigners = signingCertificates(archiveInfo)
+        val currentSigners = signingCertificates(currentInfo)
+        if (archiveSigners.isEmpty() || currentSigners.isEmpty()) return false
+
+        // Обновление валидно, если хотя бы один подписант совпадает.
+        return archiveSigners.any { archive ->
+            currentSigners.any { current ->
+                archive.toByteArray().contentEquals(current.toByteArray())
+            }
+        }
+    }
+
+    private fun signingCertificates(info: PackageInfo): List<Signature> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            info.signingInfo?.apkContentsSigners?.toList().orEmpty()
+        } else {
+            @Suppress("DEPRECATION")
+            info.signatures?.toList().orEmpty()
+        }
     }
 }

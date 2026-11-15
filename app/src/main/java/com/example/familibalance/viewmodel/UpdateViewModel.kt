@@ -104,6 +104,8 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
                             _uiState.value = UpdateUiState.ReadyToInstall(install.intent)
                         is InstallResult.NeedPermission ->
                             _uiState.value = UpdateUiState.NeedPermission(install.intent)
+                        is InstallResult.Error ->
+                            _uiState.value = UpdateUiState.Error(install.message)
                     }
                 }
                 is DownloadResult.Error ->

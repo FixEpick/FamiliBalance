@@ -103,6 +103,9 @@ class MainViewModelTest {
     fun `checkResets resets daily quests and custom quests via copy`() {
         val staleChild = createChild().copy(
             lastDailyResetDate = LocalDate.now().minusDays(1).toString(),
+            closetResetDate = LocalDate.now().minusDays(1).toString(),
+            roomResetDate = LocalDate.now().minusDays(1).toString(),
+            diaryResetDate = LocalDate.now().minusDays(1).toString(),
             closetStatus = QuestStatus.CLAIMED,
             closetRejectReason = "старая причина",
             roomStatus = QuestStatus.READY_TO_CLAIM,
