@@ -1,6 +1,6 @@
 package com.example.familibalance.data.repository
 
-import com.example.familibalance.ChildProfileState
+import com.example.familibalance.data.model.ChildProfileState
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 

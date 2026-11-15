@@ -1,5 +1,10 @@
 package com.example.familibalance
 
+import com.example.familibalance.data.model.*
+import com.example.familibalance.data.storage.*
+import com.example.familibalance.data.supabase.SupabaseManager
+import com.example.familibalance.util.*
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
@@ -53,6 +58,7 @@ import com.example.familibalance.navigation.PlayerLoginRoute
 import com.example.familibalance.navigation.RegisterParentRoute
 import com.example.familibalance.navigation.WelcomeRoute
 import com.example.familibalance.feature.admin.AdminScreen
+import com.example.familibalance.feature.child.ChildSection
 import com.example.familibalance.feature.child.MainChildScreen
 import com.example.familibalance.feature.child.TasksScreen
 import com.example.familibalance.ui.auth.PlayerLoginScreen
@@ -60,7 +66,8 @@ import com.example.familibalance.ui.auth.RegisterParentScreen
 import com.example.familibalance.ui.auth.WelcomeScreen
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
-import com.example.familibalance.ui.screens.*
+import com.example.familibalance.feature.child.screens.*
+import com.example.familibalance.ui.components.ExitConfirmDialog
 import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
@@ -332,42 +339,18 @@ class MainActivity : FragmentActivity() {
                 val exitDialogCancel = stringResource(R.string.action_cancel)
 
                 if (showExitDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showExitDialog = false },
-                        containerColor = SpaceBgStart,
-                        title = {
-                            Text(
-                                text = exitDialogTitle,
-                                color = AccentColor,
-                                fontWeight = FontWeight.Bold
-                            )
+                    ExitConfirmDialog(
+                        title = exitDialogTitle,
+                        message = exitDialogMessage,
+                        confirmText = exitDialogConfirm,
+                        cancelText = exitDialogCancel,
+                        onConfirm = {
+                            showExitDialog = false
+                            activity?.finishAffinity()
+                            // Гарантированный выход, если finishAffinity не сработал
+                            android.os.Process.killProcess(android.os.Process.myPid())
                         },
-                        text = {
-                            Text(
-                                text = exitDialogMessage,
-                                color = TextPrimary,
-                                fontSize = 14.sp
-                            )
-                        },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                showExitDialog = false
-                                activity?.finishAffinity()
-                                // Гарантированный выход, если finishAffinity не сработал
-                                android.os.Process.killProcess(android.os.Process.myPid())
-                            }) {
-                                Text(
-                                    exitDialogConfirm,
-                                    color = Color.Red,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showExitDialog = false }) {
-                                Text(exitDialogCancel, color = TextSecondary)
-                            }
-                        }
+                        onDismiss = { showExitDialog = false }
                     )
                 }
 
@@ -382,233 +365,3 @@ class MainActivity : FragmentActivity() {
     }
 }
 
-private data class ChildTab(
-    val route: Any,
-    @StringRes val titleRes: Int,
-    @StringRes val a11yRes: Int,
-    val icon: String
-)
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChildSection(
-    viewModel: MainViewModel,
-    onSwitchProfile: () -> Unit,
-    onLogout: () -> Unit = {}
-) {
-    val childNavController = rememberNavController()
-    var showThemeSheet by remember { mutableStateOf(false) }
-    val familyState by viewModel.familyState.collectAsStateWithLifecycle()
-    val isSynced by viewModel.isSynced.collectAsStateWithLifecycle()
-    val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.firstOrNull()
-        ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
-
-    var isRefreshing by remember { mutableStateOf(false) }
-    LaunchedEffect(isSynced) {
-        if (isSynced) isRefreshing = false
-    }
-    // Страховка от «вечного» индикатора: forceSync() асинхронный,
-    // а isSynced (StateFlow) не эмитит, если значение не изменилось
-    // (всё уже синхронизировано или офлайн). Сбрасываем по таймауту.
-    LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            kotlinx.coroutines.delay(15_000)
-            isRefreshing = false
-        }
-    }
-
-    val navBackStackEntry by childNavController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
-
-    val selectedTabRoute = when {
-        currentDestination?.hasRoute<ChildTasksRoute>() == true -> ChildTasksRoute
-        currentDestination?.hasRoute<ChildAchievementsRoute>() == true -> ChildAchievementsRoute
-        currentDestination?.hasRoute<ChildHistoryRoute>() == true -> ChildHistoryRoute
-        else -> ChildMainRoute
-    }
-
-    val tabs = listOf(
-        ChildTab(ChildMainRoute, R.string.nav_home, R.string.a11y_nav_home, "🏠"),
-        ChildTab(ChildTasksRoute, R.string.nav_quests, R.string.a11y_nav_quests, "✨"),
-        ChildTab(ChildAchievementsRoute, R.string.nav_achievements, R.string.a11y_nav_achievements, "🏆"),
-        ChildTab(ChildHistoryRoute, R.string.nav_history, R.string.a11y_nav_history, "📜")
-    )
-
-    val offlineDesc = stringResource(R.string.a11y_offline_status)
-    val themeDesc = stringResource(R.string.a11y_theme_button)
-
-    // Красная точка на «Достижениях», если есть награда, которую можно забрать
-    val hasClaimableAchievements = remember(child.achievements, child.fivesCount, child.wardrobeCount, child.roomCount, child.balance, child.streakDays) {
-        getAchievements(child).any { it.isReadyToClaim }
-    }
-
-    // Бейдж на «Заданиях» — только если есть квест, готовый к получению награды
-    val hasClaimableTasks = remember(child) {
-        child.closetStatus == QuestStatus.READY_TO_CLAIM ||
-            child.roomStatus == QuestStatus.READY_TO_CLAIM ||
-            child.diaryStatus == QuestStatus.READY_TO_CLAIM ||
-            child.bonusQuests.any { it.status == QuestStatus.READY_TO_CLAIM } ||
-            child.customQuests.any { it.status == QuestStatus.READY_TO_CLAIM }
-    }
-
-    fun navigateToTab(route: Any) {
-        childNavController.navigate(route) {
-            popUpTo<ChildMainRoute> { saveState = true }
-            launchSingleTop = true
-            restoreState = true
-        }
-    }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.space_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(SpaceBgOverlay.copy(alpha = 0.55f))
-        )
-        Scaffold(
-            modifier = Modifier.fillMaxSize(),
-            containerColor = Color.Transparent,
-            topBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(TopBarBg.copy(alpha = 0.85f))
-                        .statusBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(child.avatar, fontSize = 20.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "${child.name} (Игрок)",
-                            color = TextPrimary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (!isSynced) {
-                            Text(
-                                text = "📴",
-                                fontSize = 16.sp,
-                                color = StatusYellow,
-                                modifier = Modifier.semantics {
-                                    contentDescription = offlineDesc
-                                }
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        LanguageSelectorButton()
-                        IconButton(onClick = { showThemeSheet = true }) {
-                            Text(
-                                "🎨",
-                                fontSize = 18.sp,
-                                modifier = Modifier.semantics {
-                                    contentDescription = themeDesc
-                                }
-                            )
-                        }
-                    }
-                }
-            },
-            bottomBar = {
-                NavigationBar(
-                    containerColor = TopBarBg.copy(alpha = 0.92f),
-                    tonalElevation = 0.dp
-                ) {
-                    val items = tabs
-                    items.forEach { tab ->
-                        NavigationBarItem(
-                            selected = tab.route == selectedTabRoute,
-                            onClick = { navigateToTab(tab.route) },
-                            icon = {
-                                val tabA11y = stringResource(tab.a11yRes)
-                                val showBadge = when (tab.route) {
-                                    ChildTasksRoute -> hasClaimableTasks
-                                    ChildAchievementsRoute -> hasClaimableAchievements
-                                    else -> false
-                                }
-                                if (showBadge) {
-                                    BadgedBox(badge = { PulseBadge() }) {
-                                        Text(
-                                            tab.icon,
-                                            fontSize = 20.sp,
-                                            modifier = Modifier.semantics {
-                                                contentDescription = tabA11y
-                                            }
-                                        )
-                                    }
-                                } else {
-                                    Text(
-                                        tab.icon,
-                                        fontSize = 20.sp,
-                                        modifier = Modifier.semantics {
-                                            contentDescription = tabA11y
-                                        }
-                                    )
-                                }
-                            },
-                            label = {
-                                Text(
-                                    stringResource(tab.titleRes),
-                                    color = if (tab.route == selectedTabRoute) LocalAppPalette.current.primaryNeon else TextSecondary
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = LocalAppPalette.current.primaryNeon.copy(alpha = 0.18f)
-                            )
-                        )
-                    }
-                }
-            }
-        ) { innerPadding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                PullToRefreshBox(
-                    isRefreshing = isRefreshing,
-                    onRefresh = {
-                        isRefreshing = true
-                        viewModel.forceSync()
-                        // Если после forceSync нечего синхронизировать,
-                        // isSynced не изменится и LaunchedEffect не сработает —
-                        // сбрасываем индикатор сразу.
-                        if (viewModel.isSynced.value) isRefreshing = false
-                    },
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    NavHost(navController = childNavController, startDestination = ChildMainRoute) {
-                        composable<ChildMainRoute> {
-                            MainChildScreen(
-                                onNavigateToTasks = { navigateToTab(ChildTasksRoute) },
-                                onLogout = onLogout,
-                                viewModel = viewModel
-                            )
-                        }
-                        composable<ChildTasksRoute> { TasksScreen(viewModel = viewModel) }
-                        composable<ChildAchievementsRoute> { AchievementsScreen(viewModel = viewModel) }
-                        composable<ChildHistoryRoute> { HistoryScreen(viewModel = viewModel) }
-                    }
-                }
-            }
-            if (showThemeSheet) {
-                ThemeSelectionBottomSheet(
-                    currentThemeId = child.selectedThemeId,
-                    onThemeSelected = { viewModel.updateTheme(child.id, it) },
-                    onDismissRequest = { showThemeSheet = false }
-                )
-            }
-        }
-    }
-}

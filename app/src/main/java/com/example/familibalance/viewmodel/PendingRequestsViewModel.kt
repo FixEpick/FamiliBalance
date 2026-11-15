@@ -2,10 +2,10 @@ package com.example.familibalance.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.familibalance.ChildProfileState
-import com.example.familibalance.FamilyProfileRow
+import com.example.familibalance.data.model.ChildProfileState
+import com.example.familibalance.data.supabase.FamilyProfileRow
 import com.example.familibalance.MainViewModel
-import com.example.familibalance.SupabaseManager
+import com.example.familibalance.data.supabase.SupabaseManager
 import io.github.jan.supabase.postgrest.from
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

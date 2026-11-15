@@ -1,17 +1,21 @@
 package com.example.familibalance
 
+import com.example.familibalance.data.model.*
+import com.example.familibalance.data.storage.*
+import com.example.familibalance.data.supabase.SupabaseManager
+import com.example.familibalance.util.*
+
 import android.app.Application
 import android.content.Context
 import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.familibalance.data.auth.AuthRepository
-import com.example.familibalance.data.PinHasher
 import com.example.familibalance.data.SecurePrefs
 import io.github.jan.supabase.auth.auth
 import com.example.familibalance.data.repository.FamilyRepository
 import com.example.familibalance.data.repository.FamilyRepositoryImpl
 import com.example.familibalance.util.ScanDiaryUseCase
+import com.example.familibalance.viewmodel.actions.resetDailyQuestsIfNeeded
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,8 +25,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalDate
-import java.time.DayOfWeek
-import java.time.temporal.TemporalAdjusters
 
 sealed class DiaryScanState {
     object Idle : DiaryScanState()
@@ -83,7 +85,7 @@ class MainViewModel(
 
     private val scanDiaryUseCase = ScanDiaryUseCase(application)
 
-    private val _diaryScanState = MutableStateFlow<DiaryScanState>(DiaryScanState.Idle)
+    internal val _diaryScanState = MutableStateFlow<DiaryScanState>(DiaryScanState.Idle)
     val diaryScanState: StateFlow<DiaryScanState> = _diaryScanState.asStateFlow()
 
     /** OCR-сканирование фото дневника: результат — только через diaryScanState. */
@@ -107,17 +109,6 @@ class MainViewModel(
     private val _autoLoginChildId = MutableStateFlow<String?>(null)
     val autoLoginChildId: StateFlow<String?> = _autoLoginChildId.asStateFlow()
 
-    // Rate-limit входа ребёнка хранится в SecurePrefs (EncryptedSharedPreferences),
-    // чтобы счётчики и блокировки переживали перезапуск приложения.
-    // Ключи: "attempts_<rateKey>" -> Int, "lock_<rateKey>" -> epoch ms блокировки.
-    private fun rateLimitPrefs() =
-        SecurePrefs.get(getApplication(), "login_rate_limit_prefs")
-
-    private companion object {
-        const val LOGIN_MAX_ATTEMPTS = 5
-        const val LOGIN_LOCK_BASE_MS = 60_000L
-    }
-
     fun resetDiaryScanState() {
         _diaryScanState.value = DiaryScanState.Idle
     }
@@ -127,7 +118,7 @@ class MainViewModel(
         selectedChildId = familyRepository.selectedChildId
     )
 
-    private fun emitFamilyState() {
+    internal fun emitFamilyState() {
         _familyState.value = snapshotFamilyState()
     }
 
@@ -265,204 +256,6 @@ class MainViewModel(
         updateChildProfile(child.copy(streakBonusMessage = ""))
     }
 
-    /** Переключает активного ребёнка и эмитит новое состояние. pushRemote — полная синхронизация с Supabase. */
-    fun selectChild(childId: String, pushRemote: Boolean = false) {
-        familyRepository.selectChild(childId, pushRemote)
-        // Сбрасываем стейт OCR-дневника: результат скана привязан к конкретному ребёнку
-        _diaryScanState.value = DiaryScanState.Idle
-        emitFamilyState()
-    }
-
-    /**
-     * Создаёт новый профиль ребёнка из формы регистрации:
-     * генерирует childId, сохраняет профиль (локально + push в Supabase),
-     * пытается связать с родителем по email и выбирает профиль активным.
-     */
-    fun createChildProfile(
-        nickname: String,
-        pin: String,
-        avatar: String,
-        parentEmail: String,
-        onResult: ((ChildProfileState) -> Unit)? = null
-    ) {
-        viewModelScope.launch {
-            // Если сессии нет (устройство ребёнка) — входим анонимно,
-            // чтобы у ребёнка был собственный auth.uid для своей строки в family_profiles.
-            var sessionUser = runCatching {
-                SupabaseManager.client?.auth?.currentUserOrNull()
-            }.getOrNull()
-            if (sessionUser == null) {
-                runCatching { SupabaseManager.client?.auth?.signInAnonymously() }
-                sessionUser = runCatching {
-                    SupabaseManager.client?.auth?.currentUserOrNull()
-                }.getOrNull()
-            }
-
-            val sessionEmail = sessionUser?.email
-            val sessionUid = sessionUser?.id.orEmpty()
-            val email = sessionEmail?.trim().orEmpty().ifBlank { parentEmail.trim() }
-            // Родительская сессия (есть email) -> профиль сразу active.
-            // Анонимная сессия ребёнка -> pending, ждёт подтверждения родителя.
-            val isParentSession = !sessionEmail.isNullOrBlank()
-            val status = if (isParentSession) "active" else "pending"
-            if (email.isBlank()) {
-                android.util.Log.w("MainViewModel", "createChildProfile: нет email родителя — запрос не сможет быть подтверждён")
-            }
-
-            val childId = "user_${System.currentTimeMillis()}"
-            val profile = ChildProfileState(
-                id = childId,
-                name = nickname.ifBlank { "Игрок" },
-                avatar = avatar.ifBlank { "🧒" },
-                // Пустой PIN -> pinCode="" (PIN не установлен): matches() вернёт
-                // false, вход возможен только после установки PIN родителем.
-                pinCode = if (pin.isBlank()) "" else PinHasher.hash(pin, PinHasher.generateSalt()),
-                parentUserId = if (isParentSession) sessionUid else "",
-                // auth_user_id — uid анонимной сессии ребёнка (нужен для Realtime/RLS).
-                // При родительской сессии оставляем пустым: ребёнок привяжет свой uid при первом входе.
-                authUserId = if (isParentSession) "" else sessionUid,
-                parentEmail = email,
-                status = status
-            )
-            // updateChildProfile кладёт профиль в AppSharedState и пушит в Supabase
-            updateChildProfile(profile)
-            selectChild(childId)
-
-            // Best-effort привязка к родителю по email (только для родительской сессии)
-            if (isParentSession && email.isNotBlank()) {
-                runCatching { AuthRepository().linkChildToParent(childId, email) }
-            }
-            // Новый ребёнок сразу считается вошедшим (status = active)
-            if (status == "active") {
-                getApplication<Application>()
-                    .let { SecurePrefs.get(it, "app_prefs") }
-                    .edit()
-                    .putBoolean("is_logged_in", true)
-                    .putString("logged_in_child_id", childId)
-                    .putBoolean("is_admin_logged_in", false)
-                    .apply()
-            }
-            onResult?.invoke(profile)
-        }
-    }
-
-    /** Смена ПИН-кода ребёнка из админки: copy() + updateChildProfile (push в Supabase). */
-    fun updateChildPin(childId: String, newPin: String) {
-        val child = familyRepository.getChild(childId) ?: return
-        updateChildProfile(child.copy(pinCode = PinHasher.hash(newPin, PinHasher.generateSalt())))
-    }
-
-    /**
-     * Вход ребёнка по email родителя + имени + PIN.
-     * При успехе: профиль импортируется в локальный стейт, сохраняется
-     * ANDROID_ID устройства (для будущих пушей) и выбирается активным.
-     */
-    fun loginChild(
-        parentEmail: String,
-        childName: String,
-        pin: String,
-        onResult: (LoginResult) -> Unit
-    ) {
-        // Локальный rate-limit: после LOGIN_MAX_ATTEMPTS неудач — блокировка.
-        // Данные персистентны (SecurePrefs) — brute-force не сбрасывается
-        // перезапуском приложения.
-        val rateKey = "${parentEmail.trim().lowercase()}|${childName.trim().lowercase()}"
-        val attemptsKey = "attempts_$rateKey"
-        val lockKey = "lock_$rateKey"
-        val ratePrefs = rateLimitPrefs()
-        val now = System.currentTimeMillis()
-        val lockedUntil = ratePrefs.getLong(lockKey, 0L)
-        if (now < lockedUntil) {
-            onResult(LoginResult.RateLimited)
-            return
-        }
-        // Блокировка истекла — подчищаем устаревший ключ.
-        if (lockedUntil > 0L) {
-            ratePrefs.edit().remove(lockKey).apply()
-        }
-
-        fun registerFailure() {
-            val attempts = ratePrefs.getInt(attemptsKey, 0) + 1
-            val editor = ratePrefs.edit()
-            if (attempts >= LOGIN_MAX_ATTEMPTS) {
-                // Блокировка растёт с каждой новой серией неудач: 60с, 120с, ...
-                val lockMs = LOGIN_LOCK_BASE_MS * attempts.coerceAtMost(10)
-                editor.putLong(lockKey, System.currentTimeMillis() + lockMs)
-                    .remove(attemptsKey)
-            } else {
-                editor.putInt(attemptsKey, attempts)
-            }
-            editor.apply()
-        }
-
-        viewModelScope.launch {
-            val repo = runCatching { AuthRepository() }.getOrNull()
-            if (repo == null) {
-                onResult(LoginResult.NetworkError)
-                return@launch
-            }
-            val profile = try {
-                repo.findChildProfile(parentEmail, childName, pin)
-            } catch (e: Exception) {
-                android.util.Log.e("MainViewModel", "loginChild: ошибка сети/RPC", e)
-                onResult(LoginResult.NetworkError)
-                return@launch
-            }
-            if (profile == null) {
-                registerFailure()
-                onResult(LoginResult.InvalidCredentials)
-                return@launch
-            }
-            // Успешный вход — сбрасываем счётчик и блокировку.
-            ratePrefs.edit()
-                .remove(attemptsKey)
-                .remove(lockKey)
-                .apply()
-
-            // Устройство ребёнка должно иметь собственную анонимную сессию Supabase:
-            // её auth.uid сохраняем в authUserId, чтобы Realtime/RLS могли
-            // отличать «свою» строку family_profiles от чужих.
-            val supabase = SupabaseManager.client
-            var authUid = runCatching { supabase?.auth?.currentUserOrNull()?.id }.getOrNull().orEmpty()
-            val sessionEmail = runCatching { supabase?.auth?.currentUserOrNull()?.email }.getOrNull()
-            if (supabase != null && (authUid.isEmpty() || !sessionEmail.isNullOrBlank())) {
-                runCatching { supabase.auth.signInAnonymously() }
-                authUid = runCatching { supabase.auth.currentUserOrNull()?.id }.getOrNull().orEmpty()
-            }
-
-            // Миграция legacy PIN: если pinCode в старом формате (без ':'),
-            // перехэшируем введённый PIN с солью — при следующем входе
-            // уже используется безопасный формат.
-            val migratedPinCode = if (!profile.pinCode.contains(':')) {
-                PinHasher.hash(pin, PinHasher.generateSalt())
-            } else {
-                profile.pinCode
-            }
-            val deviceId = Settings.Secure.getString(
-                getApplication<Application>().contentResolver,
-                Settings.Secure.ANDROID_ID
-            ).orEmpty()
-            val updated = profile.copy(
-                deviceId = deviceId,
-                authUserId = authUid.ifBlank { profile.authUserId },
-                pinCode = migratedPinCode
-            )
-            // updateChildProfile: запись в AppSharedState + локальное сохранение
-            // + pushChildProfile (markDirty в SyncStatus + отправка в Supabase).
-            familyRepository.updateChildProfile(updated)
-            selectChild(updated.id)
-            // Флаги автовхода: при следующем запуске откроем ChildSection без Welcome
-            getApplication<Application>()
-                .let { SecurePrefs.get(it, "app_prefs") }
-                .edit()
-                .putBoolean("is_logged_in", true)
-                .putString("logged_in_child_id", updated.id)
-                .putBoolean("is_admin_logged_in", false)
-                .apply()
-            onResult(LoginResult.Success)
-        }
-    }
-
     /** Выход ребёнка: сбрасываем выбор активного профиля, UI-стейты и флаги автовхода. */
     fun logoutChild() {
         AppSharedState.selectedChildId = ""
@@ -531,153 +324,4 @@ class MainViewModel(
         
     }
 
-    private fun resetDailyQuestsIfNeeded() {
-        val today = LocalDate.now().toString()
-        val todayDate = LocalDate.now()
-        val weekStart = todayDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        val children = familyRepository.getAllChildren()
-
-        fun parseResetDate(raw: String): LocalDate? =
-            if (raw.isBlank()) null
-            else runCatching { LocalDate.parse(raw) }.getOrNull()
-
-        /**
-         * Проверяет встроенный квест: истёк ли его период (день/неделя).
-         * Возвращает новую дату сброса и флаг очистки статуса.
-         * Пустая/битая дата + CLAIMED/READY_TO_CLAIM — квест завис: сбрасываем
-         * в AVAILABLE и ставим сегодняшнюю метку (BUG-02).
-         * Пустая дата + AVAILABLE — ничего не меняем.
-         * PENDING-квесты не сбрасываются (родитель ещё не проверил).
-         */
-        fun checkBuiltInQuest(
-            frequency: QuestFrequency,
-            lastResetDate: String,
-            status: QuestStatus
-        ): Pair<String, Boolean> {
-            val parsed = parseResetDate(lastResetDate)
-            if (parsed == null) {
-                return when (status) {
-                    QuestStatus.CLAIMED, QuestStatus.READY_TO_CLAIM -> today to true
-                    QuestStatus.AVAILABLE -> lastResetDate to false
-                    else -> today to false
-                }
-            }
-            val elapsed = when (frequency) {
-                QuestFrequency.DAILY -> parsed.isBefore(todayDate)
-                QuestFrequency.WEEKLY -> parsed.isBefore(weekStart)
-                QuestFrequency.ONCE -> false
-            }
-            return if (elapsed) today to (status != QuestStatus.PENDING) else lastResetDate to false
-        }
-
-        children.forEach { child ->
-            var updated = child
-
-            // Хронологическое сравнение: lastDailyResetDate обновляем только
-            // если сегодня строго позже. При откате времени маркер не регрессирует.
-            val lastDailyReset = parseResetDate(child.lastDailyResetDate)
-            if (lastDailyReset == null || todayDate.isAfter(lastDailyReset)) {
-                updated = updated.copy(lastDailyResetDate = today)
-            }
-
-            // Шкаф
-            val (closetDate, closetClear) = checkBuiltInQuest(
-                child.wardrobeFrequency, child.closetResetDate, child.closetStatus
-            )
-            if (closetDate != child.closetResetDate || closetClear) {
-                updated = updated.copy(
-                    closetResetDate = closetDate,
-                    closetStatus = if (closetClear) QuestStatus.AVAILABLE else child.closetStatus,
-                    closetRejectReason = if (closetClear) null else child.closetRejectReason,
-                    closetPhotoUrl = if (closetClear) null else child.closetPhotoUrl,
-                    closetComment = if (closetClear) "" else child.closetComment
-                )
-            }
-
-            // Комната
-            val (roomDate, roomClear) = checkBuiltInQuest(
-                child.roomFrequency, child.roomResetDate, child.roomStatus
-            )
-            if (roomDate != child.roomResetDate || roomClear) {
-                updated = updated.copy(
-                    roomResetDate = roomDate,
-                    roomStatus = if (roomClear) QuestStatus.AVAILABLE else child.roomStatus,
-                    roomRejectReason = if (roomClear) null else child.roomRejectReason,
-                    roomPhotoUrl = if (roomClear) null else child.roomPhotoUrl,
-                    roomComment = if (roomClear) "" else child.roomComment
-                )
-            }
-
-            // Дневник
-            val (diaryDate, diaryClear) = checkBuiltInQuest(
-                child.diaryFrequency, child.diaryResetDate, child.diaryStatus
-            )
-            if (diaryDate != child.diaryResetDate || diaryClear) {
-                updated = updated.copy(
-                    diaryResetDate = diaryDate,
-                    diaryStatus = if (diaryClear) QuestStatus.AVAILABLE else child.diaryStatus,
-                    diaryRejectReason = if (diaryClear) null else child.diaryRejectReason,
-                    diaryPhotoUrl = if (diaryClear) null else child.diaryPhotoUrl,
-                    diaryComment = if (diaryClear) "" else child.diaryComment
-                )
-            }
-
-            // Auto-reset visible custom quests based on frequency
-            val newQuests = updated.customQuests.map { quest ->
-                if (!quest.isVisible) return@map quest
-                // Квесты в полёте не трогаем: PENDING ждёт проверки родителем
-                // (сброс стёр бы photoUrl и отзыв родителя), READY_TO_CLAIM —
-                // одобрен и ждёт получения награды ребёнком.
-                if (quest.status == QuestStatus.PENDING ||
-                    quest.status == QuestStatus.READY_TO_CLAIM
-                ) return@map quest
-
-                fun parseResetDate(): LocalDate? =
-                    if (quest.lastResetDate.isBlank()) null
-                    else runCatching { LocalDate.parse(quest.lastResetDate) }.getOrNull()
-
-                val shouldReset = when (quest.frequency) {
-                    QuestFrequency.DAILY -> {
-                        val questResetDate = parseResetDate()
-                        questResetDate == null || questResetDate.isBefore(todayDate)
-                    }
-                    QuestFrequency.WEEKLY -> {
-                        val questResetDate = parseResetDate()
-                        questResetDate == null || questResetDate.isBefore(weekStart)
-                    }
-                    QuestFrequency.ONCE -> false
-                }
-
-                if (shouldReset) {
-                    quest.copy(
-                        status = QuestStatus.AVAILABLE,
-                        photoUrl = null,
-                        rejectReason = null,
-                        lastResetDate = today
-                    )
-                } else quest
-            }
-
-            if (newQuests != updated.customQuests) {
-                updated = updated.copy(customQuests = newQuests)
-            }
-
-            // Затухание стрика: за каждый пропущенный день сгорает 1 огонёк.
-            // lastStreakDate очищается — стрик не горит, пока ребёнок не отметится.
-            if (updated.lastStreakDate.isNotBlank()) {
-                val lastStreak = runCatching { LocalDate.parse(updated.lastStreakDate) }.getOrNull()
-                if (lastStreak != null && lastStreak.isBefore(todayDate.minusDays(1))) {
-                    val missedDays = java.time.temporal.ChronoUnit.DAYS.between(lastStreak, todayDate).toInt()
-                    updated = updated.copy(
-                        streakDays = (updated.streakDays - missedDays).coerceAtLeast(0),
-                        lastStreakDate = ""
-                    )
-                }
-            }
-
-            if (updated != child) {
-                updateChildProfile(updated)
-            }
-        }
-    }
 }

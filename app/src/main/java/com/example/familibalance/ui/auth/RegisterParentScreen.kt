@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.familibalance.ChildProfileState
+import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 import com.example.familibalance.data.SecurePrefs
@@ -61,6 +61,7 @@ import com.example.familibalance.viewmodel.AuthEvent
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.PendingRequestsViewModel
 import com.example.familibalance.viewmodel.PendingState
+import com.example.familibalance.viewmodel.actions.createChildProfile
 
 private val CyberTextPrimary = Color(0xFFE2E8F0)
 private val CyberTextSecondary = Color(0xFF94A3B8)

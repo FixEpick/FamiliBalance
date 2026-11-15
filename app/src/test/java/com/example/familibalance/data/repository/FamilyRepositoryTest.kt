@@ -1,8 +1,8 @@
 package com.example.familibalance.data.repository
 
 import android.content.Context
-import com.example.familibalance.AppSharedState
-import com.example.familibalance.ChildProfileState
+import com.example.familibalance.data.model.ChildProfileState
+import com.example.familibalance.data.storage.AppSharedState
 import com.example.familibalance.data.SecurePrefs
 import org.junit.After
 import org.junit.Assert.assertFalse

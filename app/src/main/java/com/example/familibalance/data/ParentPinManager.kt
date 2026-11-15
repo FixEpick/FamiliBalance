@@ -1,7 +1,7 @@
 package com.example.familibalance.data
 
 import android.content.Context
-import com.example.familibalance.SupabaseManager
+import com.example.familibalance.data.supabase.SupabaseManager
 import io.github.jan.supabase.auth.auth
 
 /**

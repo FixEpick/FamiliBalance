@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.*
+import com.example.familibalance.data.model.*
+import com.example.familibalance.data.storage.*
+import com.example.familibalance.util.*
 
 @Composable
 fun HistoryItem(

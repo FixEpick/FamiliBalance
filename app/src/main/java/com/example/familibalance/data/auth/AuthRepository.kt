@@ -1,8 +1,8 @@
 package com.example.familibalance.data.auth
 
-import com.example.familibalance.ChildProfileDto
-import com.example.familibalance.ChildProfileState
-import com.example.familibalance.SupabaseManager
+import com.example.familibalance.data.model.ChildProfileDto
+import com.example.familibalance.data.model.ChildProfileState
+import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.data.PinHasher
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth

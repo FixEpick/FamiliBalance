@@ -1,0 +1,263 @@
+package com.example.familibalance.data.supabase
+
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+import com.example.familibalance.data.model.ChildProfileState
+import com.example.familibalance.data.storage.AppSharedState
+import com.example.familibalance.data.storage.AppStateStorage
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+
+@Serializable
+data class FamilyProfileRow(
+    val user_id: String,
+    val state_json: String,
+    @SerialName("parent_user_id") val parentUserId: String? = null,
+    @SerialName("parent_email") val parentEmail: String? = null,
+    /** auth.uid анонимной сессии ребёнка — нужен Realtime/RLS на устройстве ребёнка. */
+    @SerialName("auth_user_id") val authUserId: String? = null,
+    val status: String? = null
+)
+
+/** Синхронизация профилей: pull из облака, push в облако, фильтрация видимости. */
+internal object ProfileSync {
+
+    /** Загружает строки family_profiles и применяет видимые текущему пользователю. */
+    suspend fun loadProfilesFromCloud(context: Context) {
+        val supabase = SupabaseManager.client ?: return
+        try {
+            val rows = supabase.from("family_profiles")
+                .select(columns = Columns.list("user_id", "state_json", "parent_user_id", "parent_email", "auth_user_id", "status"))
+                .decodeList<FamilyProfileRow>()
+
+            val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
+            val uid = currentUser?.id
+            val email = currentUser?.email
+
+            rows.filter { isRowVisibleToUser(it, uid, email) }
+                .forEach { row ->
+                    AppStateStorage.applyRemoteChildJsonAsync(context, row.user_id, row.state_json, row.parentUserId, row.status, row.authUserId)
+                }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("SupabaseManager", "Ошибка загрузки профилей из облака: ${e.message}")
+        }
+    }
+
+    /**
+     * Ручная перезагрузка всех видимых профилей из облака.
+     * Вызывается кнопкой «Синхронизировать с сервером» — pull-часть синхронизации.
+     */
+    fun refreshFromCloud(context: Context) {
+        if (SupabaseManager.client == null) return
+        SupabaseManager.scope.launch(SupabaseManager.exceptionHandler) {
+            loadProfilesFromCloud(context)
+        }
+    }
+
+    /**
+     * Изоляция данных: авторизованный родитель видит только свои профили.
+     * Правило: parent_user_id == auth.uid(), либо (пока нет RLS) parentUserId пуст,
+     * но parentEmail внутри state_json совпадает с email текущего пользователя.
+     * Гость без сессии (uid == null) не видит ничего.
+     */
+    fun isRowVisibleToUser(row: FamilyProfileRow, uid: String?, email: String?): Boolean {
+        // Без сессии (гость) чужие строки не показываем — строгая клиентская фильтрация.
+        // Анонимный пользователь Supabase имеет uid, поэтому собственный профиль виден.
+        if (uid == null) return false
+        // Собственный профиль виден всегда (в т.ч. анонимному ребёнку)
+        if (row.user_id == uid) return true
+        if (row.parentUserId == uid) return true
+        // Профиль ребёнка на его устройстве: auth.uid анонимной сессии == auth_user_id.
+        if (!row.authUserId.isNullOrBlank() && row.authUserId == uid) return true
+        if (!row.parentUserId.isNullOrBlank()) return false
+        // Pending-запрос: виден родителю по parent_email (колонка или state_json)
+        val rowParentEmail = row.parentEmail
+        if (!rowParentEmail.isNullOrBlank()) {
+            return !email.isNullOrBlank() && rowParentEmail.equals(email, ignoreCase = true)
+        }
+        val parentEmail = runCatching {
+            Json.parseToJsonElement(row.state_json)
+                .jsonObject["parentEmail"]
+                ?.jsonPrimitive?.contentOrNull
+        }.getOrNull()
+        return !email.isNullOrBlank() && parentEmail.equals(email, ignoreCase = true)
+    }
+
+    /**
+     * Отправляет обновлённое состояние конкретного ребёнка в Supabase
+     * (а если есть локальное фото — сначала загружает его в облачный Storage)
+     */
+    fun pushChildProfile(context: Context, child: ChildProfileState, onResult: ((Boolean) -> Unit)? = null) {
+        val supabase = SupabaseManager.client ?: run {
+            onResult?.invoke(false)
+            return
+        }
+
+        SupabaseManager.scope.launch(SupabaseManager.exceptionHandler) {
+            try {
+                var hasUploadedNewPhoto = false
+
+                // Читаем текущие значения фото (snapshot-state читается с любого потока)
+                val closetUrl = child.closetPhotoUrl
+                val roomUrl = child.roomPhotoUrl
+                val diaryUrl = child.diaryPhotoUrl
+                val bonusPhotos = child.bonusQuests.map { it.id to it.photoUrl }
+                val customPhotos = child.customQuests.map { it.id to it.photoUrl }
+                val pendingPhotos = child.pendingQuests.mapIndexed { i, q -> i to q.photoUri }
+
+                // Сетевые загрузки — на IO (мы уже в scope с Dispatchers.IO)
+                suspend fun uploadIfLocal(current: String?): String? {
+                    if (current.isNullOrBlank()) return current
+                    val uri = runCatching { Uri.parse(current) }.getOrNull() ?: return current
+                    val scheme = uri.scheme?.lowercase()
+                    if (scheme == "http" || scheme == "https") return current
+                    val publicUrl = withTimeoutOrNull(30_000) {
+                        PhotoStorage.uploadPhotoToStorage(context, child.id, uri)
+                    } ?: return current
+                    hasUploadedNewPhoto = true
+                    return publicUrl
+                }
+
+                val newCloset = uploadIfLocal(closetUrl)
+                val newRoom = uploadIfLocal(roomUrl)
+                val newDiary = uploadIfLocal(diaryUrl)
+                val newBonus = bonusPhotos.map { (id, url) -> id to uploadIfLocal(url) }
+                val newCustom = customPhotos.map { (id, url) -> id to uploadIfLocal(url) }
+
+                val newPending = pendingPhotos.map { (index, uri) ->
+                    if (uri != null) {
+                        val scheme = uri.scheme?.lowercase()
+                        if (scheme != "http" && scheme != "https") {
+                            val publicUrl = withTimeoutOrNull(30_000) {
+                                PhotoStorage.uploadPhotoToStorage(context, child.id, uri)
+                            }
+                            if (publicUrl != null) {
+                                hasUploadedNewPhoto = true
+                                index to Uri.parse(publicUrl)
+                            } else index to uri
+                        } else index to uri
+                    } else index to uri
+                }
+
+                // Пользователь мог выйти из аккаунта, пока шла загрузка фото —
+                // не воскрешаем профиль в AppSharedState и не пишем в облако.
+                if (runCatching { supabase.auth.currentUserOrNull() }.getOrNull() == null) {
+                    onResult?.invoke(false)
+                    return@launch
+                }
+
+                // Применяем результаты на Main: собираем новый иммутабельный профиль
+                val updatedChild = withContext(Dispatchers.Main) {
+                    var updated = child.copy(
+                        closetPhotoUrl = newCloset,
+                        roomPhotoUrl = newRoom,
+                        diaryPhotoUrl = newDiary
+                    )
+
+                    newBonus.forEach { (id, url) ->
+                        updated = updated.copy(
+                            bonusQuests = updated.bonusQuests.map {
+                                if (it.id == id) it.copy(photoUrl = url) else it
+                            }
+                        )
+                    }
+
+                    newCustom.forEach { (id, url) ->
+                        updated = updated.copy(
+                            customQuests = updated.customQuests.map {
+                                if (it.id == id) it.copy(photoUrl = url) else it
+                            }
+                        )
+                    }
+
+                    newPending.forEach { (index, uri) ->
+                        if (index < updated.pendingQuests.size && updated.pendingQuests[index].photoUri != uri) {
+                            updated = updated.copy(
+                                pendingQuests = updated.pendingQuests.mapIndexed { i, q ->
+                                    if (i == index) q.copy(photoUri = uri) else q
+                                }
+                            )
+                        }
+                    }
+
+                    AppSharedState.children[child.id] = updated
+                    updated
+                }
+
+                if (hasUploadedNewPhoto) {
+                    withContext(Dispatchers.Main) {
+                        AppStateStorage.saveLocalOnly(context)
+                    }
+                }
+
+                val jsonString = AppStateStorage.serializeSingleChild(updatedChild)
+                val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
+                // uid сессии считаем «родительским» только если у пользователя есть email
+                // (анонимный ребёнок не должен записываться в parent_user_id)
+                val sessionParentUid = currentUser?.id?.takeIf { !currentUser.email.isNullOrBlank() }
+                // auth_user_id — uid анонимной сессии ребёнка. Берём из профиля,
+                // а если пусто и текущая сессия анонимная — подставляем её uid
+                // (самолечение старых профилей без authUserId).
+                val sessionAuthUid = currentUser?.id?.takeIf { currentUser.email.isNullOrBlank() }
+                val authId = updatedChild.authUserId.ifBlank { sessionAuthUid.orEmpty() }
+                // Не затираем существующую привязку: берём parentUserId профиля,
+                // а если его нет — uid родительской сессии
+                val parentId = updatedChild.parentUserId.ifBlank { sessionParentUid.orEmpty() }
+                supabase.from("family_profiles").upsert(
+                    FamilyProfileRow(
+                        user_id = child.id,
+                        state_json = jsonString,
+                        parentUserId = parentId.ifBlank { null },
+                        parentEmail = updatedChild.parentEmail.ifBlank { null },
+                        authUserId = authId.ifBlank { null },
+                        status = updatedChild.status.ifBlank { "active" }
+                    )
+                )
+                onResult?.invoke(true)
+                Log.d("SupabaseManager", "Профиль ${child.id} успешно отправлен в Supabase")
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                if (isRlsOrAuthError(e)) {
+                    Log.e(
+                        "SupabaseManager",
+                        "Ошибка RLS/доступа при отправке профиля ${child.id}: ${e.message}. " +
+                                "Проверьте политики доступа (RLS) таблицы family_profiles в Supabase",
+                        e
+                    )
+                } else {
+                    Log.e("SupabaseManager", "Ошибка отправки профиля ${child.id} в Supabase: ${e.message}", e)
+                }
+                onResult?.invoke(false)
+            }
+        }
+    }
+
+    /** Определяет ошибки доступа: RLS-политики, 401/403, проблемы с JWT/anon-ключом. */
+    fun isRlsOrAuthError(e: Exception): Boolean {
+        val msg = e.message.orEmpty()
+        val className = e::class.simpleName.orEmpty()
+        return msg.contains("row-level security", ignoreCase = true) ||
+                msg.contains("new row violates", ignoreCase = true) ||
+                msg.contains("401") ||
+                msg.contains("403") ||
+                msg.contains("Unauthorized", ignoreCase = true) ||
+                msg.contains("JWT", ignoreCase = true) ||
+                className.contains("Unauthorized", ignoreCase = true)
+    }
+}

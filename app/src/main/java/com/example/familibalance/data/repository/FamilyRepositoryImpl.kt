@@ -1,10 +1,10 @@
 package com.example.familibalance.data.repository
 
 import android.content.Context
-import com.example.familibalance.AppSharedState
-import com.example.familibalance.AppStateStorage
-import com.example.familibalance.ChildProfileState
-import com.example.familibalance.SupabaseManager
+import com.example.familibalance.data.storage.AppSharedState
+import com.example.familibalance.data.storage.AppStateStorage
+import com.example.familibalance.data.model.ChildProfileState
+import com.example.familibalance.data.supabase.SupabaseManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow

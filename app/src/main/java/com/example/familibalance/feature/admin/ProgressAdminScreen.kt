@@ -1,7 +1,6 @@
 package com.example.familibalance.feature.admin
 
 import androidx.compose.foundation.BorderStroke
-import com.example.familibalance.ui.screens.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,9 +47,10 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.ui.theme.*
-import com.example.familibalance.CashoutStatus
-
 import com.example.familibalance.*
+import com.example.familibalance.data.model.*
+import com.example.familibalance.data.storage.*
+import com.example.familibalance.util.*
 import com.example.familibalance.R
 import com.example.familibalance.ui.components.*
 import com.example.familibalance.viewmodel.actions.*

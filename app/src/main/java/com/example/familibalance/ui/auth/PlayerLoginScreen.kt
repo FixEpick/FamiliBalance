@@ -40,6 +40,7 @@ import com.example.familibalance.ui.components.CyberBackground
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
 import com.example.familibalance.ui.components.LanguageSelectorButton
+import com.example.familibalance.viewmodel.actions.loginChild
 
 private val CyberTextPrimary = Color(0xFFE2E8F0)
 private val CyberTextSecondary = Color(0xFF94A3B8)

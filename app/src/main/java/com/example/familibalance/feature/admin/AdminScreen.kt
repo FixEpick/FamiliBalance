@@ -1,7 +1,8 @@
 package com.example.familibalance.feature.admin
 
 import androidx.compose.foundation.BorderStroke
-import com.example.familibalance.ui.screens.*
+import com.example.familibalance.feature.child.screens.*
+import com.example.familibalance.feature.admin.verification.VerificationAdminContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -65,24 +66,15 @@ import com.example.familibalance.R
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.components.LanguageSelectorButton
-import com.example.familibalance.CashoutStatus
-
 import com.example.familibalance.*
+import com.example.familibalance.data.model.*
+import com.example.familibalance.data.storage.*
+import com.example.familibalance.data.supabase.SupabaseManager
+import com.example.familibalance.util.*
 import com.example.familibalance.viewmodel.actions.*
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 
-sealed class AdminScreenType(@StringRes val titleRes: Int, @StringRes val a11yRes: Int, val icon: String) {
-    object Verification : AdminScreenType(R.string.nav_verify, R.string.a11y_nav_verify, "🛡️")
-    object Progress : AdminScreenType(R.string.nav_progress, R.string.a11y_nav_progress, "📊")
-    object History : AdminScreenType(R.string.nav_history, R.string.a11y_nav_history, "📜")
-    object Settings : AdminScreenType(R.string.nav_settings, R.string.a11y_nav_settings, "⚙️")
-}
-
-private data class AdminTab(
-    val tab: AdminScreenType,
-    val route: Any
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -224,110 +216,19 @@ fun AdminScreen(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
             topBar = {
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .statusBarsPadding()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Surface(
-                                shape = CircleShape,
-                                color = StatusYellow.copy(alpha = 0.2f),
-                                border = BorderStroke(1.dp, StatusYellow),
-                                modifier = Modifier.size(40.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        "👑",
-                                        fontSize = 20.sp,
-                                        modifier = Modifier.semantics {
-                                            contentDescription = parentPanelDesc
-                                        }
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(stringResource(R.string.admin_panel_title), color = TextSecondary, fontSize = 11.sp)
-                                Text(stringResource(R.string.admin_role), color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                            }
-                        }
-
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            LanguageSelectorButton()
-                            OutlinedButton(
-                                onClick = onSwitchProfile,
-                                border = BorderStroke(1.dp, GlassStroke),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Text(stringResource(R.string.admin_switch), fontSize = 12.sp)
-                            }
-                        }
-                    }
-
-                    // Переключатель пользователей
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        visibleChildren.forEach { profile ->
-                            val isSelected = familyState.selectedChildId == profile.id
-                            Surface(
-                                onClick = {
-                                    viewModel.selectChild(profile.id, pushRemote = true)
-                                },
-                                shape = RoundedCornerShape(12.dp),
-                                color = if (isSelected) AccentColor.copy(alpha = 0.25f) else GlassBackground,
-                                border = BorderStroke(1.dp, if (isSelected) AccentColor else GlassStroke),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(42.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = "${profile.avatar} ${profile.name}",
-                                        color = if (isSelected) AccentColor else TextSecondary,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
+                AdminTopBar(
+                    onSwitchProfile = onSwitchProfile,
+                    visibleChildren = visibleChildren,
+                    selectedChildId = familyState.selectedChildId,
+                    onSelectChild = { viewModel.selectChild(it, pushRemote = true) }
+                )
             },
             bottomBar = {
-                NavigationBar(
-                    containerColor = GlassBackground,
-                    tonalElevation = 0.dp
-                ) {
-                    tabs.forEach { adminTab ->
-                        NavigationBarItem(
-                            selected = adminTab.route == selectedTabRoute,
-                            onClick = { navigateToTab(adminTab.route) },
-                            icon = {
-                                val tabA11y = stringResource(adminTab.tab.a11yRes)
-                                Text(
-                                    adminTab.tab.icon,
-                                    fontSize = 20.sp,
-                                    modifier = Modifier.semantics {
-                                        contentDescription = tabA11y
-                                    }
-                                )
-                            },
-                            label = { Text(stringResource(adminTab.tab.titleRes), color = if (adminTab.route == selectedTabRoute) AccentColor else TextSecondary) },
-                            colors = NavigationBarItemDefaults.colors(indicatorColor = GlassStroke)
-                        )
-                    }
-                }
+                AdminBottomBar(
+                    tabs = tabs,
+                    selectedTabRoute = selectedTabRoute,
+                    onTabClick = { navigateToTab(it) }
+                )
             }
         ) { innerPadding ->
             Box(

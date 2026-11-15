@@ -1,7 +1,10 @@
 package com.example.familibalance
 
+import com.example.familibalance.data.model.*
+import com.example.familibalance.data.storage.*
+import com.example.familibalance.util.*
+
 import androidx.compose.foundation.BorderStroke
-import com.example.familibalance.ui.screens.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*

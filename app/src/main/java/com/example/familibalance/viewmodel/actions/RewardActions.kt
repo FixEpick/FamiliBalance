@@ -2,6 +2,9 @@ package com.example.familibalance.viewmodel.actions
 
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
+import com.example.familibalance.data.model.*
+import com.example.familibalance.data.storage.*
+import com.example.familibalance.util.*
 
 fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
     if (!tryStartProcessingAction()) return

@@ -3,10 +3,10 @@ package com.example.familibalance.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.familibalance.AppSharedState
-import com.example.familibalance.FamilyProfileRow
+import com.example.familibalance.data.storage.AppSharedState
+import com.example.familibalance.data.supabase.FamilyProfileRow
 import com.example.familibalance.MainViewModel
-import com.example.familibalance.SupabaseManager
+import com.example.familibalance.data.supabase.SupabaseManager
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
