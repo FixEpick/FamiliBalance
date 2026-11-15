@@ -1,0 +1,303 @@
+<resources>
+    <string name="app_name">FamiliBalance</string>
+
+    <!-- Welcome -->
+    <string name="welcome_subtitle">Family quest universe</string>
+    <string name="welcome_greeting">Hi, space explorer! Ready for new quests? 🚀</string>
+    <string name="welcome_btn_player">Log in</string>
+    <string name="welcome_btn_create">Sign up</string>
+
+    <!-- Common -->
+    <string name="common_back">← Back</string>
+    <string name="back_exit_hint">Press Back again to exit the app</string>
+    <string name="remember_me">Remember me</string>
+
+    <!-- Player login -->
+    <string name="login_title">Station login</string>
+    <string name="login_empty_title">No players yet</string>
+    <string name="login_empty_subtitle">Create the first account to start quests</string>
+    <string name="login_create_account">Create account</string>
+    <string name="login_level">Lv. %1$d • 🔥%2$d</string>
+    <string name="login_pin_title">Secret PIN</string>
+    <string name="login_pin_error">Wrong PIN</string>
+    <string name="login_field_email">Parent\'s email</string>
+    <string name="login_field_name">Child\'s name</string>
+    <string name="login_field_pin">PIN code (4 digits)</string>
+    <string name="login_submit">Log in</string>
+    <string name="login_error">Invalid credentials or PIN</string>
+    <string name="login_loading">Logging in…</string>
+    <string name="parent_area_link">👑 Parent login</string>
+
+    <!-- Register / auth -->
+    <string name="register_title">Registration</string>
+    <string name="tab_new_player">🚀 New player</string>
+    <string name="tab_parent">🛡️ Parent</string>
+    <string name="reg_avatar">AVATAR</string>
+    <string name="reg_nickname">Nickname</string>
+    <string name="reg_pin">PIN</string>
+    <string name="reg_interests">INTERESTS</string>
+    <string name="interest_coding">💻 Coding</string>
+    <string name="interest_science">🔬 Science</string>
+    <string name="interest_games">🎮 Games</string>
+    <string name="interest_drawing">🎨 Drawing</string>
+    <string name="interest_sport">⚽ Sports</string>
+    <string name="interest_books">📚 Books</string>
+    <string name="interest_space">🚀 Space</string>
+    <string name="interest_animals">🐶 Animals</string>
+    <string name="reg_parent_email">Parent\'s email</string>
+    <string name="reg_submit">Create hero and fight!</string>
+    <string name="parent_email">Email</string>
+    <string name="parent_password">Password</string>
+    <string name="parent_login">🔑 Login</string>
+    <string name="parent_register">🚀 Register</string>
+    <string name="parent_btn_register">Create parent account</string>
+    <string name="parent_btn_login">Log in</string>
+    <string name="parent_no_account">No account? Register via the button above on the «New player» tab or ask the administrator.</string>
+
+    <!-- Pending request -->
+    <string name="pending_title">REQUEST SENT!</string>
+    <string name="pending_waiting">%1$s %2$s is waiting for parent approval.</string>
+    <string name="pending_hint">Once the parent taps «Approve» in their app, this screen will open automatically.</string>
+    <string name="pending_checking">Checking status…</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_quests">Quests</string>
+    <string name="nav_achievements">Achievements</string>
+    <string name="nav_history">History</string>
+    <string name="nav_verify">Review</string>
+    <string name="nav_progress">Progress</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Settings -->
+    <string name="settings_language">🌐 Interface language</string>
+
+    <!-- Language selector -->
+    <string name="language_sheet_title">Select language</string>
+    <string name="language_ru">Русский</string>
+    <string name="language_en">English</string>
+
+    <!-- App title / PIN dialogs -->
+    <string name="app_title_welcome">QUESTLAB</string>
+    <string name="pin_parent_check_title">PARENT CHECK</string>
+    <string name="pin_parent_check_subtitle">Enter parent PIN</string>
+    <string name="pin_parent_title">PARENT PIN</string>
+    <string name="pin_parent_step1">Enter current PIN</string>
+    <string name="pin_parent_step2">Create new PIN (4 digits)</string>
+    <string name="pin_wrong_current">WRONG CURRENT PIN</string>
+    <string name="pin_child_title">PLAYER PIN</string>
+    <string name="pin_child_subtitle">New PIN for %1$s</string>
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+
+    <!-- Logout -->
+    <string name="logout_button">Log out / Switch user</string>
+    <string name="logout_title">Log out</string>
+    <string name="logout_message">Are you sure you want to log out? You can log in again using parent email, name and PIN code</string>
+    <string name="logout_confirm">Log out</string>
+
+    <!-- Exit app dialog -->
+    <string name="exit_dialog_title">Exit application</string>
+    <string name="exit_dialog_message">Are you sure you want to close FamiliBalance?</string>
+    <string name="exit_dialog_confirm">Exit</string>
+
+    <!-- Update dialog -->
+    <string name="update_title">Update available %1$s</string>
+    <string name="update_no_notes">A new version of the app is available.</string>
+    <string name="update_btn_update">Update</string>
+    <string name="update_btn_later">Later</string>
+    <string name="update_downloading_title">Downloading update</string>
+    <string name="update_permission_title">Permission required</string>
+    <string name="update_install_permission_text">To install the update, allow the app to install from unknown sources. Downloading will start automatically when you return to the app.</string>
+    <string name="update_btn_open_settings">Open settings</string>
+    <string name="update_permission_text">Allow installing apps from this source in settings.</string>
+    <string name="update_error_title">Update</string>
+    <string name="update_btn_close">Close</string>
+
+    <!-- Child main screen -->
+    <string name="child_balance">Balance</string>
+    <string name="child_bank_name">Cosmo-bank</string>
+    <string name="child_cashout_btn">Withdraw / Buy</string>
+    <string name="child_cashout_hint">*works when you\'re with dad</string>
+    <string name="child_no_cashout_requests">No active withdrawal requests</string>
+    <string name="child_cashout_requests_title">💵 Active withdrawal requests:</string>
+    <string name="child_cashout_amount">Amount: %1$d ₽</string>
+    <string name="child_cashout_comment">Comment: %1$s</string>
+    <string name="child_cashout_waiting">⏳ Waiting for dad\'s approval</string>
+    <string name="child_dream_default_title">My goal</string>
+    <string name="child_dream_reached">Goal reached! Tap to claim ✨</string>
+    <string name="child_screen_time_title">⏳ Screen time today</string>
+    <string name="child_bought_minutes">Bought today: %1$d / %2$d min</string>
+    <string name="child_buy_time_btn">Buy time</string>
+    <string name="child_daily_limit_note">Daily limit %1$d min • Resets tomorrow</string>
+    <string name="child_streak_title">Days without penalties</string>
+    <string name="child_streak_day_label">%1$d d</string>
+    <string name="child_streak_checkin">🔥 Check in today</string>
+    <string name="child_streak_bonus">+50 ₽ bonus on day 7</string>
+    <string name="child_honest_cooldown">🐱 Honest admission • Available in %1$d d.</string>
+    <string name="child_honest_btn">🐱 Honest admission</string>
+    <string name="child_honest_approved_note">✓ Penalty will be halved on next violation</string>
+    <string name="child_honest_pending">• Admission is being reviewed by dad</string>
+    <string name="child_honest_claimed">✓ 50% discount already applied</string>
+    <string name="child_honest_ready">✓ Honest admission approved by dad (penalty halved)</string>
+    <string name="child_rules_btn">📜 Rules scroll</string>
+    <string name="child_economy_btn">💰 Economy</string>
+    <string name="child_cashout_dialog_title">💵 Withdraw cash</string>
+    <string name="child_cashout_amount_label">Amount (₽)</string>
+    <string name="child_cashout_insufficient">Insufficient funds</string>
+    <string name="child_cashout_comment_label">Comment</string>
+    <string name="child_cashout_submit">Submit request</string>
+
+    <!-- Buy time sheet -->
+    <string name="child_buytime_title">⏳ Exchange coins for time</string>
+    <string name="child_buytime_limit">Daily limit: %1$d minutes. Available today: %2$d min.</string>
+    <string name="child_tariff_title">⏳ %1$d minutes</string>
+
+    <!-- Rules sheet -->
+    <string name="rules_title">📜 Rules scroll</string>
+    <string name="rules_offline">No internet? Don\'t worry! All your quests and rewards are saved on the phone. As soon as the network is back, they\'ll be sent to the cloud automatically.</string>
+    <string name="rules_balance_title">📖 How your balance works</string>
+    <string name="rules_balance_text">All earned rubles go to your wallet. You can exchange them for phone time (100 ₽ = 30 minutes) OR you can withdraw all your money at any time — take your whole balance as real paper money from dad!</string>
+    <string name="rules_earn_title">💰 How to earn:</string>
+    <string name="rules_earn_text">• Grade "5" in diary: +50 ₽\n• Grade "4" in diary: +30 ₽\n• Wardrobe photo (perfect order): +%1$d ₽\n• Room photo (made bed and tidiness): +%2$d ₽\n• Achievement bonuses: from 10 ₽ to 500 ₽ for the "Server Legend" rank!</string>
+    <string name="rules_penalty_title">🔴 What costs you money (Penalties)</string>
+    <string name="rules_penalty_text">Grade "3" costs -20 ₽, grade "2" costs -50 ₽. But if you lied or hid the truth and then honestly told dad through the kitty — dad will approve the admission and halve the penalty for that offense! (down to -10 ₽ for a three and -25 ₽ for a two).</string>
+    <string name="rules_streak_title">🔥 Days without penalties</string>
+    <string name="rules_streak_text">Check in every day and get +50 ₽ every 7 days without penalties! But any penalty burns all accumulated days — and each missed day extinguishes one flame.</string>
+    <string name="rules_screentime_title">⏳ Screen time</string>
+    <string name="rules_screentime_text">Limit 90 minutes per day. Tariffs: 30 min = 100 ₽, 60 min = 200 ₽, 90 min = 300 ₽.</string>
+    <string name="rules_honest_title">🐱 Honest admission</string>
+    <string name="rules_honest_text">50% discount on one penalty. Available once every 7 days — tell dad the truth through the kitty!</string>
+    <string name="rules_diary_title">📓 Diary</string>
+    <string name="rules_diary_text">Submitted once a week. Grades: 5 (+50 ₽), 4 (+30 ₽), 3 (-20 ₽), 2 (-50 ₽).</string>
+    <string name="rules_achievements_title">🏆 Achievements</string>
+    <string name="rules_achievements_text">Earn bonuses for new ranks from 10 ₽ to 500 ₽ for the "Server Legend" rank!</string>
+    <string name="rules_understood">Got it!</string>
+
+    <!-- Economy sheet -->
+    <string name="economy_title">💰 Economy</string>
+    <string name="economy_earn_section">💰 How to earn</string>
+    <string name="economy_spend_section">💸 What to spend on</string>
+    <string name="economy_achievements_section">🏆 Achievements</string>
+    <string name="eco_wardrobe_photo">📸 Wardrobe photo</string>
+    <string name="eco_room_photo">🛏️ Room photo</string>
+    <string name="eco_diary_grade5">📓 Diary: grade 5</string>
+    <string name="eco_diary_grade4">📓 Diary: grade 4</string>
+    <string name="eco_diary_grade3">📓 Diary: grade 3</string>
+    <string name="eco_diary_grade2">📓 Diary: grade 2</string>
+    <string name="eco_streak">🔥 No-penalty streak</string>
+    <string name="eco_streak_value">+50 ₽ every 7 days</string>
+    <string name="eco_dream">🎯 Dream goal</string>
+    <string name="eco_set_by_dad">amount set by dad</string>
+    <string name="eco_time30">⏳ 30 minutes of screen time</string>
+    <string name="eco_time60">⏳ 60 minutes of screen time</string>
+    <string name="eco_time90">⏳ 90 minutes of screen time</string>
+    <string name="eco_honest">🐱 Honest admission</string>
+    <string name="eco_honest_discount">−50% penalty discount</string>
+    <string name="eco_parent_fine">👨‍👦 Penalties from dad</string>
+    <string name="eco_branch_diary">📓 Diary</string>
+    <string name="eco_branch_wardrobe">📸 Wardrobe</string>
+    <string name="eco_branch_room">🛏️ Room</string>
+
+    <!-- Pending quests sheet -->
+    <string name="child_pending_title">⏳ Quests under review</string>
+    <string name="child_pending_subtitle">Tasks sent to dad. You can delete or retake them.</string>
+    <string name="child_pending_empty">No quests under review</string>
+
+    <!-- Quest frequency badges -->
+    <string name="freq_daily">Daily</string>
+    <string name="freq_weekly">Weekly</string>
+    <string name="freq_once">One-time</string>
+
+    <!-- Tasks screen -->
+    <string name="tasks_title">✨ TODAY\'S TASKS</string>
+    <string name="tasks_bonus_title">🎁 BONUS QUESTS FROM DAD</string>
+    <string name="tasks_bonus_default_desc">Bonus task from dad</string>
+    <string name="tasks_custom_title">📋 Additional tasks</string>
+    <string name="tasks_claim_reward">Claim +%1$d ₽</string>
+    <string name="tasks_claim_reward_neg">Claim %1$d ₽</string>
+    <string name="tasks_diary_reward">from +30 ₽ to ∞</string>
+    <string name="tasks_under_review">Under review</string>
+    <string name="tasks_custom_default_desc">Task from dad</string>
+    <string name="tasks_empty_title">No active tasks yet</string>
+    <string name="tasks_empty_subtitle">Ask dad to add some tasks</string>
+
+    <!-- Achievements screen -->
+    <string name="ach_tab_all">All</string>
+    <string name="ach_tab_in_progress">In progress</string>
+    <string name="ach_tab_hall">Hall of fame</string>
+    <string name="ach_title">Achievements</string>
+    <string name="ach_progress">Unlocked %1$d of %2$d ranks</string>
+    <string name="ach_gift_toast">The Main Secret Gift from dad for unlocking all 16 ranks!</string>
+
+    <!-- History screen -->
+    <string name="history_filter_all">All</string>
+    <string name="history_filter_quests">Quests</string>
+    <string name="history_filter_screentime">Screen time</string>
+    <string name="history_filter_fines">Penalties</string>
+    <string name="history_pending_count">%1$d waiting for dad\'s review • Tap to view</string>
+    <string name="history_version">App version: %1$s</string>
+
+    <!-- Quest delivery screen -->
+    <string name="delivery_error_photo">Photo processing error: %1$s</string>
+    <string name="delivery_error_camera">Failed to launch camera: %1$s</string>
+    <string name="delivery_camera_permission">Camera permission is required</string>
+    <string name="delivery_photo_desc">Result photo</string>
+    <string name="delivery_camera_hint">Tap to take a photo of the result.\nNo time limits!</string>
+    <string name="delivery_retake">🔄 Retake photo</string>
+    <string name="delivery_comment_hint">Write a few words to dad about the photo if you want (e.g. "Everything is put away!")</string>
+    <string name="delivery_submit">Attach photo and send for review</string>
+
+    <!-- Honest cat screen -->
+    <string name="honest_title">🐱 Honest admission to dad</string>
+    <string name="honest_bonus">✨ Bonus: Penalty halved!</string>
+    <string name="honest_text">If you lied, hid the truth, or did something wrong — tell dad yourself through the kitty! Dad really values honesty, so he will definitely approve your admission and halve the penalty.</string>
+    <string name="honest_placeholder">Dad, I want to honestly admit that...</string>
+    <string name="honest_submit">Send to dad 🚀</string>
+
+    <!-- Admin screen -->
+    <string name="admin_cashout_title">💵 Cash payout</string>
+    <string name="admin_cashout_message">Give %1$s %2$d ₽ in cash and zero the Cosmo-bank balance?</string>
+    <string name="admin_cashout_confirm">Pay out and zero</string>
+    <string name="admin_panel_title">Dad\'s Panel</string>
+    <string name="admin_role">Administrator</string>
+    <string name="admin_switch">🔄 Switch</string>
+    <string name="admin_dream_title">🎯 Dream goal: %1$s</string>
+    <string name="admin_dream_progress">Saved: %1$d ₽ of %2$d ₽</string>
+    <string name="admin_dream_edit">✏️ Edit goal</string>
+    <string name="admin_dream_set">🎯 Set goal</string>
+    <string name="admin_goal_name_label">Goal name</string>
+    <string name="admin_stats_title">📈 Quest statistics</string>
+    <string name="admin_stat_quests">Quests completed</string>
+    <string name="admin_stat_earned">Total earned</string>
+    <string name="admin_stat_balance">Current balance</string>
+    <string name="admin_achievements_title">🏅 Achievements (%1$d)</string>
+    <string name="action_save">Save</string>
+    <string name="error_signature_mismatch">The update file signature does not match the app. Installation cancelled.</string>
+    <string name="error_download_failed">Failed to download the update. Check your internet connection and try again.</string>
+    <string name="error_checksum_mismatch">The update file is corrupted or tampered with. Download cancelled.</string>
+    <string name="error_no_apk_in_release">The new release has no installable file.</string>
+    <string name="error_permission_denied">Permission to install apps is missing. Allow installation from this source in settings.</string>
+    <string name="error_unknown">An unexpected error occurred.</string>
+    <string name="error_unknown_with_detail">An unexpected error occurred: %1$s</string>
+
+    <!-- Accessibility (TalkBack) -->
+    <string name="a11y_nav_home">Home screen</string>
+    <string name="a11y_nav_quests">Quests</string>
+    <string name="a11y_nav_achievements">Achievements</string>
+    <string name="a11y_nav_history">History</string>
+    <string name="a11y_nav_verify">Quest review</string>
+    <string name="a11y_nav_progress">Progress</string>
+    <string name="a11y_nav_settings">Settings</string>
+    <string name="a11y_theme_button">Change theme</string>
+    <string name="a11y_offline_status">No internet connection</string>
+    <string name="a11y_language_button">Select language</string>
+    <string name="a11y_edit_button">Edit</string>
+    <string name="a11y_delete_button">Delete</string>
+    <string name="a11y_close_button">Close</string>
+    <string name="a11y_locked_achievement">Achievement locked</string>
+    <string name="a11y_achievement_completed">Achievement completed</string>
+    <string name="a11y_parent_panel">Parent panel</string>
+    <string name="a11y_camera_hint">Take a photo of the quest result</string>
+    <string name="a11y_gift_icon">Gift</string>
+</resources>
