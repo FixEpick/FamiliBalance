@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
@@ -57,7 +60,10 @@ fun UpdateDialog(
                         Text(
                             stripMarkdown(notes) + if (state.release.body.lines().size > 10) "\n..." else "",
                             fontSize = 13.sp,
-                            lineHeight = 18.sp
+                            lineHeight = 18.sp,
+                            modifier = Modifier
+                                .heightIn(max = 250.dp)
+                                .verticalScroll(rememberScrollState())
                         )
                     } else {
                         Text(
