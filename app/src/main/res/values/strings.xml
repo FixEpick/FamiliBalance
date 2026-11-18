@@ -529,4 +529,27 @@
     <!-- Accessibility: fullscreen photo -->
     <string name="a11y_fullscreen_photo">Полноэкранное фото</string>
     <string name="a11y_fullscreen_diary_photo">Полноэкранное фото дневника</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Добро пожаловать в КвестЛаб!</string>
+    <string name="onboarding_welcome_desc">Семейная квестовая вселенная, где дети учатся, а родители контролируют прогресс.</string>
+    <string name="onboarding_quests_title">Квесты</string>
+    <string name="onboarding_quests_desc">Родитель создаёт задания, ребёнок их выполняет и получает награду.</string>
+    <string name="onboarding_coins_title">Монеты и баланс</string>
+    <string name="onboarding_coins_desc">За выполненные квесты ребёнок копит монеты на своём балансе.</string>
+    <string name="onboarding_achievements_title">Достижения</string>
+    <string name="onboarding_achievements_desc">Система достижений мотивирует ребёнка развиваться и не бросать начатое.</string>
+    <string name="onboarding_diary_title">Дневник и оценки</string>
+    <string name="onboarding_diary_desc">Ребёнок ведёт дневник, а оценки конвертируются в монеты или штрафы.</string>
+    <string name="onboarding_rewards_title">Награды и вывод средств</string>
+    <string name="onboarding_rewards_desc">Накопленные монеты можно обменять на реальные награды — родитель подтверждает вывод.</string>
+    <string name="onboarding_screentime_title">Экранное время</string>
+    <string name="onboarding_screentime_desc">Родитель управляет лимитом экранного времени, а ребёнок может докупить минуты за монеты.</string>
+    <string name="onboarding_role_title">Кто будет пользоваться?</string>
+    <string name="onboarding_role_desc">Выберите свою роль, чтобы начать.</string>
+    <string name="onboarding_role_parent">Я родитель</string>
+    <string name="onboarding_role_child">Я ребёнок</string>
+    <string name="onboarding_next">Далее</string>
+    <string name="onboarding_back">Назад</string>
+    <string name="onboarding_skip">Пропустить</string>
 </resources>

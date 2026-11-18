@@ -3,6 +3,9 @@ package com.example.familibalance.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
+object OnboardingRoute
+
+@Serializable
 object WelcomeRoute
 
 @Serializable

@@ -54,6 +54,7 @@ import com.example.familibalance.navigation.ChildHistoryRoute
 import com.example.familibalance.navigation.ChildMainRoute
 import com.example.familibalance.navigation.ChildRoute
 import com.example.familibalance.navigation.ChildTasksRoute
+import com.example.familibalance.navigation.OnboardingRoute
 import com.example.familibalance.navigation.PlayerLoginRoute
 import com.example.familibalance.navigation.RegisterParentRoute
 import com.example.familibalance.navigation.WelcomeRoute
@@ -64,6 +65,7 @@ import com.example.familibalance.feature.child.TasksScreen
 import com.example.familibalance.ui.auth.PlayerLoginScreen
 import com.example.familibalance.ui.auth.RegisterParentScreen
 import com.example.familibalance.ui.auth.WelcomeScreen
+import com.example.familibalance.ui.onboarding.OnboardingScreen
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.feature.child.screens.*
@@ -209,6 +211,7 @@ class MainActivity : FragmentActivity() {
                             .edit()
                             .putBoolean("is_admin_logged_in", true)
                             .putBoolean("is_logged_in", false)
+                            .putBoolean("onboarding_done", true)
                             .remove("logged_in_child_id")
                             .apply()
                         navController.navigate(AdminRoute) {
@@ -223,16 +226,60 @@ class MainActivity : FragmentActivity() {
                 LaunchedEffect(autoLoginChildId) {
                     if (!autoChildNavigated && autoLoginChildId != null) {
                         autoChildNavigated = true
+                        SecurePrefs.get(context, "app_prefs")
+                            .edit()
+                            .putBoolean("onboarding_done", true)
+                            .apply()
                         navController.navigate(ChildRoute) {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         }
                     }
                 }
 
+                // Onboarding is shown only to a new user; the flag lives
+                // in app_prefs (SecurePrefs), same as other login flags.
+                val onboardingDone = remember {
+                    SecurePrefs.get(context, "app_prefs")
+                        .getBoolean("onboarding_done", false)
+                }
+
+                fun completeOnboarding(navigate: () -> Unit) {
+                    SecurePrefs.get(context, "app_prefs")
+                        .edit()
+                        .putBoolean("onboarding_done", true)
+                        .apply()
+                    navigate()
+                }
+
                 NavHost(
                     navController = navController,
-                    startDestination = WelcomeRoute
+                    startDestination = if (onboardingDone) WelcomeRoute else OnboardingRoute
                 ) {
+                    composable<OnboardingRoute> {
+                        OnboardingScreen(
+                            onParentClick = {
+                                completeOnboarding {
+                                    navController.navigate(RegisterParentRoute) {
+                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                    }
+                                }
+                            },
+                            onChildClick = {
+                                completeOnboarding {
+                                    navController.navigate(PlayerLoginRoute) {
+                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                    }
+                                }
+                            },
+                            onSkip = {
+                                completeOnboarding {
+                                    navController.navigate(WelcomeRoute) {
+                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                                    }
+                                }
+                            }
+                        )
+                    }
                     composable<WelcomeRoute> {
                         WelcomeScreen(
                             onPlayerClick = { navController.navigate(PlayerLoginRoute) },

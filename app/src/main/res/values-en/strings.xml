@@ -523,4 +523,27 @@
     <!-- Accessibility: fullscreen photo -->
     <string name="a11y_fullscreen_photo">Fullscreen photo</string>
     <string name="a11y_fullscreen_diary_photo">Fullscreen diary photo</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_welcome_title">Welcome to QuestLab!</string>
+    <string name="onboarding_welcome_desc">A family quest universe where kids learn and parents track progress.</string>
+    <string name="onboarding_quests_title">Quests</string>
+    <string name="onboarding_quests_desc">A parent creates tasks, a child completes them and earns rewards.</string>
+    <string name="onboarding_coins_title">Coins and balance</string>
+    <string name="onboarding_coins_desc">For completed quests the child earns coins on their balance.</string>
+    <string name="onboarding_achievements_title">Achievements</string>
+    <string name="onboarding_achievements_desc">The achievement system motivates kids to grow and never give up.</string>
+    <string name="onboarding_diary_title">Diary and grades</string>
+    <string name="onboarding_diary_desc">The child keeps a diary, and grades convert into coins or fines.</string>
+    <string name="onboarding_rewards_title">Rewards and cashout</string>
+    <string name="onboarding_rewards_desc">Earned coins can be exchanged for real rewards — a parent approves the cashout.</string>
+    <string name="onboarding_screentime_title">Screen time</string>
+    <string name="onboarding_screentime_desc">A parent controls the screen time limit, and the child can buy extra minutes with coins.</string>
+    <string name="onboarding_role_title">Who will use it?</string>
+    <string name="onboarding_role_desc">Choose your role to get started.</string>
+    <string name="onboarding_role_parent">I\'m a parent</string>
+    <string name="onboarding_role_child">I\'m a child</string>
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_skip">Skip</string>
 </resources>
