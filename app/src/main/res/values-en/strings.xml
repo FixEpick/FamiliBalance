@@ -258,8 +258,10 @@
     <!-- History screen -->
     <string name="history_filter_all">All</string>
     <string name="history_filter_quests">Quests</string>
+    <string name="history_filter_achievements">Achievements</string>
     <string name="history_filter_screentime">Screen time</string>
     <string name="history_filter_fines">Penalties</string>
+    <string name="history_filter_other">Other</string>
     <string name="history_pending_count">%1$d waiting for dad\'s review • Tap to view</string>
     <string name="history_version">App version: %1$s</string>
 

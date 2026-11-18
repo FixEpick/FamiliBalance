@@ -258,8 +258,10 @@
     <!-- History screen -->
     <string name="history_filter_all">Все</string>
     <string name="history_filter_quests">Квесты</string>
+    <string name="history_filter_achievements">Достижения</string>
     <string name="history_filter_screentime">Экранное время</string>
     <string name="history_filter_fines">Штрафы</string>
+    <string name="history_filter_other">Прочее</string>
     <string name="history_pending_count">%1$d ждёт проверки папой • Нажми, чтобы посмотреть</string>
     <string name="history_version">Версия приложения: %1$s</string>
 

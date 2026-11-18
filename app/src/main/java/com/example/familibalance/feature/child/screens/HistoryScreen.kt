@@ -163,6 +163,42 @@ internal fun historyTitleSpec(item: HistoryData): HistoryTitleSpec {
     }
 }
 
+/** Индексы фильтров истории — позиции чипсов в [HistoryScreen]. */
+internal const val HIST_FILTER_ALL = 0
+internal const val HIST_FILTER_QUESTS = 1
+internal const val HIST_FILTER_ACHIEVEMENTS = 2
+internal const val HIST_FILTER_SCREEN_TIME = 3
+internal const val HIST_FILTER_FINES = 4
+internal const val HIST_FILTER_OTHER = 5
+
+/**
+ * Маппинг записи истории на индекс фильтра — по [HistoryData.type],
+ * а не по локализуемой строке category.
+ *
+ * Для legacy-записей (type == null или неизвестный тип) — fallback на
+ * русскую строку category: это data-контракт старых записей, которые
+ * создавались до появления поля type.
+ */
+internal fun historyFilterIndex(item: HistoryData): Int = when (item.type) {
+    HistoryType.QUEST_REWARD, HistoryType.QUEST_APPROVED,
+    HistoryType.CUSTOM_QUEST_DONE, HistoryType.BONUS_QUEST_DONE,
+    HistoryType.BONUS_QUEST_APPROVED, HistoryType.DIARY_GRADE_5,
+    HistoryType.DIARY_GRADE_4, HistoryType.HONEST_APPROVED,
+    HistoryType.ADMIN_REWARD -> HIST_FILTER_QUESTS
+    HistoryType.ACHIEVEMENT_UNLOCKED, HistoryType.STREAK_BONUS -> HIST_FILTER_ACHIEVEMENTS
+    HistoryType.SCREEN_TIME_PURCHASE -> HIST_FILTER_SCREEN_TIME
+    HistoryType.FINE, HistoryType.ADMIN_WITHDRAW -> HIST_FILTER_FINES
+    HistoryType.CASHOUT_GIVEN, HistoryType.CASHOUT_REQUEST,
+    HistoryType.DREAM_SET -> HIST_FILTER_OTHER
+    else -> when (item.category) {
+        "Квесты", "Дневник", "Бонус-квесты", "Кастомные квесты" -> HIST_FILTER_QUESTS
+        "Достижения", "Бонусы" -> HIST_FILTER_ACHIEVEMENTS
+        "Экранное время" -> HIST_FILTER_SCREEN_TIME
+        "Штрафы" -> HIST_FILTER_FINES
+        else -> HIST_FILTER_OTHER
+    }
+}
+
 /** Локализованный заголовок записи истории; fallback — сохранённый title. */
 @Composable
 private fun localizedHistoryTitle(item: HistoryData): String {
@@ -188,12 +224,11 @@ fun HistoryScreen(
     val filterLabels = listOf(
         stringResource(R.string.history_filter_all),
         stringResource(R.string.history_filter_quests),
-        stringResource(R.string.ach_title),
+        stringResource(R.string.history_filter_achievements),
         stringResource(R.string.history_filter_screentime),
-        stringResource(R.string.history_filter_fines)
+        stringResource(R.string.history_filter_fines),
+        stringResource(R.string.history_filter_other)
     )
-    // Категории в historyItems хранятся на русском — маппинг для фильтрации.
-    val filterCategories = listOf<String?>(null, "Квесты", "Достижения", "Экранное время", "Штрафы")
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val currentChild = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.firstOrNull()
@@ -216,11 +251,10 @@ fun HistoryScreen(
     }
 
     val filteredItems = remember(selectedFilter, historyItems.size) {
-        if (selectedFilter == 0) {
+        if (selectedFilter == HIST_FILTER_ALL) {
             historyItems
         } else {
-            val category = filterCategories[selectedFilter]
-            historyItems.filter { it.category == category }
+            historyItems.filter { historyFilterIndex(it) == selectedFilter }
         }
     }
 
