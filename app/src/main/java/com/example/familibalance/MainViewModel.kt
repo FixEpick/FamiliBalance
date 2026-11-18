@@ -31,7 +31,7 @@ sealed class DiaryScanState {
     object Idle : DiaryScanState()
     object Loading : DiaryScanState()
     data class Success(val gradeCounts: Map<Int, Int>) : DiaryScanState()
-    data class Error(val message: String) : DiaryScanState()
+    data class Error(val message: UiText) : DiaryScanState()
 }
 
 /** Результат попытки входа ребёнка — для разных сообщений об ошибках в UI. */
@@ -96,7 +96,13 @@ class MainViewModel(
             try {
                 _diaryScanState.value = DiaryScanState.Success(scanDiaryUseCase(photoUrl))
             } catch (e: Exception) {
-                _diaryScanState.value = DiaryScanState.Error(e.message ?: "Ошибка распознавания")
+                _diaryScanState.value = DiaryScanState.Error(
+                    if (BuildConfig.DEBUG) {
+                        UiText.RawString(e.message ?: "error")
+                    } else {
+                        UiText.Res(R.string.diary_scan_error_generic)
+                    }
+                )
             }
         }
     }

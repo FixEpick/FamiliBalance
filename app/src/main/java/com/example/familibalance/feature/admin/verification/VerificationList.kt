@@ -133,7 +133,7 @@ fun VerificationAdminContent(
                         viewModel.adminApproveQuest(child.id, "closet")
                     },
                     onReject = { reason ->
-                        viewModel.adminRejectQuest(child.id, "closet", reason, "Фото шкафа")
+                        viewModel.adminRejectQuest(child.id, "closet", reason)
                     }
                 )
             }
@@ -163,7 +163,7 @@ fun VerificationAdminContent(
                         viewModel.adminApproveQuest(child.id, "room")
                     },
                     onReject = { reason ->
-                        viewModel.adminRejectQuest(child.id, "room", reason, "Фото комнаты")
+                        viewModel.adminRejectQuest(child.id, "room", reason)
                     }
                 )
             }
@@ -183,7 +183,7 @@ fun VerificationAdminContent(
                         viewModel.resetDiaryScanState()
                     },
                     onReject = { reason ->
-                        viewModel.adminRejectQuest(child.id, "diary", reason, "Итоги недели")
+                        viewModel.adminRejectQuest(child.id, "diary", reason)
                         viewModel.resetDiaryScanState()
                     }
                 )

@@ -391,6 +391,7 @@
     <string name="admin_diary_scanning">Сканирование оценок…</string>
     <string name="admin_diary_scan_success">Оценки распознаны!</string>
     <string name="admin_diary_scan_error">Ошибка сканирования: %1$s</string>
+    <string name="diary_scan_error_generic">Не удалось распознать оценки</string>
     <string name="admin_diary_reward_calc">Расчёт награды по оценкам</string>
     <string name="admin_diary_rescan">🔄 Сканировать заново</string>
     <string name="admin_diary_photo">Дневник</string>

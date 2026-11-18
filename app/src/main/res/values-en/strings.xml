@@ -391,6 +391,7 @@
     <string name="admin_diary_scanning">Scanning grades…</string>
     <string name="admin_diary_scan_success">Grades recognized!</string>
     <string name="admin_diary_scan_error">Scan error: %1$s</string>
+    <string name="diary_scan_error_generic">Could not recognize grades</string>
     <string name="admin_diary_reward_calc">Reward calculation by grades</string>
     <string name="admin_diary_rescan">🔄 Scan again</string>
     <string name="admin_diary_photo">Diary</string>

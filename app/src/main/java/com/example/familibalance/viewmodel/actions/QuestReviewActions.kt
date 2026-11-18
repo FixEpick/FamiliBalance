@@ -58,7 +58,7 @@ fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
 }
 
 /** Админ отклоняет квест (шкаф/комната/дневник): статус AVAILABLE + удаление фото. Запись в историю не добавляется — отклонение не является операцией со средствами. */
-fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: String, questTitle: String) {
+fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val photoUrlToDelete = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.closetPhotoUrl

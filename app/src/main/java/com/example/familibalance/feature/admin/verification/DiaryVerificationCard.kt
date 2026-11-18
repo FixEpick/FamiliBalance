@@ -80,7 +80,7 @@ fun DiaryVerificationCard(
     val scanStatusText = when (scanState) {
         is DiaryScanState.Loading -> stringResource(R.string.admin_diary_scanning)
         is DiaryScanState.Success -> stringResource(R.string.admin_diary_scan_success)
-        is DiaryScanState.Error -> stringResource(R.string.admin_diary_scan_error, scanState.message)
+        is DiaryScanState.Error -> stringResource(R.string.admin_diary_scan_error, scanState.message.asString())
         DiaryScanState.Idle -> stringResource(R.string.admin_diary_reward_calc)
     }
 
