@@ -30,7 +30,7 @@ import java.time.LocalDate
 sealed class DiaryScanState {
     object Idle : DiaryScanState()
     object Loading : DiaryScanState()
-    data class Success(val gradeCounts: Map<Int, Int>) : DiaryScanState()
+    data class Success(val gradeCounts: Map<Int, Int>, val childId: String) : DiaryScanState()
     data class Error(val message: UiText) : DiaryScanState()
 }
 
@@ -89,12 +89,17 @@ class MainViewModel(
     internal val _diaryScanState = MutableStateFlow<DiaryScanState>(DiaryScanState.Idle)
     val diaryScanState: StateFlow<DiaryScanState> = _diaryScanState.asStateFlow()
 
-    /** OCR-сканирование фото дневника: результат — только через diaryScanState. */
-    fun scanDiaryPhoto(photoUrl: String) {
+    /** OCR-сканирование фото дневника: результат — только через diaryScanState.
+     *  childId сохраняется в Success, чтобы UI применял оценки только
+     *  к тому ребёнку, для которого выполнялось сканирование. */
+    fun scanDiaryPhoto(childId: String, photoUrl: String) {
         viewModelScope.launch {
             _diaryScanState.value = DiaryScanState.Loading
             try {
-                _diaryScanState.value = DiaryScanState.Success(scanDiaryUseCase(photoUrl))
+                _diaryScanState.value = DiaryScanState.Success(
+                    scanDiaryUseCase(photoUrl),
+                    childId
+                )
             } catch (e: Exception) {
                 _diaryScanState.value = DiaryScanState.Error(
                     if (BuildConfig.DEBUG) {

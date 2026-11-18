@@ -54,12 +54,6 @@ fun AdminAchievementsScreen(
         return
     }
 
-    var newTitle by rememberSaveable { mutableStateOf("") }
-    var newDescription by rememberSaveable { mutableStateOf("") }
-    var newTarget by rememberSaveable { mutableStateOf("") }
-    var newReward by rememberSaveable { mutableStateOf("") }
-    var newBranch by rememberSaveable { mutableStateOf(AchievementBranch.DIARY) }
-
     var showEditDialog by rememberSaveable { mutableStateOf(false) }
     var editAchievement by remember { mutableStateOf<AchievementConfig?>(null) }
     var editTitle by rememberSaveable { mutableStateOf("") }
@@ -114,20 +108,6 @@ fun AdminAchievementsScreen(
         }
         deleteTargetId = null
         showDeleteConfirm = false
-    }
-
-    fun createAchievement() {
-        val title = newTitle.trim()
-        if (title.isBlank()) return
-        val description = newDescription.trim()
-        val target = newTarget.toIntOrNull() ?: 0
-        val reward = newReward.toIntOrNull() ?: 0
-        viewModel.addAchievement(child.id, title, description, target, reward, newBranch)
-        newTitle = ""
-        newDescription = ""
-        newTarget = ""
-        newReward = ""
-        newBranch = AchievementBranch.DIARY
     }
 
     val editDesc = stringResource(R.string.a11y_edit_button)

@@ -50,6 +50,7 @@ import com.example.familibalance.viewmodel.actions.*
 @Composable
 fun DiaryVerificationCard(
     title: String,
+    childId: String,
     photoUrl: String?,
     scanState: DiaryScanState,
     actionEnabled: Boolean = true,
@@ -62,7 +63,7 @@ fun DiaryVerificationCard(
     var rejectReasonText by remember { mutableStateOf("") }
     var showFullScreenImage by remember { mutableStateOf(false) }
 
-    val gradeCounts = remember { mutableStateMapOf(5 to 0, 4 to 0, 3 to 0, 2 to 0) }
+    val gradeCounts = remember(childId) { mutableStateMapOf(5 to 0, 4 to 0, 3 to 0, 2 to 0) }
 
     // Запуск OCR — только через ViewModel; UI лишь сообщает о желании сканировать
     LaunchedEffect(photoUrl) {
@@ -70,8 +71,11 @@ fun DiaryVerificationCard(
     }
 
     // Применение результата сканирования к локальным счётчикам (ручная корректировка остаётся в UI)
-    LaunchedEffect(scanState) {
+    // Ключ по childId: результат OCR не должен применяться, если карточка
+    // уже показывает другого ребёнка (scanState — глобальный StateFlow).
+    LaunchedEffect(scanState, childId) {
         val success = scanState as? DiaryScanState.Success ?: return@LaunchedEffect
+        if (success.childId != childId) return@LaunchedEffect
         gradeCounts.clear()
         gradeCounts.putAll(success.gradeCounts)
     }

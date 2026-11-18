@@ -174,11 +174,12 @@ fun VerificationAdminContent(
             item {
                 DiaryVerificationCard(
                     title = stringResource(R.string.admin_quest_diary),
+                    childId = child.id,
                     comment = child.diaryComment,
                     photoUrl = child.diaryPhotoUrl,
                     scanState = diaryScanState,
                     actionEnabled = !isProcessingAction,
-                    onScanRequested = { viewModel.scanDiaryPhoto(child.diaryPhotoUrl ?: "") },
+                    onScanRequested = { viewModel.scanDiaryPhoto(child.id, child.diaryPhotoUrl ?: "") },
                     onApprove = { count5, count4, count3, count2 ->
                         viewModel.applyDiaryGrades(child.id, count5, count4, count3, count2)
                         viewModel.resetDiaryScanState()
