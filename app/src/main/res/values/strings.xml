@@ -9,16 +9,11 @@
 
     <!-- Common -->
     <string name="common_back">← Назад</string>
-    <string name="back_exit_hint">Нажмите «Назад» ещё раз, чтобы выйти из приложения</string>
     <string name="remember_me">Запомнить меня</string>
 
     <!-- Player login -->
     <string name="login_title">Вход на станцию</string>
-    <string name="login_empty_title">Пока нет ни одного игрока</string>
-    <string name="login_empty_subtitle">Создай первый аккаунт, чтобы начать квесты</string>
     <string name="login_create_account">Создать аккаунт</string>
-    <string name="login_level">Ур. %1$d • 🔥%2$d</string>
-    <string name="login_pin_title">Секретный ПИН-код</string>
     <string name="login_pin_error">Неверный ПИН-код</string>
     <string name="login_field_email">Email родителя</string>
     <string name="login_field_name">Имя ребёнка</string>
@@ -33,8 +28,6 @@
 
     <!-- Register / auth -->
     <string name="register_title">Регистрация</string>
-    <string name="tab_new_player">🚀 Новый игрок</string>
-    <string name="tab_parent">🛡️ Родитель</string>
     <string name="reg_avatar">АВАТАР</string>
     <string name="reg_nickname">Никнейм</string>
     <string name="reg_pin">ПИН</string>
@@ -71,9 +64,6 @@
     <string name="nav_verify">Проверка</string>
     <string name="nav_progress">Прогресс</string>
     <string name="nav_settings">Настройки</string>
-
-    <!-- Settings -->
-    <string name="settings_language">🌐 Язык интерфейса</string>
 
     <!-- Language selector -->
     <string name="language_sheet_title">Выберите язык</string>
@@ -153,8 +143,13 @@
 
     <!-- Buy time sheet -->
     <string name="child_buytime_title">⏳ Обмен коинов на время</string>
-    <string name="child_buytime_limit">Дневной лимит: %1$d минут. Осталось доступно сегодня: %2$d мин.</string>
-    <string name="child_tariff_title">⏳ %1$d минут</string>
+    <string name="child_buytime_limit">Минут в день: %1$d • доступно сегодня: %2$d</string>
+    <plurals name="child_tariff_minutes">
+        <item quantity="one">⏳ %1$d минута</item>
+        <item quantity="few">⏳ %1$d минуты</item>
+        <item quantity="many">⏳ %1$d минут</item>
+        <item quantity="other">⏳ %1$d минут</item>
+    </plurals>
 
     <!-- Rules sheet -->
     <string name="rules_title">📜 Свиток правил</string>
@@ -238,7 +233,12 @@
     <string name="ach_tab_in_progress">В процессе</string>
     <string name="ach_tab_hall">Зал славы</string>
     <string name="ach_title">Достижения</string>
-    <string name="ach_progress">Разблокировано %1$d из %2$d рангов</string>
+    <plurals name="ach_ranks">
+        <item quantity="one">Разблокировано %1$d из %2$d ранга</item>
+        <item quantity="few">Разблокировано %1$d из %2$d рангов</item>
+        <item quantity="many">Разблокировано %1$d из %2$d рангов</item>
+        <item quantity="other">Разблокировано %1$d из %2$d рангов</item>
+    </plurals>
     <string name="ach_gift_toast">Главный Секретный Подарок от папы за открытие всех 16 рангов!</string>
     <string name="ach_locked_desc">Откроется после выполнения предыдущего уровня</string>
     <string name="ach_claim_reward">🎁 Забрать награду %1$s</string>
@@ -263,7 +263,12 @@
     <string name="history_filter_screentime">Экранное время</string>
     <string name="history_filter_fines">Штрафы</string>
     <string name="history_filter_other">Прочее</string>
-    <string name="history_pending_count">%1$d ждёт проверки папой • Нажми, чтобы посмотреть</string>
+    <plurals name="history_pending_waiting">
+        <item quantity="one">%1$d ждёт проверки папой • Нажми, чтобы посмотреть</item>
+        <item quantity="few">%1$d ждут проверки папой • Нажми, чтобы посмотреть</item>
+        <item quantity="many">%1$d ждут проверки папой • Нажми, чтобы посмотреть</item>
+        <item quantity="other">%1$d ждут проверки папой • Нажми, чтобы посмотреть</item>
+    </plurals>
     <string name="history_version">Версия приложения: %1$s</string>
 
     <!-- History item titles (HistoryData.type → stringRes, fallback = title) -->

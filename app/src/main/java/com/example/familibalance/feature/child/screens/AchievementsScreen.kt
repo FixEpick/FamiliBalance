@@ -54,6 +54,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -187,7 +188,7 @@ fun AchievementsScreen(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = stringResource(R.string.ach_progress, completedCount, allAchievements.size),
+                    text = pluralStringResource(R.plurals.ach_ranks, allAchievements.size, completedCount, allAchievements.size),
                     color = TextSecondary,
                     fontSize = 14.sp
                 )

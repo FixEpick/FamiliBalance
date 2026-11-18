@@ -54,6 +54,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -333,7 +334,7 @@ fun HistoryScreen(
                             Spacer(modifier = Modifier.height(2.dp))
                             if (pendingCount > 0) {
                                 Text(
-                                    text = stringResource(R.string.history_pending_count, pendingCount),
+                                    text = pluralStringResource(R.plurals.history_pending_waiting, pendingCount, pendingCount),
                                     color = StatusYellow,
                                     fontSize = 14.sp
                                 )

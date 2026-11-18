@@ -54,6 +54,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -124,9 +125,9 @@ fun BuyTimeBottomSheet(
             Spacer(modifier = Modifier.height(20.dp))
 
             val tariffs = listOf(
-                TariffData(stringResource(R.string.child_tariff_title, 30), 100, 30),
-                TariffData(stringResource(R.string.child_tariff_title, 60), 200, 60),
-                TariffData(stringResource(R.string.child_tariff_title, 90), 300, 90)
+                TariffData(pluralStringResource(R.plurals.child_tariff_minutes, 30, 30), 100, 30),
+                TariffData(pluralStringResource(R.plurals.child_tariff_minutes, 60, 60), 200, 60),
+                TariffData(pluralStringResource(R.plurals.child_tariff_minutes, 90, 90), 300, 90)
             )
 
             tariffs.forEach { tariff ->
