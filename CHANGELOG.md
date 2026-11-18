@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.8.2] — 2026-11-18
+
+### 🧪 Test
+- Test release for in-app auto-update verification.
+
 ## [1.8.1] — 2026-11-18
 
 ### 🐛 Hotfix
