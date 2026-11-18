@@ -109,6 +109,10 @@ android {
         compose = true
         buildConfig = true
     }
+    testOptions {
+        // Robolectric-тесты читают string-ресурсы (проверка локализации).
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 // Запрет release-сборки без ключей: проверка на уровне задач,

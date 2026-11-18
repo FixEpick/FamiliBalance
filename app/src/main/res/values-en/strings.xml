@@ -224,6 +224,13 @@
     <string name="tasks_custom_default_desc">Task from dad</string>
     <string name="tasks_empty_title">No active tasks yet</string>
     <string name="tasks_empty_subtitle">Ask dad to add some tasks</string>
+    <string name="tasks_diary_report_header">📘 Diary report:</string>
+    <string name="tasks_diary_grade5">Grade 5: %1$d pcs (+%2$d ₽)</string>
+    <string name="tasks_diary_grade4">Grade 4: %1$d pcs (+%2$d ₽)</string>
+    <string name="tasks_diary_grade3">Grade 3: %1$d pcs (-%2$d ₽)</string>
+    <string name="tasks_diary_grade2">Grade 2: %1$d pcs (-%2$d ₽)</string>
+    <string name="tasks_diary_total">Total to credit: +%1$d ₽</string>
+    <string name="child_player_role">Player</string>
 
     <!-- Achievements screen -->
     <string name="ach_tab_all">All</string>
@@ -232,6 +239,21 @@
     <string name="ach_title">Achievements</string>
     <string name="ach_progress">Unlocked %1$d of %2$d ranks</string>
     <string name="ach_gift_toast">The Main Secret Gift from dad for unlocking all 16 ranks!</string>
+    <string name="ach_locked_desc">Unlocks after completing the previous level</string>
+    <string name="ach_claim_reward">🎁 Claim reward %1$s</string>
+
+    <!-- Theme selection sheet -->
+    <string name="theme_shop_title">🎨 Theme shop</string>
+    <string name="theme_shop_subtitle">Pick the palette you like the most</string>
+    <string name="theme_selected">✓ Selected</string>
+    <string name="theme_name_cosmic_blue">Cosmic blue</string>
+    <string name="theme_name_cyber_pink">Cyber pink</string>
+    <string name="theme_name_toxic_green">Toxic green</string>
+    <string name="theme_name_solar_gold">Solar gold</string>
+    <string name="theme_name_inferno_red">Inferno red</string>
+    <string name="theme_name_galaxy_purple">Galaxy purple</string>
+    <string name="theme_name_arctic_ice">Arctic ice</string>
+    <string name="theme_name_sunset_orange">Sunset orange</string>
 
     <!-- History screen -->
     <string name="history_filter_all">All</string>
@@ -240,6 +262,41 @@
     <string name="history_filter_fines">Penalties</string>
     <string name="history_pending_count">%1$d waiting for dad\'s review • Tap to view</string>
     <string name="history_version">App version: %1$s</string>
+
+    <!-- History item titles (HistoryData.type → stringRes, fallback = title) -->
+    <string name="hist_screen_time_purchase">Screen time purchase (%1$d min)</string>
+    <string name="hist_streak_bonus">🔥 7-day no-fine bonus</string>
+    <string name="hist_achievement_unlocked">Achievement unlocked: %1$s</string>
+    <string name="hist_cashout_given">Cash payout by dad (%1$s)</string>
+    <string name="hist_cashout_request">Cash withdrawal (%1$s)</string>
+    <string name="hist_custom_quest_done">Quest completed: %1$s</string>
+    <string name="hist_admin_reward">Top-up: %1$s</string>
+    <string name="hist_admin_reward_plain">Top-up from dad</string>
+    <string name="hist_admin_withdraw">Deduction: %1$s</string>
+    <string name="hist_admin_withdraw_plain">Deduction from dad</string>
+    <string name="hist_fine">Fine: %1$s</string>
+    <string name="hist_fine_plain">Fine from dad</string>
+    <string name="hist_fine_discount">Fine: %1$s (50%% honest-admission discount)</string>
+    <string name="hist_fine_plain_discount">Fine from dad (50%% honest-admission discount)</string>
+    <string name="hist_bonus_quest_approved">Bonus quest approved: %1$s</string>
+    <string name="hist_quest_approved">Quest approved: %1$s</string>
+    <string name="hist_honest_approved">Honest admission approved</string>
+    <string name="hist_diary_grade5">Grade 5</string>
+    <string name="hist_diary_grade4">Grade 4</string>
+    <string name="hist_quest_reward">Reward earned: %1$s</string>
+    <string name="hist_bonus_quest_done">Bonus quest completed: %1$s</string>
+    <string name="hist_dream_set">Goal set: %1$s</string>
+
+    <!-- Auth / admin ViewModel messages (UiText) -->
+    <string name="auth_err_nickname">Enter nickname</string>
+    <string name="auth_err_pin">PIN must be 4 digits</string>
+    <string name="auth_err_credentials">Enter email and password</string>
+    <string name="auth_err_supabase">Supabase is not configured</string>
+    <string name="auth_error_login_generic">Sign-in error</string>
+    <string name="auth_error_register_generic">Registration error</string>
+    <string name="admin_err_no_session">Error: no active session</string>
+    <string name="admin_err_approve">Failed to approve request</string>
+    <string name="admin_req_approved">Request approved — child added to family</string>
 
     <!-- Quest delivery screen -->
     <string name="delivery_error_photo">Photo processing error: %1$s</string>
@@ -250,6 +307,7 @@
     <string name="delivery_retake">🔄 Retake photo</string>
     <string name="delivery_comment_hint">Write a few words to dad about the photo if you want (e.g. "Everything is put away!")</string>
     <string name="delivery_submit">Attach photo and send for review</string>
+    <string name="delivery_uploading">Sending photo…</string>
 
     <!-- Honest cat screen -->
     <string name="honest_title">🐱 Honest admission to dad</string>
@@ -303,4 +361,160 @@
     <string name="a11y_parent_panel">Parent panel</string>
     <string name="a11y_camera_hint">Take a photo of the quest result</string>
     <string name="a11y_gift_icon">Gift</string>
+
+    <!-- TaskCard -->
+    <string name="task_claim_reward">🎉 Claim reward</string>
+    <string name="task_rejected_by_dad">❌ Rejected by dad: %1$s</string>
+    <string name="task_execute">📷 Do it</string>
+    <string name="task_pending_review">• Under dad\'s review</string>
+    <string name="task_done">✅ Done</string>
+    <string name="task_view_report">📊 Grade report — tap to view</string>
+    <string name="task_report_title">Diary report</string>
+    <string name="task_report_close">Close</string>
+
+    <!-- Admin verification -->
+    <string name="admin_cashout_requests_title">💵 Cash-out requests</string>
+    <string name="admin_cashout_amount">Amount: %1$d ₽</string>
+    <string name="admin_cashout_comment">Comment: %1$s</string>
+    <string name="admin_cashout_approved">✅ Paid</string>
+    <string name="admin_cashout_reject">❌ Reject</string>
+    <string name="admin_reward_label">Reward: %1$s</string>
+    <string name="admin_comment_label">Comment: %1$s</string>
+    <string name="admin_photo_report">Photo report</string>
+    <string name="admin_approve">✅ Approve</string>
+    <string name="admin_reject">❌ Reject</string>
+    <string name="admin_reject_reason_title">Rejection reason</string>
+    <string name="admin_reject_reason_hint">What needs to be fixed?</string>
+    <string name="admin_reject_default_reason">Needs rework</string>
+    <string name="admin_diary_scanning">Scanning grades…</string>
+    <string name="admin_diary_scan_success">Grades recognized!</string>
+    <string name="admin_diary_scan_error">Scan error: %1$s</string>
+    <string name="admin_diary_reward_calc">Reward calculation by grades</string>
+    <string name="admin_diary_rescan">🔄 Scan again</string>
+    <string name="admin_diary_photo">Diary</string>
+    <string name="admin_diary_grade_adjust">Grade adjustment:</string>
+    <string name="admin_diary_grade_label">Grade %1$d (%2$s)</string>
+    <string name="admin_diary_grade_summary">Grade %1$d: %2$d pcs</string>
+    <string name="admin_approve_with_reward">✅ Approve (+%1$d ₽)</string>
+
+    <!-- Notification rationale -->
+    <string name="notif_rationale_title">Notifications</string>
+    <string name="notif_rationale_message">Allow notifications to get quest reminders and update download status.</string>
+    <string name="notif_rationale_allow">Allow</string>
+    <string name="notif_rationale_later">Not now</string>
+
+    <!-- VerificationList (admin) -->
+    <string name="admin_no_data">No data to review</string>
+    <string name="admin_pending_header">📷 Awaiting approval (%1$s)</string>
+    <string name="admin_pending_subtitle">Photo reports and tasks waiting for review.</string>
+    <string name="admin_quest_closet">Wardrobe photo</string>
+    <string name="admin_quest_room">Room photo</string>
+    <string name="admin_quest_diary">📚 Weekly summary (Diary)</string>
+    <string name="admin_no_comment">No comment</string>
+    <string name="admin_no_comment_text">The child left no comment</string>
+    <string name="admin_bonus_prefix">Bonus: %1$s</string>
+    <string name="admin_quest_prefix">Quest: %1$s</string>
+    <string name="admin_no_pending">✨ No tasks awaiting review for %1$s</string>
+    <string name="admin_honest_title">🐱 Honest admission from %1$s</string>
+    <string name="admin_honest_quote">“%1$s”</string>
+    <string name="admin_approve_honest">✅ Approve (Penalty -50%)</string>
+    <string name="admin_quick_actions">⚡ Dad\'s quick actions (%1$s)</string>
+    <string name="admin_quick_actions_subtitle">Diary rewards, fines and manual amount entry for this profile.</string>
+    <string name="admin_amount_hint">Amount ₽</string>
+    <string name="admin_add">+ Add</string>
+    <string name="admin_desc_label">Description (for what)</string>
+    <string name="admin_withdraw">- Deduct</string>
+    <string name="admin_is_fine">This is a fine (resets streak and applies discount)</string>
+    <string name="admin_cashout_button">💵 Give cash (%1$d ₽)</string>
+
+    <!-- Admin settings screen -->
+    <string name="admin_set_quests_editor">📋 Quest editor</string>
+    <string name="admin_set_achievements_editor">🏆 Achievements editor</string>
+    <string name="admin_set_bonus_quest">🎁 Issue one-time bonus quest</string>
+    <string name="admin_set_requests_title">📨 Join requests</string>
+    <string name="admin_set_no_requests">No new requests</string>
+    <string name="admin_set_request_join">%1$s wants to join the family</string>
+    <string name="admin_set_request_email">Email: %1$s</string>
+    <string name="admin_set_approve">Approve</string>
+    <string name="admin_set_security">🔐 Security</string>
+    <string name="admin_set_pin_management">🔐 PIN management</string>
+    <string name="admin_set_resets_open">🗑 Cleanup &amp; resets ▲</string>
+    <string name="admin_set_resets_closed">🗑 Cleanup &amp; resets ▼</string>
+    <string name="admin_set_section_progress">📈 Progress &amp; quests</string>
+    <string name="admin_set_reset_quests_label">Reset progress of all quests</string>
+    <string name="admin_set_reset_visibility_label">Restore hidden and deleted quests</string>
+    <string name="admin_set_reset_achievements_label">Reset achievements and stats</string>
+    <string name="admin_set_reset_counters_label">Zero grade and cleaning counters</string>
+    <string name="admin_set_reset_honest_label">Reset honest admission</string>
+    <string name="admin_set_reset_history_label">Clear operation history</string>
+    <string name="admin_set_section_balance">💰 Balance &amp; time</string>
+    <string name="admin_set_reset_balance_label">Zero balance</string>
+    <string name="admin_set_reset_streak_label">Reset streak and screen time</string>
+    <string name="admin_set_reset_dream_label">Delete dream goal</string>
+    <string name="admin_set_section_theme">🎨 Appearance</string>
+    <string name="admin_set_reset_theme_label">Reset theme</string>
+    <string name="admin_set_reset_all">Reset everything</string>
+    <string name="admin_set_sync">🔄 Sync with server</string>
+    <string name="admin_set_logout">🚪 Log out</string>
+    <string name="admin_set_delete_account">🗑 Delete account</string>
+    <string name="admin_set_my_pin">🛡️ My PIN (Parent)</string>
+    <string name="admin_set_pin_updated">PIN code for %1$s updated</string>
+    <string name="admin_set_bonus_title">🎁 New bonus quest for %1$s</string>
+    <string name="admin_set_bonus_name">Quest name</string>
+    <string name="admin_set_bonus_desc">Quest description</string>
+    <string name="admin_set_bonus_reward">Reward (₽)</string>
+    <string name="admin_set_create">Create</string>
+    <string name="admin_set_confirm_title">Confirmation</string>
+    <string name="admin_set_confirm_message">Are you sure? This action cannot be undone</string>
+    <string name="admin_set_confirm">Confirm</string>
+    <string name="admin_set_delete_title">Delete account</string>
+    <string name="admin_set_delete_message">Are you sure? All data, including child profiles and photos, will be permanently deleted. This action cannot be undone.</string>
+    <string name="admin_set_delete_error">Failed to delete account. Check your connection and try again.</string>
+    <string name="admin_set_delete">Delete</string>
+    <string name="admin_set_btn_reset">Reset</string>
+    <string name="admin_set_btn_restore">Restore</string>
+    <string name="admin_set_btn_zero">Zero</string>
+    <string name="admin_set_btn_clear">Clear</string>
+    <string name="admin_set_btn_delete">Delete</string>
+
+    <!-- Achievements admin editor -->
+    <string name="achadm_create_title">✨ Create new achievement</string>
+    <string name="achadm_all">📋 All achievements (%1$d)</string>
+    <string name="achadm_branch_diary">📚 Diary</string>
+    <string name="achadm_branch_wardrobe">🚪 Wardrobe</string>
+    <string name="achadm_branch_room">🛏️ Room</string>
+    <string name="achadm_b_diary">Diary</string>
+    <string name="achadm_b_wardrobe">Wardrobe</string>
+    <string name="achadm_b_room">Room</string>
+    <string name="achadm_meta">%1$s · Goal: %2$d · Reward: %3$d ₽</string>
+    <string name="achadm_edit_title">✏️ Edit achievement</string>
+    <string name="achadm_field_name">Name</string>
+    <string name="achadm_field_desc">Description</string>
+    <string name="achadm_field_target">Goal (count of times/fives)</string>
+    <string name="achadm_field_target_short">Goal (count)</string>
+    <string name="achadm_field_reward">Reward ₽</string>
+    <string name="achadm_branch_label">Achievement branch:</string>
+    <string name="achadm_delete_title">Delete achievement</string>
+    <string name="achadm_delete_message">Are you sure you want to delete this achievement?</string>
+    <string name="achadm_create_btn">➕ Create new achievement</string>
+    <string name="achadm_new_title">New achievement</string>
+    <string name="achadm_edit_dialog_title">Edit achievement</string>
+    <string name="achadm_delete_confirm">Delete achievement "%1$s"?</string>
+
+    <!-- Quests editor (admin) -->
+    <string name="quested_freq_daily">Once a day</string>
+    <string name="quested_freq_weekly">Once a week</string>
+    <string name="quested_freq_once">One-time</string>
+    <string name="quested_freq_daily_adv">Daily</string>
+    <string name="quested_freq_weekly_adv">Weekly</string>
+    <string name="quested_create">➕ Create new quest</string>
+    <string name="quested_by_grades">by grades</string>
+    <string name="quested_new_title">New quest</string>
+    <string name="quested_edit_title">Edit quest</string>
+    <string name="quested_frequency">Frequency</string>
+    <string name="quested_delete_title">Delete quest?</string>
+
+    <!-- Accessibility: fullscreen photo -->
+    <string name="a11y_fullscreen_photo">Fullscreen photo</string>
+    <string name="a11y_fullscreen_diary_photo">Fullscreen diary photo</string>
 </resources>

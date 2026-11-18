@@ -96,6 +96,7 @@ fun BuyTimeBottomSheet(
             )
         }
     ) {
+        AppLocaleContent {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -180,6 +181,7 @@ fun BuyTimeBottomSheet(
                     }
                 }
             }
+        }
         }
     }
 }

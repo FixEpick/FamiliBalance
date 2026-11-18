@@ -224,6 +224,13 @@
     <string name="tasks_custom_default_desc">Задание от папы</string>
     <string name="tasks_empty_title">Пока нет активных заданий</string>
     <string name="tasks_empty_subtitle">Обратитесь к папе, чтобы он добавил задания</string>
+    <string name="tasks_diary_report_header">📘 Отчёт по дневнику:</string>
+    <string name="tasks_diary_grade5">Оценка 5: %1$d шт. (+%2$d ₽)</string>
+    <string name="tasks_diary_grade4">Оценка 4: %1$d шт. (+%2$d ₽)</string>
+    <string name="tasks_diary_grade3">Оценка 3: %1$d шт. (-%2$d ₽)</string>
+    <string name="tasks_diary_grade2">Оценка 2: %1$d шт. (-%2$d ₽)</string>
+    <string name="tasks_diary_total">Итого к начислению: +%1$d ₽</string>
+    <string name="child_player_role">Игрок</string>
 
     <!-- Achievements screen -->
     <string name="ach_tab_all">Все</string>
@@ -232,6 +239,21 @@
     <string name="ach_title">Достижения</string>
     <string name="ach_progress">Разблокировано %1$d из %2$d рангов</string>
     <string name="ach_gift_toast">Главный Секретный Подарок от папы за открытие всех 16 рангов!</string>
+    <string name="ach_locked_desc">Откроется после выполнения предыдущего уровня</string>
+    <string name="ach_claim_reward">🎁 Забрать награду %1$s</string>
+
+    <!-- Theme selection sheet -->
+    <string name="theme_shop_title">🎨 Магазин тем</string>
+    <string name="theme_shop_subtitle">Выбери палитру, которая нравится больше всего</string>
+    <string name="theme_selected">✓ Выбрана</string>
+    <string name="theme_name_cosmic_blue">Космический синий</string>
+    <string name="theme_name_cyber_pink">Кибер розовый</string>
+    <string name="theme_name_toxic_green">Токсичный зелёный</string>
+    <string name="theme_name_solar_gold">Солнечное золото</string>
+    <string name="theme_name_inferno_red">Инферно красный</string>
+    <string name="theme_name_galaxy_purple">Галактический фиолетовый</string>
+    <string name="theme_name_arctic_ice">Арктический лёд</string>
+    <string name="theme_name_sunset_orange">Закатный оранжевый</string>
 
     <!-- History screen -->
     <string name="history_filter_all">Все</string>
@@ -240,6 +262,41 @@
     <string name="history_filter_fines">Штрафы</string>
     <string name="history_pending_count">%1$d ждёт проверки папой • Нажми, чтобы посмотреть</string>
     <string name="history_version">Версия приложения: %1$s</string>
+
+    <!-- History item titles (HistoryData.type → stringRes, fallback = title) -->
+    <string name="hist_screen_time_purchase">Покупка экранного времени (%1$d мин)</string>
+    <string name="hist_streak_bonus">🔥 Бонус за 7 дней без штрафов</string>
+    <string name="hist_achievement_unlocked">Достижение открыто: %1$s</string>
+    <string name="hist_cashout_given">Выдача наличных папой (%1$s)</string>
+    <string name="hist_cashout_request">Вывод средств (%1$s)</string>
+    <string name="hist_custom_quest_done">Квест выполнен: %1$s</string>
+    <string name="hist_admin_reward">Пополнение: %1$s</string>
+    <string name="hist_admin_reward_plain">Пополнение от папы</string>
+    <string name="hist_admin_withdraw">Списание: %1$s</string>
+    <string name="hist_admin_withdraw_plain">Списание от папы</string>
+    <string name="hist_fine">Штраф: %1$s</string>
+    <string name="hist_fine_plain">Штраф от папы</string>
+    <string name="hist_fine_discount">Штраф: %1$s (Скидка 50%% за честное признание)</string>
+    <string name="hist_fine_plain_discount">Штраф от папы (Скидка 50%% за честное признание)</string>
+    <string name="hist_bonus_quest_approved">Одобрен бонус-квест: %1$s</string>
+    <string name="hist_quest_approved">Одобрен квест: %1$s</string>
+    <string name="hist_honest_approved">Честное признание одобрено</string>
+    <string name="hist_diary_grade5">Оценка 5</string>
+    <string name="hist_diary_grade4">Оценка 4</string>
+    <string name="hist_quest_reward">Награда получена: %1$s</string>
+    <string name="hist_bonus_quest_done">Бонус-квест выполнен: %1$s</string>
+    <string name="hist_dream_set">Заложена цель: %1$s</string>
+
+    <!-- Auth / admin ViewModel messages (UiText) -->
+    <string name="auth_err_nickname">Введите никнейм</string>
+    <string name="auth_err_pin">ПИН должен содержать 4 цифры</string>
+    <string name="auth_err_credentials">Введите email и пароль</string>
+    <string name="auth_err_supabase">Supabase не настроен</string>
+    <string name="auth_error_login_generic">Ошибка входа</string>
+    <string name="auth_error_register_generic">Ошибка регистрации</string>
+    <string name="admin_err_no_session">Ошибка: нет активной сессии</string>
+    <string name="admin_err_approve">Ошибка при одобрении запроса</string>
+    <string name="admin_req_approved">Запрос одобрен — ребёнок добавлен в семью</string>
 
     <!-- Quest delivery screen -->
     <string name="delivery_error_photo">Ошибка обработки фото: %1$s</string>
@@ -250,6 +307,7 @@
     <string name="delivery_retake">🔄 Переснять фото</string>
     <string name="delivery_comment_hint">Напиши папе пару слов к фото, если хочешь (например: «Всё сложил по местам!»)</string>
     <string name="delivery_submit">Прикрепить фото и отправить на проверку</string>
+    <string name="delivery_uploading">Отправляем фото…</string>
 
     <!-- Honest cat screen -->
     <string name="honest_title">🐱 Честное признание папе</string>
@@ -303,4 +361,160 @@
     <string name="a11y_parent_panel">Панель родителя</string>
     <string name="a11y_camera_hint">Сделать фото результата задания</string>
     <string name="a11y_gift_icon">Подарок</string>
+
+    <!-- TaskCard -->
+    <string name="task_claim_reward">🎉 Получить награду</string>
+    <string name="task_rejected_by_dad">❌ Отклонено папой: %1$s</string>
+    <string name="task_execute">📷 Выполнить</string>
+    <string name="task_pending_review">• На проверке у папы</string>
+    <string name="task_done">✅ Выполнено</string>
+    <string name="task_view_report">📊 Отчёт по оценкам — нажмите, чтобы посмотреть</string>
+    <string name="task_report_title">Отчёт по дневнику</string>
+    <string name="task_report_close">Закрыть</string>
+
+    <!-- Admin verification -->
+    <string name="admin_cashout_requests_title">💵 Заявки на вывод</string>
+    <string name="admin_cashout_amount">Сумма: %1$d ₽</string>
+    <string name="admin_cashout_comment">Комментарий: %1$s</string>
+    <string name="admin_cashout_approved">✅ Выдано</string>
+    <string name="admin_cashout_reject">❌ Отклонить</string>
+    <string name="admin_reward_label">Награда: %1$s</string>
+    <string name="admin_comment_label">Комментарий: %1$s</string>
+    <string name="admin_photo_report">Фотоотчёт</string>
+    <string name="admin_approve">✅ Одобрить</string>
+    <string name="admin_reject">❌ Отклонить</string>
+    <string name="admin_reject_reason_title">Причина отклонения</string>
+    <string name="admin_reject_reason_hint">Что нужно доделать?</string>
+    <string name="admin_reject_default_reason">Требуется доработка</string>
+    <string name="admin_diary_scanning">Сканирование оценок…</string>
+    <string name="admin_diary_scan_success">Оценки распознаны!</string>
+    <string name="admin_diary_scan_error">Ошибка сканирования: %1$s</string>
+    <string name="admin_diary_reward_calc">Расчёт награды по оценкам</string>
+    <string name="admin_diary_rescan">🔄 Сканировать заново</string>
+    <string name="admin_diary_photo">Дневник</string>
+    <string name="admin_diary_grade_adjust">Корректировка оценок:</string>
+    <string name="admin_diary_grade_label">Оценка %1$d (%2$s)</string>
+    <string name="admin_diary_grade_summary">Оценка %1$d: %2$d шт</string>
+    <string name="admin_approve_with_reward">✅ Одобрить (+%1$d ₽)</string>
+
+    <!-- Notification rationale -->
+    <string name="notif_rationale_title">Уведомления</string>
+    <string name="notif_rationale_message">Разрешите уведомления, чтобы получать напоминания о квестах и статус скачивания обновлений.</string>
+    <string name="notif_rationale_allow">Разрешить</string>
+    <string name="notif_rationale_later">Не сейчас</string>
+
+    <!-- VerificationList (admin) -->
+    <string name="admin_no_data">Нет данных для проверки</string>
+    <string name="admin_pending_header">📷 Ждут подтверждения (%1$s)</string>
+    <string name="admin_pending_subtitle">Фотоотчёты и задания ребёнка, ожидающие проверки.</string>
+    <string name="admin_quest_closet">Фото шкафа</string>
+    <string name="admin_quest_room">Фото комнаты</string>
+    <string name="admin_quest_diary">📚 Итоги недели (Дневник)</string>
+    <string name="admin_no_comment">Без комментария</string>
+    <string name="admin_no_comment_text">Ребёнок не оставил комментария</string>
+    <string name="admin_bonus_prefix">Бонус: %1$s</string>
+    <string name="admin_quest_prefix">Квест: %1$s</string>
+    <string name="admin_no_pending">✨ Нет заданий на проверке у %1$s</string>
+    <string name="admin_honest_title">🐱 Честное признание от %1$s</string>
+    <string name="admin_honest_quote">«%1$s»</string>
+    <string name="admin_approve_honest">✅ Одобрить (Штраф -50%)</string>
+    <string name="admin_quick_actions">⚡ Быстрые действия папы (%1$s)</string>
+    <string name="admin_quick_actions_subtitle">Начисление за дневник, штрафы и ручной ввод суммы для этого профиля.</string>
+    <string name="admin_amount_hint">Сумма ₽</string>
+    <string name="admin_add">+ Добавить</string>
+    <string name="admin_desc_label">Описание (за что)</string>
+    <string name="admin_withdraw">- Списать</string>
+    <string name="admin_is_fine">Это штраф (сбросит стрик и применит скидку)</string>
+    <string name="admin_cashout_button">💵 Выдать наличные (%1$d ₽)</string>
+
+    <!-- Admin settings screen -->
+    <string name="admin_set_quests_editor">📋 Редактор заданий</string>
+    <string name="admin_set_achievements_editor">🏆 Редактор достижений</string>
+    <string name="admin_set_bonus_quest">🎁 Выдать разовый бонус-квест</string>
+    <string name="admin_set_requests_title">📨 Запросы на добавление</string>
+    <string name="admin_set_no_requests">Нет новых запросов</string>
+    <string name="admin_set_request_join">%1$s хочет присоединиться к семье</string>
+    <string name="admin_set_request_email">Email: %1$s</string>
+    <string name="admin_set_approve">Одобрить</string>
+    <string name="admin_set_security">🔐 Безопасность</string>
+    <string name="admin_set_pin_management">🔐 Управление ПИН-кодами</string>
+    <string name="admin_set_resets_open">🗑 Очистка и сбросы ▲</string>
+    <string name="admin_set_resets_closed">🗑 Очистка и сбросы ▼</string>
+    <string name="admin_set_section_progress">📈 Прогресс и задания</string>
+    <string name="admin_set_reset_quests_label">Сбросить прогресс всех заданий</string>
+    <string name="admin_set_reset_visibility_label">Вернуть скрытые и удалённые задания</string>
+    <string name="admin_set_reset_achievements_label">Сбросить достижения и статистику</string>
+    <string name="admin_set_reset_counters_label">Обнулить счётчики оценок и уборок</string>
+    <string name="admin_set_reset_honest_label">Сбросить честное признание</string>
+    <string name="admin_set_reset_history_label">Очистить историю операций</string>
+    <string name="admin_set_section_balance">💰 Баланс и время</string>
+    <string name="admin_set_reset_balance_label">Обнулить баланс</string>
+    <string name="admin_set_reset_streak_label">Сбросить стрик и экранное время</string>
+    <string name="admin_set_reset_dream_label">Удалить цель-мечту</string>
+    <string name="admin_set_section_theme">🎨 Оформление</string>
+    <string name="admin_set_reset_theme_label">Сбросить тему оформления</string>
+    <string name="admin_set_reset_all">Обнулить всё</string>
+    <string name="admin_set_sync">🔄 Синхронизировать с сервером</string>
+    <string name="admin_set_logout">🚪 Выйти из аккаунта</string>
+    <string name="admin_set_delete_account">🗑 Удалить аккаунт</string>
+    <string name="admin_set_my_pin">🛡️ Мой ПИН (Родитель)</string>
+    <string name="admin_set_pin_updated">ПИН-код для %1$s обновлён</string>
+    <string name="admin_set_bonus_title">🎁 Новый бонус-квест для %1$s</string>
+    <string name="admin_set_bonus_name">Название квеста</string>
+    <string name="admin_set_bonus_desc">Описание квеста</string>
+    <string name="admin_set_bonus_reward">Награда (₽)</string>
+    <string name="admin_set_create">Создать</string>
+    <string name="admin_set_confirm_title">Подтверждение</string>
+    <string name="admin_set_confirm_message">Вы уверены? Это действие нельзя отменить</string>
+    <string name="admin_set_confirm">Подтвердить</string>
+    <string name="admin_set_delete_title">Удалить аккаунт</string>
+    <string name="admin_set_delete_message">Вы уверены? Все данные, включая профили детей и фото, будут удалены навсегда. Это действие нельзя отменить.</string>
+    <string name="admin_set_delete_error">Не удалось удалить аккаунт. Проверьте подключение и попробуйте ещё раз.</string>
+    <string name="admin_set_delete">Удалить</string>
+    <string name="admin_set_btn_reset">Сбросить</string>
+    <string name="admin_set_btn_restore">Вернуть</string>
+    <string name="admin_set_btn_zero">Обнулить</string>
+    <string name="admin_set_btn_clear">Очистить</string>
+    <string name="admin_set_btn_delete">Удалить</string>
+
+    <!-- Achievements admin editor -->
+    <string name="achadm_create_title">✨ Создание нового достижения</string>
+    <string name="achadm_all">📋 Все достижения (%1$d)</string>
+    <string name="achadm_branch_diary">📚 Дневник</string>
+    <string name="achadm_branch_wardrobe">🚪 Шкаф</string>
+    <string name="achadm_branch_room">🛏️ Комната</string>
+    <string name="achadm_b_diary">Дневник</string>
+    <string name="achadm_b_wardrobe">Шкаф</string>
+    <string name="achadm_b_room">Комната</string>
+    <string name="achadm_meta">%1$s · Цель: %2$d · Награда: %3$d ₽</string>
+    <string name="achadm_edit_title">✏️ Редактирование достижения</string>
+    <string name="achadm_field_name">Название</string>
+    <string name="achadm_field_desc">Описание</string>
+    <string name="achadm_field_target">Цель (количество раз/пятёрок)</string>
+    <string name="achadm_field_target_short">Цель (кол-во)</string>
+    <string name="achadm_field_reward">Награда ₽</string>
+    <string name="achadm_branch_label">Ветка достижения:</string>
+    <string name="achadm_delete_title">Удаление достижения</string>
+    <string name="achadm_delete_message">Вы уверены, что хотите удалить это достижение?</string>
+    <string name="achadm_create_btn">➕ Создать новое достижение</string>
+    <string name="achadm_new_title">Новое достижение</string>
+    <string name="achadm_edit_dialog_title">Редактировать достижение</string>
+    <string name="achadm_delete_confirm">Удалить достижение «%1$s»?</string>
+
+    <!-- Quests editor (admin) -->
+    <string name="quested_freq_daily">Раз в день</string>
+    <string name="quested_freq_weekly">Раз в неделю</string>
+    <string name="quested_freq_once">Разовое</string>
+    <string name="quested_freq_daily_adv">Ежедневно</string>
+    <string name="quested_freq_weekly_adv">Еженедельно</string>
+    <string name="quested_create">➕ Создать новое задание</string>
+    <string name="quested_by_grades">по оценкам</string>
+    <string name="quested_new_title">Новое задание</string>
+    <string name="quested_edit_title">Редактировать задание</string>
+    <string name="quested_frequency">Частота</string>
+    <string name="quested_delete_title">Удалить задание?</string>
+
+    <!-- Accessibility: fullscreen photo -->
+    <string name="a11y_fullscreen_photo">Полноэкранное фото</string>
+    <string name="a11y_fullscreen_diary_photo">Полноэкранное фото дневника</string>
 </resources>

@@ -92,6 +92,7 @@ fun RulesBottomSheet(
             )
         }
     ) {
+        AppLocaleContent {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -206,6 +207,7 @@ fun RulesBottomSheet(
             ) {
                 Text(stringResource(R.string.rules_understood), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
+        }
         }
     }
 }

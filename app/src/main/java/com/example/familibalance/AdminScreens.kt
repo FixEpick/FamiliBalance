@@ -31,10 +31,11 @@ import com.example.familibalance.ui.theme.*
 import com.example.familibalance.viewmodel.actions.*
 
 
+@Composable
 private fun builtInFreqLabel(frequency: QuestFrequency): String = when (frequency) {
-    QuestFrequency.DAILY -> "Раз в день"
-    QuestFrequency.WEEKLY -> "Раз в неделю"
-    QuestFrequency.ONCE -> "Разовое"
+    QuestFrequency.DAILY -> stringResource(R.string.quested_freq_daily)
+    QuestFrequency.WEEKLY -> stringResource(R.string.quested_freq_weekly)
+    QuestFrequency.ONCE -> stringResource(R.string.quested_freq_once)
 }
 
 @Composable
@@ -81,7 +82,20 @@ internal fun EditorItemRow(
 fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+    if (child == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.admin_no_data),
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+        return
+    }
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
     var newTitle by rememberSaveable { mutableStateOf("") }
     var newDesc by rememberSaveable { mutableStateOf("") }
@@ -109,9 +123,9 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                OutlinedButton(onClick = onBack, border = BorderStroke(1.dp, GlassStroke)) { Text("← Назад", color = Color.White) }
+                OutlinedButton(onClick = onBack, border = BorderStroke(1.dp, GlassStroke)) { Text(stringResource(R.string.common_back), color = Color.White) }
                 Spacer(Modifier.width(12.dp))
-                Text("📋 Редактор заданий", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.admin_set_quests_editor), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
         item {
@@ -121,7 +135,7 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor)
-            ) { Text("➕ Создать новое задание", fontWeight = FontWeight.Bold, fontSize = 15.sp) }
+            ) { Text(stringResource(R.string.quested_create), fontWeight = FontWeight.Bold, fontSize = 15.sp) }
         }
         if (!child.isWardrobeDeleted) {
             item {
@@ -148,7 +162,7 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         if (!child.isDiaryDeleted) {
             item {
                 EditorItemRow(
-                    title = child.diaryTitle, subtitle = "${builtInFreqLabel(child.diaryFrequency)} • по оценкам",
+                    title = child.diaryTitle, subtitle = "${builtInFreqLabel(child.diaryFrequency)} • ${stringResource(R.string.quested_by_grades)}",
                     checked = child.isDiaryVisible, switchColors = switchColors,
                     onCheckedChange = { viewModel.toggleQuestVisibility(child.id, "diary", it) },
                     onEdit = { editKind = "diary"; editTitle = child.diaryTitle; editDesc = child.diaryDesc; editReward = ""; editFreq = child.diaryFrequency },
@@ -158,9 +172,9 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         }
         items(child.customQuests, key = { it.id }) { q ->
             val badge = when (q.frequency) {
-                QuestFrequency.ONCE -> "Разовое"
-                QuestFrequency.DAILY -> "Раз в день"
-                QuestFrequency.WEEKLY -> "Раз в неделю"
+                QuestFrequency.ONCE -> stringResource(R.string.quested_freq_once)
+                QuestFrequency.DAILY -> stringResource(R.string.quested_freq_daily)
+                QuestFrequency.WEEKLY -> stringResource(R.string.quested_freq_weekly)
             }
             EditorItemRow(
                 title = q.title, subtitle = "$badge • ${q.reward} ₽",
@@ -176,21 +190,21 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             onDismissRequest = { showCreateDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
-            title = { Text("Новое задание", color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.quested_new_title), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text("Название", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text("Описание", color = TextPrimary) }, colors = editorFieldColors())
-                    OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text("Награда ₽", color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
+                    OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { newFreq = QuestFrequency.DAILY }, border = BorderStroke(1.dp, if (newFreq == QuestFrequency.DAILY) AccentColor else GlassStroke), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
-                            Text("Ежедневный", color = if (newFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
+                            Text(stringResource(R.string.freq_daily), color = if (newFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
                         }
                         OutlinedButton(onClick = { newFreq = QuestFrequency.WEEKLY }, border = BorderStroke(1.dp, if (newFreq == QuestFrequency.WEEKLY) AccentColor else GlassStroke), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
-                            Text("Еженедельный", color = if (newFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
+                            Text(stringResource(R.string.freq_weekly), color = if (newFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
                         }
                     }
                 }
@@ -203,9 +217,9 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         viewModel.addCustomQuest(child.id, newTitle.trim(), newReward.trim().toIntOrNull() ?: 50, newFreq, newDesc.trim())
                         newTitle = ""; newDesc = ""; newReward = "50"; showCreateDialog = false
                     }
-                ) { Text("Создать", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.admin_set_create), fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text("Отмена", color = TextSecondary) } }
+            dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
     if (editKind != null) {
@@ -213,33 +227,33 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             onDismissRequest = { editKind = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
-            title = { Text("Редактировать задание", color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.quested_edit_title), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(value = editTitle, onValueChange = { editTitle = it }, label = { Text("Название", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = editDesc, onValueChange = { editDesc = it }, label = { Text("Описание", color = TextPrimary) }, colors = editorFieldColors())
+                    OutlinedTextField(value = editTitle, onValueChange = { editTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    OutlinedTextField(value = editDesc, onValueChange = { editDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
                     if (editKind != "diary") {
-                        OutlinedTextField(value = editReward, onValueChange = { editReward = it }, label = { Text("Награда ₽", color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                        OutlinedTextField(value = editReward, onValueChange = { editReward = it }, label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     }
                     if (editKind != "custom") {
-                        Text("Частота", color = TextPrimary, fontSize = 13.sp)
+                        Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             OutlinedButton(
                                 onClick = { editFreq = QuestFrequency.DAILY },
                                 border = BorderStroke(1.dp, if (editFreq == QuestFrequency.DAILY) AccentColor else GlassStroke),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                Text("Ежедневно", color = if (editFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
+                                Text(stringResource(R.string.quested_freq_daily_adv), color = if (editFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
                             }
                             OutlinedButton(
                                 onClick = { editFreq = QuestFrequency.WEEKLY },
                                 border = BorderStroke(1.dp, if (editFreq == QuestFrequency.WEEKLY) AccentColor else GlassStroke),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                Text("Еженедельно", color = if (editFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
+                                Text(stringResource(R.string.quested_freq_weekly_adv), color = if (editFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
                             }
                         }
                     }
@@ -268,22 +282,22 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         }
                         editKind = null
                     }
-                ) { Text("Сохранить", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { editKind = null }) { Text("Отмена", color = TextSecondary) } }
+            dismissButton = { TextButton(onClick = { editKind = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
     deleteConfirmAction?.let { action ->
         AlertDialog(
             onDismissRequest = { deleteConfirmAction = null },
             containerColor = SpaceBgStart,
-            title = { Text("Удалить задание?", color = PenaltyRed, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.quested_delete_title), color = PenaltyRed, fontWeight = FontWeight.Bold) },
             confirmButton = {
                 Button(colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), onClick = { action(); deleteConfirmAction = null }) {
-                    Text("Удалить", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.admin_set_delete), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
-            dismissButton = { TextButton(onClick = { deleteConfirmAction = null }) { Text("Отмена", color = TextSecondary) } }
+            dismissButton = { TextButton(onClick = { deleteConfirmAction = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
 }

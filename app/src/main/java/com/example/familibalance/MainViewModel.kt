@@ -2,6 +2,7 @@ package com.example.familibalance
 
 import com.example.familibalance.data.model.*
 import com.example.familibalance.data.storage.*
+import com.example.familibalance.data.supabase.ProfileSync
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
 
@@ -133,6 +134,14 @@ class MainViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             _isInitializing.value = true
             try {
+            // Прогрев SecurePrefs-кэша на IO: первое создание
+            // EncryptedSharedPreferences дешифрует ключи и может пропустить
+            // кадры, если случится на main (логин, ProfileActions).
+            runCatching {
+                SecurePrefs.get(getApplication(), "app_prefs")
+                SecurePrefs.get(getApplication(), "familibalance_prefs")
+                SecurePrefs.get(getApplication(), "login_rate_limit_prefs")
+            }
             familyRepository.loadState()
             // Разовая чистка легаси-дефолтов «Пользователь 1/2» из локального стейта.
             // В Supabase такие строки удаляются вручную через дашборд.
@@ -178,8 +187,15 @@ class MainViewModel(
         viewModelScope.launch {
             familyRepository.onRemoteStateChanged.collect { emitFamilyState() }
         }
-        // Создание SupabaseClient и запуск sync — на IO, чтобы не блокировать первый кадр
+        // Создание SupabaseClient и запуск sync — на IO, чтобы не блокировать первый кадр.
+        // ensureSession: при авто-входе ребёнка сессии может не быть —
+        // без неё push отклоняется и isSynced навсегда остаётся false.
         viewModelScope.launch(Dispatchers.IO) {
+            SupabaseManager.ensureSession()
+            // Принудительный pull после установки сессии: гарантирует, что при
+            // открытии приложения всегда стягивается актуальный баланс с сервера
+            // (иначе возможен рассинхрон локального и облачного состояния).
+            ProfileSync.loadProfilesFromCloud(getApplication())
             SupabaseManager.startRealtimeSync(getApplication())
         }
     }
@@ -217,7 +233,10 @@ class MainViewModel(
                         date = getCurrentDateString(),
                         amount = "-$cost ₽",
                         isIncome = false,
-                        category = "Экранное время"
+                        category = "Экранное время",
+                        type = HistoryType.SCREEN_TIME_PURCHASE,
+                        amountValue = -cost,
+                        arg = minutes.toString()
                     )
                 ) + child.historyItems
             )

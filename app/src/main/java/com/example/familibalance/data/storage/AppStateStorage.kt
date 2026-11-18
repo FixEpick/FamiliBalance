@@ -43,7 +43,7 @@ object AppStateStorage {
     private const val KEY_LAST_DAILY = "last_daily_reset"
     private const val KEY_LAST_WEEKLY = "last_weekly_reset"
 
-    private val jsonFormat = Json {
+    internal val jsonFormat = Json {
         ignoreUnknownKeys = true
         isLenient = true
         coerceInputValues = true
@@ -75,9 +75,16 @@ object AppStateStorage {
     }
 
     fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null) {
-        if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) return
         try {
             val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
+            // Dirty-профиль: локальные правки ещё не ушли в облако.
+            // Применяем удалённую версию, только если она строго новее
+            // локальной (last-writer-wins) — иначе одобрение админа
+            // навсегда игнорировалось, а старый PENDING перезаписывал облако.
+            if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) {
+                val local = AppSharedState.children[userId]
+                if (local != null && local.stateUpdatedAt >= dto.stateUpdatedAt) return
+            }
             // Колонка parent_user_id в БД важнее значения внутри state_json
             val profile = ChildProfileState.fromDto(dto)
                 .copy(
@@ -87,6 +94,11 @@ object AppStateStorage {
                 )
             AppSharedState.children[userId] = profile
             saveLocalOnly(context)
+            // Удалённая версия применена — локальные несинхронизированные
+            // правки устарели (last-writer-wins): снимаем dirty-метку,
+            // иначе retryDirtyChildren позже отправит старый снапшот
+            // и перезапишет approve/reject админа (ping-pong статусов).
+            com.example.familibalance.data.repository.SyncStatus.markClean(userId)
             AppSharedState.remoteStateChanged.tryEmit(Unit)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -98,12 +110,19 @@ object AppStateStorage {
      * Используется из SupabaseManager (Realtime/первичная загрузка), чтобы не фризить UI.
      */
     suspend fun applyRemoteChildJsonAsync(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null) {
-        if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) return
         try {
-            val dto = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
-            }
-            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+            // Декод JSON + запись в children (ConcurrentHashMap) + saveLocalOnly
+            // (JSON-сериализация + EncryptedSharedPreferences) — целиком на IO:
+            // saveLocalOnly внутри withContext(Main) фризил UI на Realtime-обновлениях.
+            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
+                // Dirty-профиль: применяем удалённую версию, только если она
+                // строго новее локальной — иначе Realtime-апдейты админа
+                // (approve/reject) терялись, пока профиль был dirty.
+                if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) {
+                    val local = AppSharedState.children[userId]
+                    if (local != null && local.stateUpdatedAt >= dto.stateUpdatedAt) return@withContext
+                }
                 val profile = ChildProfileState.fromDto(dto)
                     .copy(
                         parentUserId = parentUserId?.takeIf { it.isNotBlank() } ?: dto.parentUserId,
@@ -112,6 +131,10 @@ object AppStateStorage {
                     )
                 AppSharedState.children[userId] = profile
                 saveLocalOnly(context)
+                // См. applyRemoteChildJson: применённая удалённая версия
+                // делает локальные правки устаревшими — dirty снимаем,
+                // иначе старый PENDING перезапишет статус админа.
+                com.example.familibalance.data.repository.SyncStatus.markClean(userId)
                 AppSharedState.remoteStateChanged.tryEmit(Unit)
             }
         } catch (e: Exception) {

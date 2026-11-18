@@ -1,5 +1,6 @@
 package com.example.familibalance.feature.child
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -13,7 +14,11 @@ import androidx.compose.ui.zIndex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
@@ -75,29 +80,108 @@ fun QuestDeliveryScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Страховка от IllegalStateException "No ActivityResultRegistryOwner":
+    // LocalContext может быть переопределён (LocalizedAppContent, окна Dialog),
+    // поэтому owner берём из реальной Activity через LocalActivity.
+    val activity = LocalActivity.current
+    val registryOwner = activity as? ActivityResultRegistryOwner
+    if (registryOwner != null) {
+        CompositionLocalProvider(LocalActivityResultRegistryOwner provides registryOwner) {
+            QuestDeliveryScreenContent(
+                questName = questName,
+                rewardText = rewardText,
+                onSendClick = onSendClick,
+                onBackClick = onBackClick,
+                modifier = modifier
+            )
+        }
+    } else {
+        QuestDeliveryScreenContent(
+            questName = questName,
+            rewardText = rewardText,
+            onSendClick = onSendClick,
+            onBackClick = onBackClick,
+            modifier = modifier
+        )
+    }
+}
+
+// Toast'ы в колбэках камеры (ActivityResult) — не composable-контекст,
+// поэтому stringResource там недоступен; context.getString здесь оправдан.
+@SuppressLint("LocalContextGetResourceValueCall")
+@Composable
+private fun QuestDeliveryScreenContent(
+    questName: String,
+    rewardText: String,
+    onSendClick: (comment: String, photoUri: Uri?) -> Unit,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val context = LocalContext.current
     var commentText by rememberSaveable { mutableStateOf("") }
-    var capturedImageUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    // URI храним строкой: rememberSaveable + String гарантированно
+    // переживают process death (камера — отдельная Activity).
+    var capturedImageUriString by rememberSaveable { mutableStateOf<String?>(null) }
+    val capturedImageUri = capturedImageUriString?.let {
+        runCatching { Uri.parse(it) }.getOrNull()
+    }
+    // Файл фото в filesDir/quest_photos — единственная копия. Удаляем его
+    // только при явной отмене (стрелка «Назад»/системный back) или при
+    // пересъёмке. Переключение вкладок и process death файл НЕ трогают —
+    // иначе фото «слетало» бы при возврате на экран.
+    var capturedPhotoFile by remember { mutableStateOf<java.io.File?>(null) }
     // URI и имя файла камеры храним строками: переживают process death
     // без кастомного Saver'а. Камера пишет сразу в filesDir/quest_photos/ —
     // файл не зависит от очистки cacheDir.
     var tempCameraUriString by rememberSaveable { mutableStateOf<String?>(null) }
     var tempPhotoName by rememberSaveable { mutableStateOf<String?>(null) }
+    // Блокирует «Назад»/повторную отправку, пока submitQuestForReview не вернётся:
+    // иначе экран закрывался до завершения persist+push и пользователь видел
+    // «выкидывание» на главный экран без подтверждения.
+    var isSubmitting by remember { mutableStateOf(false) }
+
+    // Единая логика «Назад»: удаляем файл фото (квест не отправлен) и
+    // закрываем экран. Во время отправки игнорируем — как disabled-кнопка.
+    val handleBack = {
+        if (!isSubmitting) {
+            capturedPhotoFile?.delete()
+            capturedPhotoFile = null
+            onBackClick()
+        }
+    }
+    // Системный «Назад» = стрелка «Назад»: без BackHandler он уводил бы
+    // на предыдущий destination, а delivery-экран «воскресал» при возврате.
+    BackHandler { handleBack() }
 
     val takePictureLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         if (success) {
             try {
-                val uriString = tempCameraUriString
-                val fileName = tempPhotoName
-                if (uriString != null && fileName != null) {
+                // Process death при долгой работе камеры мог сбросить
+                // rememberSaveable-строки — восстанавливаем последний
+                // файл из quest_photos, чтобы фото не «слетало».
+                val photosDir = java.io.File(context.filesDir, "quest_photos")
+                val resolvedFileName = tempPhotoName
+                    ?: photosDir.listFiles()
+                        ?.filter { it.extension.equals("jpg", ignoreCase = true) }
+                        ?.maxByOrNull { it.lastModified() }
+                        ?.name
+                val resolvedUriString = tempCameraUriString
+                    ?: resolvedFileName?.let { name ->
+                        FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            java.io.File(photosDir, name)
+                        ).toString()
+                    }
+                if (resolvedUriString != null && resolvedFileName != null) {
                     // Файл уже лежит в filesDir/quest_photos — камера писала
                     // сразу в постоянное хранилище. Здесь только даунскейл
                     // до 1080px JPEG перезаписью того же файла.
-                    val photosDir = java.io.File(context.filesDir, "quest_photos")
-                    val photoFile = java.io.File(photosDir, fileName)
-                    val uri = Uri.parse(uriString)
+                    val photoFile = java.io.File(photosDir, resolvedFileName)
+                    if (!photoFile.exists()) return@rememberLauncherForActivityResult
+                    val uri = Uri.parse(resolvedUriString)
 
                     val options = BitmapFactory.Options().apply {
                         inJustDecodeBounds = true
@@ -127,11 +211,11 @@ fun QuestDeliveryScreen(
                     }
                     // bitmap == null — оставляем оригинал камеры как есть.
 
-                    capturedImageUri = FileProvider.getUriForFile(
+                    capturedImageUriString = FileProvider.getUriForFile(
                         context,
                         "${context.packageName}.fileprovider",
                         photoFile
-                    )
+                    ).toString()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -146,8 +230,11 @@ fun QuestDeliveryScreen(
             // системная камера пишет сразу в постоянное хранилище, и фото
             // не зависит от очистки cacheDir или смерти процесса.
             val photosDir = java.io.File(context.filesDir, "quest_photos").apply { mkdirs() }
+            // Пересъёмка: старый файл больше не нужен — удаляем.
+            capturedPhotoFile?.delete()
             val fileName = "quest_${System.currentTimeMillis()}.jpg"
             val photoFile = java.io.File(photosDir, fileName)
+            capturedPhotoFile = photoFile
             val uri = FileProvider.getUriForFile(
                 context,
                 "${context.packageName}.fileprovider",
@@ -184,8 +271,9 @@ fun QuestDeliveryScreen(
         }
     }
 
+    Box(modifier = modifier.fillMaxSize()) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
             .imePadding()
@@ -198,7 +286,8 @@ fun QuestDeliveryScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = onBackClick,
+                onClick = handleBack,
+                enabled = !isSubmitting,
                 modifier = Modifier
                     .size(40.dp)
                     .border(1.dp, GlassStroke, CircleShape)
@@ -318,8 +407,11 @@ fun QuestDeliveryScreen(
 
         // Нижняя бирюзовая кнопка (активируется при наличии фото)
         Button(
-            onClick = { onSendClick(commentText, capturedImageUri) },
-            enabled = capturedImageUri != null,
+            onClick = {
+                isSubmitting = true
+                onSendClick(commentText, capturedImageUri)
+            },
+            enabled = capturedImageUri != null && !isSubmitting,
             colors = ButtonDefaults.buttonColors(
                 containerColor = AccentColor,
                 contentColor = SpaceBgStart,
@@ -331,13 +423,44 @@ fun QuestDeliveryScreen(
                 .fillMaxWidth()
                 .height(54.dp)
         ) {
-            Text(
-                text = stringResource(R.string.delivery_submit),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
+            if (isSubmitting) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(22.dp),
+                    color = SpaceBgStart,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.delivery_submit),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    // Полноэкранный оверлей загрузки: блокирует все касания до завершения submit
+    if (isSubmitting) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(SpaceBgStart.copy(alpha = 0.9f))
+                .clickable(enabled = false) {},
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = AccentColor)
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.delivery_uploading),
+                    color = TextPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
     }
 }

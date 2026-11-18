@@ -41,7 +41,10 @@ fun MainViewModel.claimDreamGoal(userId: String) {
                 date = getCurrentDateString(),
                 amount = "-$target ₽",
                 isIncome = false,
-                category = "Цели/Мечты"
+                category = "Цели/Мечты",
+                type = HistoryType.DREAM_SET,
+                amountValue = -target,
+                arg = claimedDreamTitle
             )
         ) + profile.historyItems
     )

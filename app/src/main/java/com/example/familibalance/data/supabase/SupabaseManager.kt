@@ -2,6 +2,7 @@ package com.example.familibalance.data.supabase
 
 import android.content.Context
 import android.util.Log
+import com.example.familibalance.BuildConfig
 import com.example.familibalance.SupabaseConfig
 import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.data.storage.AppSharedState
@@ -9,6 +10,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.SettingsSessionManager
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
@@ -24,7 +26,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.buildJsonObject
 
 object SupabaseManager {
@@ -64,6 +68,26 @@ object SupabaseManager {
                 Log.e("SupabaseManager", "Ошибка инициализации клиента", e)
                 null
             }
+        }
+    }
+
+    /**
+     * Гарантирует наличие сессии перед синхронизацией.
+     * Ждёт завершения загрузки сохранённой сессии (до 5 сек), чтобы не создать
+     * анонимную сессию поверх валидной родительской. Если пользователя нет
+     * (авто-вход ребёнка, гость) — выполняет signInAnonymously: без сессии
+     * push/upsert отклоняются, а dirty-профили навсегда блокируют isSynced.
+     */
+    suspend fun ensureSession() {
+        Log.d("SupabaseManager", "Connecting to URL: ${BuildConfig.SUPABASE_URL}")
+        val supabase = client ?: return
+        withTimeoutOrNull(5_000) {
+            supabase.auth.sessionStatus.first { it !is SessionStatus.Initializing }
+        }
+        val hasUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull() != null
+        if (!hasUser) {
+            runCatching { supabase.auth.signInAnonymously() }
+                .onFailure { Log.w("SupabaseManager", "signInAnonymously failed: ${it.message}") }
         }
     }
 

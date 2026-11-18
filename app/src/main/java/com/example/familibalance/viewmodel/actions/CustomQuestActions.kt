@@ -101,7 +101,10 @@ fun MainViewModel.claimCustomQuestReward(userId: String, questId: String) {
                     date = getCurrentDateString(),
                     amount = "+${target.reward} ₽",
                     isIncome = true,
-                    category = "Кастомные квесты"
+                    category = "Кастомные квесты",
+                    type = HistoryType.CUSTOM_QUEST_DONE,
+                    amountValue = target.reward,
+                    arg = target.title
                 )
             ) + profile.historyItems
         )

@@ -3,7 +3,9 @@ package com.example.familibalance.data.supabase
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.example.familibalance.data.model.ChildProfileDto
 import com.example.familibalance.data.model.ChildProfileState
+import com.example.familibalance.data.repository.SyncStatus
 import com.example.familibalance.data.storage.AppSharedState
 import com.example.familibalance.data.storage.AppStateStorage
 import io.github.jan.supabase.SupabaseClient
@@ -36,6 +38,13 @@ data class FamilyProfileRow(
 
 /** Синхронизация профилей: pull из облака, push в облако, фильтрация видимости. */
 internal object ProfileSync {
+
+    /** JSON для чтения stateUpdatedAt из удалённого state_json (last-writer-wins). */
+    private val stateJsonFormat = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+    }
 
     /** Загружает строки family_profiles и применяет видимые текущему пользователю. */
     suspend fun loadProfilesFromCloud(context: Context) {
@@ -162,32 +171,43 @@ internal object ProfileSync {
                     return@launch
                 }
 
-                // Применяем результаты на Main: собираем новый иммутабельный профиль
+                // Применяем результаты на Main: собираем новый иммутабельный профиль.
+                // ВАЖНО: берём СВЕЖИЙ снапшот из AppSharedState, а не устаревший
+                // `child` — за время загрузки фото Realtime мог применить изменения
+                // админа (approve/reject). Фото-URL подставляем только в те поля,
+                // которые remote не трогал (значение совпадает со старым снапшотом).
                 val updatedChild = withContext(Dispatchers.Main) {
-                    var updated = child.copy(
-                        closetPhotoUrl = newCloset,
-                        roomPhotoUrl = newRoom,
-                        diaryPhotoUrl = newDiary
+                    val fresh = AppSharedState.children[child.id] ?: child
+                    var updated = fresh.copy(
+                        closetPhotoUrl = if (fresh.closetPhotoUrl == child.closetPhotoUrl) newCloset else fresh.closetPhotoUrl,
+                        roomPhotoUrl = if (fresh.roomPhotoUrl == child.roomPhotoUrl) newRoom else fresh.roomPhotoUrl,
+                        diaryPhotoUrl = if (fresh.diaryPhotoUrl == child.diaryPhotoUrl) newDiary else fresh.diaryPhotoUrl
                     )
 
                     newBonus.forEach { (id, url) ->
+                        val origUrl = child.bonusQuests.firstOrNull { it.id == id }?.photoUrl
                         updated = updated.copy(
                             bonusQuests = updated.bonusQuests.map {
-                                if (it.id == id) it.copy(photoUrl = url) else it
+                                if (it.id == id && it.photoUrl == origUrl) it.copy(photoUrl = url) else it
                             }
                         )
                     }
 
                     newCustom.forEach { (id, url) ->
+                        val origUrl = child.customQuests.firstOrNull { it.id == id }?.photoUrl
                         updated = updated.copy(
                             customQuests = updated.customQuests.map {
-                                if (it.id == id) it.copy(photoUrl = url) else it
+                                if (it.id == id && it.photoUrl == origUrl) it.copy(photoUrl = url) else it
                             }
                         )
                     }
 
                     newPending.forEach { (index, uri) ->
-                        if (index < updated.pendingQuests.size && updated.pendingQuests[index].photoUri != uri) {
+                        val origUri = child.pendingQuests.getOrNull(index)?.photoUri
+                        if (index < updated.pendingQuests.size &&
+                            updated.pendingQuests[index].photoUri == origUri &&
+                            updated.pendingQuests[index].photoUri != uri
+                        ) {
                             updated = updated.copy(
                                 pendingQuests = updated.pendingQuests.mapIndexed { i, q ->
                                     if (i == index) q.copy(photoUri = uri) else q
@@ -201,11 +221,14 @@ internal object ProfileSync {
                 }
 
                 if (hasUploadedNewPhoto) {
-                    withContext(Dispatchers.Main) {
-                        AppStateStorage.saveLocalOnly(context)
-                    }
+                    // Мы уже в scope с Dispatchers.IO — saveLocalOnly
+                    // (JSON + EncryptedSharedPreferences) не должен идти на Main.
+                    AppStateStorage.saveLocalOnly(context)
                 }
 
+                // Dirty только на время upsert: Realtime-обновления, пришедшие
+                // во время загрузки фото, уже применены к fresh-снапшоту выше.
+                SyncStatus.markDirty(child.id)
                 val jsonString = AppStateStorage.serializeSingleChild(updatedChild)
                 val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
                 // uid сессии считаем «родительским» только если у пользователя есть email
@@ -219,6 +242,40 @@ internal object ProfileSync {
                 // Не затираем существующую привязку: берём parentUserId профиля,
                 // а если его нет — uid родительской сессии
                 val parentId = updatedChild.parentUserId.ifBlank { sessionParentUid.orEmpty() }
+
+                // Last-writer-wins: если в облаке уже лежит более свежая версия
+                // (например, админ отклонил квест, пока у нас шла загрузка фото),
+                // не затираем её устаревшим снапшотом — применяем удалённую
+                // версию локально и считаем синхронизацию достигнутой.
+                // stateUpdatedAt == 0 — legacy-профиль без метки: всегда пишем.
+                val remoteRow = runCatching {
+                    supabase.from("family_profiles")
+                        .select(columns = Columns.list("state_json", "parent_user_id", "parent_email", "auth_user_id", "status")) {
+                            filter { eq("user_id", child.id) }
+                        }
+                        .decodeList<FamilyProfileRow>()
+                        .firstOrNull()
+                }.getOrNull()
+                val remoteIsNewer = remoteRow?.let { row ->
+                    runCatching {
+                        val remoteTs = stateJsonFormat
+                            .decodeFromString<ChildProfileDto>(row.state_json)
+                            .stateUpdatedAt
+                        remoteTs > 0 && remoteTs > updatedChild.stateUpdatedAt
+                    }.getOrDefault(false)
+                } == true
+                if (remoteIsNewer) {
+                    remoteRow?.let { row ->
+                        AppStateStorage.applyRemoteChildJsonAsync(
+                            context, row.user_id, row.state_json,
+                            row.parentUserId, row.status, row.authUserId
+                        )
+                    }
+                    onResult?.invoke(true)
+                    Log.d("SupabaseManager", "Профиль ${child.id}: удалённая версия новее — upsert пропущен")
+                    return@launch
+                }
+
                 supabase.from("family_profiles").upsert(
                     FamilyProfileRow(
                         user_id = child.id,

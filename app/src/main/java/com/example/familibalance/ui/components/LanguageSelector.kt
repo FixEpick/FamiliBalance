@@ -13,6 +13,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.AppLocaleState
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
@@ -69,6 +70,7 @@ fun LanguageSelectionBottomSheet(
         containerColor = SpaceBgStart,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
+        AppLocaleContent {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -108,6 +110,7 @@ fun LanguageSelectionBottomSheet(
                 }
                 HorizontalDivider(color = GlassStroke)
             }
+        }
         }
     }
 }

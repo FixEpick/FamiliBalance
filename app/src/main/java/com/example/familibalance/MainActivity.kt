@@ -121,27 +121,6 @@ class MainActivity : FragmentActivity() {
                     showNotifRationale = true
                 }
             }
-            if (showNotifRationale) {
-                AlertDialog(
-                    onDismissRequest = { showNotifRationale = false },
-                    title = { Text("Уведомления", fontWeight = FontWeight.Bold) },
-                    text = {
-                        Text(
-                            "Разрешите уведомления, чтобы получать напоминания о квестах и статус скачивания обновлений.",
-                            fontSize = 13.sp
-                        )
-                    },
-                    confirmButton = {
-                        Button(onClick = {
-                            showNotifRationale = false
-                            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                        }) { Text("Разрешить") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { showNotifRationale = false }) { Text("Не сейчас") }
-                    }
-                )
-            }
             val familyState by viewModel.familyState.collectAsStateWithLifecycle()
             val sessionStatus by authViewModel.sessionStatus.collectAsStateWithLifecycle()
             val autoLoginChildId by viewModel.autoLoginChildId.collectAsStateWithLifecycle()
@@ -179,14 +158,13 @@ class MainActivity : FragmentActivity() {
                 }
 
                 // Жизненный цикл Realtime и синхронизации:
-                //  - ON_STOP: закрываем WebSocket — в фоне он не нужен (батарея);
-                //  - ON_START: возобновляем подписку, если есть авторизованная сессия;
+                //  - ON_START: подписка активна всегда, включая фон
+                //    (startRealtimeSync идемпотентен — повторный вызов no-op);
                 //  - ON_RESUME: досылаем несинхронизированные данные и обновления.
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->
                         when (event) {
-                            Lifecycle.Event.ON_STOP -> SupabaseManager.stopRealtimeSync()
                             Lifecycle.Event.ON_START -> {
                                 if (sessionStatus is SessionStatus.Authenticated) {
                                     SupabaseManager.startRealtimeSync(context)
@@ -351,6 +329,43 @@ class MainActivity : FragmentActivity() {
                             android.os.Process.killProcess(android.os.Process.myPid())
                         },
                         onDismiss = { showExitDialog = false }
+                    )
+                }
+
+                // Диалог разрешения на уведомления — внутри LocalizedAppContent/FamiliBalanceTheme,
+                // чтобы получить тёмную тему и локаль приложения.
+                if (showNotifRationale) {
+                    AlertDialog(
+                        onDismissRequest = { showNotifRationale = false },
+                        containerColor = SpaceBgStart,
+                        title = {
+                            Text(
+                                stringResource(R.string.notif_rationale_title),
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        text = {
+                            Text(
+                                stringResource(R.string.notif_rationale_message),
+                                color = TextSecondary,
+                                fontSize = 13.sp
+                            )
+                        },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showNotifRationale = false
+                                    notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart)
+                            ) { Text(stringResource(R.string.notif_rationale_allow)) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showNotifRationale = false }) {
+                                Text(stringResource(R.string.notif_rationale_later), color = TextSecondary)
+                            }
+                        }
                     )
                 }
 

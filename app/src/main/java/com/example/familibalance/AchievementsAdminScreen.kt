@@ -36,7 +36,20 @@ fun AdminAchievementsScreen(
 ) {
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+    if (child == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.admin_no_data),
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+        return
+    }
 
     var newTitle by rememberSaveable { mutableStateOf("") }
     var newDescription by rememberSaveable { mutableStateOf("") }
@@ -124,7 +137,7 @@ fun AdminAchievementsScreen(
     ) {
         item {
             Text(
-                text = "✨ Создание нового достижения",
+                text = stringResource(R.string.achadm_create_title),
                 color = AccentColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
@@ -133,7 +146,7 @@ fun AdminAchievementsScreen(
 
     item {
             Text(
-                text = "📋 Все достижения (${child.achievements.size})",
+                text = stringResource(R.string.achadm_all, child.achievements.size),
                 color = TextPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
@@ -162,12 +175,12 @@ fun AdminAchievementsScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     val branchLabel = when (achievement.branch) {
-                        AchievementBranch.DIARY -> "📚 Дневник"
-                        AchievementBranch.WARDROBE -> "🚪 Шкаф"
-                        AchievementBranch.ROOM -> "🛏️ Комната"
+                        AchievementBranch.DIARY -> stringResource(R.string.achadm_branch_diary)
+                        AchievementBranch.WARDROBE -> stringResource(R.string.achadm_branch_wardrobe)
+                        AchievementBranch.ROOM -> stringResource(R.string.achadm_branch_room)
                     }
                     Text(
-                        text = "$branchLabel · Цель: ${achievement.targetCount} · Награда: ${achievement.reward} ₽",
+                        text = stringResource(R.string.achadm_meta, branchLabel, achievement.targetCount, achievement.reward),
                         color = TextSecondary,
                         fontSize = 13.sp
                     )
@@ -226,14 +239,14 @@ fun AdminAchievementsScreen(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
             title = {
-                Text("✏️ Редактирование достижения", color = AccentColor, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.achadm_edit_title), color = AccentColor, fontWeight = FontWeight.Bold)
             },
             text = {
                 Column(modifier = Modifier.imePadding()) {
                     OutlinedTextField(
                         value = editTitle,
                         onValueChange = { editTitle = it },
-                        label = { Text("Название", color = TextPrimary) },
+                        label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -249,7 +262,7 @@ fun AdminAchievementsScreen(
                     OutlinedTextField(
                         value = editDescription,
                         onValueChange = { editDescription = it },
-                        label = { Text("Описание", color = TextPrimary) },
+                        label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -265,7 +278,7 @@ fun AdminAchievementsScreen(
                     OutlinedTextField(
                         value = editTarget,
                         onValueChange = { editTarget = it },
-                        label = { Text("Цель (количество раз/пятёрок)", color = TextPrimary) },
+                        label = { Text(stringResource(R.string.achadm_field_target), color = TextPrimary) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
@@ -282,7 +295,7 @@ fun AdminAchievementsScreen(
                     OutlinedTextField(
                         value = editReward,
                         onValueChange = { editReward = it },
-                        label = { Text("Награда ₽", color = TextPrimary) },
+                        label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
@@ -296,16 +309,16 @@ fun AdminAchievementsScreen(
                         )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Ветка достижения:", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.achadm_branch_label), color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val branches = listOf(
-                            AchievementBranch.DIARY to "📚 Дневник",
-                            AchievementBranch.WARDROBE to "🚪 Шкаф",
-                            AchievementBranch.ROOM to "🛏️ Комната"
+                            AchievementBranch.DIARY to stringResource(R.string.achadm_branch_diary),
+                            AchievementBranch.WARDROBE to stringResource(R.string.achadm_branch_wardrobe),
+                            AchievementBranch.ROOM to stringResource(R.string.achadm_branch_room)
                         )
                         branches.forEach { (branch, label) ->
                             val isSelected = editBranch == branch
@@ -331,12 +344,12 @@ fun AdminAchievementsScreen(
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.fillMaxWidth().height(50.dp)
                 ) {
-                    Text("Сохранить", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { cancelEdit() }) {
-                    Text("Отмена", color = TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
                 }
             }
         )
@@ -347,10 +360,10 @@ fun AdminAchievementsScreen(
             onDismissRequest = { showDeleteConfirm = false },
             containerColor = SpaceBgStart,
             title = {
-                Text("Удаление достижения", color = PenaltyRed, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.achadm_delete_title), color = PenaltyRed, fontWeight = FontWeight.Bold)
             },
             text = {
-                Text("Вы уверены, что хотите удалить это достижение?", color = TextPrimary)
+                Text(stringResource(R.string.achadm_delete_message), color = TextPrimary)
             },
             confirmButton = {
                 Button(
@@ -358,12 +371,12 @@ fun AdminAchievementsScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed, contentColor = Color.White),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text("Удалить", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.admin_set_delete), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDeleteConfirm = false }) {
-                    Text("Отмена", color = TextSecondary)
+                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
                 }
             }
         )
@@ -374,7 +387,20 @@ fun AdminAchievementsScreen(
 fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+    if (child == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.admin_no_data),
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+        return
+    }
     var showCreateDialog by rememberSaveable { mutableStateOf(false) }
     var newTitle by rememberSaveable { mutableStateOf("") }
     var newDesc by rememberSaveable { mutableStateOf("") }
@@ -403,9 +429,9 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     ) {
         item {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                OutlinedButton(onClick = onBack, border = BorderStroke(1.dp, GlassStroke)) { Text("← Назад", color = Color.White) }
+                OutlinedButton(onClick = onBack, border = BorderStroke(1.dp, GlassStroke)) { Text(stringResource(R.string.common_back), color = Color.White) }
                 Spacer(Modifier.width(12.dp))
-                Text("🏆 Редактор достижений", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.admin_set_achievements_editor), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
         item {
@@ -415,16 +441,16 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor)
-            ) { Text("➕ Создать новое достижение", fontWeight = FontWeight.Bold, fontSize = 15.sp) }
+            ) { Text(stringResource(R.string.achadm_create_btn), fontWeight = FontWeight.Bold, fontSize = 15.sp) }
         }
         items(child.achievements, key = { it.id }, contentType = { "achievement" }) { ach ->
             val branchLabel = when (ach.branch) {
-                AchievementBranch.DIARY -> "📚 Дневник"
-                AchievementBranch.WARDROBE -> "🚪 Шкаф"
-                AchievementBranch.ROOM -> "🛏️ Комната"
+                AchievementBranch.DIARY -> stringResource(R.string.achadm_branch_diary)
+                AchievementBranch.WARDROBE -> stringResource(R.string.achadm_branch_wardrobe)
+                AchievementBranch.ROOM -> stringResource(R.string.achadm_branch_room)
             }
             EditorItemRow(
-                title = ach.title, subtitle = "$branchLabel • Цель: ${ach.targetCount} • Награда: ${ach.reward} ₽",
+                title = ach.title, subtitle = stringResource(R.string.achadm_meta, branchLabel, ach.targetCount, ach.reward),
                 checked = ach.isVisible, switchColors = switchColors,
                 onCheckedChange = { viewModel.toggleAchievementVisibility(child.id, ach.id, it) },
                 onEdit = { editingAch = ach; editTitle = ach.title; editDesc = ach.description; editTarget = ach.targetCount.toString(); editReward = ach.reward.toString(); editBranch = ach.branch },
@@ -437,19 +463,19 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             onDismissRequest = { showCreateDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
-            title = { Text("Новое достижение", color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.achadm_new_title), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text("Название", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text("Описание", color = TextPrimary) }, colors = editorFieldColors())
-                    OutlinedTextField(value = newTarget, onValueChange = { newTarget = it }, label = { Text("Цель (кол-во)", color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
-                    OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text("Награда ₽", color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
+                    OutlinedTextField(value = newTarget, onValueChange = { newTarget = it }, label = { Text(stringResource(R.string.achadm_field_target_short), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         AchievementBranch.entries.forEach { b ->
-                            val label = when (b) { AchievementBranch.DIARY -> "Дневник"; AchievementBranch.WARDROBE -> "Шкаф"; AchievementBranch.ROOM -> "Комната" }
+                            val label = when (b) { AchievementBranch.DIARY -> stringResource(R.string.achadm_b_diary); AchievementBranch.WARDROBE -> stringResource(R.string.achadm_b_wardrobe); AchievementBranch.ROOM -> stringResource(R.string.achadm_b_room) }
                             OutlinedButton(onClick = { newBranch = b }, border = BorderStroke(1.dp, if (newBranch == b) AccentColor else GlassStroke), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
                                 Text(label, fontSize = 12.sp, color = if (newBranch == b) AccentColor else Color.White)
                             }
@@ -465,9 +491,9 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         viewModel.addAchievement(child.id, newTitle.trim(), newDesc.trim(), newTarget.trim().toIntOrNull() ?: 1, newReward.trim().toIntOrNull() ?: 20, newBranch)
                         newTitle = ""; newDesc = ""; newTarget = "5"; newReward = "50"; showCreateDialog = false
                     }
-                ) { Text("Создать", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.admin_set_create), fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text("Отмена", color = TextSecondary) } }
+            dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
     editingAch?.let { ach ->
@@ -475,19 +501,19 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             onDismissRequest = { editingAch = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
-            title = { Text("Редактировать достижение", color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.achadm_edit_dialog_title), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(value = editTitle, onValueChange = { editTitle = it }, label = { Text("Название", color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = editDesc, onValueChange = { editDesc = it }, label = { Text("Описание", color = TextPrimary) }, colors = editorFieldColors())
-                    OutlinedTextField(value = editTarget, onValueChange = { editTarget = it }, label = { Text("Цель (кол-во)", color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
-                    OutlinedTextField(value = editReward, onValueChange = { editReward = it }, label = { Text("Награда ₽", color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    OutlinedTextField(value = editTitle, onValueChange = { editTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    OutlinedTextField(value = editDesc, onValueChange = { editDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
+                    OutlinedTextField(value = editTarget, onValueChange = { editTarget = it }, label = { Text(stringResource(R.string.achadm_field_target_short), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    OutlinedTextField(value = editReward, onValueChange = { editReward = it }, label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         AchievementBranch.entries.forEach { b ->
-                            val label = when (b) { AchievementBranch.DIARY -> "Дневник"; AchievementBranch.WARDROBE -> "Шкаф"; AchievementBranch.ROOM -> "Комната" }
+                            val label = when (b) { AchievementBranch.DIARY -> stringResource(R.string.achadm_b_diary); AchievementBranch.WARDROBE -> stringResource(R.string.achadm_b_wardrobe); AchievementBranch.ROOM -> stringResource(R.string.achadm_b_room) }
                             OutlinedButton(onClick = { editBranch = b }, border = BorderStroke(1.dp, if (editBranch == b) AccentColor else GlassStroke), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
                                 Text(label, fontSize = 12.sp, color = if (editBranch == b) AccentColor else Color.White)
                             }
@@ -503,22 +529,22 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         viewModel.updateAchievement(child.id, ach.id, editTitle.trim(), editDesc.trim(), editTarget.trim().toIntOrNull() ?: ach.targetCount, editReward.trim().toIntOrNull() ?: ach.reward, editBranch)
                         editingAch = null
                     }
-                ) { Text("Сохранить", fontWeight = FontWeight.Bold) }
+                ) { Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { editingAch = null }) { Text("Отмена", color = TextSecondary) } }
+            dismissButton = { TextButton(onClick = { editingAch = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
     deletingAch?.let { ach ->
         AlertDialog(
             onDismissRequest = { deletingAch = null },
             containerColor = SpaceBgStart,
-            title = { Text("Удалить достижение «${ach.title}»?", color = PenaltyRed, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.achadm_delete_confirm, ach.title), color = PenaltyRed, fontWeight = FontWeight.Bold) },
             confirmButton = {
                 Button(colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), onClick = { viewModel.deleteAchievement(child.id, ach.id); deletingAch = null }) {
-                    Text("Удалить", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.admin_set_delete), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
-            dismissButton = { TextButton(onClick = { deletingAch = null }) { Text("Отмена", color = TextSecondary) } }
+            dismissButton = { TextButton(onClick = { deletingAch = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
 }

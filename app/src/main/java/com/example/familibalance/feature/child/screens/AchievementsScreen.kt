@@ -88,9 +88,23 @@ fun AchievementsScreen(
 
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val currentChild = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+    if (currentChild == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.admin_no_data),
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+        return
+    }
     val context = LocalContext.current
     val giftDesc = stringResource(R.string.a11y_gift_icon)
+    val giftToastText = stringResource(R.string.ach_gift_toast)
     val allAchievements = getAchievements(currentChild)
 
     val displayList = remember(selectedTab, allAchievements) {
@@ -210,7 +224,7 @@ fun AchievementsScreen(
                             .clickable {
                                 Toast.makeText(
                                     context,
-                                    context.getString(R.string.ach_gift_toast),
+                                    giftToastText,
                                     Toast.LENGTH_SHORT
                                 ).show()
                             },

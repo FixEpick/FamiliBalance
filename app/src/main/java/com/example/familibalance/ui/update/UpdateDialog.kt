@@ -28,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
 import com.example.familibalance.data.update.UpdateError
+import com.example.familibalance.ui.theme.SpaceBgStart
+import com.example.familibalance.ui.theme.TextPrimary
+import com.example.familibalance.ui.theme.TextSecondary
 import com.example.familibalance.viewmodel.UpdateUiState
 
 @Composable
@@ -45,9 +48,11 @@ fun UpdateDialog(
 
         is UpdateUiState.Available -> AlertDialog(
             onDismissRequest = onDismiss,
+            containerColor = SpaceBgStart,
             title = {
                 Text(
                     stringResource(R.string.update_title, state.release.tagName),
+                    color = TextPrimary,
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -60,6 +65,7 @@ fun UpdateDialog(
                     if (notes.isNotBlank()) {
                         Text(
                             stripMarkdown(notes) + if (state.release.body.lines().size > 10) "\n..." else "",
+                            color = TextSecondary,
                             fontSize = 13.sp,
                             lineHeight = 18.sp,
                             modifier = Modifier
@@ -69,6 +75,7 @@ fun UpdateDialog(
                     } else {
                         Text(
                             stringResource(R.string.update_no_notes),
+                            color = TextSecondary,
                             fontSize = 13.sp
                         )
                     }
@@ -84,7 +91,8 @@ fun UpdateDialog(
 
         is UpdateUiState.Downloading -> AlertDialog(
             onDismissRequest = {},
-            title = { Text(stringResource(R.string.update_downloading_title), fontWeight = FontWeight.Bold) },
+            containerColor = SpaceBgStart,
+            title = { Text(stringResource(R.string.update_downloading_title), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     LinearProgressIndicator(
@@ -92,7 +100,7 @@ fun UpdateDialog(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("${state.progress}%", fontSize = 13.sp)
+                    Text("${state.progress}%", color = TextSecondary, fontSize = 13.sp)
                 }
             },
             confirmButton = {}
@@ -101,6 +109,9 @@ fun UpdateDialog(
         is UpdateUiState.ReadyToInstall -> {
             // Запускаем установщик сразу при переходе в это состояние
             androidx.compose.runtime.LaunchedEffect(state) {
+                // LocalContext может быть не Activity (application context) —
+                // без NEW_TASK startActivity падает с AndroidRuntimeException.
+                state.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(state.intent)
                 onDismiss()
             }
@@ -108,10 +119,12 @@ fun UpdateDialog(
 
         is UpdateUiState.NeedInstallPermission -> AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.update_permission_title), fontWeight = FontWeight.Bold) },
+            containerColor = SpaceBgStart,
+            title = { Text(stringResource(R.string.update_permission_title), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     stringResource(R.string.update_install_permission_text),
+                    color = TextSecondary,
                     fontSize = 13.sp
                 )
             },
@@ -143,15 +156,18 @@ fun UpdateDialog(
 
         is UpdateUiState.NeedPermission -> AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.update_permission_title), fontWeight = FontWeight.Bold) },
+            containerColor = SpaceBgStart,
+            title = { Text(stringResource(R.string.update_permission_title), color = TextPrimary, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
                     stringResource(R.string.update_permission_text),
+                    color = TextSecondary,
                     fontSize = 13.sp
                 )
             },
             confirmButton = {
                 Button(onClick = {
+                    state.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(state.intent)
                     onDismiss()
                 }) { Text(stringResource(R.string.update_btn_open_settings)) }
@@ -163,8 +179,9 @@ fun UpdateDialog(
 
         is UpdateUiState.Error -> AlertDialog(
             onDismissRequest = onDismiss,
-            title = { Text(stringResource(R.string.update_error_title), fontWeight = FontWeight.Bold) },
-            text = { Text(updateErrorMessage(state.error), fontSize = 13.sp) },
+            containerColor = SpaceBgStart,
+            title = { Text(stringResource(R.string.update_error_title), color = TextPrimary, fontWeight = FontWeight.Bold) },
+            text = { Text(updateErrorMessage(state.error), color = TextSecondary, fontSize = 13.sp) },
             confirmButton = {
                 Button(onClick = onDismiss) { Text(stringResource(R.string.update_btn_close)) }
             }

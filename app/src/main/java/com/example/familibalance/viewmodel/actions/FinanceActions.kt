@@ -19,7 +19,7 @@ fun MainViewModel.adminDeposit(userId: String, amount: Int, description: String)
         profile.copy(
             balance = profile.balance + amount,
             historyItems = listOf(
-                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "+$amount ₽", true, "Квесты")
+                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "+$amount ₽", true, "Квесты", type = HistoryType.ADMIN_REWARD, amountValue = amount, arg = description.trim().ifBlank { null })
             ) + profile.historyItems
         )
     )
@@ -56,7 +56,7 @@ internal fun MainViewModel.applyFineInternal(childId: String, amount: Int, reaso
             lastStreakDate = "",
             honestAdmissionStatus = if (discounted) QuestStatus.CLAIMED else profile.honestAdmissionStatus,
             historyItems = listOf(
-                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "-$finalAmount ₽", false, "Штрафы")
+                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "-$finalAmount ₽", false, "Штрафы", type = HistoryType.FINE, amountValue = -finalAmount, arg = reason.trim().ifBlank { null })
             ) + profile.historyItems
         )
     )
@@ -72,7 +72,7 @@ fun MainViewModel.adminWithdraw(userId: String, amount: Int, description: String
         profile.copy(
             balance = (profile.balance - amount).coerceAtLeast(0),
             historyItems = listOf(
-                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "-$amount ₽", false, "Штрафы")
+                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "-$amount ₽", false, "Штрафы", type = HistoryType.ADMIN_WITHDRAW, amountValue = -amount, arg = description.trim().ifBlank { null })
             ) + profile.historyItems
         )
     )

@@ -30,7 +30,10 @@ fun MainViewModel.adminCashoutAll(userId: String) {
                         date = getCurrentDateString(),
                         amount = "-$amount ₽",
                         isIncome = false,
-                        category = "Вывод средств"
+                        category = "Вывод средств",
+                        type = HistoryType.CASHOUT_GIVEN,
+                        amountValue = -amount,
+                        arg = profile.name
                     )
                 ) + profile.historyItems
             )
@@ -67,10 +70,12 @@ fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
     }
 }
 
-fun MainViewModel.approveCashoutRequest(requestId: String) {
+fun MainViewModel.approveCashoutRequest(childId: String, requestId: String) {
     if (!tryStartProcessingAction()) return
     try {
-    val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
+    // childId обязателен: на устройстве админа selectedChildId может
+    // указывать на другого ребёнка — заявка просто не находилась.
+    val profile = familyRepository.getChild(childId) ?: return
 
     val request = profile.cashoutRequests.firstOrNull { it.id == requestId } ?: return
 
@@ -87,7 +92,10 @@ fun MainViewModel.approveCashoutRequest(requestId: String) {
                 date = getCurrentDateString(),
                 amount = "-${request.amount} ₽",
                 isIncome = false,
-                category = "Вывод средств"
+                category = "Вывод средств",
+                type = HistoryType.CASHOUT_REQUEST,
+                amountValue = -request.amount,
+                arg = request.comment
             )
         ) + profile.historyItems,
         cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId }
@@ -98,8 +106,8 @@ fun MainViewModel.approveCashoutRequest(requestId: String) {
     }
 }
 
-fun MainViewModel.rejectCashoutRequest(requestId: String) {
-    val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
+fun MainViewModel.rejectCashoutRequest(childId: String, requestId: String) {
+    val profile = familyRepository.getChild(childId) ?: return
 
     updateChildProfile(
         profile.copy(cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId })

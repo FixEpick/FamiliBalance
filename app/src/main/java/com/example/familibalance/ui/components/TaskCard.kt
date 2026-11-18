@@ -2,6 +2,7 @@ package com.example.familibalance.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -17,6 +18,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
@@ -30,14 +33,18 @@ fun TaskCard(
     reward: String,
     status: QuestStatus,
     rejectReason: String? = null,
-    claimButtonText: String = "🎉 Получить награду",
+    claimButtonText: String? = null,
     frequencyBadge: String? = null,
+    /** Краткий отчёт (например, разбивка оценок дневника), показывается
+     *  кликабельным текстом при READY_TO_CLAIM; клик открывает AlertDialog. */
+    reportText: String? = null,
     borderColor: Color = GlassStroke,
     actionEnabled: Boolean = true,
     onExecute: () -> Unit,
     onClaim: (Offset) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val resolvedClaimText = claimButtonText ?: stringResource(R.string.task_claim_reward)
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -104,11 +111,50 @@ fun TaskCard(
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = "❌ Отклонено папой: $rejectReason",
+                        text = stringResource(R.string.task_rejected_by_dad, rejectReason),
                         color = PenaltyRed,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier.padding(10.dp)
+                    )
+                }
+            }
+            if (status == QuestStatus.READY_TO_CLAIM && !reportText.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                var showReportDialog by remember { mutableStateOf(false) }
+                Text(
+                    text = stringResource(R.string.task_view_report),
+                    color = AccentColor,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.clickable { showReportDialog = true }
+                )
+                if (showReportDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showReportDialog = false },
+                        containerColor = GlassBackground,
+                        title = {
+                            Text(
+                                text = stringResource(R.string.task_report_title),
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        text = {
+                            Text(
+                                text = reportText,
+                                color = TextPrimary,
+                                fontSize = 14.sp
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showReportDialog = false }) {
+                                Text(
+                                    text = stringResource(R.string.task_report_close),
+                                    color = AccentColor
+                                )
+                            }
+                        }
                     )
                 }
             }
@@ -130,7 +176,7 @@ fun TaskCard(
                             border = BorderStroke(1.dp, AccentColor),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(text = "📷 Выполнить", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text(text = stringResource(R.string.task_execute), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                     QuestStatus.PENDING -> {
@@ -140,7 +186,7 @@ fun TaskCard(
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = "• На проверке у папы",
+                                text = stringResource(R.string.task_pending_review),
                                 color = StatusYellow,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -166,7 +212,7 @@ fun TaskCard(
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(text = claimButtonText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            Text(text = resolvedClaimText, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                     QuestStatus.CLAIMED, QuestStatus.APPROVED -> {
@@ -176,7 +222,7 @@ fun TaskCard(
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Text(
-                                text = "✅ Выполнено",
+                                text = stringResource(R.string.task_done),
                                 color = StatusGreen,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,

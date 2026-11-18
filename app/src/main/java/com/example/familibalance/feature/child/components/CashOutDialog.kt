@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 
@@ -34,13 +35,16 @@ fun CashOutDialog(
         onDismissRequest = onDismiss,
         containerColor = SpaceBgStart,
         title = {
+            AppLocaleContent {
             Text(
                 text = stringResource(R.string.child_cashout_dialog_title),
                 color = LocalAppPalette.current.primaryNeon,
                 fontWeight = FontWeight.Bold
             )
+            }
         },
         text = {
+            AppLocaleContent {
             Column {
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
@@ -85,8 +89,10 @@ fun CashOutDialog(
                     shape = RoundedCornerShape(12.dp)
                 )
             }
+            }
         },
         confirmButton = {
+            AppLocaleContent {
             Button(
                 onClick = {
                     if (canSubmit) {
@@ -97,10 +103,13 @@ fun CashOutDialog(
             ) {
                 Text(stringResource(R.string.child_cashout_submit))
             }
+            }
         },
         dismissButton = {
+            AppLocaleContent {
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.action_cancel))
+            }
             }
         }
     )

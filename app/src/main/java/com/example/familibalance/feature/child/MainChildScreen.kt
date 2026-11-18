@@ -86,7 +86,20 @@ fun MainChildScreen(
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isProcessingAction by viewModel.isProcessingAction.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+    if (child == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.admin_no_data),
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+        return
+    }
     val balance = child.balance
     val boughtMinutesToday = child.boughtMinutesToday
     val honestAdmissionStatus = child.honestAdmissionStatus

@@ -87,7 +87,20 @@ fun TasksScreen(
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isProcessingAction by viewModel.isProcessingAction.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+    if (child == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.admin_no_data),
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+        return
+    }
     val closetStatus = child.closetStatus
     val roomStatus = child.roomStatus
     val diaryStatus = child.diaryStatus
@@ -95,10 +108,15 @@ fun TasksScreen(
     val isRoomVisible = child.isRoomVisible
     val isDiaryVisible = child.isDiaryVisible
 
-    var activeDeliveryQuest by remember { mutableStateOf<QuestDeliveryTarget?>(null) }
+    // rememberSaveable хранит только String-ключ: Bundle с Serializable-
+    // объектом мог не восстановиться после process death (камера —
+    // отдельная Activity). Цель резолвится из актуального child по ключу —
+    // если квест удалён/изменён, экран просто не откроется.
+    var activeDeliveryKey by rememberSaveable { mutableStateOf<String?>(null) }
+    val activeDeliveryQuest = rememberQuestDeliveryTarget(child, activeDeliveryKey)
 
     if (activeDeliveryQuest != null) {
-        val target = activeDeliveryQuest!!
+        val target = activeDeliveryQuest
         QuestDeliveryScreen(
             questName = target.displayName,
             rewardText = target.rewardText,
@@ -119,10 +137,10 @@ fun TasksScreen(
                         }
                     }
                 }
-                activeDeliveryQuest = null
+                activeDeliveryKey = null
             },
             onBackClick = {
-                activeDeliveryQuest = null
+                activeDeliveryKey = null
             },
             modifier = modifier
         )
@@ -211,7 +229,7 @@ fun TasksScreen(
                         borderColor = StatusYellow,
                         actionEnabled = !isProcessingAction,
                         onExecute = {
-                            activeDeliveryQuest = QuestDeliveryTarget(bQuest.title, "+${bQuest.reward} ₽", "bonus:${bQuest.id}")
+                            activeDeliveryKey = "bonus:${bQuest.id}"
                         },
                         onClaim = { buttonOffset ->
                             triggerCoinFlight(buttonOffset) {
@@ -234,7 +252,7 @@ fun TasksScreen(
                         rejectReason = child.closetRejectReason,
                         actionEnabled = !isProcessingAction,
                         onExecute = {
-                            activeDeliveryQuest = QuestDeliveryTarget(child.wardrobeTitle, "+${child.wardrobeReward} ₽", "closet")
+                            activeDeliveryKey = "closet"
                         },
                         onClaim = { buttonOffset ->
                             triggerCoinFlight(buttonOffset) {
@@ -255,7 +273,7 @@ fun TasksScreen(
                         rejectReason = child.roomRejectReason,
                         actionEnabled = !isProcessingAction,
                         onExecute = {
-                            activeDeliveryQuest = QuestDeliveryTarget(child.roomTitle, "+${child.roomReward} ₽", "room")
+                            activeDeliveryKey = "room"
                         },
                         onClaim = { buttonOffset ->
                             triggerCoinFlight(buttonOffset) {
@@ -267,12 +285,33 @@ fun TasksScreen(
             }
             if (isDiaryVisible && !child.isDiaryDeleted) {
                 item {
-                    val diaryClaimText = if (child.diaryApprovedReward >= 0) {
-                        stringResource(R.string.tasks_claim_reward, child.diaryApprovedReward)
+                    // Штрафные оценки (3 → -20 ₽, 2 → -50 ₽) вычитаются из
+                    // diaryApprovedReward — та же формула, что в отчёте
+                    // «Итого к начислению», чтобы кнопка совпадала с отчётом.
+                    val diaryFines = 20 * child.diaryCount3 + 50 * child.diaryCount2
+                    val diaryNetReward = child.diaryApprovedReward - diaryFines
+                    val diaryClaimText = if (diaryNetReward >= 0) {
+                        stringResource(R.string.tasks_claim_reward, diaryNetReward)
                     } else {
-                        stringResource(R.string.tasks_claim_reward_neg, child.diaryApprovedReward)
+                        stringResource(R.string.tasks_claim_reward_neg, diaryNetReward)
                     }
                     val diaryRewardText = stringResource(R.string.tasks_diary_reward)
+                    // Отчёт по оценкам — виден, когда админ утвердил дневник
+                    // (READY_TO_CLAIM) и сохранил разбивку в diaryCount*.
+                    val diaryReportText = if (
+                        diaryStatus == QuestStatus.READY_TO_CLAIM &&
+                        child.diaryCount5 + child.diaryCount4 +
+                        child.diaryCount3 + child.diaryCount2 > 0
+                    ) {
+                        buildString {
+                            appendLine(stringResource(R.string.tasks_diary_report_header))
+                            appendLine(stringResource(R.string.tasks_diary_grade5, child.diaryCount5, 50 * child.diaryCount5))
+                            appendLine(stringResource(R.string.tasks_diary_grade4, child.diaryCount4, 30 * child.diaryCount4))
+                            appendLine(stringResource(R.string.tasks_diary_grade3, child.diaryCount3, 20 * child.diaryCount3))
+                            appendLine(stringResource(R.string.tasks_diary_grade2, child.diaryCount2, 50 * child.diaryCount2))
+                            appendLine(stringResource(R.string.tasks_diary_total, diaryNetReward))
+                        }.trimEnd()
+                    } else null
                     TaskCard(
                         title = child.diaryTitle,
                         description = child.diaryDesc,
@@ -281,9 +320,10 @@ fun TasksScreen(
                         status = diaryStatus,
                         rejectReason = child.diaryRejectReason,
                         claimButtonText = diaryClaimText,
+                        reportText = diaryReportText,
                         actionEnabled = !isProcessingAction,
                         onExecute = {
-                            activeDeliveryQuest = QuestDeliveryTarget(child.diaryTitle, diaryRewardText, "diary")
+                            activeDeliveryKey = "diary"
                         },
                         onClaim = { buttonOffset ->
                             triggerCoinFlight(buttonOffset) {
@@ -327,7 +367,7 @@ fun TasksScreen(
                         claimButtonText = claimText,
                         actionEnabled = !isProcessingAction,
                         onExecute = {
-                            activeDeliveryQuest = QuestDeliveryTarget(quest.title, "+${quest.reward} ₽", "custom:${quest.id}")
+                            activeDeliveryKey = "custom:${quest.id}"
                         },
                         onClaim = { buttonOffset ->
                             triggerCoinFlight(buttonOffset) {
@@ -393,3 +433,31 @@ internal data class QuestDeliveryTarget(
     val rewardText: String,
     val key: String
 )
+
+/**
+ * Резолвит ключ квеста ("closet"/"room"/"diary"/"bonus:<id>"/"custom:<id>")
+ * в [QuestDeliveryTarget] по актуальному состоянию ребёнка.
+ * Используется TasksScreen и HistoryScreen: в rememberSaveable хранится
+ * только String-ключ — он гарантированно переживает process death,
+ * в отличие от Serializable-объекта в Bundle.
+ */
+@Composable
+internal fun rememberQuestDeliveryTarget(
+    child: ChildProfileState,
+    key: String?
+): QuestDeliveryTarget? {
+    if (key == null) return null
+    return when {
+        key == "closet" -> QuestDeliveryTarget(child.wardrobeTitle, "+${child.wardrobeReward} ₽", key)
+        key == "room" -> QuestDeliveryTarget(child.roomTitle, "+${child.roomReward} ₽", key)
+        key == "diary" -> QuestDeliveryTarget(child.diaryTitle, stringResource(R.string.tasks_diary_reward), key)
+        key.startsWith("bonus:") -> child.bonusQuests
+            .firstOrNull { "bonus:${it.id}" == key }
+            ?.let { QuestDeliveryTarget(it.title, "+${it.reward} ₽", key) }
+        key.startsWith("custom:") -> child.customQuests
+            .firstOrNull { "custom:${it.id}" == key }
+            ?.let { QuestDeliveryTarget(it.title, "+${it.reward} ₽", key) }
+        else -> null
+    }
+}
+

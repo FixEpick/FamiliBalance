@@ -110,7 +110,7 @@ fun AdminScreen(
 
     val child = visibleChildren.firstOrNull { it.id == familyState.selectedChildId }
         ?: visibleChildren.firstOrNull()
-        ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
+        ?: ChildProfileState(id = "user_1", name = stringResource(R.string.child_player_role), avatar = "🧒")
 
     var isRefreshing by remember { mutableStateOf(false) }
     LaunchedEffect(isSynced) {

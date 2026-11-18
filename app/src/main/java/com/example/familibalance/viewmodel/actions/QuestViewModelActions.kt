@@ -143,6 +143,14 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
     var updated = profile
     var rewardAmount = 50
     var questTitle = ""
+    // Для дневника записи в историю уже добавлены по каждой оценке
+    // (gradeEntries) — сводная запись «Награда получена» не нужна,
+    // иначе в истории появляется лишний дубль суммы.
+    var addRewardHistoryEntry = true
+    // Штрафные оценки дневника (3 и 2) — применяются после updateChildProfile,
+    // когда статус уже CLAIMED (applyFineInternal читает свежий профиль).
+    var diaryFine3 = 0
+    var diaryFine2 = 0
     when (questType.lowercase()) {
         "closet", "шкаф" -> {
             if (profile.closetStatus == QuestStatus.READY_TO_CLAIM) {
@@ -166,27 +174,58 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
         }
         "diary", "дневник", "итоги" -> {
             if (profile.diaryStatus == QuestStatus.READY_TO_CLAIM) {
-                updated = updated.copy(diaryStatus = QuestStatus.CLAIMED)
+                val c5 = profile.diaryCount5
+                val c4 = profile.diaryCount4
+                diaryFine3 = profile.diaryCount3
+                diaryFine2 = profile.diaryCount2
+                // Записи по оценкам — как раньше при мгновенном применении.
+                val time = getCurrentTimeString()
+                val date = getCurrentDateString()
+                val gradeEntries = mutableListOf<HistoryData>()
+                repeat(c5) {
+                    gradeEntries += HistoryData("Оценка 5", time, date, "+50 ₽", true, "Дневник", type = HistoryType.DIARY_GRADE_5, amountValue = 50)
+                }
+                repeat(c4) {
+                    gradeEntries += HistoryData("Оценка 4", time, date, "+30 ₽", true, "Дневник", type = HistoryType.DIARY_GRADE_4, amountValue = 30)
+                }
+                updated = updated.copy(
+                    diaryStatus = QuestStatus.CLAIMED,
+                    diaryCount5 = 0,
+                    diaryCount4 = 0,
+                    diaryCount3 = 0,
+                    diaryCount2 = 0,
+                    fivesCount = updated.fivesCount + c5,
+                    historyItems = gradeEntries + updated.historyItems
+                )
                 questTitle = "📚 Итоги недели (Дневник)"
                 rewardAmount = profile.diaryApprovedReward
+                addRewardHistoryEntry = false
             }
         }
     }
     if (questTitle.isNotEmpty()) {
-        updated = updated.copy(
-            balance = updated.balance + rewardAmount,
-            historyItems = listOf(
-                HistoryData(
-                    title = "Награда получена: $questTitle",
-                    time = getCurrentTimeString(),
-                    date = getCurrentDateString(),
-                    amount = "+$rewardAmount ₽",
-                    isIncome = true,
-                    category = "Квесты"
-                )
-            ) + updated.historyItems
-        )
+        updated = updated.copy(balance = updated.balance + rewardAmount)
+        if (addRewardHistoryEntry) {
+            updated = updated.copy(
+                historyItems = listOf(
+                    HistoryData(
+                        title = "Награда получена: $questTitle",
+                        time = getCurrentTimeString(),
+                        date = getCurrentDateString(),
+                        amount = "+$rewardAmount ₽",
+                        isIncome = true,
+                        category = "Квесты",
+                        type = HistoryType.QUEST_REWARD,
+                        amountValue = rewardAmount,
+                        arg = questTitle
+                    )
+                ) + updated.historyItems
+            )
+        }
         updateChildProfile(updated)
+        // Штрафные оценки дневника — после фиксации CLAIMED.
+        repeat(diaryFine3) { applyFineInternal(userId, 20, "Оценка 3 (дневник)") }
+        repeat(diaryFine2) { applyFineInternal(userId, 50, "Оценка 2 (дневник)") }
     }
     } finally {
         endProcessingAction()
@@ -277,7 +316,10 @@ fun MainViewModel.claimBonusQuestReward(userId: String, questId: String) {
                     date = getCurrentDateString(),
                     amount = "+${target.reward} ₽",
                     isIncome = true,
-                    category = "Бонус-квесты"
+                    category = "Бонус-квесты",
+                    type = HistoryType.BONUS_QUEST_DONE,
+                    amountValue = target.reward,
+                    arg = target.title
                 )
             ) + profile.historyItems
         )

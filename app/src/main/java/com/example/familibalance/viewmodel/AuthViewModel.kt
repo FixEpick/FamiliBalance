@@ -2,7 +2,10 @@ package com.example.familibalance.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.familibalance.BuildConfig
+import com.example.familibalance.R
 import com.example.familibalance.data.auth.AuthRepository
+import com.example.familibalance.util.UiText
 import io.github.jan.supabase.auth.status.SessionStatus
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +32,7 @@ data class AuthUiState(
     /** Вкладка «Родитель»: false — вход, true — регистрация. */
     val isParentRegisterMode: Boolean = false,
     val isLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: UiText? = null
 )
 
 sealed interface AuthEvent {
@@ -95,11 +98,11 @@ class AuthViewModel : ViewModel() {
     fun registerPlayer() {
         val state = _uiState.value
         if (state.nickname.isBlank()) {
-            update { copy(errorMessage = "Введите никнейм") }
+            update { copy(errorMessage = UiText.Res(R.string.auth_err_nickname)) }
             return
         }
         if (state.pin.length != 4) {
-            update { copy(errorMessage = "ПИН должен содержать 4 цифры") }
+            update { copy(errorMessage = UiText.Res(R.string.auth_err_pin)) }
             return
         }
         update { copy(isLoading = true, errorMessage = null) }
@@ -114,11 +117,11 @@ class AuthViewModel : ViewModel() {
     fun signIn() {
         val state = _uiState.value
         if (state.email.isBlank() || state.password.isBlank()) {
-            update { copy(errorMessage = "Введите email и пароль") }
+            update { copy(errorMessage = UiText.Res(R.string.auth_err_credentials)) }
             return
         }
         val repo = authRepository ?: run {
-            update { copy(errorMessage = "Supabase не настроен") }
+            update { copy(errorMessage = UiText.Res(R.string.auth_err_supabase)) }
             return
         }
         viewModelScope.launch {
@@ -127,7 +130,7 @@ class AuthViewModel : ViewModel() {
                 repo.signIn(state.email.trim(), state.password)
                 _events.emit(AuthEvent.AuthSuccess)
             } catch (e: Exception) {
-                update { copy(errorMessage = e.message ?: "Ошибка входа") }
+                update { copy(errorMessage = authError(e, R.string.auth_error_login_generic)) }
             } finally {
                 update { copy(isLoading = false) }
             }
@@ -137,11 +140,11 @@ class AuthViewModel : ViewModel() {
     fun signUpParent() {
         val state = _uiState.value
         if (state.email.isBlank() || state.password.isBlank()) {
-            update { copy(errorMessage = "Введите email и пароль") }
+            update { copy(errorMessage = UiText.Res(R.string.auth_err_credentials)) }
             return
         }
         val repo = authRepository ?: run {
-            update { copy(errorMessage = "Supabase не настроен") }
+            update { copy(errorMessage = UiText.Res(R.string.auth_err_supabase)) }
             return
         }
         viewModelScope.launch {
@@ -150,7 +153,7 @@ class AuthViewModel : ViewModel() {
                 repo.signUpParent(state.email.trim(), state.password)
                 _events.emit(AuthEvent.AuthSuccess)
             } catch (e: Exception) {
-                update { copy(errorMessage = e.message ?: "Ошибка регистрации") }
+                update { copy(errorMessage = authError(e, R.string.auth_error_register_generic)) }
             } finally {
                 update { copy(isLoading = false) }
             }
@@ -162,6 +165,18 @@ class AuthViewModel : ViewModel() {
             runCatching { authRepository?.signOut() }
         }
     }
+
+    /**
+     * Ошибка auth-операции: в debug показываем сырое e.message
+     * (может содержать stack/URL — только для отладки),
+     * в release — generic-строку, чтобы не утекали внутренние детали.
+     */
+    private fun authError(e: Exception, @androidx.annotation.StringRes genericResId: Int): UiText =
+        if (BuildConfig.DEBUG) {
+            UiText.RawString(e.message ?: "error")
+        } else {
+            UiText.Res(genericResId)
+        }
 
     private inline fun update(transform: AuthUiState.() -> AuthUiState) {
         _uiState.value = _uiState.value.transform()

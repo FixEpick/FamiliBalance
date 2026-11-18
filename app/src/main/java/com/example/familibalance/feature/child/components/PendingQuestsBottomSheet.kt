@@ -66,8 +66,6 @@ import com.example.familibalance.data.model.*
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 import com.example.familibalance.R
-import com.example.familibalance.feature.child.QuestDeliveryScreen
-import com.example.familibalance.feature.child.QuestDeliveryTarget
 import com.example.familibalance.feature.child.components.*
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.components.*
@@ -84,7 +82,7 @@ private data class PendingQuestItem(
 )
 
 /** Собирает все квесты ребёнка в статусе PENDING из основных, бонусных и кастомных списков. */
-private fun collectPendingQuests(child: ChildProfileState): List<PendingQuestItem> {
+private fun collectPendingQuests(child: ChildProfileState, diaryRewardText: String): List<PendingQuestItem> {
     val items = mutableListOf<PendingQuestItem>()
 
     if (child.closetStatus == QuestStatus.PENDING) {
@@ -94,7 +92,7 @@ private fun collectPendingQuests(child: ChildProfileState): List<PendingQuestIte
         items += PendingQuestItem("room", child.roomTitle, "+${child.roomReward} ₽", child.roomPhotoUrl, null)
     }
     if (child.diaryStatus == QuestStatus.PENDING) {
-        items += PendingQuestItem("diary", child.diaryTitle, "от +30 ₽ до ∞", child.diaryPhotoUrl, null)
+        items += PendingQuestItem("diary", child.diaryTitle, diaryRewardText, child.diaryPhotoUrl, null)
     }
     child.bonusQuests.filter { it.status == QuestStatus.PENDING }.forEach { q ->
         items += PendingQuestItem("bonus:${q.id}", q.title, "+${q.reward} ₽", q.photoUrl, q.comment.ifBlank { null })
@@ -110,10 +108,13 @@ private fun collectPendingQuests(child: ChildProfileState): List<PendingQuestIte
 internal fun PendingQuestsBottomSheet(
     child: ChildProfileState,
     onDismiss: () -> Unit,
-    onEditQuest: (QuestDeliveryTarget) -> Unit,
+    onEditQuest: (String) -> Unit,
     viewModel: MainViewModel
 ) {
-    val pendingItems = remember(child) { collectPendingQuests(child) }
+    // Награда дневника — строковый ресурс (локализуется), поэтому
+    // вычисляем её до remember и передаём параметром.
+    val diaryRewardText = stringResource(R.string.tasks_diary_reward)
+    val pendingItems = remember(child, diaryRewardText) { collectPendingQuests(child, diaryRewardText) }
     val editDesc = stringResource(R.string.a11y_edit_button)
     val deleteDesc = stringResource(R.string.a11y_delete_button)
 
@@ -122,6 +123,7 @@ internal fun PendingQuestsBottomSheet(
         containerColor = SpaceBgStart,
         contentColor = TextPrimary
     ) {
+        AppLocaleContent {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -205,13 +207,7 @@ internal fun PendingQuestsBottomSheet(
                             // Кнопка «Изменить» — открыть QuestDeliveryScreen для пересъёмки
                             IconButton(
                                 onClick = {
-                                    onEditQuest(
-                                        QuestDeliveryTarget(
-                                            displayName = item.title,
-                                            rewardText = item.rewardText,
-                                            key = item.key
-                                        )
-                                    )
+                                    onEditQuest(item.key)
                                 }
                             ) {
                                 Text(
@@ -239,6 +235,7 @@ internal fun PendingQuestsBottomSheet(
                     }
                 }
             }
+        }
         }
     }
 }

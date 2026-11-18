@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.familibalance.data.storage.AppSharedState
 import com.example.familibalance.data.supabase.FamilyProfileRow
 import com.example.familibalance.MainViewModel
+import com.example.familibalance.R
 import com.example.familibalance.data.supabase.SupabaseManager
+import com.example.familibalance.util.UiText
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Columns
@@ -36,7 +38,7 @@ data class PendingRequestUi(
 
 /** Одноразовые события для UI (Toast и т.п.). */
 sealed interface AdminEvent {
-    data class ShowMessage(val text: String) : AdminEvent
+    data class ShowMessage(val text: UiText) : AdminEvent
 }
 
 /**
@@ -84,7 +86,7 @@ class AdminViewModel(
         viewModelScope.launch {
             val me = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
             if (me == null) {
-                _events.emit(AdminEvent.ShowMessage("Ошибка: нет активной сессии"))
+                _events.emit(AdminEvent.ShowMessage(UiText.Res(R.string.admin_err_no_session)))
                 return@launch
             }
             val updateResult = runCatching {
@@ -98,7 +100,7 @@ class AdminViewModel(
             }
             if (updateResult.isFailure) {
                 Log.e("AdminViewModel", "approveRequest failed", updateResult.exceptionOrNull())
-                _events.emit(AdminEvent.ShowMessage("Ошибка при одобрении запроса"))
+                _events.emit(AdminEvent.ShowMessage(UiText.Res(R.string.admin_err_approve)))
                 return@launch
             }
             // Если профиль уже есть локально — сразу помечаем активным и привязываем
@@ -108,7 +110,7 @@ class AdminViewModel(
                 )
             }
             _pendingRequests.update { list -> list.filterNot { it.id == id } }
-            _events.emit(AdminEvent.ShowMessage("Запрос одобрен — ребёнок добавлен в семью"))
+            _events.emit(AdminEvent.ShowMessage(UiText.Res(R.string.admin_req_approved)))
         }
     }
 

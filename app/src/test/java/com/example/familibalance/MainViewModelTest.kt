@@ -230,6 +230,125 @@ class MainViewModelTest {
     }
 
     @Test
+    fun `applyDiaryGrades sets READY_TO_CLAIM and computes approved reward`() {
+        repository.children["user_1"] = createChild().copy(
+            diaryStatus = QuestStatus.PENDING,
+            diaryPhotoUrl = null
+        )
+
+        viewModel.applyDiaryGrades("user_1", count5 = 2, count4 = 1, count3 = 1, count2 = 0)
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(QuestStatus.READY_TO_CLAIM, updated.diaryStatus)
+        // 2×50 + 1×30 = 130 — только положительные оценки
+        assertEquals(130, updated.diaryApprovedReward)
+        assertEquals(2, updated.diaryCount5)
+        assertEquals(1, updated.diaryCount4)
+        assertEquals(1, updated.diaryCount3)
+        assertEquals(0, updated.diaryCount2)
+    }
+
+    @Test
+    fun `claimQuestReward diary credits balance without duplicate summary entry`() {
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            diaryStatus = QuestStatus.READY_TO_CLAIM,
+            diaryApprovedReward = 80, // 1×5 (50) + 1×4 (30)
+            diaryCount5 = 1,
+            diaryCount4 = 1,
+            diaryCount3 = 0,
+            diaryCount2 = 0
+        )
+
+        viewModel.claimQuestReward("user_1", "diary")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(180, updated.balance)
+        assertEquals(QuestStatus.CLAIMED, updated.diaryStatus)
+        assertEquals(0, updated.diaryCount5)
+        assertEquals(0, updated.diaryCount4)
+        // Только записи по оценкам — без сводной «Награда получена: Итоги недели»
+        assertTrue(updated.historyItems.none { it.title.contains("Итоги недели") })
+        assertTrue(updated.historyItems.none { it.title.startsWith("Награда получена") })
+        assertEquals(2, updated.historyItems.count { it.category == "Дневник" })
+        assertTrue(updated.historyItems.any { it.title == "Оценка 5" && it.amount == "+50 ₽" })
+        assertTrue(updated.historyItems.any { it.title == "Оценка 4" && it.amount == "+30 ₽" })
+    }
+
+    @Test
+    fun `claimQuestReward diary applies grade 3 and 2 fines after claim`() {
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            streakDays = 4,
+            diaryStatus = QuestStatus.READY_TO_CLAIM,
+            diaryApprovedReward = 80,
+            diaryCount5 = 1,
+            diaryCount4 = 1,
+            diaryCount3 = 1,
+            diaryCount2 = 1
+        )
+
+        viewModel.claimQuestReward("user_1", "diary")
+
+        val updated = repository.children["user_1"]!!
+        // 100 + 80 (награда) - 20 (оценка 3) - 50 (оценка 2) = 110
+        assertEquals(110, updated.balance)
+        assertEquals(QuestStatus.CLAIMED, updated.diaryStatus)
+        // Штрафы записаны в историю с причиной «дневник»
+        assertTrue(updated.historyItems.any { it.title.contains("Оценка 3 (дневник)") && it.amount == "-20 ₽" })
+        assertTrue(updated.historyItems.any { it.title.contains("Оценка 2 (дневник)") && it.amount == "-50 ₽" })
+        // Стрик сброшен штрафами
+        assertEquals(0, updated.streakDays)
+    }
+
+    @Test
+    fun `claimQuestReward diary keeps balance delta equal to sum of new history entries`() {
+        // Инвариант сверки: balance — хранимое поле профиля (не леджер),
+        // historyItems — аудит-лог. Для дневника сумма новых записей
+        // (оценки +50/+30, штрафы -20/-50) обязана равняться дельте баланса,
+        // иначе сверка в БД разойдётся.
+        val before = createChild().copy(
+            balance = 100,
+            streakDays = 4,
+            diaryStatus = QuestStatus.READY_TO_CLAIM,
+            diaryApprovedReward = 80,
+            diaryCount5 = 1,
+            diaryCount4 = 1,
+            diaryCount3 = 1,
+            diaryCount2 = 1
+        )
+        repository.children["user_1"] = before
+
+        viewModel.claimQuestReward("user_1", "diary")
+
+        val after = repository.children["user_1"]!!
+        val balanceDelta = after.balance - before.balance
+        // Инвариант валиден только для baseline с пустой историей:
+        // before.historyItems пуст, значит все записи after — новые.
+        // Если фикстуру расширят историей, фильтровать по time/date.
+        val historySum = after.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(balanceDelta, historySum)
+        // И явно: 100 + 80 - 20 - 50 = 110, дельта = +10
+        assertEquals(10, balanceDelta)
+    }
+
+    @Test
+    fun `claimQuestReward diary does nothing when not READY_TO_CLAIM`() {
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            diaryStatus = QuestStatus.PENDING,
+            diaryApprovedReward = 80
+        )
+
+        viewModel.claimQuestReward("user_1", "diary")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(100, updated.balance)
+        assertEquals(QuestStatus.PENDING, updated.diaryStatus)
+        assertTrue(updated.historyItems.isEmpty())
+    }
+
+    @Test
     fun `submitHonestAdmission respects 7 day cooldown`() {
         val today = LocalDate.now()
         repository.children["user_1"] = createChild().copy(

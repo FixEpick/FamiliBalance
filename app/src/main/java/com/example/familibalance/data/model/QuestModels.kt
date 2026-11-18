@@ -55,8 +55,39 @@ data class HistoryData(
     val date: String,
     val amount: String,
     val isIncome: Boolean,
-    val category: String
+    val category: String,
+    /** Тип записи для локализации на рендере (HistoryScreen). null — legacy-запись. */
+    val type: String? = null,
+    /** Сумма операции в ₽ со знаком (+доход/-расход). null — не денежная запись. */
+    val amountValue: Int? = null,
+    /** Динамический аргумент для локализованного шаблона (название квеста/достижения и т.п.). null — нет аргумента или legacy-запись. */
+    val arg: String? = null
 )
+
+/**
+ * Строковые константы типов [HistoryData.type].
+ * Строки, а не enum: неизвестное значение из БД не крашит десериализацию
+ * (forward-compat при добавлении новых типов без обновления приложения).
+ */
+object HistoryType {
+    const val SCREEN_TIME_PURCHASE = "SCREEN_TIME_PURCHASE"
+    const val STREAK_BONUS = "STREAK_BONUS"
+    const val ACHIEVEMENT_UNLOCKED = "ACHIEVEMENT_UNLOCKED"
+    const val CASHOUT_GIVEN = "CASHOUT_GIVEN"
+    const val CASHOUT_REQUEST = "CASHOUT_REQUEST"
+    const val CUSTOM_QUEST_DONE = "CUSTOM_QUEST_DONE"
+    const val ADMIN_REWARD = "ADMIN_REWARD"
+    const val ADMIN_WITHDRAW = "ADMIN_WITHDRAW"
+    const val FINE = "FINE"
+    const val BONUS_QUEST_APPROVED = "BONUS_QUEST_APPROVED"
+    const val QUEST_APPROVED = "QUEST_APPROVED"
+    const val HONEST_APPROVED = "HONEST_APPROVED"
+    const val DIARY_GRADE_5 = "DIARY_GRADE_5"
+    const val DIARY_GRADE_4 = "DIARY_GRADE_4"
+    const val QUEST_REWARD = "QUEST_REWARD"
+    const val BONUS_QUEST_DONE = "BONUS_QUEST_DONE"
+    const val DREAM_SET = "DREAM_SET"
+}
 
 enum class CashoutStatus {
     PENDING,

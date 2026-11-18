@@ -5,11 +5,12 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.R
 import com.example.familibalance.data.model.CashoutRequest
 import com.example.familibalance.ui.theme.*
 
@@ -29,55 +30,58 @@ fun CashoutSection(
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
-                text = "💵 Заявки на вывод",
+                text = stringResource(R.string.admin_cashout_requests_title),
                 color = AccentColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(12.dp))
             requests.forEach { request ->
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(vertical = 6.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Сумма: ${request.amount} ₽",
-                            color = TextPrimary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "Комментарий: ${request.comment}",
-                            color = TextSecondary,
-                            fontSize = 12.sp
-                        )
-                    }
+                    // Текст заявки сверху
+                    Text(
+                        text = stringResource(R.string.admin_cashout_amount, request.amount),
+                        color = TextPrimary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.admin_cashout_comment, request.comment),
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // Кнопки снизу, на всю ширину поровну
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
                             onClick = { onApprove(request.id) },
                             enabled = actionEnabled,
                             colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.height(36.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
                         ) {
-                            Text("✅ Выдано", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.admin_cashout_approved), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                         Button(
                             onClick = { onReject(request.id) },
                             enabled = actionEnabled,
                             colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),
                             shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.height(36.dp)
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(40.dp)
                         ) {
-                            Text("❌ Отклонить", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.admin_cashout_reject), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }

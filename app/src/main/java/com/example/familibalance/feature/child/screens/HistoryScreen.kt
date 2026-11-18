@@ -67,12 +67,112 @@ import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 import com.example.familibalance.R
 import com.example.familibalance.feature.child.QuestDeliveryScreen
-import com.example.familibalance.feature.child.QuestDeliveryTarget
+import com.example.familibalance.feature.child.rememberQuestDeliveryTarget
 import com.example.familibalance.feature.child.components.*
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.components.*
 import com.example.familibalance.viewmodel.actions.*
 
+
+/** Спецификация локализованного заголовка: resId + аргументы для stringResource. resId == null → показываем title как есть. */
+internal data class HistoryTitleSpec(val resId: Int?, val args: List<Any> = emptyList())
+
+/**
+ * Маппинг [HistoryData] → [HistoryTitleSpec].
+ *
+ * Приоритет аргумента:
+ * 1. [HistoryData.arg] != null → используем его напрямую (новые записи,
+ *    пользовательский контент не парсим);
+ * 2. arg == null → legacy-экстракция из сохранённого title по фиксированным
+ *    русским префиксам (записи, созданные до появления arg);
+ * 3. type == null или неизвестный → resId = null → fallback на title.
+ */
+internal fun historyTitleSpec(item: HistoryData): HistoryTitleSpec {
+    val title = item.title
+    val arg = item.arg
+    return when (item.type) {
+        HistoryType.SCREEN_TIME_PURCHASE -> {
+            val minutes = arg?.toIntOrNull()
+                ?: title.substringAfter('(', "").substringBefore(" мин", "").toIntOrNull()
+            if (minutes != null) HistoryTitleSpec(R.string.hist_screen_time_purchase, listOf(minutes))
+            else HistoryTitleSpec(null)
+        }
+        HistoryType.STREAK_BONUS -> HistoryTitleSpec(R.string.hist_streak_bonus)
+        HistoryType.ACHIEVEMENT_UNLOCKED ->
+            HistoryTitleSpec(R.string.hist_achievement_unlocked, listOf(arg ?: title.removePrefix("Достижение открыто: ")))
+        HistoryType.CASHOUT_GIVEN ->
+            HistoryTitleSpec(R.string.hist_cashout_given, listOf(arg ?: title.substringAfter('(', "").substringBefore(')', "")))
+        HistoryType.CASHOUT_REQUEST ->
+            HistoryTitleSpec(R.string.hist_cashout_request, listOf(arg ?: title.substringAfter('(', "").substringBefore(')', "")))
+        HistoryType.CUSTOM_QUEST_DONE ->
+            HistoryTitleSpec(R.string.hist_custom_quest_done, listOf(arg ?: title.removePrefix("Квест выполнен: ")))
+        HistoryType.ADMIN_REWARD ->
+            if (arg != null) {
+                HistoryTitleSpec(R.string.hist_admin_reward, listOf(arg))
+            } else if (title.startsWith("Пополнение: ")) {
+                HistoryTitleSpec(R.string.hist_admin_reward, listOf(title.removePrefix("Пополнение: ")))
+            } else {
+                HistoryTitleSpec(R.string.hist_admin_reward_plain)
+            }
+        HistoryType.ADMIN_WITHDRAW ->
+            if (arg != null) {
+                HistoryTitleSpec(R.string.hist_admin_withdraw, listOf(arg))
+            } else if (title.startsWith("Списание: ")) {
+                HistoryTitleSpec(R.string.hist_admin_withdraw, listOf(title.removePrefix("Списание: ")))
+            } else {
+                HistoryTitleSpec(R.string.hist_admin_withdraw_plain)
+            }
+        HistoryType.FINE -> {
+            val discounted = title.endsWith("(Скидка 50% за честное признание)")
+            when {
+                arg != null -> {
+                    val resId = if (discounted) R.string.hist_fine_discount else R.string.hist_fine
+                    HistoryTitleSpec(resId, listOf(arg))
+                }
+                else -> {
+                    val base = title.removeSuffix(" (Скидка 50% за честное признание)")
+                    when {
+                        base.startsWith("Штраф: ") -> {
+                            val reason = base.removePrefix("Штраф: ")
+                            val resId = if (discounted) R.string.hist_fine_discount else R.string.hist_fine
+                            HistoryTitleSpec(resId, listOf(reason))
+                        }
+                        base == "Штраф от папы" -> {
+                            val resId = if (discounted) R.string.hist_fine_plain_discount else R.string.hist_fine_plain
+                            HistoryTitleSpec(resId)
+                        }
+                        else -> HistoryTitleSpec(null)
+                    }
+                }
+            }
+        }
+        HistoryType.BONUS_QUEST_APPROVED ->
+            HistoryTitleSpec(R.string.hist_bonus_quest_approved, listOf(arg ?: title.removePrefix("Одобрен бонус-квест: ")))
+        HistoryType.QUEST_APPROVED ->
+            HistoryTitleSpec(R.string.hist_quest_approved, listOf(arg ?: title.removePrefix("Одобрен квест: ")))
+        HistoryType.HONEST_APPROVED -> HistoryTitleSpec(R.string.hist_honest_approved)
+        HistoryType.DIARY_GRADE_5 -> HistoryTitleSpec(R.string.hist_diary_grade5)
+        HistoryType.DIARY_GRADE_4 -> HistoryTitleSpec(R.string.hist_diary_grade4)
+        HistoryType.QUEST_REWARD ->
+            HistoryTitleSpec(R.string.hist_quest_reward, listOf(arg ?: title.removePrefix("Награда получена: ")))
+        HistoryType.BONUS_QUEST_DONE ->
+            HistoryTitleSpec(R.string.hist_bonus_quest_done, listOf(arg ?: title.removePrefix("Бонус-квест выполнен: ")))
+        HistoryType.DREAM_SET ->
+            HistoryTitleSpec(R.string.hist_dream_set, listOf(arg ?: title.removePrefix("Заложена цель: ")))
+        else -> HistoryTitleSpec(null)
+    }
+}
+
+/** Локализованный заголовок записи истории; fallback — сохранённый title. */
+@Composable
+private fun localizedHistoryTitle(item: HistoryData): String {
+    val spec = historyTitleSpec(item)
+    return if (spec.resId != null) {
+        stringResource(spec.resId, *spec.args.toTypedArray())
+    } else {
+        item.title
+    }
+}
 
 @Composable
 fun HistoryScreen(
@@ -82,7 +182,9 @@ fun HistoryScreen(
 ) {
     var selectedFilter by remember { mutableIntStateOf(0) }
     var showPendingSheet by remember { mutableStateOf(false) }
-    var editingQuest by remember { mutableStateOf<QuestDeliveryTarget?>(null) }
+    // Пересъёмка квеста из BottomSheet: в rememberSaveable — только
+    // String-ключ (как в TasksScreen), цель резолвится из child.
+    var editingQuestKey by rememberSaveable { mutableStateOf<String?>(null) }
     val filterLabels = listOf(
         stringResource(R.string.history_filter_all),
         stringResource(R.string.history_filter_quests),
@@ -94,7 +196,20 @@ fun HistoryScreen(
     val filterCategories = listOf<String?>(null, "Квесты", "Достижения", "Экранное время", "Штрафы")
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val currentChild = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+    if (currentChild == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.admin_no_data),
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+        return
+    }
     val rawHistoryItems = currentChild.historyItems
     val historyItems = remember(rawHistoryItems.size) {
         rawHistoryItems.filterNot { it.title.startsWith("Квест на проверке:") || it.title.startsWith("Одобрен квест:") }
@@ -118,7 +233,7 @@ fun HistoryScreen(
     }
 
     // Полноэкранная отправка/пересъёмка квеста из BottomSheet
-    val activeEdit = editingQuest
+    val activeEdit = rememberQuestDeliveryTarget(currentChild, editingQuestKey)
     if (activeEdit != null) {
         QuestDeliveryScreen(
             questName = activeEdit.displayName,
@@ -136,9 +251,9 @@ fun HistoryScreen(
                         viewModel.submitCustomQuestPhoto(currentChild.id, activeEdit.key.removePrefix("custom:"), photoUrlStr.orEmpty(), comment)
                     }
                 }
-                editingQuest = null
+                editingQuestKey = null
             },
-            onBackClick = { editingQuest = null },
+            onBackClick = { editingQuestKey = null },
             modifier = modifier
         )
         return
@@ -241,7 +356,7 @@ fun HistoryScreen(
 
         items(filteredItems) { item ->
             HistoryItem(
-                title = item.title,
+                title = localizedHistoryTitle(item),
                 time = item.time,
                 date = item.date,
                 amount = item.amount,
@@ -265,9 +380,9 @@ fun HistoryScreen(
         PendingQuestsBottomSheet(
             child = currentChild,
             onDismiss = { showPendingSheet = false },
-            onEditQuest = { target ->
+            onEditQuest = { key ->
                 showPendingSheet = false
-                editingQuest = target
+                editingQuestKey = key
             },
             viewModel = viewModel
         )

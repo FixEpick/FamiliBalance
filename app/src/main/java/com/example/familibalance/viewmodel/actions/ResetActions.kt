@@ -98,7 +98,11 @@ internal fun MainViewModel.resetDailyQuestsIfNeeded() {
                 diaryStatus = if (diaryClear) QuestStatus.AVAILABLE else child.diaryStatus,
                 diaryRejectReason = if (diaryClear) null else child.diaryRejectReason,
                 diaryPhotoUrl = if (diaryClear) null else child.diaryPhotoUrl,
-                diaryComment = if (diaryClear) "" else child.diaryComment
+                diaryComment = if (diaryClear) "" else child.diaryComment,
+                diaryCount5 = if (diaryClear) 0 else child.diaryCount5,
+                diaryCount4 = if (diaryClear) 0 else child.diaryCount4,
+                diaryCount3 = if (diaryClear) 0 else child.diaryCount3,
+                diaryCount2 = if (diaryClear) 0 else child.diaryCount2
             )
         }
 

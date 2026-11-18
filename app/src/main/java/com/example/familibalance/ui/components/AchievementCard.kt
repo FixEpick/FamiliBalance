@@ -40,7 +40,7 @@ fun AchievementCard(
     modifier: Modifier = Modifier
 ) {
     val displayTitle = if (isLocked) "🔒 $title" else title
-    val displayDescription = if (isLocked) "Откроется после выполнения предыдущего уровня" else description
+    val displayDescription = if (isLocked) stringResource(R.string.ach_locked_desc) else description
     val displayReward = if (isLocked) "??? ₽" else reward
     val lockedDesc = stringResource(R.string.a11y_locked_achievement)
     val completedDesc = stringResource(R.string.a11y_achievement_completed)
@@ -136,7 +136,7 @@ fun AchievementCard(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "🎁 Забрать награду $reward",
+                    text = stringResource(R.string.ach_claim_reward, reward),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )

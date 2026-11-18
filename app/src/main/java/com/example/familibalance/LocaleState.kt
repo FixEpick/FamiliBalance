@@ -6,12 +6,14 @@ import com.example.familibalance.util.*
 
 import android.content.Context
 import android.content.res.Configuration
+import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.example.familibalance.data.SecurePrefs
@@ -57,9 +59,44 @@ fun LocalizedAppContent(content: @Composable () -> Unit) {
         }
         context.createConfigurationContext(config)
     }
+    // LocalContext подменяется на configuration-context (не Activity) —
+    // rememberLauncherForActivityResult внутри NavHost-экранов терял
+    // ActivityResultRegistryOwner и падал с IllegalStateException.
+    // Пробрасываем owner явно, чтобы launchers камеры/галереи работали.
+    val activityResultRegistryOwner = LocalActivityResultRegistryOwner.current
     CompositionLocalProvider(
         LocalContext provides localizedContext,
         LocalConfiguration provides localizedContext.resources.configuration,
-        content = content
+        LocalAppLocalizedContext provides localizedContext,
+        content = {
+            if (activityResultRegistryOwner != null) {
+                CompositionLocalProvider(
+                    LocalActivityResultRegistryOwner provides activityResultRegistryOwner,
+                    content = content
+                )
+            } else {
+                content()
+            }
+        }
     )
+}
+
+/**
+ * Локализованный контекст приложения. Окна Dialog/ModalBottomSheet
+ * переопределяют LocalContext контекстом своего окна (системная локаль),
+ * поэтому stringResource() внутри шторок резолвится через этот локал.
+ */
+val LocalAppLocalizedContext = staticCompositionLocalOf<Context> {
+    error("LocalAppLocalizedContext is not provided")
+}
+
+/**
+ * Оборачивает контент шторки/диалога, чтобы stringResource() внутри него
+ * использовал локаль приложения, а не системную локаль устройства.
+ * Применять ВНУТРИ content-лямбды ModalBottomSheet/Dialog/AlertDialog.
+ */
+@Composable
+fun AppLocaleContent(content: @Composable () -> Unit) {
+    val localizedContext = LocalAppLocalizedContext.current
+    CompositionLocalProvider(LocalContext provides localizedContext, content = content)
 }

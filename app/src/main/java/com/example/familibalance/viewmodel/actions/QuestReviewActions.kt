@@ -14,6 +14,13 @@ fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
     if (!tryStartProcessingAction()) return
     try {
     val profile = familyRepository.getChild(userId) ?: return
+    // Дневник одобряется только через applyDiaryGrades — он сохраняет
+    // разбивку оценок (diaryCount*). Generic-approve без оценок дал бы
+    // READY_TO_CLAIM с diaryApprovedReward=100 и пустой историей — блокируем.
+    if (questType.lowercase() in listOf("diary", "дневник", "итоги") &&
+        profile.diaryCount5 + profile.diaryCount4 +
+        profile.diaryCount3 + profile.diaryCount2 == 0
+    ) return
     val photoUrlToDelete = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.closetPhotoUrl
         "room", "комната" -> profile.roomPhotoUrl
@@ -50,7 +57,7 @@ fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
     }
 }
 
-/** Админ отклоняет квест (шкаф/комната/дневник): статус AVAILABLE + запись в историю. */
+/** Админ отклоняет квест (шкаф/комната/дневник): статус AVAILABLE + удаление фото. Запись в историю не добавляется — отклонение не является операцией со средствами. */
 fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: String, questTitle: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val photoUrlToDelete = when (questType.lowercase()) {
@@ -76,83 +83,55 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
             diaryStatus = QuestStatus.AVAILABLE,
             diaryComment = "",
             diaryPhotoUrl = null,
-            diaryRejectReason = reason
+            diaryRejectReason = reason,
+            diaryCount5 = 0,
+            diaryCount4 = 0,
+            diaryCount3 = 0,
+            diaryCount2 = 0
         )
         else -> profile
     }
-    updateChildProfile(
-        updated.copy(
-            historyItems = listOf(
-                HistoryData(
-                    title = "Отклонен квест: $questTitle",
-                    time = getCurrentTimeString(),
-                    date = getCurrentDateString(),
-                    amount = "0 ₽",
-                    isIncome = false,
-                    category = "Квесты"
-                )
-            ) + updated.historyItems
-        )
-    )
+    updateChildProfile(updated)
     if (!photoUrlToDelete.isNullOrBlank()) {
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
     }
 }
 
 /**
- * Применяет дневник по оценкам: каждая оценка — отдельная запись в истории.
- * Положительные оценки (5, 4) начисляются сразу; штрафные (3, 2) проходят
- * через [applyFine] — со скидкой за честное признание и сбросом стрика.
- * Статус дневника сразу становится CLAIMED — награда уже применена.
+ * Админ утверждает оценки дневника: статус READY_TO_CLAIM, оценки
+ * сохраняются в профиле (diaryCount5/4/3/2). Баланс, история, fivesCount
+ * и штрафы применяются только когда ребёнок нажмёт «Забрать»
+ * (claimQuestReward → diary-ветка) — как у шкафа и комнаты.
  */
 fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, count3: Int, count2: Int) {
     if (!tryStartProcessingAction()) return
     try {
     val profile = familyRepository.getChild(childId) ?: return
-    val time = getCurrentTimeString()
-    val date = getCurrentDateString()
-
-    var balance = profile.balance
-    var netReward = 0
-    val entries = mutableListOf<HistoryData>()
-
-    fun addGrade(grade: Int, points: Int, count: Int) {
-        repeat(count.coerceAtLeast(0)) {
-            balance += points
-            netReward += points
-            entries += HistoryData(
-                title = "Оценка $grade",
-                time = time,
-                date = date,
-                amount = if (points >= 0) "+$points ₽" else "$points ₽",
-                isIncome = points >= 0,
-                category = "Дневник"
-            )
-        }
-    }
-
-    addGrade(5, 50, count5)
-    addGrade(4, 30, count4)
+    val c5 = count5.coerceAtLeast(0)
+    val c4 = count4.coerceAtLeast(0)
+    val c3 = count3.coerceAtLeast(0)
+    val c2 = count2.coerceAtLeast(0)
+    // Положительные оценки (5→50, 4→30) — в diaryApprovedReward;
+    // штрафные (3, 2) применятся штрафами при получении награды.
+    val netReward = 50 * c5 + 30 * c4
 
     val photoUrlToDelete = profile.diaryPhotoUrl
     updateChildProfile(
         profile.copy(
-            balance = balance,
-            diaryStatus = QuestStatus.CLAIMED,
+            diaryStatus = QuestStatus.READY_TO_CLAIM,
             diaryComment = "",
             diaryPhotoUrl = null,
             diaryRejectReason = null,
             diaryApprovedReward = netReward,
-            fivesCount = profile.fivesCount + count5.coerceAtLeast(0),
-            historyItems = entries + profile.historyItems
+            diaryCount5 = c5,
+            diaryCount4 = c4,
+            diaryCount3 = c3,
+            diaryCount2 = c2
         )
     )
     if (!photoUrlToDelete.isNullOrBlank()) {
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
     }
-
-    repeat(count3.coerceAtLeast(0)) { applyFineInternal(childId, 20, "Оценка 3 (дневник)") }
-    repeat(count2.coerceAtLeast(0)) { applyFineInternal(childId, 50, "Оценка 2 (дневник)") }
     } finally {
         endProcessingAction()
     }
@@ -178,7 +157,10 @@ fun MainViewModel.adminApproveBonusQuest(userId: String, questId: String) {
                     date = getCurrentDateString(),
                     amount = "+${target.reward} ₽",
                     isIncome = true,
-                    category = "Бонус-квесты"
+                    category = "Бонус-квесты",
+                    type = HistoryType.BONUS_QUEST_APPROVED,
+                    amountValue = target.reward,
+                    arg = target.title
                 )
             ) + profile.historyItems
         )
@@ -191,7 +173,7 @@ fun MainViewModel.adminApproveBonusQuest(userId: String, questId: String) {
     }
 }
 
-/** Админ отклоняет бонус-квест: AVAILABLE + причина + запись в историю. */
+/** Админ отклоняет бонус-квест: AVAILABLE + причина + удаление фото (без записи в историю). */
 fun MainViewModel.adminRejectBonusQuest(userId: String, questId: String, reason: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.bonusQuests.firstOrNull { it.id == questId } ?: return
@@ -199,21 +181,7 @@ fun MainViewModel.adminRejectBonusQuest(userId: String, questId: String, reason:
     val updatedQuests = profile.bonusQuests.map { q ->
         if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = reason, photoUrl = null) else q
     }
-    updateChildProfile(
-        profile.copy(
-            bonusQuests = updatedQuests,
-            historyItems = listOf(
-                HistoryData(
-                    title = "Отклонен бонус-квест: ${target.title}",
-                    time = getCurrentTimeString(),
-                    date = getCurrentDateString(),
-                    amount = "0 ₽",
-                    isIncome = false,
-                    category = "Бонус-квесты"
-                )
-            ) + profile.historyItems
-        )
-    )
+    updateChildProfile(profile.copy(bonusQuests = updatedQuests))
     if (!photoUrlToDelete.isNullOrBlank()) {
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
     }
@@ -239,7 +207,10 @@ fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
                     date = getCurrentDateString(),
                     amount = "+${target.reward} ₽",
                     isIncome = true,
-                    category = "Кастомные квесты"
+                    category = "Кастомные квесты",
+                    type = HistoryType.QUEST_APPROVED,
+                    amountValue = target.reward,
+                    arg = target.title
                 )
             ) + profile.historyItems
         )
@@ -254,7 +225,7 @@ fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
     }
 }
 
-/** Админ отклоняет кастомный квест: AVAILABLE + причина + запись в историю + удаление фото. */
+/** Админ отклоняет кастомный квест: AVAILABLE + причина + удаление фото (без записи в историю). */
 fun MainViewModel.adminRejectCustomQuest(userId: String, questId: String, reason: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.customQuests.firstOrNull { it.id == questId } ?: return
@@ -262,21 +233,7 @@ fun MainViewModel.adminRejectCustomQuest(userId: String, questId: String, reason
     val updatedQuests = profile.customQuests.map { q ->
         if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = reason, photoUrl = null) else q
     }
-    updateChildProfile(
-        profile.copy(
-            customQuests = updatedQuests,
-            historyItems = listOf(
-                HistoryData(
-                    title = "Отклонен квест: ${target.title}",
-                    time = getCurrentTimeString(),
-                    date = getCurrentDateString(),
-                    amount = "0 ₽",
-                    isIncome = false,
-                    category = "Кастомные квесты"
-                )
-            ) + profile.historyItems
-        )
-    )
+    updateChildProfile(profile.copy(customQuests = updatedQuests))
     if (!photoUrlToDelete.isNullOrBlank()) {
         viewModelScope.launch {
             SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
@@ -299,7 +256,9 @@ fun MainViewModel.adminApproveHonestAdmission(userId: String) {
                     date = getCurrentDateString(),
                     amount = "Скидка 50%",
                     isIncome = true,
-                    category = "Достижения"
+                    category = "Достижения",
+                    type = HistoryType.HONEST_APPROVED,
+                    amountValue = null
                 )
             ) + profile.historyItems
         )
@@ -309,23 +268,11 @@ fun MainViewModel.adminApproveHonestAdmission(userId: String) {
     }
 }
 
-/** Админ отклоняет честное признание. */
+/** Админ отклоняет честное признание (без записи в историю — отклонение не операция со средствами). */
 fun MainViewModel.adminRejectHonestAdmission(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     updateChildProfile(
-        profile.copy(
-            honestAdmissionStatus = QuestStatus.AVAILABLE,
-            historyItems = listOf(
-                HistoryData(
-                    title = "Честное признание отклонено",
-                    time = getCurrentTimeString(),
-                    date = getCurrentDateString(),
-                    amount = "0 ₽",
-                    isIncome = false,
-                    category = "Достижения"
-                )
-            ) + profile.historyItems
-        )
+        profile.copy(honestAdmissionStatus = QuestStatus.AVAILABLE)
     )
 }
 

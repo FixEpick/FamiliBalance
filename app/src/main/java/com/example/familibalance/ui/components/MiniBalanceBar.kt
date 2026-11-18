@@ -7,9 +7,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 
 /**
@@ -41,7 +43,7 @@ fun MiniBalanceBar(
                 Text("💰", fontSize = 18.sp)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Баланс",
+                    text = stringResource(R.string.child_balance),
                     color = TextSecondary,
                     fontSize = 13.sp
                 )

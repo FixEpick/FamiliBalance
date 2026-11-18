@@ -78,10 +78,10 @@ fun DiaryVerificationCard(
 
     val isScanning = scanState is DiaryScanState.Loading
     val scanStatusText = when (scanState) {
-        is DiaryScanState.Loading -> "Сканирование оценок..."
-        is DiaryScanState.Success -> "Оценки распознаны!"
-        is DiaryScanState.Error -> "Ошибка сканирования: ${scanState.message}"
-        DiaryScanState.Idle -> "Расчет награды по оценкам"
+        is DiaryScanState.Loading -> stringResource(R.string.admin_diary_scanning)
+        is DiaryScanState.Success -> stringResource(R.string.admin_diary_scan_success)
+        is DiaryScanState.Error -> stringResource(R.string.admin_diary_scan_error, scanState.message)
+        DiaryScanState.Idle -> stringResource(R.string.admin_diary_reward_calc)
     }
 
     val total = (gradeCounts[5] ?: 0) * 50 + (gradeCounts[4] ?: 0) * 30 - (gradeCounts[3] ?: 0) * 20 - (gradeCounts[2] ?: 0) * 50
@@ -107,7 +107,7 @@ fun DiaryVerificationCard(
                     Text(title, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = if (isScanning) scanStatusText else "Расчет награды по оценкам",
+                        text = if (isScanning) scanStatusText else stringResource(R.string.admin_diary_reward_calc),
                         color = AccentColor,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
@@ -115,14 +115,14 @@ fun DiaryVerificationCard(
                     if (comment.isNotBlank()) {
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Комментарий: $comment",
+                            text = stringResource(R.string.admin_comment_label, comment),
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
                     }
                     if (scanState is DiaryScanState.Error) {
                         TextButton(onClick = onScanRequested) {
-                            Text("🔄 Сканировать заново", color = AccentColor, fontSize = 13.sp)
+                            Text(stringResource(R.string.admin_diary_rescan), color = AccentColor, fontSize = 13.sp)
                         }
                     }
                 }
@@ -137,7 +137,7 @@ fun DiaryVerificationCard(
                 ) {
                     AsyncImage(
                         model = photoUrl,
-                        contentDescription = "Дневник",
+                        contentDescription = stringResource(R.string.admin_diary_photo),
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(RoundedCornerShape(12.dp))
@@ -159,7 +159,7 @@ fun DiaryVerificationCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text("Корректировка оценок:", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.admin_diary_grade_adjust), color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(8.dp))
 
             val gradeConfigs = listOf(
@@ -177,7 +177,7 @@ fun DiaryVerificationCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Оценка $grade ($rewardLabel)", color = color, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                    Text(stringResource(R.string.admin_diary_grade_label, grade, rewardLabel), color = color, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(
                             onClick = {
@@ -210,7 +210,7 @@ fun DiaryVerificationCard(
 
             Spacer(modifier = Modifier.height(8.dp))
             val summaryText = listOf(5, 4, 3, 2).map { g ->
-                "Оценка $g: ${gradeCounts[g] ?: 0} шт"
+                stringResource(R.string.admin_diary_grade_summary, g, gradeCounts[g] ?: 0)
             }.joinToString(", ")
             Text(summaryText, color = TextSecondary, fontSize = 12.sp)
 
@@ -233,7 +233,7 @@ fun DiaryVerificationCard(
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text("✅ Одобрить (+${finalReward} ₽)", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.admin_approve_with_reward, finalReward), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 OutlinedButton(
@@ -244,21 +244,23 @@ fun DiaryVerificationCard(
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text("❌ Отклонить", fontSize = 12.sp)
+                    Text(stringResource(R.string.admin_reject), fontSize = 12.sp)
                 }
             }
         }
     }
 
     if (showRejectDialog) {
+        val defaultRejectReason = stringResource(R.string.admin_reject_default_reason)
         AlertDialog(
             onDismissRequest = { showRejectDialog = false },
-            title = { Text("Причина отклонения") },
+            containerColor = SpaceBgStart,
+            title = { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) },
             text = {
                 OutlinedTextField(
                     value = rejectReasonText,
                     onValueChange = { rejectReasonText = it },
-                    label = { Text("Что нужно доделать?") },
+                    label = { Text(stringResource(R.string.admin_reject_reason_hint), color = TextSecondary) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
@@ -271,16 +273,16 @@ fun DiaryVerificationCard(
             },
             confirmButton = {
                 Button(onClick = {
-                    val reason = if (rejectReasonText.isNotBlank()) rejectReasonText else "Требуется доработка"
+                    val reason = if (rejectReasonText.isNotBlank()) rejectReasonText else defaultRejectReason
                     onReject(reason)
                     showRejectDialog = false
                 }, enabled = actionEnabled) {
-                    Text("Отклонить")
+                    Text(stringResource(R.string.admin_reject))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRejectDialog = false }) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )

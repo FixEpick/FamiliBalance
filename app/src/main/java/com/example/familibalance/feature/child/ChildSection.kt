@@ -98,7 +98,7 @@ fun ChildSection(
     val isSynced by viewModel.isSynced.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.firstOrNull()
-        ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
+        ?: ChildProfileState(id = "user_1", name = stringResource(R.string.child_player_role), avatar = "🧒")
 
     var isRefreshing by remember { mutableStateOf(false) }
     LaunchedEffect(isSynced) {
@@ -185,7 +185,7 @@ fun ChildSection(
                         Text(child.avatar, fontSize = 20.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "${child.name} (Игрок)",
+                            text = "${child.name} (${stringResource(R.string.child_player_role)})",
                             color = TextPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold

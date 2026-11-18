@@ -59,7 +59,20 @@ import com.example.familibalance.viewmodel.actions.*
 fun ProgressAdminContent(viewModel: MainViewModel) {
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
-        ?: familyState.children.values.first()
+        ?: familyState.children.values.firstOrNull()
+    if (child == null) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(R.string.admin_no_data),
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+        return
+    }
     var showAchievementsDialog by remember { mutableStateOf(false) }
     var showDreamGoalDialog by remember { mutableStateOf(false) }
     var dreamTitle by remember { mutableStateOf(child.dreamTitle) }
@@ -67,7 +80,9 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
 
     val validHistory = child.historyItems.filterNot { it.title.startsWith("Квест на проверке:") || it.title.startsWith("Одобрен квест:") }
     val completedQuests = validHistory.count { it.isIncome }
-    val totalEarned = validHistory.filter { it.isIncome }.mapNotNull { it.amount.removeSuffix(" ₽").removePrefix("+").toIntOrNull() }.sum()
+    val totalEarned = validHistory.filter { it.isIncome }.sumOf {
+        it.amountValue ?: it.amount.removeSuffix(" ₽").removePrefix("+").toIntOrNull() ?: 0
+    }
     val allAchievements: List<AchievementItemData> = getAchievements(child)
 
     LazyColumn(

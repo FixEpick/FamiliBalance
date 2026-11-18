@@ -49,7 +49,7 @@ fun FullScreenImageDialog(
 
             AsyncImage(
                 model = photoUrl,
-                contentDescription = "Полноэкранное фото дневника",
+                contentDescription = stringResource(R.string.a11y_fullscreen_diary_photo),
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {

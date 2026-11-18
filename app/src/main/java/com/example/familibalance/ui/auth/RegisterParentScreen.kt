@@ -52,6 +52,7 @@ import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.ui.components.CyberBackground
+import com.example.familibalance.util.asString
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
 import com.example.familibalance.ui.components.LanguageSelectorButton
@@ -386,7 +387,7 @@ private fun PlayerRegisterForm(
     state.errorMessage?.let { error ->
         Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = error,
+            text = error.asString(),
             color = CyberRed,
             fontSize = 13.sp,
             textAlign = TextAlign.Center,
@@ -469,7 +470,7 @@ private fun ParentLoginForm(
             state.errorMessage?.let { error ->
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = error,
+                    text = error.asString(),
                     color = CyberRed,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center,

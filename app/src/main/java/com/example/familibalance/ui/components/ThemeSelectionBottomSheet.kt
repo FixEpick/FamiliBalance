@@ -16,11 +16,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
+
+/** Локализованное отображаемое имя темы по её id. */
+@Composable
+private fun themeDisplayName(theme: AppThemePalette): String = when (theme.id) {
+    "COSMIC_BLUE" -> stringResource(R.string.theme_name_cosmic_blue)
+    "CYBER_PINK" -> stringResource(R.string.theme_name_cyber_pink)
+    "TOXIC_GREEN" -> stringResource(R.string.theme_name_toxic_green)
+    "SOLAR_GOLD" -> stringResource(R.string.theme_name_solar_gold)
+    "INFERNO_RED" -> stringResource(R.string.theme_name_inferno_red)
+    "GALAXY_PURPLE" -> stringResource(R.string.theme_name_galaxy_purple)
+    "ARCTIC_ICE" -> stringResource(R.string.theme_name_arctic_ice)
+    "SUNSET_ORANGE" -> stringResource(R.string.theme_name_sunset_orange)
+    else -> theme.name
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,14 +63,14 @@ fun ThemeSelectionBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "🎨 Магазин тем",
+                text = stringResource(R.string.theme_shop_title),
                 color = TextPrimary,
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
             Text(
-                text = "Выбери палитру, которая нравится больше всего",
+                text = stringResource(R.string.theme_shop_subtitle),
                 color = TextSecondary,
                 fontSize = 13.sp,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -118,7 +134,7 @@ fun ThemeSelectionBottomSheet(
                             }
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                text = theme.name,
+                                text = themeDisplayName(theme),
                                 color = TextPrimary,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -129,7 +145,7 @@ fun ThemeSelectionBottomSheet(
                             if (isSelected) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "✓ Выбрана",
+                                    text = stringResource(R.string.theme_selected),
                                     color = theme.primaryNeon,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold

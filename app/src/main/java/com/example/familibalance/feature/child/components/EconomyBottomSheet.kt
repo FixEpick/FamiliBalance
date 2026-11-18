@@ -95,6 +95,7 @@ fun EconomyBottomSheet(
             BottomSheetDefaults.DragHandle(color = GlassStroke)
         }
     ) {
+        AppLocaleContent {
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -198,6 +199,7 @@ fun EconomyBottomSheet(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
             }
+        }
         }
     }
 }

@@ -27,6 +27,11 @@ data class ChildProfileState(
     val diaryPhotoUrl: String? = null,
     val diaryComment: String = "",
     val diaryApprovedReward: Int = 100,
+    /** Оценки дневника, утверждённые админом — применяются при «Забрать». */
+    val diaryCount5: Int = 0,
+    val diaryCount4: Int = 0,
+    val diaryCount3: Int = 0,
+    val diaryCount2: Int = 0,
     val wardrobeFrequency: QuestFrequency = QuestFrequency.DAILY,
     val roomFrequency: QuestFrequency = QuestFrequency.DAILY,
     val diaryFrequency: QuestFrequency = QuestFrequency.WEEKLY,
@@ -72,7 +77,9 @@ data class ChildProfileState(
     /** "active" — полноценный член семьи; "pending" — ждёт подтверждения родителя. */
     val status: String = "active",
     /** ANDROID_ID устройства, с которого ребёнок последний раз входил (для будущих пушей). */
-    val deviceId: String = ""
+    val deviceId: String = "",
+    /** Epoch ms последнего локального изменения состояния (last-writer-wins при синхронизации). */
+    val stateUpdatedAt: Long = 0
 ) {
     constructor(
         id: String,
@@ -111,6 +118,10 @@ data class ChildProfileState(
             diaryPhotoUrl = dto.diaryPhotoUrl,
             diaryComment = dto.diaryComment,
             diaryApprovedReward = dto.diaryApprovedReward,
+            diaryCount5 = dto.diaryCount5,
+            diaryCount4 = dto.diaryCount4,
+            diaryCount3 = dto.diaryCount3,
+            diaryCount2 = dto.diaryCount2,
             wardrobeFrequency = dto.wardrobeFrequency,
             roomFrequency = dto.roomFrequency,
             diaryFrequency = dto.diaryFrequency,
@@ -153,7 +164,8 @@ data class ChildProfileState(
             pinCode = dto.pinCode,
             parentEmail = dto.parentEmail,
             status = dto.status,
-            deviceId = dto.deviceId
+            deviceId = dto.deviceId,
+            stateUpdatedAt = dto.stateUpdatedAt
         )
     }
 }
@@ -181,6 +193,11 @@ data class ChildProfileDto(
     val diaryPhotoUrl: String? = null,
     val diaryComment: String = "",
     val diaryApprovedReward: Int = 100,
+    /** Оценки дневника, утверждённые админом — применяются при «Забрать». */
+    val diaryCount5: Int = 0,
+    val diaryCount4: Int = 0,
+    val diaryCount3: Int = 0,
+    val diaryCount2: Int = 0,
     val wardrobeFrequency: QuestFrequency = QuestFrequency.DAILY,
     val roomFrequency: QuestFrequency = QuestFrequency.DAILY,
     val diaryFrequency: QuestFrequency = QuestFrequency.WEEKLY,
@@ -223,7 +240,8 @@ data class ChildProfileDto(
     val pinCode: String = "",
     val parentEmail: String = "",
     val status: String = "active",
-    val deviceId: String = ""
+    val deviceId: String = "",
+    val stateUpdatedAt: Long = 0
 )
 
 fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
@@ -248,6 +266,10 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     diaryPhotoUrl = diaryPhotoUrl,
     diaryComment = diaryComment,
     diaryApprovedReward = diaryApprovedReward,
+    diaryCount5 = diaryCount5,
+    diaryCount4 = diaryCount4,
+    diaryCount3 = diaryCount3,
+    diaryCount2 = diaryCount2,
     wardrobeFrequency = wardrobeFrequency,
     roomFrequency = roomFrequency,
     diaryFrequency = diaryFrequency,
@@ -290,5 +312,6 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     pinCode = pinCode,
     parentEmail = parentEmail,
     status = status,
-    deviceId = deviceId
+    deviceId = deviceId,
+    stateUpdatedAt = stateUpdatedAt
 )

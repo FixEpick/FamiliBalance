@@ -80,10 +80,10 @@ fun QuestVerificationCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(title, color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     Spacer(modifier = Modifier.height(2.dp))
-                    Text("Награда: $reward", color = AccentColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.admin_reward_label, reward), color = AccentColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                     if (description.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Комментарий: $description", color = TextSecondary, fontSize = 13.sp)
+                        Text(stringResource(R.string.admin_comment_label, description), color = TextSecondary, fontSize = 13.sp)
                     }
                 }
             }
@@ -92,7 +92,7 @@ fun QuestVerificationCard(
                 Spacer(modifier = Modifier.height(12.dp))
                 AsyncImage(
                     model = photoUrl,
-                    contentDescription = "Фотоотчёт",
+                    contentDescription = stringResource(R.string.admin_photo_report),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(180.dp)
@@ -114,7 +114,7 @@ fun QuestVerificationCard(
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text("✅ Одобрить", fontSize = 12.sp)
+                    Text(stringResource(R.string.admin_approve), fontSize = 12.sp)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 OutlinedButton(
@@ -125,21 +125,23 @@ fun QuestVerificationCard(
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text("❌ Отклонить", fontSize = 12.sp)
+                    Text(stringResource(R.string.admin_reject), fontSize = 12.sp)
                 }
             }
         }
     }
 
     if (showRejectDialog) {
+        val defaultRejectReason = stringResource(R.string.admin_reject_default_reason)
         AlertDialog(
             onDismissRequest = { showRejectDialog = false },
-            title = { Text("Причина отклонения") },
+            containerColor = SpaceBgStart,
+            title = { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) },
             text = {
                 OutlinedTextField(
                     value = rejectReasonText,
                     onValueChange = { rejectReasonText = it },
-                    label = { Text("Что нужно доделать?") },
+                    label = { Text(stringResource(R.string.admin_reject_reason_hint), color = TextSecondary) },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,
                         unfocusedTextColor = Color.White,
@@ -152,16 +154,16 @@ fun QuestVerificationCard(
             },
             confirmButton = {
                 Button(onClick = {
-                    val reason = if (rejectReasonText.isNotBlank()) rejectReasonText else "Требуется доработка"
+                    val reason = if (rejectReasonText.isNotBlank()) rejectReasonText else defaultRejectReason
                     onReject(reason)
                     showRejectDialog = false
                 }, enabled = actionEnabled) {
-                    Text("Отклонить")
+                    Text(stringResource(R.string.admin_reject))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRejectDialog = false }) {
-                    Text("Отмена")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -184,7 +186,7 @@ fun QuestVerificationCard(
 
                 AsyncImage(
                     model = photoUrl,
-                    contentDescription = "Полноэкранное фото",
+                    contentDescription = stringResource(R.string.a11y_fullscreen_photo),
                     modifier = Modifier
                         .fillMaxSize()
                         .graphicsLayer {

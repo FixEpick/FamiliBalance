@@ -65,7 +65,7 @@ fun VerificationAdminContent(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Нет данных для проверки",
+                text = stringResource(R.string.admin_no_data),
                 color = TextSecondary,
                 fontSize = 14.sp
             )
@@ -105,14 +105,14 @@ fun VerificationAdminContent(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "📷 Ждут подтверждения (${child.name})",
+                            text = stringResource(R.string.admin_pending_header, child.name),
                             color = TextPrimary,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Фотоотчёты и задания ребёнка, ожидающие проверки.",
+                            text = stringResource(R.string.admin_pending_subtitle),
                             color = TextSecondary,
                             fontSize = 13.sp
                         )
@@ -124,9 +124,9 @@ fun VerificationAdminContent(
         if (child.closetStatus == QuestStatus.PENDING) {
             item {
                 QuestVerificationCard(
-                    title = "Фото шкафа",
+                    title = stringResource(R.string.admin_quest_closet),
                     reward = "+50 ₽",
-                    description = child.closetComment.ifBlank { "Без комментария" },
+                    description = child.closetComment.ifBlank { stringResource(R.string.admin_no_comment) },
                     photoUrl = child.closetPhotoUrl,
                     actionEnabled = !isProcessingAction,
                     onApprove = {
@@ -145,8 +145,8 @@ fun VerificationAdminContent(
                 CashoutSection(
                     requests = child.cashoutRequests,
                     actionEnabled = !isProcessingAction,
-                    onApprove = { viewModel.approveCashoutRequest(it) },
-                    onReject = { viewModel.rejectCashoutRequest(it) }
+                    onApprove = { viewModel.approveCashoutRequest(child.id, it) },
+                    onReject = { viewModel.rejectCashoutRequest(child.id, it) }
                 )
             }
         }
@@ -154,9 +154,9 @@ fun VerificationAdminContent(
         if (child.roomStatus == QuestStatus.PENDING) {
             item {
                 QuestVerificationCard(
-                    title = "Фото комнаты",
+                    title = stringResource(R.string.admin_quest_room),
                     reward = "+50 ₽",
-                    description = child.roomComment.ifBlank { "Без комментария" },
+                    description = child.roomComment.ifBlank { stringResource(R.string.admin_no_comment) },
                     photoUrl = child.roomPhotoUrl,
                     actionEnabled = !isProcessingAction,
                     onApprove = {
@@ -172,7 +172,7 @@ fun VerificationAdminContent(
         if (child.diaryStatus == QuestStatus.PENDING) {
             item {
                 DiaryVerificationCard(
-                    title = "📚 Итоги недели (Дневник)",
+                    title = stringResource(R.string.admin_quest_diary),
                     comment = child.diaryComment,
                     photoUrl = child.diaryPhotoUrl,
                     scanState = diaryScanState,
@@ -192,9 +192,9 @@ fun VerificationAdminContent(
 
         items(child.bonusQuests.filter { it.status == QuestStatus.PENDING }) { bQuest ->
             QuestVerificationCard(
-                title = "Бонус: ${bQuest.title}",
+                title = stringResource(R.string.admin_bonus_prefix, bQuest.title),
                 reward = "+${bQuest.reward} ₽",
-                description = bQuest.comment.ifBlank { "Без комментария" },
+                description = bQuest.comment.ifBlank { stringResource(R.string.admin_no_comment) },
                 photoUrl = bQuest.photoUrl,
                 actionEnabled = !isProcessingAction,
                 onApprove = {
@@ -208,9 +208,9 @@ fun VerificationAdminContent(
 
         items(child.customQuests.filter { it.status == QuestStatus.PENDING }, key = { it.id }, contentType = { "custom_quest" }) { cQuest ->
             QuestVerificationCard(
-                title = "Квест: ${cQuest.title}",
+                title = stringResource(R.string.admin_quest_prefix, cQuest.title),
                 reward = "+${cQuest.reward} ₽",
-                description = cQuest.comment.ifBlank { "Без комментария" },
+                description = cQuest.comment.ifBlank { stringResource(R.string.admin_no_comment) },
                 photoUrl = cQuest.photoUrl,
                 actionEnabled = !isProcessingAction,
                 onApprove = {
@@ -231,7 +231,7 @@ fun VerificationAdminContent(
             child.cashoutRequests.isEmpty()) {
             item {
                 Text(
-                    text = "✨ Нет заданий на проверке у ${child.name}",
+                    text = stringResource(R.string.admin_no_pending, child.name),
                     color = TextSecondary,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(vertical = 12.dp)
@@ -249,10 +249,10 @@ fun VerificationAdminContent(
                     border = BorderStroke(1.dp, StatusYellow)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("🐱 Честное признание от ${child.name}", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.admin_honest_title, child.name), color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "«${child.honestAdmissionText.ifBlank { "Ребенок не оставил комментария" }}»",
+                            text = stringResource(R.string.admin_honest_quote, child.honestAdmissionText.ifBlank { stringResource(R.string.admin_no_comment_text) }),
                             color = TextSecondary,
                             fontSize = 13.sp,
                             fontStyle = FontStyle.Italic
@@ -271,7 +271,7 @@ fun VerificationAdminContent(
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                Text("✅ Одобрить (Штраф -50%)", fontSize = 12.sp)
+                                Text(stringResource(R.string.admin_approve_honest), fontSize = 12.sp)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             OutlinedButton(
@@ -283,7 +283,7 @@ fun VerificationAdminContent(
                                 shape = RoundedCornerShape(8.dp),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                             ) {
-                                Text("❌ Отклонить", fontSize = 12.sp)
+                                Text(stringResource(R.string.admin_reject), fontSize = 12.sp)
                             }
                         }
                     }
@@ -302,14 +302,14 @@ fun VerificationAdminContent(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "⚡ Быстрые действия папы (${child.name})",
+                        text = stringResource(R.string.admin_quick_actions, child.name),
                         color = TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Начисление за дневник, штрафы и ручной ввод суммы для этого профиля.",
+                        text = stringResource(R.string.admin_quick_actions_subtitle),
                         color = TextSecondary,
                         fontSize = 13.sp
                     )
@@ -325,7 +325,7 @@ fun VerificationAdminContent(
                         OutlinedTextField(
                             value = depositInput,
                             onValueChange = { depositInput = it },
-                            placeholder = { Text("Сумма ₽", color = TextSecondary.copy(alpha = 0.6f)) },
+                            placeholder = { Text(stringResource(R.string.admin_amount_hint), color = TextSecondary.copy(alpha = 0.6f)) },
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                                 keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
                             ),
@@ -354,13 +354,13 @@ fun VerificationAdminContent(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.height(56.dp)
                         ) {
-                            Text("+ Добавить", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.admin_add), fontWeight = FontWeight.Bold)
                         }
                     }
                     OutlinedTextField(
                         value = depositDesc,
                         onValueChange = { depositDesc = it },
-                        label = { Text("Описание (за что)", color = TextPrimary) },
+                        label = { Text(stringResource(R.string.admin_desc_label), color = TextPrimary) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -386,7 +386,7 @@ fun VerificationAdminContent(
                         OutlinedTextField(
                             value = withdrawInput,
                             onValueChange = { withdrawInput = it },
-                            placeholder = { Text("Сумма ₽", color = TextSecondary.copy(alpha = 0.6f)) },
+                            placeholder = { Text(stringResource(R.string.admin_amount_hint), color = TextSecondary.copy(alpha = 0.6f)) },
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                                 keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
                             ),
@@ -420,7 +420,7 @@ fun VerificationAdminContent(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier.height(56.dp)
                         ) {
-                            Text("- Списать", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.admin_withdraw), fontWeight = FontWeight.Bold)
                         }
                     }
                     Row(
@@ -439,7 +439,7 @@ fun VerificationAdminContent(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Это штраф (сбросит стрик и применит скидку)",
+                            text = stringResource(R.string.admin_is_fine),
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
@@ -447,7 +447,7 @@ fun VerificationAdminContent(
                     OutlinedTextField(
                         value = withdrawDesc,
                         onValueChange = { withdrawDesc = it },
-                        label = { Text("Описание (за что)", color = TextPrimary) },
+                        label = { Text(stringResource(R.string.admin_desc_label), color = TextPrimary) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -477,7 +477,7 @@ fun VerificationAdminContent(
                 border = BorderStroke(1.dp, StatusGreen),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusGreen)
             ) {
-                Text("💵 Выдать наличные (${child.balance} ₽)", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.admin_cashout_button, child.balance), fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

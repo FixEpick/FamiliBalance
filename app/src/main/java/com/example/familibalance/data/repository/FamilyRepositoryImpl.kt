@@ -1,14 +1,20 @@
 package com.example.familibalance.data.repository
 
 import android.content.Context
+import android.util.Log
 import com.example.familibalance.data.storage.AppSharedState
 import com.example.familibalance.data.storage.AppStateStorage
 import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.data.supabase.SupabaseManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -32,21 +38,29 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
 
     override val onRemoteStateChanged: SharedFlow<Unit> = AppSharedState.remoteStateChanged
 
+    /** Scope для отложенной IO-инициализации (SecurePrefs/сеть) — не блокирует main. */
+    private val initScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     init {
-        // Восстанавливаем dirty-статусы с диска и запускаем монитор сети
-        SyncStatus.attach(appContext)
-        NetworkMonitor.start(appContext)
+        // Вся инициализация — на IO: SyncStatus.attach читает
+        // EncryptedSharedPreferences (дешифровка на каждый ключ),
+        // retryDirtyChildren может дёргать сеть. На main это давало фризы.
+        initScope.launch {
+            // Восстанавливаем dirty-статусы с диска и запускаем монитор сети
+            SyncStatus.attach(appContext)
+            NetworkMonitor.start(appContext)
 
-        // Сеть появилась -> автоматически досылаем несинхронизированные профили
-        NetworkMonitor.addListener { online ->
-            if (online && SyncStatus.hasDirtyChildren()) {
-                retryDirtyChildren()
+            // Сеть появилась -> автоматически досылаем несинхронизированные профили
+            NetworkMonitor.addListener { online ->
+                if (online && SyncStatus.hasDirtyChildren()) {
+                    retryDirtyChildren()
+                }
             }
-        }
 
-        // Стартовая проверка: если остались dirty-профили с прошлого запуска —
-        // пробуем отправить (при offline push просто неудачен, статус сохранится)
-        retryDirtyChildren()
+            // Стартовая проверка: если остались dirty-профили с прошлого запуска —
+            // пробуем отправить (при offline push просто неудачен, статус сохранится)
+            retryDirtyChildren()
+        }
     }
 
     override fun childrenSnapshot(): Map<String, ChildProfileState> =
@@ -79,12 +93,21 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
         retryDirtyChildren()
     }
 
+    /**
+     * Локальное сохранение (JSON-сериализация всех профилей + запись в
+     * EncryptedSharedPreferences) — только на IO. Вызов с main давал
+     * Skipped frames: updateChildProfile/saveState дёргаются из UI.
+     */
+    private fun saveLocalAsync() {
+        initScope.launch { AppStateStorage.saveLocalOnly(appContext) }
+    }
+
     override fun saveLocal() {
-        AppStateStorage.saveLocalOnly(appContext)
+        saveLocalAsync()
     }
 
     override fun saveAndSync(onlyChildId: String?) {
-        AppStateStorage.saveLocalOnly(appContext)
+        saveLocalAsync()
         if (onlyChildId != null) {
             AppSharedState.children[onlyChildId]?.let { pushChildProfile(it) }
         } else {
@@ -95,13 +118,25 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
     override fun checkResets() {
         // Изменённые профили отправляем через pushChildProfile: он помечает
         // их dirty в SyncStatus и повторяет отправку при неудаче (MVI-01).
-        AppStateStorage.checkResets(appContext).forEach { pushChildProfile(it) }
+        AppStateStorage.checkResets(appContext).forEach { changed ->
+            // Сброс — локальное изменение: обновляем stateUpdatedAt, чтобы
+            // last-writer-wins в ProfileSync не проигнорировал его.
+            val stamped = changed.copy(stateUpdatedAt = System.currentTimeMillis())
+            AppSharedState.children[stamped.id] = stamped
+            pushChildProfile(stamped)
+        }
     }
 
+    /** Счётчик инициированных push'ей — наблюдаемый признак для тестов/диагностики
+     *  (dirty-флаг теперь ставится только на время upsert внутри ProfileSync). */
+    internal val pushAttemptCount = java.util.concurrent.atomic.AtomicInteger(0)
+
     override fun pushChildProfile(child: ChildProfileState) {
-        // Помечаем dirty до отправки: входящие Realtime-обновления для этого
-        // профиля будут игнорироваться, пока локальные правки не подтверждены.
-        SyncStatus.markDirty(child.id)
+        pushAttemptCount.incrementAndGet()
+        // Dirty ставится внутри ProfileSync непосредственно перед upsert:
+        // загрузка фото может идти десятки секунд, и всё это время Realtime
+        // не должен игнорировать изменения админа (approve/reject) — иначе
+        // наш устаревший снапшот затирал бы их при upsert (рассинхрон).
         pendingPushes.incrementAndGet()
         _isSyncing.value = true
         SupabaseManager.pushChildProfile(appContext, child) { success ->
@@ -111,6 +146,14 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
                     // НЕ вызываем retryDirtyChildren() здесь: иначе каждый успешный push
                     // запускает новый каскадный обход всех dirty-профилей (O(n²) запросов).
                     // Остальные dirty-профили подхватит текущий/следующий проход retryDirtyChildren.
+                    //
+                    // Pull после push: локальный push мог завершиться ПОСЛЕ того, как
+                    // админ уже изменил профиль в облаке (approve/reject квеста, заявка
+                    // на вывод). Realtime-обновление в этом окне игнорировалось
+                    // (профиль был dirty), а наш upsert мог затереть чужое изменение.
+                    // Стягиваем свежее состояние — applyRemoteChildJsonAsync применит
+                    // его, т.к. профиль уже clean.
+                    SupabaseManager.refreshFromCloud(appContext)
                 }
                 // При неудаче профиль остаётся dirty — повторим при следующем push.
             } finally {
@@ -123,13 +166,25 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
     }
 
     override fun syncNow(childId: String?) {
-        AppStateStorage.saveLocalOnly(appContext)
+        saveLocalAsync()
         // Pull: подтягиваем свежие данные из облака (изменения с других устройств),
         // затем push: отправляем выбранного ребёнка и все dirty-профили.
         SupabaseManager.refreshFromCloud(appContext)
         val targetId = childId ?: selectedChildId
         AppSharedState.children[targetId]?.let { pushChildProfile(it) }
         retryDirtyChildren()
+        // Watchdog: если за 10 сек ни один push не завершился (сессия не создана,
+        // сеть мёртвая, onResult не вызван) — принудительно сбрасываем isSyncing,
+        // чтобы UI не висел на вечном спиннере. Сами push'и доработают в фоне,
+        // а их колбэки безопасно обнулят счётчик (guard в pushChildProfile).
+        initScope.launch {
+            delay(10_000)
+            if (_isSyncing.value && pendingPushes.get() > 0) {
+                Log.w("FamilyRepository", "syncNow timeout: isSyncing принудительно сброшен")
+                pendingPushes.set(0)
+                _isSyncing.value = false
+            }
+        }
     }
 
     /** Повторяет отправку всех профилей, у которых есть неподтверждённые изменения. */
@@ -141,7 +196,16 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
             // Снимок dirty-списка: новые dirty, появившиеся во время прохода,
             // будут обработаны следующим триггером (network/push/forceSync).
             SyncStatus.dirtyChildIdsSnapshot().forEach { id ->
-                AppSharedState.children[id]?.let { pushChildProfile(it) }
+                val child = AppSharedState.children[id]
+                if (child != null) {
+                    pushChildProfile(child)
+                } else if (AppSharedState.children.isNotEmpty()) {
+                    // Профиль недоступен этому устройству (удалён или принадлежит
+                    // другому родителю) — push невозможен, а dirty-метка заблокировала
+                    // бы isSynced навсегда. Снимаем её.
+                    // (children.isEmpty() = стейт ещё не загружен — не трогаем.)
+                    SyncStatus.markClean(id)
+                }
             }
         } finally {
             retryInProgress.set(false)
@@ -151,9 +215,13 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
     override fun updateChildProfile(profile: ChildProfileState) {
         // Модель иммутабельна: заменяем экземпляр в shared state,
         // чтобы UI и Repository видели актуальную версию профиля.
-        AppSharedState.children[profile.id] = profile
-        AppStateStorage.saveLocalOnly(appContext)
-        pushChildProfile(profile)
+        // stateUpdatedAt — метка последнего локального изменения для
+        // last-writer-wins при синхронизации (ProfileSync сравнивает
+        // с удалённой версией перед upsert).
+        val stamped = profile.copy(stateUpdatedAt = System.currentTimeMillis())
+        AppSharedState.children[stamped.id] = stamped
+        saveLocalAsync()
+        pushChildProfile(stamped)
     }
 
     override fun addAdminNotification(message: String) {

@@ -38,7 +38,9 @@ fun MainViewModel.checkInStreak(userId: String) {
                         date = getCurrentDateString(),
                         amount = "+50 ₽",
                         isIncome = true,
-                        category = "Бонусы"
+                        category = "Бонусы",
+                        type = HistoryType.STREAK_BONUS,
+                        amountValue = 50
                     )
                 ) + updated.historyItems,
                 streakBonusMessage = "🎉 $streakDays дней без штрафов! Бонус +50 ₽"
@@ -142,7 +144,10 @@ fun MainViewModel.claimAchievementReward(userId: String, achievementId: String) 
                     date = getCurrentDateString(),
                     amount = "+${target.reward} ₽",
                     isIncome = true,
-                    category = "Достижения"
+                    category = "Достижения",
+                    type = HistoryType.ACHIEVEMENT_UNLOCKED,
+                    amountValue = target.reward,
+                    arg = target.title
                 )
             ) + profile.historyItems
         )
@@ -189,6 +194,10 @@ fun MainViewModel.resetActiveQuests(userId: String) {
             diaryRejectReason = null,
             diaryPhotoUrl = null,
             diaryComment = "",
+            diaryCount5 = 0,
+            diaryCount4 = 0,
+            diaryCount3 = 0,
+            diaryCount2 = 0,
             customQuests = updatedQuests
         )
     )

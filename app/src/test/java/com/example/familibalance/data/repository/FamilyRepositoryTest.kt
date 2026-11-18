@@ -20,9 +20,9 @@ import org.robolectric.annotation.Config
  * SyncStatus / AppStateStorage / NetworkMonitor работают по-настоящему
  * (SharedPreferences и ConnectivityManager доступны в Robolectric).
  * SupabaseManager в юнит-тестах не имеет клиента, поэтому push завершается
- * неудачей и профиль остаётся dirty — это и используется как наблюдаемый
- * признак того, что отправка была инициирована (markDirty вызывается
- * только внутри pushChildProfile).
+ * неудачей сразу. Инициирование отправки наблюдаем через
+ * [FamilyRepositoryImpl.pushAttemptCount] — dirty-флаг теперь ставится
+ * только на время upsert внутри ProfileSync.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -60,13 +60,18 @@ class FamilyRepositoryTest {
 
         repository.updateChildProfile(child)
 
-        // Локальное сохранение: состояние записано в SharedPreferences
+        // Локальное сохранение теперь асинхронное (IO): ждём записи в SharedPreferences
         val prefs = SecurePrefs.get(context, "familibalance_prefs")
-        val savedJson = prefs.getString("app_state_json", "") ?: ""
+        val deadline = System.currentTimeMillis() + 3000
+        var savedJson = prefs.getString("app_state_json", "") ?: ""
+        while (!savedJson.contains("user_1") && System.currentTimeMillis() < deadline) {
+            Thread.sleep(20)
+            savedJson = prefs.getString("app_state_json", "") ?: ""
+        }
         assertTrue("Локальное состояние должно содержать ребёнка", savedJson.contains("user_1"))
 
-        // Push инициирован: профиль помечен dirty (markDirty вызывается только в pushChildProfile)
-        assertTrue(SyncStatus.isChildDirty("user_1"))
+        // Push инициирован: зафиксирована попытка отправки
+        assertTrue(repository.pushAttemptCount.get() >= 1)
     }
 
     @Test
@@ -82,10 +87,14 @@ class FamilyRepositoryTest {
 
         repository = FamilyRepositoryImpl(context)
 
-        // retryDirtyChildren в init должен был повторить отправку user_1,
-        // а user_2 (чистый) — не трогать
-        assertTrue(SyncStatus.isChildDirty("user_1"))
-        assertFalse(SyncStatus.isChildDirty("user_2"))
+        // retryDirtyChildren в init идёт на Dispatchers.IO — ждём попытку push
+        val deadline = System.currentTimeMillis() + 3000
+        while (repository.pushAttemptCount.get() == 0 && System.currentTimeMillis() < deadline) {
+            Thread.sleep(20)
+        }
+
+        // Повторная отправка только для user_1 (dirty), user_2 (чистый) не тронут
+        assertTrue(repository.pushAttemptCount.get() == 1)
     }
 
     @Test
@@ -98,8 +107,8 @@ class FamilyRepositoryTest {
 
         repository.saveAndSync(onlyChildId = "user_1")
 
-        assertTrue(SyncStatus.isChildDirty("user_1"))
-        assertFalse(SyncStatus.isChildDirty("user_2"))
+        // Пуш только для user_1: одна попытка, user_2 не затронут
+        assertTrue(repository.pushAttemptCount.get() == 1)
     }
 
     @Test
