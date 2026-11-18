@@ -5,15 +5,9 @@ import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -102,27 +96,7 @@ class MainActivity : FragmentActivity() {
             val updateState by updateViewModel.uiState.collectAsStateWithLifecycle()
             LaunchedEffect(Unit) { updateViewModel.checkOnLaunch() }
 
-            // Запрос POST_NOTIFICATIONS (Android 13+) при первом запуске —
-            // уведомления нужны для квестов и статуса скачивания обновления.
             val context = androidx.compose.ui.platform.LocalContext.current
-            var showNotifRationale by remember { mutableStateOf(false) }
-            val notifPermissionLauncher = rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission()
-            ) { /* результат не критичен — уведомления просто не покажутся */ }
-            val notifPrefs = remember {
-                SecurePrefs.get(context, "app_prefs")
-            }
-            LaunchedEffect(Unit) {
-                val alreadyAsked = notifPrefs.getBoolean("notif_rationale_shown", false)
-                if (!alreadyAsked &&
-                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
-                    != PackageManager.PERMISSION_GRANTED
-                ) {
-                    notifPrefs.edit().putBoolean("notif_rationale_shown", true).apply()
-                    showNotifRationale = true
-                }
-            }
             val familyState by viewModel.familyState.collectAsStateWithLifecycle()
             val sessionStatus by authViewModel.sessionStatus.collectAsStateWithLifecycle()
             val autoLoginChildId by viewModel.autoLoginChildId.collectAsStateWithLifecycle()
@@ -379,42 +353,6 @@ class MainActivity : FragmentActivity() {
                     )
                 }
 
-                // Диалог разрешения на уведомления — внутри LocalizedAppContent/FamiliBalanceTheme,
-                // чтобы получить тёмную тему и локаль приложения.
-                if (showNotifRationale) {
-                    AlertDialog(
-                        onDismissRequest = { showNotifRationale = false },
-                        containerColor = SpaceBgStart,
-                        title = {
-                            Text(
-                                stringResource(R.string.notif_rationale_title),
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        },
-                        text = {
-                            Text(
-                                stringResource(R.string.notif_rationale_message),
-                                color = TextSecondary,
-                                fontSize = 13.sp
-                            )
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    showNotifRationale = false
-                                    notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart)
-                            ) { Text(stringResource(R.string.notif_rationale_allow)) }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showNotifRationale = false }) {
-                                Text(stringResource(R.string.notif_rationale_later), color = TextSecondary)
-                            }
-                        }
-                    )
-                }
 
                 UpdateDialog(
                     state = updateState,

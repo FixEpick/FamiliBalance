@@ -404,10 +404,6 @@
     <string name="admin_approve_with_reward">✅ Approve (+%1$d ₽)</string>
 
     <!-- Notification rationale -->
-    <string name="notif_rationale_title">Notifications</string>
-    <string name="notif_rationale_message">Allow notifications to get quest reminders and update download status.</string>
-    <string name="notif_rationale_allow">Allow</string>
-    <string name="notif_rationale_later">Not now</string>
 
     <!-- VerificationList (admin) -->
     <string name="admin_no_data">No data to review</string>

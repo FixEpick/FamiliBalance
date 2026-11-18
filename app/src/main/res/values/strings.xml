@@ -410,10 +410,6 @@
     <string name="admin_approve_with_reward">✅ Одобрить (+%1$d ₽)</string>
 
     <!-- Notification rationale -->
-    <string name="notif_rationale_title">Уведомления</string>
-    <string name="notif_rationale_message">Разрешите уведомления, чтобы получать напоминания о квестах и статус скачивания обновлений.</string>
-    <string name="notif_rationale_allow">Разрешить</string>
-    <string name="notif_rationale_later">Не сейчас</string>
 
     <!-- VerificationList (admin) -->
     <string name="admin_no_data">Нет данных для проверки</string>
