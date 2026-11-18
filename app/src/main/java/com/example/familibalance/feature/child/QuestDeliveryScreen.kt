@@ -1,8 +1,6 @@
 package com.example.familibalance.feature.child
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.content.pm.PackageManager
 import android.widget.Toast
@@ -71,6 +69,7 @@ import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
+import com.example.familibalance.feature.child.components.CameraCaptureScreen
 
 @Composable
 fun QuestDeliveryScreen(
@@ -130,11 +129,9 @@ private fun QuestDeliveryScreenContent(
     // пересъёмке. Переключение вкладок и process death файл НЕ трогают —
     // иначе фото «слетало» бы при возврате на экран.
     var capturedPhotoFile by remember { mutableStateOf<java.io.File?>(null) }
-    // URI и имя файла камеры храним строками: переживают process death
-    // без кастомного Saver'а. Камера пишет сразу в filesDir/quest_photos/ —
-    // файл не зависит от очистки cacheDir.
-    var tempCameraUriString by rememberSaveable { mutableStateOf<String?>(null) }
-    var tempPhotoName by rememberSaveable { mutableStateOf<String?>(null) }
+    // Встроенная камера CameraX: процесс не уходит в фон,
+    // поэтому OS не убивает приложение при съёмке фото.
+    var showCamera by remember { mutableStateOf(false) }
     // Блокирует «Назад»/повторную отправку, пока submitQuestForReview не вернётся:
     // иначе экран закрывался до завершения persist+push и пользователь видел
     // «выкидывание» на главный экран без подтверждения.
@@ -151,109 +148,13 @@ private fun QuestDeliveryScreenContent(
     }
     // Системный «Назад» = стрелка «Назад»: без BackHandler он уводил бы
     // на предыдущий destination, а delivery-экран «воскресал» при возврате.
-    BackHandler { handleBack() }
-
-    val takePictureLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success) {
-            try {
-                // Process death при долгой работе камеры мог сбросить
-                // rememberSaveable-строки — восстанавливаем последний
-                // файл из quest_photos, чтобы фото не «слетало».
-                val photosDir = java.io.File(context.filesDir, "quest_photos")
-                val resolvedFileName = tempPhotoName
-                    ?: photosDir.listFiles()
-                        ?.filter { it.extension.equals("jpg", ignoreCase = true) }
-                        ?.maxByOrNull { it.lastModified() }
-                        ?.name
-                val resolvedUriString = tempCameraUriString
-                    ?: resolvedFileName?.let { name ->
-                        FileProvider.getUriForFile(
-                            context,
-                            "${context.packageName}.fileprovider",
-                            java.io.File(photosDir, name)
-                        ).toString()
-                    }
-                if (resolvedUriString != null && resolvedFileName != null) {
-                    // Файл уже лежит в filesDir/quest_photos — камера писала
-                    // сразу в постоянное хранилище. Здесь только даунскейл
-                    // до 1080px JPEG перезаписью того же файла.
-                    val photoFile = java.io.File(photosDir, resolvedFileName)
-                    if (!photoFile.exists()) return@rememberLauncherForActivityResult
-                    val uri = Uri.parse(resolvedUriString)
-
-                    val options = BitmapFactory.Options().apply {
-                        inJustDecodeBounds = true
-                    }
-                    context.contentResolver.openInputStream(uri)?.use { input ->
-                        BitmapFactory.decodeStream(input, null, options)
-                    }
-
-                    val maxDimension = 1080
-                    var sampleSize = 1
-                    while (options.outWidth / sampleSize > maxDimension || options.outHeight / sampleSize > maxDimension) {
-                        sampleSize *= 2
-                    }
-
-                    val decodeOptions = BitmapFactory.Options().apply {
-                        inSampleSize = sampleSize
-                    }
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    val bitmap = BitmapFactory.decodeStream(inputStream, null, decodeOptions)
-                    inputStream?.close()
-
-                    if (bitmap != null) {
-                        photoFile.outputStream().use { out ->
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out)
-                        }
-                        bitmap.recycle()
-                    }
-                    // bitmap == null — оставляем оригинал камеры как есть.
-
-                    capturedImageUriString = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        photoFile
-                    ).toString()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                Toast.makeText(context, context.getString(R.string.delivery_error_photo, e.message), Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    val launchCamera = {
-        try {
-            // Целевой файл создаётся в filesDir/quest_photos ДО вызова камеры:
-            // системная камера пишет сразу в постоянное хранилище, и фото
-            // не зависит от очистки cacheDir или смерти процесса.
-            val photosDir = java.io.File(context.filesDir, "quest_photos").apply { mkdirs() }
-            // Пересъёмка: старый файл больше не нужен — удаляем.
-            capturedPhotoFile?.delete()
-            val fileName = "quest_${System.currentTimeMillis()}.jpg"
-            val photoFile = java.io.File(photosDir, fileName)
-            capturedPhotoFile = photoFile
-            val uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                photoFile
-            )
-            tempCameraUriString = uri.toString()
-            tempPhotoName = fileName
-            takePictureLauncher.launch(uri)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(context, context.getString(R.string.delivery_error_camera, e.message), Toast.LENGTH_SHORT).show()
-        }
-    }
+    BackHandler { if (showCamera) showCamera = false else handleBack() }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            launchCamera()
+            showCamera = true
         } else {
             Toast.makeText(context, context.getString(R.string.delivery_camera_permission), Toast.LENGTH_SHORT).show()
         }
@@ -265,7 +166,7 @@ private fun QuestDeliveryScreenContent(
             android.Manifest.permission.CAMERA
         )
         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
-            launchCamera()
+            showCamera = true
         } else {
             permissionLauncher.launch(android.Manifest.permission.CAMERA)
         }
@@ -439,6 +340,25 @@ private fun QuestDeliveryScreenContent(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+
+    // Встроенная камера CameraX — полноэкранный оверлей внутри нашего
+    // процесса: OS не уводит приложение в фон и не убивает его.
+    if (showCamera) {
+        CameraCaptureScreen(
+            onImageCaptured = { file ->
+                // Пересъёмка: предыдущий файл больше не нужен.
+                capturedPhotoFile?.delete()
+                capturedPhotoFile = file
+                capturedImageUriString = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    file
+                ).toString()
+                showCamera = false
+            },
+            onClose = { showCamera = false }
+        )
     }
 
     // Полноэкранный оверлей загрузки: блокирует все касания до завершения submit

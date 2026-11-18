@@ -315,6 +315,9 @@
     <string name="delivery_retake">🔄 Переснять фото</string>
     <string name="delivery_comment_hint">Напиши папе пару слов к фото, если хочешь (например: «Всё сложил по местам!»)</string>
     <string name="delivery_submit">Прикрепить фото и отправить на проверку</string>
+    <string name="camera_capture_close">Закрыть камеру</string>
+    <string name="camera_capture_switch">Переключить камеру</string>
+    <string name="camera_capture_shoot">Сделать фото</string>
     <string name="delivery_uploading">Отправляем фото…</string>
 
     <!-- Honest cat screen -->

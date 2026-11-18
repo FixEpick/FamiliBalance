@@ -309,6 +309,9 @@
     <string name="delivery_retake">🔄 Retake photo</string>
     <string name="delivery_comment_hint">Write a few words to dad about the photo if you want (e.g. "Everything is put away!")</string>
     <string name="delivery_submit">Attach photo and send for review</string>
+    <string name="camera_capture_close">Close camera</string>
+    <string name="camera_capture_switch">Switch camera</string>
+    <string name="camera_capture_shoot">Take photo</string>
     <string name="delivery_uploading">Sending photo…</string>
 
     <!-- Honest cat screen -->
