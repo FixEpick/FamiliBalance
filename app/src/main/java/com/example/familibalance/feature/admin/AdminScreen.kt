@@ -66,6 +66,7 @@ import com.example.familibalance.R
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.components.LanguageSelectorButton
+import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
 import com.example.familibalance.data.storage.*
@@ -168,7 +169,7 @@ fun AdminScreen(
             title = { Text(stringResource(R.string.admin_cashout_title), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
                 Text(
-                    stringResource(R.string.admin_cashout_message, child.name, child.balance),
+                    stringResource(R.string.admin_cashout_message, childDisplayName(child), child.balance),
                     color = TextPrimary
                 )
             },

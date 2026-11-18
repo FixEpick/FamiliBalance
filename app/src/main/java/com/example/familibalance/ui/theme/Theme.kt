@@ -11,20 +11,19 @@ import androidx.compose.ui.graphics.Color
 
 data class AppThemePalette(
     val id: String,
-    val name: String,
     val primaryNeon: Color,
     val secondaryNeon: Color
 )
 
 val AppThemes = listOf(
-    AppThemePalette("COSMIC_BLUE", "Космический синий", Color(0xFF5CE1E6), Color(0xFF7B61FF)),
-    AppThemePalette("CYBER_PINK", "Кибер розовый", Color(0xFFFF0080), Color(0xFFE91E63)),
-    AppThemePalette("TOXIC_GREEN", "Токсичный зелёный", Color(0xFF39FF14), Color(0xFF00FF41)),
-    AppThemePalette("SOLAR_GOLD", "Солнечное золото", Color(0xFFFFD700), Color(0xFFFFA500)),
-    AppThemePalette("INFERNO_RED", "Инферно красный", Color(0xFFFF0040), Color(0xFFFF1744)),
-    AppThemePalette("GALAXY_PURPLE", "Галактический фиолетовый", Color(0xFFB000FF), Color(0xFF8A2BE2)),
-    AppThemePalette("ARCTIC_ICE", "Арктический лёд", Color(0xFF00FFFF), Color(0xFF87CEEB)),
-    AppThemePalette("SUNSET_ORANGE", "Закатный оранжевый", Color(0xFFFF8C00), Color(0xFFFF4500))
+    AppThemePalette("COSMIC_BLUE", Color(0xFF5CE1E6), Color(0xFF7B61FF)),
+    AppThemePalette("CYBER_PINK", Color(0xFFFF0080), Color(0xFFE91E63)),
+    AppThemePalette("TOXIC_GREEN", Color(0xFF39FF14), Color(0xFF00FF41)),
+    AppThemePalette("SOLAR_GOLD", Color(0xFFFFD700), Color(0xFFFFA500)),
+    AppThemePalette("INFERNO_RED", Color(0xFFFF0040), Color(0xFFFF1744)),
+    AppThemePalette("GALAXY_PURPLE", Color(0xFFB000FF), Color(0xFF8A2BE2)),
+    AppThemePalette("ARCTIC_ICE", Color(0xFF00FFFF), Color(0xFF87CEEB)),
+    AppThemePalette("SUNSET_ORANGE", Color(0xFFFF8C00), Color(0xFFFF4500))
 )
 
 val LocalAppPalette = compositionLocalOf { AppThemes.first() }

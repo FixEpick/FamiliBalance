@@ -231,6 +231,7 @@
     <string name="tasks_diary_grade2">Grade 2: %1$d pcs (-%2$d ₽)</string>
     <string name="tasks_diary_total">Total to credit: +%1$d ₽</string>
     <string name="child_player_role">Player</string>
+    <string name="default_child_name">Child %1$s</string>
 
     <!-- Achievements screen -->
     <string name="ach_tab_all">All</string>

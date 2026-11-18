@@ -35,7 +35,7 @@ private fun themeDisplayName(theme: AppThemePalette): String = when (theme.id) {
     "GALAXY_PURPLE" -> stringResource(R.string.theme_name_galaxy_purple)
     "ARCTIC_ICE" -> stringResource(R.string.theme_name_arctic_ice)
     "SUNSET_ORANGE" -> stringResource(R.string.theme_name_sunset_orange)
-    else -> theme.name
+    else -> theme.id
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

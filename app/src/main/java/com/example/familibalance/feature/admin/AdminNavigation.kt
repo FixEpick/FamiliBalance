@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
 import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.ui.components.LanguageSelectorButton
+import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.ui.theme.*
 
 sealed class AdminScreenType(@StringRes val titleRes: Int, @StringRes val a11yRes: Int, val icon: String) {
@@ -108,7 +109,7 @@ fun AdminTopBar(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(
-                            text = "${profile.avatar} ${profile.name}",
+                            text = "${profile.avatar} ${childDisplayName(profile)}",
                             color = if (isSelected) AccentColor else TextSecondary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp

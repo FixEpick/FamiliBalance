@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import com.example.familibalance.ui.auth.ChangeParentPinDialog
 import com.example.familibalance.ui.auth.SetChildPinDialog
+import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.viewmodel.AdminEvent
 import com.example.familibalance.viewmodel.AdminViewModel
 import com.example.familibalance.viewmodel.actions.*
@@ -367,7 +368,7 @@ if (showPinPicker) {
         title = { Text(stringResource(R.string.admin_set_pin_management), color = AccentColor, fontWeight = FontWeight.Bold) },
         text = {
             val options = listOf("parent" to stringResource(R.string.admin_set_my_pin)) +
-                childrenList.map { it.id to "👦 ${it.name}" }
+                childrenList.map { it.id to "👦 ${childDisplayName(it)}" }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 options.forEach { (target, label) ->
                 OutlinedButton(
@@ -407,9 +408,9 @@ pinTarget?.let { targetId ->
     if (targetId == "parent") return@let
     val targetChild = familyState.children[targetId]
     if (targetChild != null) {
-        val pinUpdatedText = stringResource(R.string.admin_set_pin_updated, targetChild.name)
+        val pinUpdatedText = stringResource(R.string.admin_set_pin_updated, childDisplayName(targetChild))
         SetChildPinDialog(
-            childName = targetChild.name,
+            childName = childDisplayName(targetChild),
             onPinEntered = { newPin ->
                 viewModel.updateChildPin(targetId, newPin)
                 android.widget.Toast.makeText(
@@ -432,7 +433,7 @@ if (showAddBonusDialog) {
         onDismissRequest = { showAddBonusDialog = false },
         properties = DialogProperties(usePlatformDefaultWidth = false),
         containerColor = SpaceBgStart,
-        title = { Text(stringResource(R.string.admin_set_bonus_title, child.name), color = AccentColor, fontWeight = FontWeight.Bold) },
+        title = { Text(stringResource(R.string.admin_set_bonus_title, childDisplayName(child)), color = AccentColor, fontWeight = FontWeight.Bold) },
         text = {
             Column(
                 modifier = Modifier.imePadding(),

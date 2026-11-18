@@ -98,7 +98,7 @@ data class ChildProfileState(
     companion object {
         fun fromDto(dto: ChildProfileDto): ChildProfileState = ChildProfileState(
             id = dto.id,
-            name = dto.name.ifBlank { "Ребёнок ${dto.id}" },
+            name = dto.name,
             avatar = dto.avatar.ifBlank { "🧒" },
             balance = dto.balance,
             boughtMinutesToday = dto.boughtMinutesToday,

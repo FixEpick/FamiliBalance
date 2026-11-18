@@ -69,6 +69,7 @@ import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.feature.child.screens.*
 import com.example.familibalance.ui.components.LanguageSelectorButton
+import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
 import com.example.familibalance.ui.theme.*
@@ -185,7 +186,7 @@ fun ChildSection(
                         Text(child.avatar, fontSize = 20.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "${child.name} (${stringResource(R.string.child_player_role)})",
+                            text = "${childDisplayName(child)} (${stringResource(R.string.child_player_role)})",
                             color = TextPrimary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold

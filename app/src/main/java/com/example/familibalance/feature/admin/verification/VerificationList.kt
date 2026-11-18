@@ -43,6 +43,7 @@ import com.example.familibalance.*
 import com.example.familibalance.data.model.*
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
+import com.example.familibalance.ui.components.childDisplayName
 
 import com.example.familibalance.viewmodel.actions.*
 
@@ -105,7 +106,7 @@ fun VerificationAdminContent(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = stringResource(R.string.admin_pending_header, child.name),
+                            text = stringResource(R.string.admin_pending_header, childDisplayName(child)),
                             color = TextPrimary,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold
@@ -231,7 +232,7 @@ fun VerificationAdminContent(
             child.cashoutRequests.isEmpty()) {
             item {
                 Text(
-                    text = stringResource(R.string.admin_no_pending, child.name),
+                    text = stringResource(R.string.admin_no_pending, childDisplayName(child)),
                     color = TextSecondary,
                     fontSize = 14.sp,
                     modifier = Modifier.padding(vertical = 12.dp)
@@ -249,7 +250,7 @@ fun VerificationAdminContent(
                     border = BorderStroke(1.dp, StatusYellow)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(stringResource(R.string.admin_honest_title, child.name), color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text(stringResource(R.string.admin_honest_title, childDisplayName(child)), color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = stringResource(R.string.admin_honest_quote, child.honestAdmissionText.ifBlank { stringResource(R.string.admin_no_comment_text) }),
@@ -302,7 +303,7 @@ fun VerificationAdminContent(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = stringResource(R.string.admin_quick_actions, child.name),
+                        text = stringResource(R.string.admin_quick_actions, childDisplayName(child)),
                         color = TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold

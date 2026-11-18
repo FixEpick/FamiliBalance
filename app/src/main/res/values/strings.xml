@@ -231,6 +231,7 @@
     <string name="tasks_diary_grade2">Оценка 2: %1$d шт. (-%2$d ₽)</string>
     <string name="tasks_diary_total">Итого к начислению: +%1$d ₽</string>
     <string name="child_player_role">Игрок</string>
+    <string name="default_child_name">Ребёнок %1$s</string>
 
     <!-- Achievements screen -->
     <string name="ach_tab_all">Все</string>

@@ -56,6 +56,7 @@ import com.example.familibalance.util.asString
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
 import com.example.familibalance.ui.components.LanguageSelectorButton
+import com.example.familibalance.ui.components.childDisplayName
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import com.example.familibalance.viewmodel.AuthEvent
@@ -583,7 +584,7 @@ private fun PendingRequestScreen(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = stringResource(R.string.pending_waiting, child.avatar, child.name),
+            text = stringResource(R.string.pending_waiting, child.avatar, childDisplayName(child)),
             color = CyberTextPrimary,
             fontSize = 15.sp,
             textAlign = TextAlign.Center
