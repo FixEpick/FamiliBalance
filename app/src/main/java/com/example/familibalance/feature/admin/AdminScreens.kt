@@ -1,4 +1,7 @@
-package com.example.familibalance
+package com.example.familibalance.feature.admin
+
+import com.example.familibalance.MainViewModel
+import com.example.familibalance.R
 
 import com.example.familibalance.data.model.*
 import com.example.familibalance.data.storage.*
