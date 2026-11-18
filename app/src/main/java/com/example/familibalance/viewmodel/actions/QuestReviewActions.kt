@@ -50,6 +50,7 @@ fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
     }
     updateChildProfile(updated)
     if (!photoUrlToDelete.isNullOrBlank()) {
+        PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
     }
     } finally {
@@ -93,6 +94,7 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
     }
     updateChildProfile(updated)
     if (!photoUrlToDelete.isNullOrBlank()) {
+        PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
     }
 }
@@ -130,6 +132,7 @@ fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, co
         )
     )
     if (!photoUrlToDelete.isNullOrBlank()) {
+        PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
     }
     } finally {
@@ -137,7 +140,7 @@ fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, co
     }
 }
 
-/** Админ одобряет бонус-квест: READY_TO_CLAIM + запись в историю. */
+/** Админ одобряет бонус-квест: READY_TO_CLAIM. История и баланс — при получении награды ребёнком. */
 fun MainViewModel.adminApproveBonusQuest(userId: String, questId: String) {
     if (!tryStartProcessingAction()) return
     try {
@@ -147,25 +150,9 @@ fun MainViewModel.adminApproveBonusQuest(userId: String, questId: String) {
     val updatedQuests = profile.bonusQuests.map { q ->
         if (q.id == questId) q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, photoUrl = null) else q
     }
-    updateChildProfile(
-        profile.copy(
-            bonusQuests = updatedQuests,
-            historyItems = listOf(
-                HistoryData(
-                    title = "Одобрен бонус-квест: ${target.title}",
-                    time = getCurrentTimeString(),
-                    date = getCurrentDateString(),
-                    amount = "+${target.reward} ₽",
-                    isIncome = true,
-                    category = "Бонус-квесты",
-                    type = HistoryType.BONUS_QUEST_APPROVED,
-                    amountValue = target.reward,
-                    arg = target.title
-                )
-            ) + profile.historyItems
-        )
-    )
+    updateChildProfile(profile.copy(bonusQuests = updatedQuests))
     if (!photoUrlToDelete.isNullOrBlank()) {
+        PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
     }
     } finally {
@@ -183,11 +170,12 @@ fun MainViewModel.adminRejectBonusQuest(userId: String, questId: String, reason:
     }
     updateChildProfile(profile.copy(bonusQuests = updatedQuests))
     if (!photoUrlToDelete.isNullOrBlank()) {
+        PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
     }
 }
 
-/** Админ одобряет кастомный квест: READY_TO_CLAIM + запись в историю + удаление фото. */
+/** Админ одобряет кастомный квест: READY_TO_CLAIM. История и баланс — при получении награды ребёнком. */
 fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
     if (!tryStartProcessingAction()) return
     try {
@@ -197,25 +185,9 @@ fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
     val updatedQuests = profile.customQuests.map { q ->
         if (q.id == questId) q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, photoUrl = null) else q
     }
-    updateChildProfile(
-        profile.copy(
-            customQuests = updatedQuests,
-            historyItems = listOf(
-                HistoryData(
-                    title = "Одобрен квест: ${target.title}",
-                    time = getCurrentTimeString(),
-                    date = getCurrentDateString(),
-                    amount = "+${target.reward} ₽",
-                    isIncome = true,
-                    category = "Кастомные квесты",
-                    type = HistoryType.QUEST_APPROVED,
-                    amountValue = target.reward,
-                    arg = target.title
-                )
-            ) + profile.historyItems
-        )
-    )
+    updateChildProfile(profile.copy(customQuests = updatedQuests))
     if (!photoUrlToDelete.isNullOrBlank()) {
+        PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch {
             SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
         }
@@ -235,6 +207,7 @@ fun MainViewModel.adminRejectCustomQuest(userId: String, questId: String, reason
     }
     updateChildProfile(profile.copy(customQuests = updatedQuests))
     if (!photoUrlToDelete.isNullOrBlank()) {
+        PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch {
             SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
         }

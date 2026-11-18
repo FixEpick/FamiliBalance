@@ -121,6 +121,11 @@ internal object ProfileSync {
         SupabaseManager.scope.launch(SupabaseManager.exceptionHandler) {
             try {
                 var hasUploadedNewPhoto = false
+                // true, если хотя бы одно локальное фото не удалось загрузить
+                // в Storage: тогда upsert с локальным URI делать НЕЛЬЗЯ —
+                // админ получил бы битую ссылку content:///file://.
+                // Прерываем push: профиль остаётся dirty и будет повторён.
+                var uploadFailed = false
 
                 // Читаем текущие значения фото (snapshot-state читается с любого потока)
                 val closetUrl = child.closetPhotoUrl
@@ -138,7 +143,15 @@ internal object ProfileSync {
                     if (scheme == "http" || scheme == "https") return current
                     val publicUrl = withTimeoutOrNull(30_000) {
                         PhotoStorage.uploadPhotoToStorage(context, child.id, uri)
-                    } ?: return current
+                    }
+                    if (publicUrl == null) {
+                        uploadFailed = true
+                        return current
+                    }
+                    // Локальный файл больше не нужен: в state_json уйдёт
+                    // публичный URL, а filesDir не должен копить фото.
+                    com.example.familibalance.util.PhotoStorage
+                        .deleteLocalFileIfPresent(context, current)
                     hasUploadedNewPhoto = true
                     return publicUrl
                 }
@@ -157,11 +170,26 @@ internal object ProfileSync {
                                 PhotoStorage.uploadPhotoToStorage(context, child.id, uri)
                             }
                             if (publicUrl != null) {
+                                com.example.familibalance.util.PhotoStorage
+                                    .deleteLocalFileIfPresent(context, uri.toString())
                                 hasUploadedNewPhoto = true
                                 index to Uri.parse(publicUrl)
-                            } else index to uri
+                            } else {
+                                uploadFailed = true
+                                index to uri
+                            }
                         } else index to uri
                     } else index to uri
+                }
+
+                // Хоть одно фото не загрузилось — прерываем push ДО upsert:
+                // в облако не должен уйти локальный URI. Помечаем dirty,
+                // чтобы retryDirtyChildren повторил попытку при появлении сети.
+                if (uploadFailed) {
+                    SyncStatus.markDirty(child.id)
+                    onResult?.invoke(false)
+                    Log.w("SupabaseManager", "Профиль ${child.id}: фото не загружено — push отложен")
+                    return@launch
                 }
 
                 // Пользователь мог выйти из аккаунта, пока шла загрузка фото —

@@ -49,4 +49,27 @@ object PhotoStorage {
             uriString
         }
     }
+
+    /**
+     * Удаляет локальный файл фото из filesDir/quest_photos, если URI на него указывает.
+     * Безопасно для http(s) и чужих content:// — просто no-op.
+     * Вызывается после approve/reject/claim и после успешной загрузки в Storage,
+     * чтобы filesDir не забивался обработанными фото.
+     */
+    fun deleteLocalFileIfPresent(context: Context, uriString: String?) {
+        if (uriString.isNullOrBlank()) return
+        val uri = runCatching { Uri.parse(uriString) }.getOrNull() ?: return
+        val ourProvider = "${context.packageName}.fileprovider"
+        val file = when (uri.scheme) {
+            "file" -> uri.path?.let { File(it) }
+            "content" -> if (uri.authority == ourProvider) {
+                // FileProvider URI: content://pkg.fileprovider/quest_photos/<name>.jpg
+                uri.lastPathSegment?.let { File(context.filesDir, "$SUBDIR/$it") }
+            } else null
+            else -> null
+        } ?: return
+        runCatching {
+            if (file.exists()) file.delete()
+        }
+    }
 }

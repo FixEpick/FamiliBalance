@@ -81,6 +81,7 @@ fun MainViewModel.cancelPendingQuest(userId: String, questKey: String) {
             if (updatedQuests != profile.bonusQuests) {
                 updateChildProfile(profile.copy(bonusQuests = updatedQuests))
                 if (!photoUrlToDelete.isNullOrBlank()) {
+                    PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
                     viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
                 }
             }
@@ -96,6 +97,7 @@ fun MainViewModel.cancelPendingQuest(userId: String, questKey: String) {
             if (updatedQuests != profile.customQuests) {
                 updateChildProfile(profile.copy(customQuests = updatedQuests))
                 if (!photoUrlToDelete.isNullOrBlank()) {
+                    PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
                     viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
                 }
             }
@@ -129,6 +131,7 @@ fun MainViewModel.cancelPendingQuest(userId: String, questKey: String) {
                 else -> profile
             }
             if (updated != profile) {
+                PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
                 clearQuestPhotoIfNeeded(updated, key, photoUrlToDelete)
                 updateChildProfile(updated)
             }
@@ -335,6 +338,7 @@ fun MainViewModel.deleteBonusQuest(userId: String, questId: String) {
     val photoUrlToDelete = profile.bonusQuests.firstOrNull { it.id == questId }?.photoUrl
     updateChildProfile(profile.copy(bonusQuests = profile.bonusQuests.filterNot { it.id == questId }))
     if (!photoUrlToDelete.isNullOrBlank()) {
+        PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch {
             SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
         }

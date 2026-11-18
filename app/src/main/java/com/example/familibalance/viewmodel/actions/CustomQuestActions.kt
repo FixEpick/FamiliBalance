@@ -28,6 +28,7 @@ fun MainViewModel.deleteCustomQuest(userId: String, questId: String) {
     val photoUrlToDelete = profile.customQuests.firstOrNull { it.id == questId }?.photoUrl
     updateChildProfile(profile.copy(customQuests = profile.customQuests.filterNot { it.id == questId }))
     if (!photoUrlToDelete.isNullOrBlank()) {
+        PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch {
             SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
         }
