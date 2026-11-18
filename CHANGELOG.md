@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.1] — 2026-11-18
+
+### 🐛 Hotfix
+- **Критические падения на экранах админа**: пустой список детей больше не вызывает `NoSuchElementException` — все обращения к `children` используют `firstOrNull()` с UI-плейсхолдером.
+- **Падение при запуске обновления**: `startActivity` в `UpdateDialog` вызывается с `FLAG_ACTIVITY_NEW_TASK` — работает из любого контекста (application context), установщик APK и настройки разрешений открываются без `AndroidRuntimeException`.
+
 ## [1.8.0] — 2026-11-18
 
 ### ✨ Новое
