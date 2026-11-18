@@ -128,6 +128,9 @@ tasks.matching {
     // Локальная копия: doFirst захватывает только String (сериализуемо для
     // configuration cache), а не ссылку на script object.
     val kpPath = keyPropertiesPath
+    // Локальная копия githubRepo: doFirst не должен захватывать script-level
+    // val (ссылка на script object ломает configuration cache).
+    val repo = githubRepo
     doFirst {
         // hasReleaseKey объявлен внутри android {} и здесь недоступен —
         // повторяем проверку key.properties напрямую.
