@@ -158,10 +158,21 @@ class MainActivity : FragmentActivity() {
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                 }
 
-                fun backToLogin() {
-                    navController.navigate(WelcomeRoute) {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                // Переход «в корень»: startDestination может быть уже удалён
+                // из back stack после первого popUpTo(inclusive = true),
+                // поэтому popUpTo(graph.startDestinationId) перестаёт находить
+                // цель и back stack не очищается. Снимаем все destination'ы
+                // до пустого стека (popBackStack() возвращает false, когда
+                // снимать больше нечего), затем navigate создаёт чистый корень
+                // без старых экранов авторизации и дублей маршрутов.
+                fun navigateToRoot(target: Any) {
+                    while (navController.popBackStack()) {
+                        // pop до тех пор, пока стек не опустеет
                     }
+                    navController.navigate(target)
+                }
+                fun backToLogin() {
+                    navigateToRoot(WelcomeRoute)
                 }
 
                 // Анонимная сессия (устройство ребёнка) не считается родительской:
@@ -188,9 +199,7 @@ class MainActivity : FragmentActivity() {
                             .putBoolean("onboarding_done", true)
                             .remove("logged_in_child_id")
                             .apply()
-                        navController.navigate(AdminRoute) {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        }
+                        navigateToRoot(AdminRoute)
                     }
                 }
 
@@ -204,9 +213,7 @@ class MainActivity : FragmentActivity() {
                             .edit()
                             .putBoolean("onboarding_done", true)
                             .apply()
-                        navController.navigate(ChildRoute) {
-                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                        }
+                        navigateToRoot(ChildRoute)
                     }
                 }
 
@@ -233,23 +240,17 @@ class MainActivity : FragmentActivity() {
                         OnboardingScreen(
                             onParentClick = {
                                 completeOnboarding {
-                                    navController.navigate(RegisterParentRoute) {
-                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                    }
+                                    navigateToRoot(RegisterParentRoute)
                                 }
                             },
                             onChildClick = {
                                 completeOnboarding {
-                                    navController.navigate(PlayerLoginRoute) {
-                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                    }
+                                    navigateToRoot(PlayerLoginRoute)
                                 }
                             },
                             onSkip = {
                                 completeOnboarding {
-                                    navController.navigate(WelcomeRoute) {
-                                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                    }
+                                    navigateToRoot(WelcomeRoute)
                                 }
                             }
                         )
@@ -265,9 +266,7 @@ class MainActivity : FragmentActivity() {
                             viewModel = viewModel,
                             onBack = { navController.popBackStack() },
                             onLoginSuccess = {
-                                navController.navigate(ChildRoute) {
-                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                }
+                                navigateToRoot(ChildRoute)
                             },
                             onCreateAccount = { navController.navigate(RegisterParentRoute) }
                         )
@@ -277,9 +276,7 @@ class MainActivity : FragmentActivity() {
                             viewModel = authViewModel,
                             mainViewModel = viewModel,
                             onPlayerSuccess = {
-                                navController.navigate(ChildRoute) {
-                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                }
+                                navigateToRoot(ChildRoute)
                             },
                             onParentSuccess = {
                                 // Флаг автовхода родителя: при перезапуске
@@ -290,9 +287,7 @@ class MainActivity : FragmentActivity() {
                                     .putBoolean("is_logged_in", false)
                                     .remove("logged_in_child_id")
                                     .apply()
-                                navController.navigate(AdminRoute) {
-                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                }
+                                navigateToRoot(AdminRoute)
                             },
                             onBack = { navController.popBackStack() }
                         )
@@ -310,9 +305,7 @@ class MainActivity : FragmentActivity() {
                                     .putBoolean("is_logged_in", false)
                                     .remove("logged_in_child_id")
                                     .apply()
-                                navController.navigate(WelcomeRoute) {
-                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                }
+                                navigateToRoot(WelcomeRoute)
                             }
                         )
                     }
@@ -322,9 +315,7 @@ class MainActivity : FragmentActivity() {
                             onSwitchProfile = { backToLogin() },
                             onLogout = {
                                 viewModel.logoutChild()
-                                navController.navigate(WelcomeRoute) {
-                                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                                }
+                                navigateToRoot(WelcomeRoute)
                             }
                         )
                     }
