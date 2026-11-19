@@ -154,6 +154,30 @@ object PushNotifier {
         )
     }
 
+    /** Ребёнку: вывод наличных отклонён. */
+    fun cashoutRejected(childId: String, amount: Int) {
+        notify(
+            targetUserId = childId,
+            targetRole = "child",
+            title = "Заявка на вывод отклонена",
+            body = "Родитель отклонил вывод $amount ₽.",
+            screen = "main",
+            channel = PushChannels.QUESTS
+        )
+    }
+
+    /** Ребёнку: честное признание отклонено. */
+    fun honestAdmissionRejected(childId: String) {
+        notify(
+            targetUserId = childId,
+            targetRole = "child",
+            title = "Честное признание отклонено",
+            body = "Родитель не принял признание. Можно отправить новое через 7 дней.",
+            screen = "main",
+            channel = PushChannels.QUESTS
+        )
+    }
+
     /** Ребёнку: новый бонус-квест от родителя. */
     fun bonusQuestAdded(childId: String, questTitle: String, reward: Int) {
         notify(

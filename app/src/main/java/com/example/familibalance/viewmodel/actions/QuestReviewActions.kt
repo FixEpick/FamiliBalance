@@ -271,6 +271,7 @@ fun MainViewModel.adminRejectHonestAdmission(userId: String) {
     updateChildProfile(
         profile.copy(honestAdmissionStatus = QuestStatus.AVAILABLE)
     )
+    PushNotifier.honestAdmissionRejected(userId)
 }
 
 /** Админ удаляет встроенный квест (шкаф/комната/дневник). */

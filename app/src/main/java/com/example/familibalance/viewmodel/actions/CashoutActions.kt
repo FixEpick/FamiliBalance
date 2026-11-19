@@ -110,9 +110,16 @@ fun MainViewModel.approveCashoutRequest(childId: String, requestId: String) {
 }
 
 fun MainViewModel.rejectCashoutRequest(childId: String, requestId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
     val profile = familyRepository.getChild(childId) ?: return
+    val request = profile.cashoutRequests.firstOrNull { it.id == requestId } ?: return
 
     updateChildProfile(
         profile.copy(cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId })
     )
+    PushNotifier.cashoutRejected(childId, request.amount)
+    } finally {
+        endProcessingAction()
+    }
 }

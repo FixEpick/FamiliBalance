@@ -126,6 +126,7 @@ fun AdminTopBar(
 fun AdminBottomBar(
     tabs: List<AdminTab>,
     selectedTabRoute: Any,
+    hasPending: Boolean = false,
     onTabClick: (Any) -> Unit
 ) {
     NavigationBar(
@@ -133,18 +134,27 @@ fun AdminBottomBar(
         tonalElevation = 0.dp
     ) {
         tabs.forEach { adminTab ->
+            val showBadge = hasPending && adminTab.tab == AdminScreenType.Verification
             NavigationBarItem(
                 selected = adminTab.route == selectedTabRoute,
                 onClick = { onTabClick(adminTab.route) },
                 icon = {
                     val tabA11y = stringResource(adminTab.tab.a11yRes)
-                    Text(
-                        adminTab.tab.icon,
-                        fontSize = 20.sp,
-                        modifier = Modifier.semantics {
-                            contentDescription = tabA11y
+                    BadgedBox(
+                        badge = {
+                            if (showBadge) {
+                                Badge(containerColor = PenaltyRed)
+                            }
                         }
-                    )
+                    ) {
+                        Text(
+                            adminTab.tab.icon,
+                            fontSize = 20.sp,
+                            modifier = Modifier.semantics {
+                                contentDescription = tabA11y
+                            }
+                        )
+                    }
                 },
                 label = { Text(stringResource(adminTab.tab.titleRes), color = if (adminTab.route == selectedTabRoute) AccentColor else TextSecondary) },
                 colors = NavigationBarItemDefaults.colors(indicatorColor = GlassStroke)

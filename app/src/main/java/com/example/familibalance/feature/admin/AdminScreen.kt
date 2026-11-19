@@ -186,12 +186,18 @@ fun AdminScreen(
     }
     LaunchedEffect(Unit) { PushChannels.ensureChannels(context) }
 
-    val hasPending = child.closetStatus == QuestStatus.PENDING
-        || child.roomStatus == QuestStatus.PENDING
-        || child.diaryStatus == QuestStatus.PENDING
-        || child.bonusQuests.any { it.status == QuestStatus.PENDING }
-        || child.cashoutRequests.isNotEmpty()
-        || child.honestAdmissionStatus == QuestStatus.PENDING
+    // Бейдж на вкладке «Проверка»: горит, если у ЛЮБОГО видимого ребёнка
+    // есть ожидающие заявки (а не только у выбранного в переключателе).
+    fun ChildProfileState.hasPendingItems(): Boolean =
+        closetStatus == QuestStatus.PENDING
+            || roomStatus == QuestStatus.PENDING
+            || diaryStatus == QuestStatus.PENDING
+            || bonusQuests.any { it.status == QuestStatus.PENDING }
+            || customQuests.any { it.status == QuestStatus.PENDING }
+            || cashoutRequests.isNotEmpty()
+            || honestAdmissionStatus == QuestStatus.PENDING
+
+    val hasPending = visibleChildren.any { it.hasPendingItems() }
 
     if (showCashOutDialog) {
         AlertDialog(
@@ -259,6 +265,7 @@ fun AdminScreen(
                 AdminBottomBar(
                     tabs = tabs,
                     selectedTabRoute = selectedTabRoute,
+                    hasPending = hasPending,
                     onTabClick = { navigateToTab(it) }
                 )
             }
