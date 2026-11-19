@@ -226,7 +226,6 @@
     <string name="eco_streak_value">+50 ₽ every 7 days</string>
     <string name="eco_dream">🎯 Dream goal</string>
     <string name="eco_dream_value">you pick it</string>
-    <string name="eco_set_by_parent">amount set by your parent</string>
     <string name="eco_time30">⏳ 30 minutes of screen time</string>
     <string name="eco_time60">⏳ 60 minutes of screen time</string>
     <string name="eco_time90">⏳ 90 minutes of screen time</string>
@@ -427,7 +426,6 @@
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Claim reward</string>
-    <string name="task_rejected_by_parent">❌ Rejected by your parent: %1$s</string>
     <string name="task_execute">📷 Do it</string>
     <string name="task_pending_review">• Under parent\'s review</string>
     <string name="task_done">✅ Done</string>
