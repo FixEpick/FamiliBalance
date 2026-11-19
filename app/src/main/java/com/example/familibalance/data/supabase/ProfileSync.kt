@@ -36,6 +36,19 @@ data class FamilyProfileRow(
     val status: String? = null
 )
 
+/** Строка с серверным updated_at — только для SELECT (в upsert не входит,
+ *  чтобы не затирать значение триггера). */
+@Serializable
+data class FamilyProfileRowTs(
+    val user_id: String,
+    val state_json: String,
+    @SerialName("parent_user_id") val parentUserId: String? = null,
+    @SerialName("parent_email") val parentEmail: String? = null,
+    @SerialName("auth_user_id") val authUserId: String? = null,
+    val status: String? = null,
+    @SerialName("updated_at") val updatedAt: String? = null
+)
+
 /** Синхронизация профилей: pull из облака, push в облако, фильтрация видимости. */
 internal object ProfileSync {
 
@@ -51,8 +64,8 @@ internal object ProfileSync {
         val supabase = SupabaseManager.client ?: return
         try {
             val rows = supabase.from("family_profiles")
-                .select(columns = Columns.list("user_id", "state_json", "parent_user_id", "parent_email", "auth_user_id", "status"))
-                .decodeList<FamilyProfileRow>()
+                .select(columns = Columns.list("user_id", "state_json", "parent_user_id", "parent_email", "auth_user_id", "status", "updated_at"))
+                .decodeList<FamilyProfileRowTs>()
 
             val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
             val uid = currentUser?.id
@@ -60,7 +73,7 @@ internal object ProfileSync {
 
             rows.filter { isRowVisibleToUser(it, uid, email) }
                 .forEach { row ->
-                    AppStateStorage.applyRemoteChildJsonAsync(context, row.user_id, row.state_json, row.parentUserId, row.status, row.authUserId)
+                    AppStateStorage.applyRemoteChildJsonAsync(context, row.user_id, row.state_json, row.parentUserId, row.status, row.authUserId, row.updatedAt)
                 }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
@@ -85,7 +98,7 @@ internal object ProfileSync {
      * но parentEmail внутри state_json совпадает с email текущего пользователя.
      * Гость без сессии (uid == null) не видит ничего.
      */
-    fun isRowVisibleToUser(row: FamilyProfileRow, uid: String?, email: String?): Boolean {
+    fun isRowVisibleToUser(row: FamilyProfileRowTs, uid: String?, email: String?): Boolean {
         // Без сессии (гость) чужие строки не показываем — строгая клиентская фильтрация.
         // Анонимный пользователь Supabase имеет uid, поэтому собственный профиль виден.
         if (uid == null) return false
@@ -278,31 +291,45 @@ internal object ProfileSync {
                 // stateUpdatedAt == 0 — legacy-профиль без метки: всегда пишем.
                 val remoteRow = runCatching {
                     supabase.from("family_profiles")
-                        .select(columns = Columns.list("state_json", "parent_user_id", "parent_email", "auth_user_id", "status")) {
+                        .select(columns = Columns.list("state_json", "parent_user_id", "parent_email", "auth_user_id", "status", "updated_at")) {
                             filter { eq("user_id", child.id) }
                         }
-                        .decodeList<FamilyProfileRow>()
+                        .decodeList<FamilyProfileRowTs>()
                         .firstOrNull()
                 }.getOrNull()
-                val remoteIsNewer = remoteRow?.let { row ->
-                    runCatching {
-                        val remoteTs = stateJsonFormat
-                            .decodeFromString<ChildProfileDto>(row.state_json)
-                            .stateUpdatedAt
-                        remoteTs > 0 && remoteTs > updatedChild.stateUpdatedAt
-                    }.getOrDefault(false)
-                } == true
-                if (remoteIsNewer) {
-                    remoteRow?.let { row ->
-                        AppStateStorage.applyRemoteChildJsonAsync(
-                            context, row.user_id, row.state_json,
-                            row.parentUserId, row.status, row.authUserId
-                        )
+                // Порядок версий — по СЕРВЕРНОМУ updated_at (часы Supabase), а не по
+                // клиентским stateUpdatedAt: они расходятся между устройствами
+                // (эмуляторы, ручная установка времени) и ломали LWW.
+                val lastCloudVer = com.example.familibalance.data.repository.SyncStatus.cloudVersion(child.id)
+                val remoteVer = remoteRow?.updatedAt
+                val remoteChanged = remoteVer != null &&
+                    (lastCloudVer.isEmpty() ||
+                        com.example.familibalance.data.repository.SyncStatus.isTsNewer(remoteVer, lastCloudVer))
+                if (remoteChanged) {
+                    // Облако изменилось с нашей последней синхронизации — возможен
+                    // конфликт. Tiebreak по клиентским часам (редкий случай).
+                    val remoteIsNewer = remoteRow?.let { row ->
+                        runCatching {
+                            val remoteTs = stateJsonFormat
+                                .decodeFromString<ChildProfileDto>(row.state_json)
+                                .stateUpdatedAt
+                            remoteTs > 0 && remoteTs > updatedChild.stateUpdatedAt
+                        }.getOrDefault(false)
+                    } == true
+                    if (remoteIsNewer) {
+                        remoteRow?.let { row ->
+                            AppStateStorage.applyRemoteChildJsonAsync(
+                                context, row.user_id, row.state_json,
+                                row.parentUserId, row.status, row.authUserId, row.updatedAt
+                            )
+                        }
+                        onResult?.invoke(true)
+                        Log.d("SupabaseManager", "Профиль ${child.id}: удалённая версия новее — upsert пропущен")
+                        return@launch
                     }
-                    onResult?.invoke(true)
-                    Log.d("SupabaseManager", "Профиль ${child.id}: удалённая версия новее — upsert пропущен")
-                    return@launch
                 }
+                // !remoteChanged: облако не менялось с нашей последней синхронизации —
+                // upsert безопасен при любых расхождениях клиентских часов.
 
                 supabase.from("family_profiles").upsert(
                     FamilyProfileRow(
@@ -314,6 +341,18 @@ internal object ProfileSync {
                         status = updatedChild.status.ifBlank { "active" }
                     )
                 )
+                // Фиксируем серверную версию, которую только что записали —
+                // следующие push'и смогут отличить «облако не менялось» от конфликта.
+                runCatching {
+                    supabase.from("family_profiles")
+                        .select(columns = Columns.list("updated_at")) {
+                            filter { eq("user_id", child.id) }
+                        }
+                        .decodeList<FamilyProfileRowTs>()
+                        .firstOrNull()?.updatedAt
+                }.getOrNull()?.let {
+                    com.example.familibalance.data.repository.SyncStatus.setCloudVersion(child.id, it)
+                }
                 onResult?.invoke(true)
                 Log.d("SupabaseManager", "Профиль ${child.id} успешно отправлен в Supabase")
             } catch (e: Exception) {

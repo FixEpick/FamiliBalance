@@ -79,18 +79,20 @@ internal object RealtimeSync {
                             val parentEmail = record["parent_email"]?.jsonPrimitive?.contentOrNull
                             val authUserId = record["auth_user_id"]?.jsonPrimitive?.contentOrNull
                             val status = record["status"]?.jsonPrimitive?.contentOrNull
+                            val updatedAt = record["updated_at"]?.jsonPrimitive?.contentOrNull
                             if (!userId.isNullOrEmpty() && !stateJson.isNullOrEmpty()) {
                                 val currentUser = runCatching { supabase.auth.currentUserOrNull() }.getOrNull()
-                                val row = FamilyProfileRow(
+                                val row = FamilyProfileRowTs(
                                     user_id = userId,
                                     state_json = stateJson,
                                     parentUserId = parentUserId,
                                     parentEmail = parentEmail,
                                     authUserId = authUserId,
-                                    status = status
+                                    status = status,
+                                    updatedAt = updatedAt
                                 )
                                 if (ProfileSync.isRowVisibleToUser(row, currentUser?.id, currentUser?.email)) {
-                                    AppStateStorage.applyRemoteChildJsonAsync(context, userId, stateJson, parentUserId, status, authUserId)
+                                    AppStateStorage.applyRemoteChildJsonAsync(context, userId, stateJson, parentUserId, status, authUserId, updatedAt)
                                 }
                             }
                         }

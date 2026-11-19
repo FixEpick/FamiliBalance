@@ -74,9 +74,16 @@ object AppStateStorage {
         return jsonFormat.encodeToString(child.toDto())
     }
 
-    fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null) {
+    fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null, remoteUpdatedAt: String? = null) {
         try {
             val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
+            // Дубль уже синхронизированной версии (server updated_at не новее
+            // последней применённой) — пропускаем, чтобы echo собственных push'ей
+            // и повторные Realtime-события не гоняли UI по кругу.
+            val lastCloudVer = com.example.familibalance.data.repository.SyncStatus.cloudVersion(userId)
+            if (remoteUpdatedAt != null && lastCloudVer.isNotEmpty() &&
+                !com.example.familibalance.data.repository.SyncStatus.isTsNewer(remoteUpdatedAt, lastCloudVer)
+            ) return
             // Dirty-профиль: локальные правки ещё не ушли в облако.
             // Применяем удалённую версию, только если она строго новее
             // локальной (last-writer-wins) — иначе одобрение админа
@@ -94,6 +101,7 @@ object AppStateStorage {
                 )
             AppSharedState.children[userId] = profile
             saveLocalOnly(context)
+            com.example.familibalance.data.repository.SyncStatus.setCloudVersion(userId, remoteUpdatedAt)
             // Удалённая версия применена — локальные несинхронизированные
             // правки устарели (last-writer-wins): снимаем dirty-метку,
             // иначе retryDirtyChildren позже отправит старый снапшот
@@ -109,13 +117,19 @@ object AppStateStorage {
      * Suspend-вариант: парсит JSON на IO-потоке, применяет на Main.
      * Используется из SupabaseManager (Realtime/первичная загрузка), чтобы не фризить UI.
      */
-    suspend fun applyRemoteChildJsonAsync(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null) {
+    suspend fun applyRemoteChildJsonAsync(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null, remoteUpdatedAt: String? = null) {
         try {
             // Декод JSON + запись в children (ConcurrentHashMap) + saveLocalOnly
             // (JSON-сериализация + EncryptedSharedPreferences) — целиком на IO:
             // saveLocalOnly внутри withContext(Main) фризил UI на Realtime-обновлениях.
             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
+                // Дубль уже синхронизированной версии (server updated_at не новее
+                // последней применённой) — пропускаем echo собственных push'ей.
+                val lastCloudVer = com.example.familibalance.data.repository.SyncStatus.cloudVersion(userId)
+                if (remoteUpdatedAt != null && lastCloudVer.isNotEmpty() &&
+                    !com.example.familibalance.data.repository.SyncStatus.isTsNewer(remoteUpdatedAt, lastCloudVer)
+                ) return@withContext
                 // Dirty-профиль: применяем удалённую версию, только если она
                 // строго новее локальной — иначе Realtime-апдейты админа
                 // (approve/reject) терялись, пока профиль был dirty.
@@ -143,6 +157,7 @@ object AppStateStorage {
                     "remote update APPLIED: user=$userId ts=${dto.stateUpdatedAt} " +
                         "closet=${profile.closetStatus} room=${profile.roomStatus} diary=${profile.diaryStatus}"
                 )
+                com.example.familibalance.data.repository.SyncStatus.setCloudVersion(userId, remoteUpdatedAt)
                 // См. applyRemoteChildJson: применённая удалённая версия
                 // делает локальные правки устаревшими — dirty снимаем,
                 // иначе старый PENDING перезапишет статус админа.
