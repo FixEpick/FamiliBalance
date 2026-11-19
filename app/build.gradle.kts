@@ -7,8 +7,8 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-// GitHub repo для проверки обновлений (owner/name). Замените на реальный.
-// Читается на уровне скрипта: значение нужно и в defaultConfig, и в guard release-задач.
+// GitHub repo РґР»СЏ РїСЂРѕРІРµСЂРєРё РѕР±РЅРѕРІР»РµРЅРёР№ (owner/name). Р—Р°РјРµРЅРёС‚Рµ РЅР° СЂРµР°Р»СЊРЅС‹Р№.
+// Р§РёС‚Р°РµС‚СЃСЏ РЅР° СѓСЂРѕРІРЅРµ СЃРєСЂРёРїС‚Р°: Р·РЅР°С‡РµРЅРёРµ РЅСѓР¶РЅРѕ Рё РІ defaultConfig, Рё РІ guard release-Р·Р°РґР°С‡.
 val githubRepoProps = Properties().apply {
     val localPropsFile = rootProject.file("local.properties")
     if (localPropsFile.exists()) {
@@ -23,8 +23,8 @@ android {
     namespace = "com.example.familibalance"
     compileSdk = 37
 
-    // Ключи Supabase берутся из local.properties / gradle.properties,
-    // чтобы не хранить их в исходном коде. Fallback — пустые строки.
+    // РљР»СЋС‡Рё Supabase Р±РµСЂСѓС‚СЃСЏ РёР· local.properties / gradle.properties,
+    // С‡С‚РѕР±С‹ РЅРµ С…СЂР°РЅРёС‚СЊ РёС… РІ РёСЃС…РѕРґРЅРѕРј РєРѕРґРµ. Fallback вЂ” РїСѓСЃС‚С‹Рµ СЃС‚СЂРѕРєРё.
     val localProps = Properties().apply {
         val localPropsFile = rootProject.file("local.properties")
         if (localPropsFile.exists()) {
@@ -38,8 +38,8 @@ android {
         ?: (project.findProperty("SUPABASE_ANON_KEY") as? String)
         ?: ""
 
-    // key.properties в корне проекта — данные release-keystore (не коммитится).
-    // Если файла нет — release подписывается debug-ключом, debug-сборки не затрагиваются.
+    // key.properties РІ РєРѕСЂРЅРµ РїСЂРѕРµРєС‚Р° вЂ” РґР°РЅРЅС‹Рµ release-keystore (РЅРµ РєРѕРјРјРёС‚РёС‚СЃСЏ).
+    // Р•СЃР»Рё С„Р°Р№Р»Р° РЅРµС‚ вЂ” release РїРѕРґРїРёСЃС‹РІР°РµС‚СЃСЏ debug-РєР»СЋС‡РѕРј, debug-СЃР±РѕСЂРєРё РЅРµ Р·Р°С‚СЂР°РіРёРІР°СЋС‚СЃСЏ.
     val keyPropsFile = rootProject.file("key.properties")
     val keyProps = Properties().apply {
         if (keyPropsFile.exists()) {
@@ -63,7 +63,7 @@ android {
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"$supabaseAnonKey\"")
         buildConfigField("String", "GITHUB_REPO", "\"$githubRepo\"")
 
-        // Только 64-bit ARM + 64-bit x86 (эмуляторы): отсекаем 32-bit x86 (~11 МБ .so).
+        // РўРѕР»СЊРєРѕ 64-bit ARM + 64-bit x86 (СЌРјСѓР»СЏС‚РѕСЂС‹): РѕС‚СЃРµРєР°РµРј 32-bit x86 (~11 РњР‘ .so).
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
@@ -85,8 +85,8 @@ android {
             signingConfig = if (hasReleaseKey) {
                 signingConfigs.getByName("release")
             } else {
-                // Не используется: release-задачи падают раньше (см. guard ниже),
-                // но signingConfig обязателен для DSL — указываем debug как заглушку.
+                // РќРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ: release-Р·Р°РґР°С‡Рё РїР°РґР°СЋС‚ СЂР°РЅСЊС€Рµ (СЃРј. guard РЅРёР¶Рµ),
+                // РЅРѕ signingConfig РѕР±СЏР·Р°С‚РµР»РµРЅ РґР»СЏ DSL вЂ” СѓРєР°Р·С‹РІР°РµРј debug РєР°Рє Р·Р°РіР»СѓС€РєСѓ.
                 signingConfigs.getByName("debug")
             }
             optimization {
@@ -110,30 +110,22 @@ android {
         buildConfig = true
     }
     testOptions {
-        // Robolectric-тесты читают string-ресурсы (проверка локализации).
+        // Robolectric-С‚РµСЃС‚С‹ С‡РёС‚Р°СЋС‚ string-СЂРµСЃСѓСЂСЃС‹ (РїСЂРѕРІРµСЂРєР° Р»РѕРєР°Р»РёР·Р°С†РёРё).
         unitTests.isIncludeAndroidResources = true
     }
 }
 
-// Запрет release-сборки без ключей: проверка на уровне задач,
-// чтобы assembleDebug не падал (блок buildTypes выполняется при любой конфигурации).
-// Путь вычисляем на этапе конфигурации: doFirst не должен захватывать
-// Project (иначе configuration cache не может сериализовать задачу).
+// Р—Р°РїСЂРµС‚ release-СЃР±РѕСЂРєРё Р±РµР· РєР»СЋС‡РµР№: РїСЂРѕРІРµСЂРєР° РЅР° СѓСЂРѕРІРЅРµ Р·Р°РґР°С‡,
+// С‡С‚РѕР±С‹ assembleDebug РЅРµ РїР°РґР°Р» (Р±Р»РѕРє buildTypes РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РїСЂРё Р»СЋР±РѕР№ РєРѕРЅС„РёРіСѓСЂР°С†РёРё).
+// РџСѓС‚СЊ РІС‹С‡РёСЃР»СЏРµРј РЅР° СЌС‚Р°РїРµ РєРѕРЅС„РёРіСѓСЂР°С†РёРё: doFirst РЅРµ РґРѕР»Р¶РµРЅ Р·Р°С…РІР°С‚С‹РІР°С‚СЊ
+// Project (РёРЅР°С‡Рµ configuration cache РЅРµ РјРѕР¶РµС‚ СЃРµСЂРёР°Р»РёР·РѕРІР°С‚СЊ Р·Р°РґР°С‡Сѓ).
 val keyPropertiesPath = rootProject.file("key.properties").absolutePath
 
-tasks.matching {
-    it.name.contains("Release", ignoreCase = true) &&
-        (it.name.startsWith("assemble") || it.name.startsWith("bundle") || it.name.startsWith("package"))
-}.configureEach {
-    // Локальная копия: doFirst захватывает только String (сериализуемо для
-    // configuration cache), а не ссылку на script object.
-    val kpPath = keyPropertiesPath
-    // Локальная копия githubRepo: doFirst не должен захватывать script-level
-    // val (ссылка на script object ломает configuration cache).
-    val repo = githubRepo
+// Release guard lives in a top-level function: the doFirst lambda must not
+// capture the Gradle script object, otherwise the configuration cache cannot
+// serialize it (fails on assembleRelease/packageRelease* tasks).
+fun Task.guardReleaseBuild(kpPath: String, repo: String) {
     doFirst {
-        // hasReleaseKey объявлен внутри android {} и здесь недоступен —
-        // повторяем проверку key.properties напрямую.
         val kpFile = File(kpPath)
         val kp = Properties().apply {
             if (kpFile.exists()) kpFile.inputStream().use { load(it) }
@@ -143,21 +135,25 @@ tasks.matching {
             !kp.getProperty("keyPassword").isNullOrBlank()
         if (!releaseKeyPresent) {
             throw GradleException(
-                "Файл key.properties отсутствует! Сборка release запрещена. " +
-                    "Создайте key.properties или используйте assembleDebug."
+                "key.properties is missing! Release build is forbidden. " +
+                    "Create key.properties or use assembleDebug."
             )
         }
-        // REL-02: дефолтный/пустой GITHUB_REPO ломает автообновление —
-        // релиз с заглушкой опубликовать нельзя.
-        if (githubRepo.isBlank() || githubRepo == "user/familibalance") {
+        if (repo.isBlank() || repo == "user/familibalance") {
             throw GradleException(
-                "Укажите реальный GITHUB_REPO для работы автообновления " +
-                    "(local.properties или -PGITHUB_REPO=owner/name)."
+                "Set a real GITHUB_REPO for update checks " +
+                    "(local.properties or -PGITHUB_REPO=owner/name)."
             )
         }
     }
 }
 
+tasks.matching {
+    it.name.contains("Release", ignoreCase = true) &&
+        (it.name.startsWith("assemble") || it.name.startsWith("bundle") || it.name.startsWith("package"))
+}.configureEach {
+    guardReleaseBuild(keyPropertiesPath, githubRepo)
+}
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
@@ -182,10 +178,12 @@ dependencies {
     implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
-    // Unbundled ML Kit: модель OCR скачивается через Play Services — APK на ~35 МБ легче.
-    // API идентичен bundled-варианту (com.google.mlkit.vision.text.*), импорты не меняются.
+    // Unbundled ML Kit: РјРѕРґРµР»СЊ OCR СЃРєР°С‡РёРІР°РµС‚СЃСЏ С‡РµСЂРµР· Play Services вЂ” APK РЅР° ~35 РњР‘ Р»РµРіС‡Рµ.
+    // API РёРґРµРЅС‚РёС‡РµРЅ bundled-РІР°СЂРёР°РЅС‚Сѓ (com.google.mlkit.vision.text.*), РёРјРїРѕСЂС‚С‹ РЅРµ РјРµРЅСЏСЋС‚СЃСЏ.
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.media3:media3-exoplayer:1.5.1")
+    implementation("androidx.media3:media3-ui:1.5.1")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)

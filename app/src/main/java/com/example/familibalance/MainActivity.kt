@@ -20,7 +20,6 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -63,6 +62,7 @@ import com.example.familibalance.ui.onboarding.OnboardingScreen
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.feature.child.screens.*
+import com.example.familibalance.ui.components.AppSplashScreen
 import com.example.familibalance.ui.components.ExitConfirmDialog
 import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.ui.components.PulseBadge
@@ -81,7 +81,7 @@ class MainActivity : FragmentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Защита от скриншотов и записи экрана
+        // Р—Р°С‰РёС‚Р° РѕС‚ СЃРєСЂРёРЅС€РѕС‚РѕРІ Рё Р·Р°РїРёСЃРё СЌРєСЂР°РЅР°
         window.setFlags(
             android.view.WindowManager.LayoutParams.FLAG_SECURE,
             android.view.WindowManager.LayoutParams.FLAG_SECURE
@@ -106,23 +106,42 @@ class MainActivity : FragmentActivity() {
             val currentThemeId = themeChild?.selectedThemeId ?: "COSMIC_BLUE"
             LocalizedAppContent {
             FamiliBalanceTheme(themeId = currentThemeId) {
-                // Пока грузится локальный стейт и Supabase восстанавливает сессию —
-                // показываем splash, чтобы не мигал экран входа перед админкой.
-                if (isInitializing || sessionStatus is SessionStatus.Initializing) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
+                // РџРѕРєР° РіСЂСѓР·РёС‚СЃСЏ Р»РѕРєР°Р»СЊРЅС‹Р№ СЃС‚РµР№С‚ Рё Supabase РІРѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СЃРµСЃСЃРёСЋ вЂ”
+                // РїРѕРєР°Р·С‹РІР°РµРј splash, С‡С‚РѕР±С‹ РЅРµ РјРёРіР°Р» СЌРєСЂР°РЅ РІС…РѕРґР° РїРµСЂРµРґ Р°РґРјРёРЅРєРѕР№.
+                var splashMinTimeElapsed by remember { mutableStateOf(false) }
+                LaunchedEffect(Unit) {
+                    kotlinx.coroutines.delay(2200)
+                    splashMinTimeElapsed = true
+                }
+                // supabase-kt на Android может кратковременно эмитить
+                // NotAuthenticated/RefreshFailure во время восстановления
+                // сессии (onStart/onStop lifecycle). Ждём стабилизации статуса,
+                // иначе NavHost стартует с WelcomeRoute и кабинет «мигает».
+                var sessionReady by remember { mutableStateOf(false) }
+                LaunchedEffect(sessionStatus) {
+                    if (sessionReady) return@LaunchedEffect
+                    val status = sessionStatus
+                    when (status) {
+                        SessionStatus.Initializing,
+                        is SessionStatus.RefreshFailure -> Unit
+                        is SessionStatus.Authenticated -> sessionReady = true
+                        is SessionStatus.NotAuthenticated -> {
+                            val settleMs = if (status.isSignOut) 300L else 1500L
+                            kotlinx.coroutines.delay(settleMs)
+                            sessionReady = true
+                        }
                     }
+                }
+                if (!splashMinTimeElapsed || isInitializing || !sessionReady) {
+                    AppSplashScreen()
                     return@FamiliBalanceTheme
                 }
                 val navController = rememberNavController()
 
-                // «Назад» на главных разделах (ChildRoute / AdminRoute) —
-                // диалог подтверждения выхода вместо двойного нажатия.
-                // На экранах входа/регистрации и внутренних маршрутах
-                // работает обычная навигация (popBackStack).
+                // В«РќР°Р·Р°РґВ» РЅР° РіР»Р°РІРЅС‹С… СЂР°Р·РґРµР»Р°С… (ChildRoute / AdminRoute) вЂ”
+                // РґРёР°Р»РѕРі РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ РІС‹С…РѕРґР° РІРјРµСЃС‚Рѕ РґРІРѕР№РЅРѕРіРѕ РЅР°Р¶Р°С‚РёСЏ.
+                // РќР° СЌРєСЂР°РЅР°С… РІС…РѕРґР°/СЂРµРіРёСЃС‚СЂР°С†РёРё Рё РІРЅСѓС‚СЂРµРЅРЅРёС… РјР°СЂС€СЂСѓС‚Р°С…
+                // СЂР°Р±РѕС‚Р°РµС‚ РѕР±С‹С‡РЅР°СЏ РЅР°РІРёРіР°С†РёСЏ (popBackStack).
                 val topBackStackEntry by navController.currentBackStackEntryAsState()
                 val isMainSection = topBackStackEntry?.destination?.let {
                     it.hasRoute<ChildRoute>() || it.hasRoute<AdminRoute>()
@@ -133,10 +152,10 @@ class MainActivity : FragmentActivity() {
                     showExitDialog = true
                 }
 
-                // Жизненный цикл Realtime и синхронизации:
-                //  - ON_START: подписка активна всегда, включая фон
-                //    (startRealtimeSync идемпотентен — повторный вызов no-op);
-                //  - ON_RESUME: досылаем несинхронизированные данные и обновления.
+                // Р–РёР·РЅРµРЅРЅС‹Р№ С†РёРєР» Realtime Рё СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё:
+                //  - ON_START: РїРѕРґРїРёСЃРєР° Р°РєС‚РёРІРЅР° РІСЃРµРіРґР°, РІРєР»СЋС‡Р°СЏ С„РѕРЅ
+                //    (startRealtimeSync РёРґРµРјРїРѕС‚РµРЅС‚РµРЅ вЂ” РїРѕРІС‚РѕСЂРЅС‹Р№ РІС‹Р·РѕРІ no-op);
+                //  - ON_RESUME: РґРѕСЃС‹Р»Р°РµРј РЅРµСЃРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°РЅРЅС‹Рµ РґР°РЅРЅС‹Рµ Рё РѕР±РЅРѕРІР»РµРЅРёСЏ.
                 val lifecycleOwner = LocalLifecycleOwner.current
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->
@@ -148,7 +167,7 @@ class MainActivity : FragmentActivity() {
                             }
                             Lifecycle.Event.ON_RESUME -> {
                                 viewModel.forceSync()
-                                // Если ждали разрешения на установку — продолжаем обновление
+                                // Р•СЃР»Рё Р¶РґР°Р»Рё СЂР°Р·СЂРµС€РµРЅРёСЏ РЅР° СѓСЃС‚Р°РЅРѕРІРєСѓ вЂ” РїСЂРѕРґРѕР»Р¶Р°РµРј РѕР±РЅРѕРІР»РµРЅРёРµ
                                 updateViewModel.onResume()
                             }
                             else -> {}
@@ -158,16 +177,16 @@ class MainActivity : FragmentActivity() {
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                 }
 
-                // Переход «в корень»: startDestination может быть уже удалён
-                // из back stack после первого popUpTo(inclusive = true),
-                // поэтому popUpTo(graph.startDestinationId) перестаёт находить
-                // цель и back stack не очищается. Снимаем все destination'ы
-                // до пустого стека (popBackStack() возвращает false, когда
-                // снимать больше нечего), затем navigate создаёт чистый корень
-                // без старых экранов авторизации и дублей маршрутов.
+                // РџРµСЂРµС…РѕРґ В«РІ РєРѕСЂРµРЅСЊВ»: startDestination РјРѕР¶РµС‚ Р±С‹С‚СЊ СѓР¶Рµ СѓРґР°Р»С‘РЅ
+                // РёР· back stack РїРѕСЃР»Рµ РїРµСЂРІРѕРіРѕ popUpTo(inclusive = true),
+                // РїРѕСЌС‚РѕРјСѓ popUpTo(graph.startDestinationId) РїРµСЂРµСЃС‚Р°С‘С‚ РЅР°С…РѕРґРёС‚СЊ
+                // С†РµР»СЊ Рё back stack РЅРµ РѕС‡РёС‰Р°РµС‚СЃСЏ. РЎРЅРёРјР°РµРј РІСЃРµ destination'С‹
+                // РґРѕ РїСѓСЃС‚РѕРіРѕ СЃС‚РµРєР° (popBackStack() РІРѕР·РІСЂР°С‰Р°РµС‚ false, РєРѕРіРґР°
+                // СЃРЅРёРјР°С‚СЊ Р±РѕР»СЊС€Рµ РЅРµС‡РµРіРѕ), Р·Р°С‚РµРј navigate СЃРѕР·РґР°С‘С‚ С‡РёСЃС‚С‹Р№ РєРѕСЂРµРЅСЊ
+                // Р±РµР· СЃС‚Р°СЂС‹С… СЌРєСЂР°РЅРѕРІ Р°РІС‚РѕСЂРёР·Р°С†РёРё Рё РґСѓР±Р»РµР№ РјР°СЂС€СЂСѓС‚РѕРІ.
                 fun navigateToRoot(target: Any) {
                     while (navController.popBackStack()) {
-                        // pop до тех пор, пока стек не опустеет
+                        // pop РґРѕ С‚РµС… РїРѕСЂ, РїРѕРєР° СЃС‚РµРє РЅРµ РѕРїСѓСЃС‚РµРµС‚
                     }
                     navController.navigate(target)
                 }
@@ -175,23 +194,17 @@ class MainActivity : FragmentActivity() {
                     navigateToRoot(WelcomeRoute)
                 }
 
-                // Анонимная сессия (устройство ребёнка) не считается родительской:
-                // в AdminRoute пускаем только пользователей с email.
-                var isParentSession by remember { mutableStateOf(false) }
-                LaunchedEffect(sessionStatus) {
-                    val user = runCatching {
-                        SupabaseManager.client?.auth?.currentUserOrNull()
-                    }.getOrNull()
-                    isParentSession = sessionStatus is SessionStatus.Authenticated &&
-                        !user?.email.isNullOrBlank()
-                }
+                // РђРЅРѕРЅРёРјРЅР°СЏ СЃРµСЃСЃРёСЏ (СѓСЃС‚СЂРѕР№СЃС‚РІРѕ СЂРµР±С‘РЅРєР°) РЅРµ СЃС‡РёС‚Р°РµС‚СЃСЏ СЂРѕРґРёС‚РµР»СЊСЃРєРѕР№:
+                // РІ AdminRoute РїСѓСЃРєР°РµРј С‚РѕР»СЊРєРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ СЃ email.
+                val isParentSession = (sessionStatus as? SessionStatus.Authenticated)
+                    ?.session?.user?.email?.isNotBlank() == true
 
-                // Если сессия родителя уже активна — сразу в родительский кабинет
+                // Р•СЃР»Рё СЃРµСЃСЃРёСЏ СЂРѕРґРёС‚РµР»СЏ СѓР¶Рµ Р°РєС‚РёРІРЅР° вЂ” СЃСЂР°Р·Сѓ РІ СЂРѕРґРёС‚РµР»СЊСЃРєРёР№ РєР°Р±РёРЅРµС‚
                 var autoNavigatedToAdmin by remember { mutableStateOf(false) }
                 LaunchedEffect(isParentSession) {
                     if (!autoNavigatedToAdmin && isParentSession) {
                         autoNavigatedToAdmin = true
-                        // Синхронизируем локальный флаг автовхода с Supabase-сессией
+                        // РЎРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµРј Р»РѕРєР°Р»СЊРЅС‹Р№ С„Р»Р°Рі Р°РІС‚РѕРІС…РѕРґР° СЃ Supabase-СЃРµСЃСЃРёРµР№
                         SecurePrefs.get(context, "app_prefs")
                             .edit()
                             .putBoolean("is_admin_logged_in", true)
@@ -199,12 +212,12 @@ class MainActivity : FragmentActivity() {
                             .putBoolean("onboarding_done", true)
                             .remove("logged_in_child_id")
                             .apply()
-                        navigateToRoot(AdminRoute)
+                        // Переход в AdminRoute выполняет startDestination NavHost
                     }
                 }
 
-                // Автовход ребёнка: MainViewModel выставляет autoLoginChildId
-                // после загрузки локального стейта, если стоит флаг is_logged_in.
+                // РђРІС‚РѕРІС…РѕРґ СЂРµР±С‘РЅРєР°: MainViewModel РІС‹СЃС‚Р°РІР»СЏРµС‚ autoLoginChildId
+                // РїРѕСЃР»Рµ Р·Р°РіСЂСѓР·РєРё Р»РѕРєР°Р»СЊРЅРѕРіРѕ СЃС‚РµР№С‚Р°, РµСЃР»Рё СЃС‚РѕРёС‚ С„Р»Р°Рі is_logged_in.
                 var autoChildNavigated by remember { mutableStateOf(false) }
                 LaunchedEffect(autoLoginChildId) {
                     if (!autoChildNavigated && autoLoginChildId != null) {
@@ -213,7 +226,7 @@ class MainActivity : FragmentActivity() {
                             .edit()
                             .putBoolean("onboarding_done", true)
                             .apply()
-                        navigateToRoot(ChildRoute)
+                        // Переход в ChildRoute выполняет startDestination NavHost
                     }
                 }
 
@@ -234,7 +247,16 @@ class MainActivity : FragmentActivity() {
 
                 NavHost(
                     navController = navController,
-                    startDestination = if (onboardingDone) WelcomeRoute else OnboardingRoute
+                    // Стартовый destination выбирается после разрешения сессии:
+                    // активная родительская сессия → кабинет, автовход ребёнка →
+                    // ChildRoute, иначе онбординг/Welcome. Так WelcomeRoute не
+                    // успевает отрисоваться перед автоматическим переходом.
+                    startDestination = when {
+                        isParentSession -> AdminRoute
+                        autoLoginChildId != null -> ChildRoute
+                        onboardingDone -> WelcomeRoute
+                        else -> OnboardingRoute
+                    }
                 ) {
                     composable<OnboardingRoute> {
                         OnboardingScreen(
@@ -279,8 +301,8 @@ class MainActivity : FragmentActivity() {
                                 navigateToRoot(ChildRoute)
                             },
                             onParentSuccess = {
-                                // Флаг автовхода родителя: при перезапуске
-                                // isParentSession (Supabase) + этот флаг → AdminRoute
+                                // Р¤Р»Р°Рі Р°РІС‚РѕРІС…РѕРґР° СЂРѕРґРёС‚РµР»СЏ: РїСЂРё РїРµСЂРµР·Р°РїСѓСЃРєРµ
+                                // isParentSession (Supabase) + СЌС‚РѕС‚ С„Р»Р°Рі в†’ AdminRoute
                                 SecurePrefs.get(context, "app_prefs")
                                     .edit()
                                     .putBoolean("is_admin_logged_in", true)
@@ -321,8 +343,8 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
-                // Строки диалога выхода вычисляем здесь, а не внутри AlertDialog:
-                // Dialog создаёт отдельное окно и может потерять локализованный контекст.
+                // РЎС‚СЂРѕРєРё РґРёР°Р»РѕРіР° РІС‹С…РѕРґР° РІС‹С‡РёСЃР»СЏРµРј Р·РґРµСЃСЊ, Р° РЅРµ РІРЅСѓС‚СЂРё AlertDialog:
+                // Dialog СЃРѕР·РґР°С‘С‚ РѕС‚РґРµР»СЊРЅРѕРµ РѕРєРЅРѕ Рё РјРѕР¶РµС‚ РїРѕС‚РµСЂСЏС‚СЊ Р»РѕРєР°Р»РёР·РѕРІР°РЅРЅС‹Р№ РєРѕРЅС‚РµРєСЃС‚.
                 val exitDialogTitle = stringResource(R.string.exit_dialog_title)
                 val exitDialogMessage = stringResource(R.string.exit_dialog_message)
                 val exitDialogConfirm = stringResource(R.string.exit_dialog_confirm)
@@ -337,7 +359,7 @@ class MainActivity : FragmentActivity() {
                         onConfirm = {
                             showExitDialog = false
                             activity?.finishAffinity()
-                            // Гарантированный выход, если finishAffinity не сработал
+                            // Р“Р°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅС‹Р№ РІС‹С…РѕРґ, РµСЃР»Рё finishAffinity РЅРµ СЃСЂР°Р±РѕС‚Р°Р»
                             android.os.Process.killProcess(android.os.Process.myPid())
                         },
                         onDismiss = { showExitDialog = false }
