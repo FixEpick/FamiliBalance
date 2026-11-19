@@ -197,7 +197,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     allAchievements.forEach { ach ->
-                        AchievementCard(title = ach.title, condition = ach.condition, description = ach.description, reward = ach.reward, progress = ach.progress, isLocked = ach.isLocked, isCompleted = ach.isCompleted)
+                        AchievementCard(title = ach.title, condition = ach.condition, description = ach.description, reward = ach.reward, progress = ach.progress, isLocked = ach.isLocked, isCompleted = ach.isCompleted, conditionKind = ach.conditionKind, conditionCount = ach.conditionCount, progressCurrent = ach.progressCurrent, progressTarget = ach.conditionCount)
                     }
                 }
             },

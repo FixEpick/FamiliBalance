@@ -2,6 +2,7 @@ package com.example.familibalance.feature.child.components
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -28,10 +29,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.TextPrimary
 import java.io.File
+
+/** true, пока открыта встроенная камера — ChildSection прячет нижний таб-бар. */
+object CameraCaptureVisibility {
+    var isCameraOpen by mutableStateOf(false)
+}
 
 /**
  * Встроенная камера на CameraX — замена системному Intent TakePicture.
@@ -66,6 +73,13 @@ fun CameraCaptureScreen(
 
     var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     var isCapturing by remember { mutableStateOf(false) }
+
+    // Прячем нижний таб-бар на время съёмки — иначе случайные нажатия
+    // по навигации уводят с экрана доставки фото.
+    DisposableEffect(Unit) {
+        CameraCaptureVisibility.isCameraOpen = true
+        onDispose { CameraCaptureVisibility.isCameraOpen = false }
+    }
 
     // Привязка камеры к жизненному циклу composable: при смене
     // lensFacing эффект пересоздаётся (unbindAll → bind), при уходе
@@ -191,6 +205,16 @@ fun CameraCaptureScreen(
  */
 private fun downscaleQuestPhoto(photoFile: File) {
     try {
+        // EXIF-ориентация читается ДО перезаписи файла: BitmapFactory её
+        // игнорирует, поэтому без поворота матрицей превью и фото на сервере
+        // отображались повёрнутыми на 90°.
+        val orientation = runCatching {
+            ExifInterface(photoFile.absolutePath).getAttributeInt(
+                ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_NORMAL
+            )
+        }.getOrDefault(ExifInterface.ORIENTATION_NORMAL)
+
         val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         photoFile.inputStream().use { BitmapFactory.decodeStream(it, null, options) }
 
@@ -201,9 +225,32 @@ private fun downscaleQuestPhoto(photoFile: File) {
         }
 
         val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-        val bitmap = photoFile.inputStream().use {
+        val decoded = photoFile.inputStream().use {
             BitmapFactory.decodeStream(it, null, decodeOptions)
         } ?: return // оригинал камеры оставляем как есть
+
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+            ExifInterface.ORIENTATION_TRANSPOSE -> {
+                matrix.postRotate(90f)
+                matrix.postScale(-1f, 1f)
+            }
+            ExifInterface.ORIENTATION_TRANSVERSE -> {
+                matrix.postRotate(270f)
+                matrix.postScale(-1f, 1f)
+            }
+        }
+        val bitmap = if (matrix.isIdentity) {
+            decoded
+        } else {
+            Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
+                .also { if (it != decoded) decoded.recycle() }
+        }
 
         photoFile.outputStream().use { out ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, out)

@@ -50,6 +50,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.familibalance.R
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.data.SecurePrefs
+import com.example.familibalance.data.push.PushNavBus
 import com.example.familibalance.navigation.AdminRoute
 import com.example.familibalance.navigation.ChildAchievementsRoute
 import com.example.familibalance.navigation.ChildHistoryRoute
@@ -65,7 +66,9 @@ import com.example.familibalance.ui.auth.PlayerLoginScreen
 import com.example.familibalance.ui.auth.RegisterParentScreen
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
+import com.example.familibalance.feature.child.components.CameraCaptureVisibility
 import com.example.familibalance.feature.child.screens.*
+import com.example.familibalance.ui.components.EmojiIcon
 import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.ui.components.PulseBadge
@@ -155,6 +158,23 @@ fun ChildSection(
         }
     }
 
+    // Deep-link из пуша: переключаем вкладку по роли и экрану.
+    // Чужая роль (parent-пуш на детском устройстве) просто сбрасывается.
+    val pushNav by PushNavBus.pending.collectAsStateWithLifecycle()
+    LaunchedEffect(pushNav) {
+        val nav = pushNav ?: return@LaunchedEffect
+        PushNavBus.consume()
+        if (nav.role != "child") return@LaunchedEffect
+        navigateToTab(
+            when (nav.screen) {
+                "tasks" -> ChildTasksRoute
+                "history" -> ChildHistoryRoute
+                "achievements" -> ChildAchievementsRoute
+                else -> ChildMainRoute
+            }
+        )
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.space_bg),
@@ -192,30 +212,27 @@ fun ChildSection(
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (!isSynced) {
-                            Text(
-                                text = "📴",
-                                fontSize = 16.sp,
+                            EmojiIcon(
+                                emoji = "📴",
+                                size = 16.dp,
                                 color = StatusYellow,
-                                modifier = Modifier.semantics {
-                                    contentDescription = offlineDesc
-                                }
+                                contentDescription = offlineDesc
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
                         LanguageSelectorButton()
                         IconButton(onClick = { showThemeSheet = true }) {
-                            Text(
-                                "🎨",
-                                fontSize = 18.sp,
-                                modifier = Modifier.semantics {
-                                    contentDescription = themeDesc
-                                }
+                            EmojiIcon(
+                                emoji = "🎨",
+                                size = 18.dp,
+                                contentDescription = themeDesc
                             )
                         }
                     }
                 }
             },
             bottomBar = {
+                if (!CameraCaptureVisibility.isCameraOpen) {
                 NavigationBar(
                     containerColor = TopBarBg.copy(alpha = 0.92f),
                     tonalElevation = 0.dp
@@ -263,6 +280,7 @@ fun ChildSection(
                             )
                         )
                     }
+                }
                 }
             }
         ) { innerPadding ->

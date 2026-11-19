@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -73,6 +74,7 @@ fun VerificationAdminContent(
         }
         return
     }
+    val lieFineReason = stringResource(R.string.admin_fine_reason_lie)
     val hasPending = child.closetStatus == QuestStatus.PENDING ||
         child.roomStatus == QuestStatus.PENDING ||
         child.diaryStatus == QuestStatus.PENDING ||
@@ -135,6 +137,10 @@ fun VerificationAdminContent(
                     },
                     onReject = { reason ->
                         viewModel.adminRejectQuest(child.id, "closet", reason)
+                    },
+                    onRejectWithFine = { reason, withFine ->
+                        viewModel.adminRejectQuest(child.id, "closet", reason)
+                        if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
                     }
                 )
             }
@@ -165,6 +171,10 @@ fun VerificationAdminContent(
                     },
                     onReject = { reason ->
                         viewModel.adminRejectQuest(child.id, "room", reason)
+                    },
+                    onRejectWithFine = { reason, withFine ->
+                        viewModel.adminRejectQuest(child.id, "room", reason)
+                        if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
                     }
                 )
             }
@@ -187,6 +197,11 @@ fun VerificationAdminContent(
                     onReject = { reason ->
                         viewModel.adminRejectQuest(child.id, "diary", reason)
                         viewModel.resetDiaryScanState()
+                    },
+                    onRejectWithFine = { reason, withFine ->
+                        viewModel.adminRejectQuest(child.id, "diary", reason)
+                        viewModel.resetDiaryScanState()
+                        if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
                     }
                 )
             }
@@ -204,6 +219,10 @@ fun VerificationAdminContent(
                 },
                 onReject = { reason ->
                     viewModel.adminRejectBonusQuest(child.id, bQuest.id, reason)
+                },
+                onRejectWithFine = { reason, withFine ->
+                    viewModel.adminRejectBonusQuest(child.id, bQuest.id, reason)
+                    if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
                 }
             )
         }
@@ -220,6 +239,10 @@ fun VerificationAdminContent(
                 },
                 onReject = { reason ->
                     viewModel.adminRejectCustomQuest(child.id, cQuest.id, reason)
+                },
+                onRejectWithFine = { reason, withFine ->
+                    viewModel.adminRejectCustomQuest(child.id, cQuest.id, reason)
+                    if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
                 }
             )
         }
@@ -293,7 +316,7 @@ fun VerificationAdminContent(
             }
         }
 
-        // Быстрые действия папы
+        // Быстрые действия родителя
         item {
             Card(
                 modifier = Modifier
@@ -461,6 +484,50 @@ fun VerificationAdminContent(
                             unfocusedTextColor = Color.White
                         )
                     )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.admin_fine_presets_label),
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    val finePresetReasons = listOf(
+                        stringResource(R.string.admin_fine_reason_grade3),
+                        stringResource(R.string.admin_fine_reason_grade2),
+                        stringResource(R.string.admin_fine_reason_mischief),
+                        stringResource(R.string.admin_fine_reason_lie)
+                    )
+                    val finePresets = listOf(
+                        Triple(R.string.admin_fine_preset_grade3, 20, finePresetReasons[0]),
+                        Triple(R.string.admin_fine_preset_grade2, 50, finePresetReasons[1]),
+                        Triple(R.string.admin_fine_preset_mischief, 30, finePresetReasons[2]),
+                        Triple(R.string.admin_fine_preset_lie, 100, finePresetReasons[3])
+                    )
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(finePresets) { (labelRes, amount, reason) ->
+                            FilterChip(
+                                selected = false,
+                                onClick = {
+                                    isFine = true
+                                    withdrawInput = amount.toString()
+                                    withdrawDesc = reason
+                                },
+                                label = { Text(stringResource(labelRes), fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    containerColor = PenaltyRed.copy(alpha = 0.12f),
+                                    labelColor = PenaltyRed
+                                ),
+                                border = FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = false,
+                                    borderColor = PenaltyRed.copy(alpha = 0.4f),
+                                    selectedBorderColor = PenaltyRed
+                                ),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                        }
+                    }
 
 
                 }

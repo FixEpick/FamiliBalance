@@ -14,6 +14,8 @@ val AccentColor: Color
     @Composable get() = LocalAppPalette.current.primaryNeon
 val TextPrimary = Color(0xFFFFFFFF)
 val TextSecondary = Color(0x99FFFFFF)
+/** Приглушённый серый для мелких подписей в подвалах карточек (контрастнее на тёмном фоне). */
+val TextMuted = Color(0xFF94A3B8)
 val StatusGreen = Color(0xFF4CAF50)
 val StatusYellow = Color(0xFFFFC107)
 val PenaltyRed = Color(0xFFFF5252)

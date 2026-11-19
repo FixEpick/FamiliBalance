@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
+import com.example.familibalance.ui.components.EmojiIcon
 import com.example.familibalance.ui.theme.*
 
 /** Карточка цели-мечты (копилка): прогресс-бар и клейм при достижении. */
@@ -81,10 +82,7 @@ fun DreamGoalCard(
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )
-                Text(
-                    text = "💫",
-                    fontSize = 20.sp
-                )
+                EmojiIcon(emoji = "💫", size = 20.dp)
             }
             Text(
                 text = "$balance / $dreamTarget ₽",

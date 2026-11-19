@@ -70,6 +70,9 @@ import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
 import com.example.familibalance.data.storage.*
+import com.example.familibalance.data.push.PushNavBus
+import com.example.familibalance.data.push.PushChannels
+import com.example.familibalance.data.push.rememberPushPermissionRequester
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
 import com.example.familibalance.viewmodel.actions.*
@@ -154,6 +157,34 @@ fun AdminScreen(
             restoreState = true
         }
     }
+
+    // Deep-link из пуша: переключаем вкладку по роли и экрану.
+    val pushNav by PushNavBus.pending.collectAsStateWithLifecycle()
+    LaunchedEffect(pushNav) {
+        val nav = pushNav ?: return@LaunchedEffect
+        PushNavBus.consume()
+        if (nav.role != "parent") return@LaunchedEffect
+        navigateToTab(
+            when (nav.screen) {
+                "progress" -> AdminProgressRoute
+                "history" -> AdminHistoryRoute
+                "settings" -> AdminSettingsRoute
+                else -> AdminVerificationRoute
+            }
+        )
+    }
+
+    // Разрешение на уведомления — в момент появления первого ребёнка
+    // (не при холодном старте, чтобы не спалить системный диалог).
+    val requestNotifPermission = rememberPushPermissionRequester()
+    var notifPermissionAsked by remember { mutableStateOf(false) }
+    LaunchedEffect(visibleChildren.isNotEmpty()) {
+        if (!notifPermissionAsked && visibleChildren.isNotEmpty()) {
+            notifPermissionAsked = true
+            requestNotifPermission()
+        }
+    }
+    LaunchedEffect(Unit) { PushChannels.ensureChannels(context) }
 
     val hasPending = child.closetStatus == QuestStatus.PENDING
         || child.roomStatus == QuestStatus.PENDING

@@ -104,6 +104,7 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     var newDesc by rememberSaveable { mutableStateOf("") }
     var newReward by rememberSaveable { mutableStateOf("50") }
     var newFreq by rememberSaveable { mutableStateOf(QuestFrequency.DAILY) }
+    var newRequiresPhoto by rememberSaveable { mutableStateOf(true) }
     var editKind by rememberSaveable { mutableStateOf<String?>(null) }
     var editQuestId by rememberSaveable { mutableStateOf("") }
     var editTitle by rememberSaveable { mutableStateOf("") }
@@ -210,6 +211,21 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             Text(stringResource(R.string.freq_weekly), color = if (newFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
                         }
                     }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Checkbox(
+                            checked = newRequiresPhoto,
+                            onCheckedChange = { newRequiresPhoto = it },
+                            colors = CheckboxDefaults.colors(checkedColor = AccentColor)
+                        )
+                        Text(
+                            text = stringResource(R.string.admin_set_bonus_photo),
+                            color = TextPrimary,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             },
             confirmButton = {
@@ -217,8 +233,8 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     enabled = newTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
                     onClick = {
-                        viewModel.addCustomQuest(child.id, newTitle.trim(), newReward.trim().toIntOrNull() ?: 50, newFreq, newDesc.trim())
-                        newTitle = ""; newDesc = ""; newReward = "50"; showCreateDialog = false
+                        viewModel.addCustomQuest(child.id, newTitle.trim(), newReward.trim().toIntOrNull() ?: 50, newFreq, newDesc.trim(), newRequiresPhoto)
+                        newTitle = ""; newDesc = ""; newReward = "50"; newRequiresPhoto = true; showCreateDialog = false
                     }
                 ) { Text(stringResource(R.string.admin_set_create), fontWeight = FontWeight.Bold) }
             },

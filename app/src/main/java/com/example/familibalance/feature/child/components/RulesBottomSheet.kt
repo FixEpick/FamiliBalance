@@ -121,12 +121,10 @@ fun RulesBottomSheet(
                     modifier = Modifier.padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "📴",
-                        fontSize = 22.sp,
-                        modifier = Modifier.semantics {
-                            contentDescription = offlineDesc
-                        }
+                    EmojiIcon(
+                        emoji = "📴",
+                        size = 22.dp,
+                        contentDescription = offlineDesc
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
@@ -234,7 +232,7 @@ private fun RuleBlock(
             Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = text,
-                color = TextSecondary,
+                color = TextMuted,
                 fontSize = 14.sp,
                 lineHeight = 20.sp
             )

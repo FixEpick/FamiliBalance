@@ -44,6 +44,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -210,12 +213,11 @@ internal fun PendingQuestsBottomSheet(
                                     onEditQuest(item.key)
                                 }
                             ) {
-                                Text(
-                                    "✏️",
-                                    fontSize = 18.sp,
-                                    modifier = Modifier.semantics {
-                                        contentDescription = editDesc
-                                    }
+                                Icon(
+                                    imageVector = Icons.Filled.Edit,
+                                    contentDescription = editDesc,
+                                    tint = AccentColor,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
 
@@ -223,17 +225,29 @@ internal fun PendingQuestsBottomSheet(
                             IconButton(
                                 onClick = { viewModel.cancelPendingQuest(child.id, item.key) }
                             ) {
-                                Text(
-                                    "🗑️",
-                                    fontSize = 18.sp,
-                                    modifier = Modifier.semantics {
-                                        contentDescription = deleteDesc
-                                    }
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = deleteDesc,
+                                    tint = PenaltyRed,
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentColor,
+                    contentColor = SpaceBgStart
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.rules_understood), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         }
         }

@@ -14,6 +14,8 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.handleDeeplinks
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.functions.Functions
+import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
@@ -69,6 +71,7 @@ object SupabaseManager {
                     }
                     install(Realtime)
                     install(Storage)
+                    install(Functions)
                 }
             } catch (e: Exception) {
                 Log.e("SupabaseManager", "Ошибка инициализации клиента", e)

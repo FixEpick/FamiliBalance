@@ -99,15 +99,25 @@ fun CashOutDialog(
                         onSubmit(amountInt, commentText)
                     }
                 },
-                enabled = canSubmit && !isProcessing
+                enabled = canSubmit && !isProcessing,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentColor,
+                    contentColor = SpaceBgStart,
+                    disabledContainerColor = GlassBackground,
+                    disabledContentColor = TextSecondary
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text(stringResource(R.string.child_cashout_submit))
+                Text(stringResource(R.string.child_cashout_submit), fontWeight = FontWeight.Bold)
             }
             }
         },
         dismissButton = {
             AppLocaleContent {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(contentColor = TextMuted)
+            ) {
                 Text(stringResource(R.string.action_cancel))
             }
             }

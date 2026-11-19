@@ -9,6 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -37,9 +39,19 @@ fun AchievementCard(
     isCompleted: Boolean,
     isReadyToClaim: Boolean = false,
     onClaimClick: (() -> Unit)? = null,
+    conditionKind: AchievementConditionKind? = null,
+    conditionCount: Int = 0,
+    progressCurrent: Int = 0,
+    progressTarget: Int = 0,
     modifier: Modifier = Modifier
 ) {
-    val displayTitle = if (isLocked) "🔒 $title" else title
+    val displayTitle = title
+    val displayCondition = when (conditionKind) {
+        AchievementConditionKind.FIVES -> pluralStringResource(R.plurals.ach_condition_fives, conditionCount, conditionCount)
+        AchievementConditionKind.WARDROBE_CLEAN -> pluralStringResource(R.plurals.ach_condition_wardrobe, conditionCount, conditionCount)
+        AchievementConditionKind.ROOM_CLEAN -> pluralStringResource(R.plurals.ach_condition_room, conditionCount, conditionCount)
+        null -> condition
+    }
     val displayDescription = if (isLocked) stringResource(R.string.ach_locked_desc) else description
     val displayReward = if (isLocked) "??? ₽" else reward
     val lockedDesc = stringResource(R.string.a11y_locked_achievement)
@@ -71,7 +83,7 @@ fun AchievementCard(
                 if (!isLocked && condition.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = condition,
+                        text = displayCondition,
                         color = TextSecondary,
                         fontSize = 12.sp
                     )
@@ -104,24 +116,35 @@ fun AchievementCard(
             }
             Spacer(modifier = Modifier.width(8.dp))
             if (isLocked) {
-                Text(
-                    text = "🔒",
-                    fontSize = 24.sp,
-                    modifier = Modifier.semantics {
-                        contentDescription = lockedDesc
-                    }
+                EmojiIcon(
+                    emoji = "🔒",
+                    size = 24.dp,
+                    contentDescription = lockedDesc
                 )
             } else if (isCompleted) {
-                Text(
-                    text = "✓",
+                EmojiIcon(
+                    emoji = "✓",
+                    size = 24.dp,
                     color = StatusGreen,
-                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.semantics {
-                        contentDescription = completedDesc
-                    }
+                    contentDescription = completedDesc
                 )
             }
+        }
+
+        if (!isLocked && !isCompleted && progressTarget > 0) {
+            Spacer(modifier = Modifier.height(8.dp))
+            LinearProgressIndicator(
+                progress = { (progressCurrent.toFloat() / progressTarget).coerceIn(0f, 1f) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 12.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp)),
+                color = AccentColor,
+                trackColor = GlassStroke
+            )
         }
 
         if (isReadyToClaim && onClaimClick != null) {
@@ -131,7 +154,7 @@ fun AchievementCard(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AccentColor,
-                    contentColor = TextPrimary
+                    contentColor = SpaceBgStart
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {

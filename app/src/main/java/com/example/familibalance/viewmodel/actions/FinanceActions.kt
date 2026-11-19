@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
+import com.example.familibalance.data.push.PushNotifier
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
@@ -14,7 +15,7 @@ fun MainViewModel.adminDeposit(userId: String, amount: Int, description: String)
     if (!tryStartProcessingAction()) return
     try {
     val profile = familyRepository.getChild(userId) ?: return
-    val title = if (description.isNotBlank()) "Пополнение: ${description.trim()}" else "Пополнение от папы"
+    val title = if (description.isNotBlank()) "Пополнение: ${description.trim()}" else "Пополнение от родителя"
     updateChildProfile(
         profile.copy(
             balance = profile.balance + amount,
@@ -60,6 +61,7 @@ internal fun MainViewModel.applyFineInternal(childId: String, amount: Int, reaso
             ) + profile.historyItems
         )
     )
+    PushNotifier.balanceUpdated(childId, finalAmount, reason.trim().ifBlank { "Штраф" })
 }
 
 /** Админ списывает сумму с баланса (не ниже 0). Обычное списание — стрик не трогает. */
@@ -67,7 +69,7 @@ fun MainViewModel.adminWithdraw(userId: String, amount: Int, description: String
     if (!tryStartProcessingAction()) return
     try {
     val profile = familyRepository.getChild(userId) ?: return
-    val title = if (description.isNotBlank()) "Списание: ${description.trim()}" else "Списание от папы"
+    val title = if (description.isNotBlank()) "Списание: ${description.trim()}" else "Списание от родителя"
     updateChildProfile(
         profile.copy(
             balance = (profile.balance - amount).coerceAtLeast(0),

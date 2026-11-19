@@ -5,13 +5,9 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.content.pm.PackageManager
 import android.widget.Toast
-import android.media.AudioManager
-import android.media.ToneGenerator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.zIndex
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -120,32 +116,22 @@ fun AchievementsScreen(
         allAchievements.count { it.isCompleted }
     }
 
-    val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     var balanceBadgePosition by remember { mutableStateOf(Offset.Zero) }
     var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
-    var showConfetti by remember { mutableStateOf(false) }
+    var confettiTrigger by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(showConfetti) {
-        if (showConfetti) {
+    LaunchedEffect(confettiTrigger) {
+        if (confettiTrigger > 0) {
             delay(2500)
-            showConfetti = false
+            confettiTrigger = 0
         }
     }
 
     val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
-        showConfetti = true
+        confettiTrigger++
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        scope.launch(Dispatchers.IO) {
-            val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
-            try {
-                toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 120)
-                delay(400)
-            } catch (_: Exception) {
-            } finally {
-                toneGen.release()
-            }
-        }
+        RewardSoundPlayer.playCoin()
 
         lateinit var flight: CoinFlightData
         flight = CoinFlightData(
@@ -198,17 +184,24 @@ fun AchievementsScreen(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    LinearProgressIndicator(
-                        progress = { completedCount.toFloat() / allAchievements.size.toFloat() },
+                    val rankFraction = if (allAchievements.isEmpty()) 0f
+                        else (completedCount.toFloat() / allAchievements.size).coerceIn(0f, 1f)
+                    Box(
                         modifier = Modifier
                             .weight(1f)
                             .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp)),
-                        color = AccentColor,
-                        trackColor = CardBgDark.copy(alpha = 0.85f)
-                    )
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(CardBgDark.copy(alpha = 0.85f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .fillMaxWidth(rankFraction)
+                                .background(AccentColor, RoundedCornerShape(4.dp))
+                        )
+                    }
 
                     Box(
                         modifier = Modifier
@@ -283,6 +276,10 @@ fun AchievementsScreen(
                 isLocked = item.isLocked,
                 isCompleted = item.isCompleted,
                 isReadyToClaim = item.isReadyToClaim,
+                conditionKind = item.conditionKind,
+                conditionCount = item.conditionCount,
+                progressCurrent = item.progressCurrent,
+                progressTarget = item.conditionCount,
                 onClaimClick = {
                     if (item.id.isNotBlank()) {
                         triggerCoinFlight(Offset.Zero) {
@@ -302,8 +299,8 @@ fun AchievementsScreen(
                 flight.onFinished()
             }
         )
-        if (showConfetti) {
-            ConfettiOverlay(modifier = Modifier.fillMaxSize())
+        if (confettiTrigger > 0) {
+            ConfettiOverlay(trigger = confettiTrigger, modifier = Modifier.fillMaxSize())
         }
     }
 }

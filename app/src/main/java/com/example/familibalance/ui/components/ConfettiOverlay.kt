@@ -36,7 +36,7 @@ private class ConfettiParticle(
  * Частицы падают сверху вниз с покачиванием и вращением, цвета — из текущей темы.
  */
 @Composable
-fun ConfettiOverlay(modifier: Modifier = Modifier) {
+fun ConfettiOverlay(trigger: Int = 0, modifier: Modifier = Modifier) {
     val palette = LocalAppPalette.current
     val particleColors = remember(palette) {
         listOf(
@@ -67,8 +67,11 @@ fun ConfettiOverlay(modifier: Modifier = Modifier) {
         }
     }
     val progress = remember { Animatable(0f) }
-    LaunchedEffect(Unit) {
-        progress.animateTo(1f, tween(durationMillis = 2400, easing = LinearEasing))
+    LaunchedEffect(trigger) {
+        if (trigger > 0) {
+            progress.snapTo(0f)
+            progress.animateTo(1f, tween(durationMillis = 2400, easing = LinearEasing))
+        }
     }
 
     Canvas(modifier = modifier) {

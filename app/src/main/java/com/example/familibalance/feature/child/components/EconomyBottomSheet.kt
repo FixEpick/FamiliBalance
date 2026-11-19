@@ -106,10 +106,13 @@ fun EconomyBottomSheet(
             item {
                 Text(
                     text = stringResource(R.string.economy_title),
-                    color = TextPrimary,
+                    color = AccentColor,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
                 )
             }
 
@@ -133,7 +136,7 @@ fun EconomyBottomSheet(
                 EconomyRow(stringResource(R.string.eco_streak), stringResource(R.string.eco_streak_value))
             }
             item {
-                EconomyRow(stringResource(R.string.eco_dream), stringResource(R.string.eco_set_by_dad))
+                EconomyRow(stringResource(R.string.eco_dream), stringResource(R.string.eco_dream_value))
             }
 
             // ===== Секция 2: Расходы =====
@@ -150,20 +153,32 @@ fun EconomyBottomSheet(
             item {
                 EconomyRow(stringResource(R.string.eco_time90), "300 ₽")
             }
+
+            // ===== Секция 3: Штрафы =====
             item {
-                EconomyRow(stringResource(R.string.eco_diary_grade3), "−20 ₽")
+                Spacer(modifier = Modifier.height(12.dp))
+                EconomySectionTitle(stringResource(R.string.economy_fines_section))
             }
             item {
-                EconomyRow(stringResource(R.string.eco_diary_grade2), "−50 ₽")
+                EconomyRow(stringResource(R.string.eco_diary_grade3), "−20 ₽", PenaltyRed)
+            }
+            item {
+                EconomyRow(stringResource(R.string.eco_diary_grade2), "−50 ₽", PenaltyRed)
+            }
+            item {
+                EconomyRow(stringResource(R.string.eco_mischief), "−30 ₽", PenaltyRed)
+            }
+            item {
+                EconomyRow(stringResource(R.string.eco_lie), "−100 ₽", PenaltyRed)
             }
             item {
                 EconomyRow(stringResource(R.string.eco_honest), stringResource(R.string.eco_honest_discount))
             }
             item {
-                EconomyRow(stringResource(R.string.eco_parent_fine), stringResource(R.string.eco_set_by_dad))
+                EconomyRow(stringResource(R.string.eco_parent_fine), stringResource(R.string.eco_set_by_dad), PenaltyRed)
             }
 
-            // ===== Секция 3: Достижения =====
+            // ===== Секция 4: Достижения =====
             item {
                 Spacer(modifier = Modifier.height(12.dp))
                 EconomySectionTitle(stringResource(R.string.economy_achievements_section))
@@ -199,6 +214,20 @@ fun EconomyBottomSheet(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
             }
+
+            item {
+                Button(
+                    onClick = onDismissRequest,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AccentColor,
+                        contentColor = SpaceBgStart
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.rules_understood), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
+            }
         }
         }
     }
@@ -228,7 +257,7 @@ private fun EconomyRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, color = TextSecondary, fontSize = 14.sp)
+        Text(text = title, color = TextMuted, fontSize = 14.sp)
         Text(
             text = value,
             color = valueColor,

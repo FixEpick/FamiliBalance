@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
+import com.example.familibalance.data.push.PushNotifier
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
@@ -58,6 +59,15 @@ fun MainViewModel.submitQuestForReview(userId: String, questType: String, photoU
         else -> profile
     }
     updateChildProfile(updated)
+    // Пуш родителю о новом фотоотчёте (только для валидных типов квестов).
+    if (updated != profile) {
+        val (reportTitle, reportReward) = when (questType.lowercase()) {
+            "closet", "шкаф" -> profile.wardrobeTitle to profile.wardrobeReward
+            "room", "комната" -> profile.roomTitle to profile.roomReward
+            else -> profile.diaryTitle to profile.diaryApprovedReward
+        }
+        PushNotifier.photoReportSubmitted(profile.parentUserId, profile.name, reportTitle, reportReward)
+    }
 }
 
 /**
@@ -235,16 +245,18 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
     }
 }
 
-fun MainViewModel.addBonusQuest(userId: String, title: String, reward: Int, description: String = "") {
+fun MainViewModel.addBonusQuest(userId: String, title: String, reward: Int, description: String = "", requiresPhoto: Boolean = true) {
     val profile = familyRepository.getChild(userId) ?: return
     val newQuest = BonusQuest(
         title = title,
         reward = reward,
         description = description,
         status = QuestStatus.AVAILABLE,
-        createdDate = getCurrentDateString()
+        createdDate = getCurrentDateString(),
+        requiresPhoto = requiresPhoto
     )
     updateChildProfile(profile.copy(bonusQuests = profile.bonusQuests + newQuest))
+    PushNotifier.bonusQuestAdded(userId, title.trim(), reward)
 }
 
 fun MainViewModel.submitBonusQuestByChild(userId: String, questId: String, photoUri: Uri?, comment: String) {
@@ -262,6 +274,11 @@ fun MainViewModel.submitBonusQuestByChild(userId: String, questId: String, photo
     }
     if (updatedQuests != profile.bonusQuests) {
         updateChildProfile(profile.copy(bonusQuests = updatedQuests))
+        val bq = profile.bonusQuests.firstOrNull { it.id == questId }
+        PushNotifier.photoReportSubmitted(
+            profile.parentUserId, profile.name,
+            bq?.title ?: "", bq?.reward ?: 0
+        )
     }
 }
 

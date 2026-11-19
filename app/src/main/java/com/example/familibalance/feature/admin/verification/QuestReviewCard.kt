@@ -55,10 +55,12 @@ fun QuestVerificationCard(
     photoUrl: String?,
     actionEnabled: Boolean = true,
     onApprove: () -> Unit,
-    onReject: (String) -> Unit
+    onReject: (String) -> Unit,
+    onRejectWithFine: ((String, Boolean) -> Unit)? = null
 ) {
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReasonText by remember { mutableStateOf("") }
+    var applyLieFine by remember { mutableStateOf(false) }
     var showFullScreenImage by remember { mutableStateOf(false) }
 
     Card(
@@ -138,24 +140,46 @@ fun QuestVerificationCard(
             containerColor = SpaceBgStart,
             title = { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) },
             text = {
-                OutlinedTextField(
-                    value = rejectReasonText,
-                    onValueChange = { rejectReasonText = it },
-                    label = { Text(stringResource(R.string.admin_reject_reason_hint), color = TextSecondary) },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedContainerColor = GlassBackground,
-                        unfocusedContainerColor = GlassBackground,
-                        focusedBorderColor = AccentColor,
-                        unfocusedBorderColor = GlassStroke
+                Column {
+                    OutlinedTextField(
+                        value = rejectReasonText,
+                        onValueChange = { rejectReasonText = it },
+                        label = { Text(stringResource(R.string.admin_reject_reason_hint), color = TextSecondary) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedContainerColor = GlassBackground,
+                            unfocusedContainerColor = GlassBackground,
+                            focusedBorderColor = AccentColor,
+                            unfocusedBorderColor = GlassStroke
+                        )
                     )
-                )
+                    if (onRejectWithFine != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(
+                                checked = applyLieFine,
+                                onCheckedChange = { applyLieFine = it },
+                                colors = CheckboxDefaults.colors(checkedColor = PenaltyRed)
+                            )
+                            Text(
+                                text = stringResource(R.string.admin_reject_fine_lie),
+                                color = TextSecondary,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
             },
             confirmButton = {
                 Button(onClick = {
                     val reason = if (rejectReasonText.isNotBlank()) rejectReasonText else defaultRejectReason
-                    onReject(reason)
+                    if (applyLieFine && onRejectWithFine != null) {
+                        onRejectWithFine(reason, true)
+                    } else {
+                        onReject(reason)
+                    }
+                    applyLieFine = false
                     showRejectDialog = false
                 }, enabled = actionEnabled) {
                     Text(stringResource(R.string.admin_reject))

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "767524456268",
+    "project_id": "famili-88111",
+    "storage_bucket": "famili-88111.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:767524456268:android:e157ebe71cf9301791f1e9",
+        "android_client_info": {
+          "package_name": "com.example.familibalance"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB9qU8jF7uNY09s2BZgT8VZMuBdArCu5y4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

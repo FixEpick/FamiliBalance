@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 
@@ -55,6 +55,7 @@ fun ThemeSelectionBottomSheet(
             BottomSheetDefaults.DragHandle(color = GlassStroke)
         }
     ) {
+        AppLocaleContent {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -114,23 +115,32 @@ fun ThemeSelectionBottomSheet(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            // Превью: два цветных кружка палитры
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            // Мини-превью: тёмная карточка + акцентная полоса и вторичная линия
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 72.dp, height = 40.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(SpaceBgStart)
+                                    .border(1.dp, GlassStroke, RoundedCornerShape(8.dp))
+                                    .padding(6.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(theme.primaryNeon)
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .size(28.dp)
-                                        .clip(CircleShape)
-                                        .background(theme.secondaryNeon)
-                                )
+                                Column {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(0.65f)
+                                            .height(7.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(theme.primaryNeon)
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .width(26.dp)
+                                            .height(5.dp)
+                                            .clip(RoundedCornerShape(3.dp))
+                                            .background(theme.secondaryNeon.copy(alpha = 0.8f))
+                                    )
+                                }
                             }
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
@@ -155,6 +165,21 @@ fun ThemeSelectionBottomSheet(
                     }
                 }
             }
+
+            Button(
+                onClick = onDismissRequest,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentColor,
+                    contentColor = SpaceBgStart
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
+            ) {
+                Text(stringResource(R.string.theme_done), fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            }
+        }
         }
     }
 }

@@ -3,6 +3,7 @@ package com.example.familibalance.viewmodel.actions
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
+import com.example.familibalance.data.push.PushNotifier
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 
@@ -14,7 +15,8 @@ fun MainViewModel.setDreamGoal(userId: String, title: String, target: Int) {
     updateChildProfile(
         profile.copy(
             dreamTitle = title.ifBlank { profile.dreamTitle },
-            dreamTarget = target
+            dreamTarget = target,
+            dreamSetDate = getCurrentDateString()
         )
     )
 }
@@ -34,6 +36,7 @@ fun MainViewModel.claimDreamGoal(userId: String) {
         balance = profile.balance - target,
         dreamTitle = "",
         dreamTarget = 0,
+        dreamSetDate = "",
         historyItems = listOf(
             HistoryData(
                 title = "Заложена цель: $claimedDreamTitle",
@@ -51,6 +54,7 @@ fun MainViewModel.claimDreamGoal(userId: String) {
 
     val message = "Ребёнок ${profile.name} осуществил цель «$claimedDreamTitle» на $target ₽."
     familyRepository.addAdminNotification(message)
+    PushNotifier.dreamReached(profile.parentUserId, profile.name, claimedDreamTitle, target)
 
     updateChildProfile(updated)
     } finally {

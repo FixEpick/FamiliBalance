@@ -137,15 +137,25 @@
     <!-- Child main screen -->
     <string name="child_balance">Баланс</string>
     <string name="child_bank_name">Космо-банк</string>
-    <string name="child_cashout_btn">Вывести / Купить</string>
-    <string name="child_cashout_hint">*работает, когда вы с папой</string>
+    <string name="child_cashout_btn">Вывести наличные</string>
+    <string name="child_cashout_hint">*работает, когда вы с родителем</string>
     <string name="child_no_cashout_requests">Нет активных заявок на вывод</string>
     <string name="child_cashout_requests_title">💵 Активные заявки на вывод:</string>
     <string name="child_cashout_amount">Сумма: %1$d ₽</string>
     <string name="child_cashout_comment">Комментарий: %1$s</string>
-    <string name="child_cashout_waiting">⏳ Ждёт подтверждения папы</string>
+    <string name="child_cashout_waiting">⏳ Ждёт подтверждения родителя</string>
     <string name="child_dream_default_title">Моя цель</string>
     <string name="child_dream_reached">Цель достигнута! Нажми, чтобы забрать ✨</string>
+    <string name="child_dream_choose_title">🎯 Цель-мечта</string>
+    <string name="child_dream_choose_subtitle">Поставь цель и копи на мечту!</string>
+    <string name="child_dream_choose_btn">Выбрать цель</string>
+    <string name="child_dream_change_btn">Изменить цель</string>
+    <string name="child_dream_cooldown">Новую цель можно будет выбрать через %1$d дн.</string>
+    <string name="dream_dialog_title">🎯 Новая цель</string>
+    <string name="dream_name_label">Название цели</string>
+    <string name="dream_amount_label">Сумма (₽)</string>
+    <string name="dream_change_hint">Цель можно изменить через 7 дней или после выполнения этой мечты.</string>
+    <string name="dream_deduct_hint">Когда накопишь нужную сумму, она спишется с баланса — и цель будет достигнута.</string>
     <string name="child_screen_time_title">⏳ Экранное время на сегодня</string>
     <string name="child_bought_minutes">Куплено сегодня: %1$d / %2$d мин</string>
     <string name="child_buy_time_btn">Купить время</string>
@@ -153,13 +163,14 @@
     <string name="child_streak_title">Дни без штрафов</string>
     <string name="child_streak_day_label">%1$d дн</string>
     <string name="child_streak_checkin">🔥 Отметиться сегодня</string>
+    <string name="child_streak_checked_today">✓ Сегодняшний день засчитан — стрик в безопасности</string>
     <string name="child_streak_bonus">Бонус +50 ₽ на 7-й день</string>
     <string name="child_honest_cooldown">🐱 Честное признание • Доступно через %1$d дн.</string>
     <string name="child_honest_btn">🐱 Честное признание</string>
     <string name="child_honest_approved_note">✓ Штраф уменьшится вдвое при следующем нарушении</string>
-    <string name="child_honest_pending">• Признание на проверке у папы</string>
+    <string name="child_honest_pending">• Признание на проверке у родителя</string>
     <string name="child_honest_claimed">✓ Скидка 50% уже применена</string>
-    <string name="child_honest_ready">✓ Честное признание одобрено папой (Штраф уменьшен в половину)</string>
+    <string name="child_honest_ready">✓ Честное признание одобрено родителем (Штраф уменьшен в половину)</string>
     <string name="child_rules_btn">📜 Свиток правил</string>
     <string name="child_economy_btn">💰 Экономика</string>
     <string name="child_cashout_dialog_title">💵 Вывести наличные</string>
@@ -169,7 +180,7 @@
     <string name="child_cashout_submit">Отправить заявку</string>
 
     <!-- Buy time sheet -->
-    <string name="child_buytime_title">⏳ Обмен коинов на время</string>
+    <string name="child_buytime_title">⏳ Обмен рублей на время</string>
     <string name="child_buytime_limit">Минут в день: %1$d • доступно сегодня: %2$d</string>
     <plurals name="child_tariff_minutes">
         <item quantity="one">⏳ %1$d минута</item>
@@ -182,17 +193,17 @@
     <string name="rules_title">📜 Свиток правил</string>
     <string name="rules_offline">Нет интернета? Не переживай! Все твои квесты и награды сохранены на телефоне. Как только появится сеть, они сами отправятся в облако.</string>
     <string name="rules_balance_title">📖 Как работает твой баланс</string>
-    <string name="rules_balance_text">Все заработанные рубли падают в твой кошелёк. Ты можешь менять их на время в телефоне (100 ₽ = 30 минут) ИЛИ ты можешь в любой момент вывести все деньги — то есть забрать весь свой баланс настоящими бумажными деньгами на руки у папы!</string>
+    <string name="rules_balance_text">Все заработанные рубли падают в твой кошелёк. Ты можешь менять их на время в телефоне (100 ₽ = 30 минут) ИЛИ ты можешь в любой момент вывести все деньги — то есть забрать весь свой баланс настоящими бумажными деньгами на руки у родителя!</string>
     <string name="rules_earn_title">💰 Как заработать:</string>
     <string name="rules_earn_text">• Оценка «5» в дневнике: +50 ₽\n• Оценка «4» в дневнике: +30 ₽\n• Фото шкафа (идеальный порядок): +%1$d ₽\n• Фото комнаты (заправленная кровать и порядок): +%2$d ₽\n• Бонусы за Достижения: от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!</string>
     <string name="rules_penalty_title">🔴 За что вычитается денежка (Штрафы)</string>
-    <string name="rules_penalty_text">За оценку «3» списывается -20 ₽, за оценку «2» списывается -50 ₽. Но если ты обманул или скрыл правду, но сам честно рассказал об этом папе через кошечку — папа одобрит признание и уменьшит штраф за этот проступок ровно в половину! (до -10 ₽ за тройку и до -25 ₽ за двойку).</string>
+    <string name="rules_penalty_text">За оценку «3» списывается −20 ₽, за оценку «2» — −50 ₽. За баловство и шалости — −30 ₽, а за обман или попытку схитрить — сразу −100 ₽. Но если ты сам честно рассказал родителю через кошечку до того, как он узнал — штраф уменьшится ровно вдвое! (−10 ₽ за тройку, −25 ₽ за двойку, −15 ₽ за баловство и −50 ₽ за обман).</string>
     <string name="rules_streak_title">🔥 Дни без штрафов</string>
     <string name="rules_streak_text">Отмечайся каждый день и получай +50 ₽ каждые 7 дней без штрафов! Но любой штраф сжигает все накопленные дни — а за каждый пропущенный день гаснет один огонёк.</string>
     <string name="rules_screentime_title">⏳ Экранное время</string>
     <string name="rules_screentime_text">Лимит 90 минут в день. Тарифы: 30 мин = 100 ₽, 60 мин = 200 ₽, 90 мин = 300 ₽.</string>
     <string name="rules_honest_title">🐱 Честное признание</string>
-    <string name="rules_honest_text">Скидка 50% на один штраф. Доступно раз в 7 дней — расскажи папе правду через кошечку!</string>
+    <string name="rules_honest_text">Скидка 50% на любой штраф — хоть за двойку, хоть за обман. Доступно раз в 7 дней — расскажи родителю правду через кошечку!</string>
     <string name="rules_diary_title">📓 Дневник</string>
     <string name="rules_diary_text">Сдаётся раз в неделю. Оценки: 5 (+50 ₽), 4 (+30 ₽), 3 (-20 ₽), 2 (-50 ₽).</string>
     <string name="rules_achievements_title">🏆 Достижения</string>
@@ -203,6 +214,7 @@
     <string name="economy_title">💰 Экономика</string>
     <string name="economy_earn_section">💰 Как заработать</string>
     <string name="economy_spend_section">💸 На что потратить</string>
+    <string name="economy_fines_section">🔴 За что списывают (штрафы)</string>
     <string name="economy_achievements_section">🏆 Достижения</string>
     <string name="eco_wardrobe_photo">📸 Фото шкафа</string>
     <string name="eco_room_photo">🛏️ Фото комнаты</string>
@@ -210,23 +222,26 @@
     <string name="eco_diary_grade4">📓 Дневник: оценка 4</string>
     <string name="eco_diary_grade3">📓 Дневник: оценка 3</string>
     <string name="eco_diary_grade2">📓 Дневник: оценка 2</string>
+    <string name="eco_mischief">🤪 Баловство / нарушение правил</string>
+    <string name="eco_lie">🤥 Обман или попытка схитрить</string>
     <string name="eco_streak">🔥 Стрик без штрафов</string>
     <string name="eco_streak_value">+50 ₽ каждые 7 дней</string>
     <string name="eco_dream">🎯 Цель-мечта</string>
-    <string name="eco_set_by_dad">сумма задаётся папой</string>
+    <string name="eco_dream_value">выбираешь сам</string>
+    <string name="eco_set_by_dad">сумма задаётся родителем</string>
     <string name="eco_time30">⏳ 30 минут экранного времени</string>
     <string name="eco_time60">⏳ 60 минут экранного времени</string>
     <string name="eco_time90">⏳ 90 минут экранного времени</string>
     <string name="eco_honest">🐱 Честное признание</string>
     <string name="eco_honest_discount">скидка −50% на штраф</string>
-    <string name="eco_parent_fine">👨‍👦 Штрафы от папы</string>
+    <string name="eco_parent_fine">👨‍👩‍👧 Штрафы от родителя</string>
     <string name="eco_branch_diary">📓 Дневник</string>
     <string name="eco_branch_wardrobe">📸 Шкаф</string>
     <string name="eco_branch_room">🛏️ Комната</string>
 
     <!-- Pending quests sheet -->
-    <string name="child_pending_title">⏳ Квесты на проверке</string>
-    <string name="child_pending_subtitle">Отправленные папе задания. Можно удалить или переснять.</string>
+    <string name="child_pending_title">Квесты на проверке</string>
+    <string name="child_pending_subtitle">Отправленные родителю задания. Можно удалить или переснять.</string>
     <string name="child_pending_empty">Нет заданий на проверке</string>
 
     <!-- Quest frequency badges -->
@@ -236,22 +251,24 @@
 
     <!-- Tasks screen -->
     <string name="tasks_title">✨ ЗАДАНИЯ НА СЕГОДНЯ</string>
-    <string name="tasks_bonus_title">🎁 БОНУС-КВЕСТЫ ОТ ПАПЫ</string>
-    <string name="tasks_bonus_default_desc">Бонусное задание от папы</string>
+    <string name="tasks_bonus_title">🎁 БОНУС-КВЕСТЫ ОТ РОДИТЕЛЯ</string>
+    <string name="tasks_bonus_default_desc">Бонусное задание от родителя</string>
     <string name="tasks_custom_title">📋 Дополнительные задания</string>
     <string name="tasks_claim_reward">Получить +%1$d ₽</string>
     <string name="tasks_claim_reward_neg">Получить %1$d ₽</string>
     <string name="tasks_diary_reward">от +30 ₽ до ∞</string>
     <string name="tasks_under_review">На проверке</string>
-    <string name="tasks_custom_default_desc">Задание от папы</string>
+    <string name="tasks_custom_default_desc">Задание от родителя</string>
     <string name="tasks_empty_title">Пока нет активных заданий</string>
-    <string name="tasks_empty_subtitle">Обратитесь к папе, чтобы он добавил задания</string>
+    <string name="tasks_empty_subtitle">Обратитесь к родителю, чтобы он добавил задания</string>
     <string name="tasks_diary_report_header">📘 Отчёт по дневнику:</string>
     <string name="tasks_diary_grade5">Оценка 5: %1$d шт. (+%2$d ₽)</string>
     <string name="tasks_diary_grade4">Оценка 4: %1$d шт. (+%2$d ₽)</string>
     <string name="tasks_diary_grade3">Оценка 3: %1$d шт. (-%2$d ₽)</string>
     <string name="tasks_diary_grade2">Оценка 2: %1$d шт. (-%2$d ₽)</string>
     <string name="tasks_diary_total">Итого к начислению: +%1$d ₽</string>
+    <string name="tasks_diary_total_plain">Итого к начислению: %1$d ₽</string>
+    <string name="tasks_diary_grade_zero">Оценка %1$d: 0 шт. (0 ₽)</string>
     <string name="child_player_role">Игрок</string>
     <string name="default_child_name">Ребёнок %1$s</string>
 
@@ -266,7 +283,25 @@
         <item quantity="many">Разблокировано %1$d из %2$d рангов</item>
         <item quantity="other">Разблокировано %1$d из %2$d рангов</item>
     </plurals>
-    <string name="ach_gift_toast">Главный Секретный Подарок от папы за открытие всех 16 рангов!</string>
+    <plurals name="ach_condition_fives">
+        <item quantity="one">Получить %d пятёрку</item>
+        <item quantity="few">Получить %d пятёрки</item>
+        <item quantity="many">Получить %d пятёрок</item>
+        <item quantity="other">Получить %d пятёрок</item>
+    </plurals>
+    <plurals name="ach_condition_wardrobe">
+        <item quantity="one">Уборка в шкафу %d раз</item>
+        <item quantity="few">Уборка в шкафу %d раза</item>
+        <item quantity="many">Уборка в шкафу %d раз</item>
+        <item quantity="other">Уборка в шкафу %d раз</item>
+    </plurals>
+    <plurals name="ach_condition_room">
+        <item quantity="one">Уборка в комнате %d раз</item>
+        <item quantity="few">Уборка в комнате %d раза</item>
+        <item quantity="many">Уборка в комнате %d раз</item>
+        <item quantity="other">Уборка в комнате %d раз</item>
+    </plurals>
+    <string name="ach_gift_toast">Главный Секретный Подарок от родителя за открытие всех 16 рангов!</string>
     <string name="ach_locked_desc">Откроется после выполнения предыдущего уровня</string>
     <string name="ach_claim_reward">🎁 Забрать награду %1$s</string>
 
@@ -274,6 +309,7 @@
     <string name="theme_shop_title">🎨 Магазин тем</string>
     <string name="theme_shop_subtitle">Выбери палитру, которая нравится больше всего</string>
     <string name="theme_selected">✓ Выбрана</string>
+    <string name="theme_done">Готово</string>
     <string name="theme_name_cosmic_blue">Космический синий</string>
     <string name="theme_name_cyber_pink">Кибер розовый</string>
     <string name="theme_name_toxic_green">Токсичный зелёный</string>
@@ -291,10 +327,10 @@
     <string name="history_filter_fines">Штрафы</string>
     <string name="history_filter_other">Прочее</string>
     <plurals name="history_pending_waiting">
-        <item quantity="one">%1$d ждёт проверки папой • Нажми, чтобы посмотреть</item>
-        <item quantity="few">%1$d ждут проверки папой • Нажми, чтобы посмотреть</item>
-        <item quantity="many">%1$d ждут проверки папой • Нажми, чтобы посмотреть</item>
-        <item quantity="other">%1$d ждут проверки папой • Нажми, чтобы посмотреть</item>
+        <item quantity="one">%1$d ждёт проверки родителем • Нажми, чтобы посмотреть</item>
+        <item quantity="few">%1$d ждут проверки родителем • Нажми, чтобы посмотреть</item>
+        <item quantity="many">%1$d ждут проверки родителем • Нажми, чтобы посмотреть</item>
+        <item quantity="other">%1$d ждут проверки родителем • Нажми, чтобы посмотреть</item>
     </plurals>
     <string name="history_version">Версия приложения: %1$s</string>
 
@@ -302,17 +338,17 @@
     <string name="hist_screen_time_purchase">Покупка экранного времени (%1$d мин)</string>
     <string name="hist_streak_bonus">🔥 Бонус за 7 дней без штрафов</string>
     <string name="hist_achievement_unlocked">Достижение открыто: %1$s</string>
-    <string name="hist_cashout_given">Выдача наличных папой (%1$s)</string>
+    <string name="hist_cashout_given">Выдача наличных родителем (%1$s)</string>
     <string name="hist_cashout_request">Вывод средств (%1$s)</string>
     <string name="hist_custom_quest_done">Квест выполнен: %1$s</string>
     <string name="hist_admin_reward">Пополнение: %1$s</string>
-    <string name="hist_admin_reward_plain">Пополнение от папы</string>
+    <string name="hist_admin_reward_plain">Пополнение от родителя</string>
     <string name="hist_admin_withdraw">Списание: %1$s</string>
-    <string name="hist_admin_withdraw_plain">Списание от папы</string>
+    <string name="hist_admin_withdraw_plain">Списание от родителя</string>
     <string name="hist_fine">Штраф: %1$s</string>
-    <string name="hist_fine_plain">Штраф от папы</string>
+    <string name="hist_fine_plain">Штраф от родителя</string>
     <string name="hist_fine_discount">Штраф: %1$s (Скидка 50%% за честное признание)</string>
-    <string name="hist_fine_plain_discount">Штраф от папы (Скидка 50%% за честное признание)</string>
+    <string name="hist_fine_plain_discount">Штраф от родителя (Скидка 50%% за честное признание)</string>
     <string name="hist_bonus_quest_approved">Одобрен бонус-квест: %1$s</string>
     <string name="hist_quest_approved">Одобрен квест: %1$s</string>
     <string name="hist_honest_approved">Честное признание одобрено</string>
@@ -340,7 +376,7 @@
     <string name="delivery_photo_desc">Фото результата</string>
     <string name="delivery_camera_hint">Нажми, чтобы сфотографировать результат.\nНикаких ограничений по времени!</string>
     <string name="delivery_retake">🔄 Переснять фото</string>
-    <string name="delivery_comment_hint">Напиши папе пару слов к фото, если хочешь (например: «Всё сложил по местам!»)</string>
+    <string name="delivery_comment_hint">Напиши родителю пару слов к фото, если хочешь (например: «Всё сложил по местам!»)</string>
     <string name="delivery_submit">Прикрепить фото и отправить на проверку</string>
     <string name="camera_capture_close">Закрыть камеру</string>
     <string name="camera_capture_switch">Переключить камеру</string>
@@ -348,17 +384,18 @@
     <string name="delivery_uploading">Отправляем фото…</string>
 
     <!-- Honest cat screen -->
-    <string name="honest_title">🐱 Честное признание папе</string>
+    <string name="honest_title">🐱 Честное признание родителю</string>
     <string name="honest_bonus">✨ Бонус: Штраф в половину!</string>
-    <string name="honest_text">Если ты обманул или скрыл правду, или совершил проступок — поделись этим с папой сам через кошечку! Папа очень ценит честность, поэтому обязательно одобрит твоё признание и уменьшит штраф в половину.</string>
-    <string name="honest_placeholder">Папа, я хочу честно признаться в том, что...</string>
-    <string name="honest_submit">Отправить папе 🚀</string>
+    <string name="honest_text">Если ты обманул или скрыл правду, или совершил проступок — поделись этим с родителем сам через кошечку! Родитель очень ценит честность, поэтому обязательно одобрит твоё признание и уменьшит штраф в половину.</string>
+    <string name="honest_input_label">Текст признания</string>
+    <string name="honest_placeholder">Родитель, я хочу честно признаться в том, что...</string>
+    <string name="honest_submit">Отправить родителю 🚀</string>
 
     <!-- Admin screen -->
     <string name="admin_cashout_title">💵 Выдача наличных</string>
     <string name="admin_cashout_message">Выдать %1$s %2$d ₽ наличными и обнулить баланс в Космо-банке?</string>
     <string name="admin_cashout_confirm">Выдать и обнулить</string>
-    <string name="admin_panel_title">Панель Папы</string>
+    <string name="admin_panel_title">Панель Родителя</string>
     <string name="admin_role">Администратор</string>
     <string name="admin_switch">🔄 Сменить</string>
     <string name="admin_dream_title">🎯 Цель-мечта: %1$s</string>
@@ -402,9 +439,9 @@
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Получить награду</string>
-    <string name="task_rejected_by_dad">❌ Отклонено папой: %1$s</string>
+    <string name="task_rejected_by_dad">❌ Отклонено родителем: %1$s</string>
     <string name="task_execute">📷 Выполнить</string>
-    <string name="task_pending_review">• На проверке у папы</string>
+    <string name="task_pending_review">• На проверке у родителя</string>
     <string name="task_done">✅ Выполнено</string>
     <string name="task_view_report">📊 Отчёт по оценкам — нажмите, чтобы посмотреть</string>
     <string name="task_report_title">Отчёт по дневнику</string>
@@ -453,13 +490,23 @@
     <string name="admin_honest_title">🐱 Честное признание от %1$s</string>
     <string name="admin_honest_quote">«%1$s»</string>
     <string name="admin_approve_honest">✅ Одобрить (Штраф -50%)</string>
-    <string name="admin_quick_actions">⚡ Быстрые действия папы (%1$s)</string>
+    <string name="admin_quick_actions">⚡ Быстрые действия родителя (%1$s)</string>
     <string name="admin_quick_actions_subtitle">Начисление за дневник, штрафы и ручной ввод суммы для этого профиля.</string>
     <string name="admin_amount_hint">Сумма ₽</string>
     <string name="admin_add">+ Добавить</string>
     <string name="admin_desc_label">Описание (за что)</string>
     <string name="admin_withdraw">- Списать</string>
     <string name="admin_is_fine">Это штраф (сбросит стрик и применит скидку)</string>
+    <string name="admin_fine_presets_label">Быстрые штрафы:</string>
+    <string name="admin_fine_preset_grade3">Оценка 3 (−20 ₽)</string>
+    <string name="admin_fine_preset_grade2">Оценка 2 (−50 ₽)</string>
+    <string name="admin_fine_preset_mischief">Баловство (−30 ₽)</string>
+    <string name="admin_fine_preset_lie">Обман (−100 ₽)</string>
+    <string name="admin_fine_reason_grade3">Оценка 3</string>
+    <string name="admin_fine_reason_grade2">Оценка 2</string>
+    <string name="admin_fine_reason_mischief">Баловство</string>
+    <string name="admin_fine_reason_lie">Обман</string>
+    <string name="admin_reject_fine_lie">Списать штраф за обман (−100 ₽)</string>
     <string name="admin_cashout_button">💵 Выдать наличные (%1$d ₽)</string>
 
     <!-- Admin settings screen -->
@@ -498,6 +545,7 @@
     <string name="admin_set_bonus_name">Название квеста</string>
     <string name="admin_set_bonus_desc">Описание квеста</string>
     <string name="admin_set_bonus_reward">Награда (₽)</string>
+    <string name="admin_set_bonus_photo">📷 Фотоотчёт</string>
     <string name="admin_set_create">Создать</string>
     <string name="admin_set_confirm_title">Подтверждение</string>
     <string name="admin_set_confirm_message">Вы уверены? Это действие нельзя отменить</string>

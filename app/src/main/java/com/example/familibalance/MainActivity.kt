@@ -43,6 +43,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.example.familibalance.data.SecurePrefs
+import com.example.familibalance.data.push.PushTokenRegistrar
+import com.example.familibalance.data.push.handlePushIntent
 import com.example.familibalance.navigation.AdminRoute
 import com.example.familibalance.navigation.ChildAchievementsRoute
 import com.example.familibalance.navigation.ChildHistoryRoute
@@ -84,6 +86,7 @@ class MainActivity : FragmentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleAuthDeepLink(intent)
+        handlePushIntent(intent)
     }
 
     /**
@@ -110,7 +113,9 @@ class MainActivity : FragmentActivity() {
         updateViewModel = ViewModelProvider(this)[UpdateViewModel::class.java]
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
         AppLocaleState.init(this)
+        RewardSoundPlayer.init(this)
         handleAuthDeepLink(intent)
+        handlePushIntent(intent)
 
         enableEdgeToEdge()
         setContent {
@@ -237,6 +242,10 @@ class MainActivity : FragmentActivity() {
                 LaunchedEffect(isParentSession) {
                     if (!autoNavigatedToAdmin && isParentSession) {
                         autoNavigatedToAdmin = true
+                        // Регистрация FCM-токена родителя для пушей «Панель Родителя»
+                        (sessionStatus as? SessionStatus.Authenticated)
+                            ?.session?.user?.id
+                            ?.let { PushTokenRegistrar.registerParent(context, it) }
                         // РЎРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµРј Р»РѕРєР°Р»СЊРЅС‹Р№ С„Р»Р°Рі Р°РІС‚РѕРІС…РѕРґР° СЃ Supabase-СЃРµСЃСЃРёРµР№
                         SecurePrefs.get(context, "app_prefs")
                             .edit()
@@ -255,6 +264,8 @@ class MainActivity : FragmentActivity() {
                 LaunchedEffect(autoLoginChildId) {
                     if (!autoChildNavigated && autoLoginChildId != null) {
                         autoChildNavigated = true
+                        // Регистрация FCM-токена ребёнка для пушей «Игрок»
+                        PushTokenRegistrar.registerChild(context, autoLoginChildId!!)
                         SecurePrefs.get(context, "app_prefs")
                             .edit()
                             .putBoolean("onboarding_done", true)
@@ -333,9 +344,13 @@ class MainActivity : FragmentActivity() {
                     }
                     composable<AdminRoute> {
                         AdminScreen(
-                            onSwitchProfile = { backToLogin() },
+                            onSwitchProfile = {
+                                PushTokenRegistrar.unregister(context)
+                                backToLogin()
+                            },
                             viewModel = viewModel,
                             onLogout = {
+                                PushTokenRegistrar.unregister(context)
                                 authViewModel.signOut()
                                 viewModel.clearState()
                                 SecurePrefs.get(context, "app_prefs")
@@ -351,8 +366,12 @@ class MainActivity : FragmentActivity() {
                     composable<ChildRoute> {
                         ChildSection(
                             viewModel = viewModel,
-                            onSwitchProfile = { backToLogin() },
+                            onSwitchProfile = {
+                                PushTokenRegistrar.unregister(context)
+                                backToLogin()
+                            },
                             onLogout = {
+                                PushTokenRegistrar.unregister(context)
                                 viewModel.logoutChild()
                                 navigateToRoot(OnboardingRoute)
                             }

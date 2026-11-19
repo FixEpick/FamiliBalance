@@ -67,6 +67,7 @@ fun MainViewModel.resetAchievements(userId: String) {
             boughtMinutesToday = 0,
             dreamTitle = "",
             dreamTarget = 0,
+            dreamSetDate = "",
             fivesCount = 0,
             wardrobeCount = 0,
             roomCount = 0,
@@ -164,9 +165,18 @@ private fun MainViewModel.deleteQuestPhotos(urls: List<String?>) {
 
 fun MainViewModel.resetActiveQuests(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
+    // Квесты «в полёте» не трогаем: PENDING ждёт проверки родителем
+    // (сброс стёр бы photoUrl и отзыв родителя), READY_TO_CLAIM —
+    // одобрен и ждёт получения награды ребёнком.
+    fun QuestStatus.inFlight() = this == QuestStatus.PENDING || this == QuestStatus.READY_TO_CLAIM
+
+    val resetCloset = !profile.closetStatus.inFlight()
+    val resetRoom = !profile.roomStatus.inFlight()
+    val resetDiary = !profile.diaryStatus.inFlight()
+
     val updatedQuests = profile.customQuests.map { quest ->
         // ONCE-квесты не сбрасываем — они выполняются один раз
-        if (quest.isVisible && quest.frequency != QuestFrequency.ONCE) {
+        if (quest.isVisible && quest.frequency != QuestFrequency.ONCE && !quest.status.inFlight()) {
             quest.copy(
                 status = QuestStatus.AVAILABLE,
                 photoUrl = null,
@@ -174,31 +184,47 @@ fun MainViewModel.resetActiveQuests(userId: String) {
             )
         } else quest
     }
-    // Чистим фото, которые сбрасываются ниже (built-in + custom), из Storage.
+    val updatedBonusQuests = profile.bonusQuests.map { bq ->
+        if (!bq.status.inFlight()) {
+            bq.copy(
+                status = QuestStatus.AVAILABLE,
+                photoUrl = null,
+                rejectReason = null
+            )
+        } else bq
+    }
+    // Чистим фото, которые сбрасываются ниже (built-in + custom + bonus), из Storage.
     deleteQuestPhotos(
-        listOf(profile.closetPhotoUrl, profile.roomPhotoUrl, profile.diaryPhotoUrl) +
+        buildList {
+            if (resetCloset) add(profile.closetPhotoUrl)
+            if (resetRoom) add(profile.roomPhotoUrl)
+            if (resetDiary) add(profile.diaryPhotoUrl)
             updatedQuests.filter { it.status == QuestStatus.AVAILABLE && it.photoUrl == null }
-                .mapNotNull { q -> profile.customQuests.firstOrNull { it.id == q.id }?.photoUrl }
+                .forEach { q -> add(profile.customQuests.firstOrNull { it.id == q.id }?.photoUrl) }
+            updatedBonusQuests.filter { it.status == QuestStatus.AVAILABLE && it.photoUrl == null }
+                .forEach { bq -> add(profile.bonusQuests.firstOrNull { it.id == bq.id }?.photoUrl) }
+        }
     )
     updateChildProfile(
         profile.copy(
-            closetStatus = QuestStatus.AVAILABLE,
-            closetRejectReason = null,
-            closetPhotoUrl = null,
-            closetComment = "",
-            roomStatus = QuestStatus.AVAILABLE,
-            roomRejectReason = null,
-            roomPhotoUrl = null,
-            roomComment = "",
-            diaryStatus = QuestStatus.AVAILABLE,
-            diaryRejectReason = null,
-            diaryPhotoUrl = null,
-            diaryComment = "",
-            diaryCount5 = 0,
-            diaryCount4 = 0,
-            diaryCount3 = 0,
-            diaryCount2 = 0,
-            customQuests = updatedQuests
+            closetStatus = if (resetCloset) QuestStatus.AVAILABLE else profile.closetStatus,
+            closetRejectReason = if (resetCloset) null else profile.closetRejectReason,
+            closetPhotoUrl = if (resetCloset) null else profile.closetPhotoUrl,
+            closetComment = if (resetCloset) "" else profile.closetComment,
+            roomStatus = if (resetRoom) QuestStatus.AVAILABLE else profile.roomStatus,
+            roomRejectReason = if (resetRoom) null else profile.roomRejectReason,
+            roomPhotoUrl = if (resetRoom) null else profile.roomPhotoUrl,
+            roomComment = if (resetRoom) "" else profile.roomComment,
+            diaryStatus = if (resetDiary) QuestStatus.AVAILABLE else profile.diaryStatus,
+            diaryRejectReason = if (resetDiary) null else profile.diaryRejectReason,
+            diaryPhotoUrl = if (resetDiary) null else profile.diaryPhotoUrl,
+            diaryComment = if (resetDiary) "" else profile.diaryComment,
+            diaryCount5 = if (resetDiary) 0 else profile.diaryCount5,
+            diaryCount4 = if (resetDiary) 0 else profile.diaryCount4,
+            diaryCount3 = if (resetDiary) 0 else profile.diaryCount3,
+            diaryCount2 = if (resetDiary) 0 else profile.diaryCount2,
+            customQuests = updatedQuests,
+            bonusQuests = updatedBonusQuests
         )
     )
 }
@@ -218,7 +244,7 @@ fun MainViewModel.resetGradeCounters(userId: String) {
 fun MainViewModel.resetDream(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     updateChildProfile(
-        profile.copy(dreamTitle = "", dreamTarget = 0)
+        profile.copy(dreamTitle = "", dreamTarget = 0, dreamSetDate = "")
     )
 }
 
@@ -252,7 +278,8 @@ fun MainViewModel.resetQuestVisibility(userId: String) {
             isDiaryVisible = true,
             isWardrobeDeleted = false,
             isRoomDeleted = false,
-            isDiaryDeleted = false
+            isDiaryDeleted = false,
+            customQuests = profile.customQuests.map { it.copy(isVisible = true) }
         )
     )
 }
@@ -263,6 +290,7 @@ fun MainViewModel.resetStreakAndTime(userId: String) {
         profile.copy(
             streakDays = 0,
             lastStreakDate = "",
+            streakBonusMessage = "",
             boughtMinutesToday = 0
         )
     )
@@ -288,13 +316,15 @@ fun MainViewModel.resetAllChildData(userId: String) {
             isRoomDeleted = false,
             isDiaryDeleted = false,
             wardrobeTitle = "Фото шкафа",
-            wardrobeDesc = "Наведи идеальный порядок на полках и сфотографируй результат для папы",
+            wardrobeDesc = "Наведи идеальный порядок на полках и сфотографируй результат для родителя",
             wardrobeReward = 50,
             roomTitle = "Фото комнаты",
             roomDesc = "Заправь кровать без складок, собери игрушки и пришли фото",
             roomReward = 50,
             diaryTitle = "📚 Дневник",
-            diaryDesc = "Квест выполняется раз в неделю. Папа проверяет все оценки в дневнике за прошедшую неделю.",
+            diaryDesc = "Квест выполняется раз в неделю. Родитель проверяет все оценки в дневнике за прошедшую неделю.",
+            diaryApprovedReward = 100,
+            lastDailyResetDate = "",
             cashoutRequests = emptyList(),
             bonusQuests = emptyList(),
             historyItems = emptyList(),
@@ -302,6 +332,7 @@ fun MainViewModel.resetAllChildData(userId: String) {
             boughtMinutesToday = 0,
             dreamTitle = "",
             dreamTarget = 0,
+            dreamSetDate = "",
             fivesCount = 0,
             wardrobeCount = 0,
             roomCount = 0,

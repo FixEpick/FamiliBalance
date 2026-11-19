@@ -5,13 +5,9 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.content.pm.PackageManager
 import android.widget.Toast
-import android.media.AudioManager
-import android.media.ToneGenerator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.zIndex
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -113,8 +109,21 @@ fun MainChildScreen(
         else (7 - ChronoUnit.DAYS.between(last, LocalDate.now()).toInt()).coerceIn(0, 7)
     }
 
+    // Кулдаун смены цели-мечты: 1 раз в 7 дней (или после выполнения цели)
+    val dreamCooldownDaysLeft = remember(child.dreamSetDate, child.dreamTarget) {
+        if (child.dreamTarget <= 0 || child.dreamSetDate.isBlank()) 0
+        else {
+            val fmt = java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy")
+            val last = runCatching { LocalDate.parse(child.dreamSetDate, fmt) }.getOrNull()
+            if (last == null) 0
+            else (7 - ChronoUnit.DAYS.between(last, LocalDate.now()).toInt()).coerceIn(0, 7)
+        }
+    }
+    val canChangeDream = dreamCooldownDaysLeft <= 0
+
     var showHonestCatScreen by remember { mutableStateOf(false) }
     var catAdmissionText by remember { mutableStateOf("") }
+    var showDreamDialog by remember { mutableStateOf(false) }
 
     var showCashOutDialog by remember { mutableStateOf(false) }
 
@@ -146,7 +155,7 @@ fun MainChildScreen(
     val logoutDialogCancel = stringResource(R.string.action_cancel)
 
     if (showHonestCatScreen) {
-        HonestCatScreen(
+        HonestCatSheet(
             admissionText = catAdmissionText,
             onTextChange = { catAdmissionText = it },
             onSendClick = {
@@ -154,12 +163,10 @@ fun MainChildScreen(
                 catAdmissionText = ""
                 showHonestCatScreen = false
             },
-            onBackClick = {
+            onDismiss = {
                 showHonestCatScreen = false
-            },
-            modifier = modifier
+            }
         )
-        return
     }
 
     if (showRulesSheet) {
@@ -174,6 +181,18 @@ fun MainChildScreen(
         EconomyBottomSheet(
             child = child,
             onDismissRequest = { showEconomySheet = false }
+        )
+    }
+
+    if (showDreamDialog) {
+        DreamGoalDialog(
+            initialTitle = child.dreamTitle,
+            initialTarget = child.dreamTarget,
+            onConfirm = { title, target ->
+                viewModel.setDreamGoal(child.id, title, target)
+                showDreamDialog = false
+            },
+            onDismiss = { showDreamDialog = false }
         )
     }
 
@@ -205,32 +224,22 @@ fun MainChildScreen(
         )
     )
 
-    val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     var balanceBadgePosition by remember { mutableStateOf(Offset.Zero) }
     var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
-    var showConfetti by remember { mutableStateOf(false) }
+    var confettiTrigger by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(showConfetti) {
-        if (showConfetti) {
+    LaunchedEffect(confettiTrigger) {
+        if (confettiTrigger > 0) {
             delay(2500)
-            showConfetti = false
+            confettiTrigger = 0
         }
     }
 
     val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
-        showConfetti = true
+        confettiTrigger++
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        scope.launch(Dispatchers.IO) {
-            val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
-            try {
-                toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 120)
-                delay(400)
-            } catch (_: Exception) {
-            } finally {
-                toneGen.release()
-            }
-        }
+        RewardSoundPlayer.playCoin()
 
         lateinit var flight: CoinFlightData
         flight = CoinFlightData(
@@ -247,7 +256,7 @@ fun MainChildScreen(
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
             contentPadding = PaddingValues(bottom = 16.dp, top = 8.dp, start = 16.dp, end = 16.dp)
         ) {
             // ================= БЛОК 1: КАРТОЧКА БАЛАНСА =================
@@ -277,9 +286,9 @@ fun MainChildScreen(
                 }
             }
 
-            // ================= БЛОК 2: ЦЕЛЬ-МЕЧТА (КОПИЛКА) =================
-            if (child.dreamTarget > 0) {
-                item {
+            // ================= БЛОК 2: ЦЕЛЬ-МЕЧТА (ВЫБОР / ПРОГРЕСС) =================
+            item {
+                if (child.dreamTarget > 0) {
                     DreamGoalCard(
                         dreamTitle = child.dreamTitle,
                         dreamTarget = child.dreamTarget,
@@ -291,6 +300,70 @@ fun MainChildScreen(
                             }
                         }
                     )
+                    if (canChangeDream) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = { showDreamDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, GlassStroke),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextMuted)
+                        ) {
+                            Text(stringResource(R.string.child_dream_change_btn), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = stringResource(R.string.child_dream_cooldown, dreamCooldownDaysLeft),
+                            color = TextMuted,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                } else {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, GlassStroke, RoundedCornerShape(20.dp)),
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = GlassBackground)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = stringResource(R.string.child_dream_choose_title),
+                                color = LocalAppPalette.current.primaryNeon,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = stringResource(R.string.child_dream_choose_subtitle),
+                                color = TextMuted,
+                                fontSize = 13.sp,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            OutlinedButton(
+                                onClick = { showDreamDialog = true },
+                                border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = LocalAppPalette.current.primaryNeon
+                                ),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(stringResource(R.string.child_dream_choose_btn), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            }
+                        }
+                    }
                 }
             }
 
@@ -325,27 +398,34 @@ fun MainChildScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        LinearProgressIndicator(
-                            progress = { animatedProgress },
+                        // Серая дорожка всегда; неоновая заливка — только при прогрессе > 0
+                        Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(8.dp)
-                                .clip(RoundedCornerShape(4.dp)),
-                            color = LocalAppPalette.current.primaryNeon,
-                            trackColor = SpaceBgStart
-                        )
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(TextMuted.copy(alpha = 0.25f))
+                        ) {
+                            if (animatedProgress > 0.001f) {
+                                LinearProgressIndicator(
+                                    progress = { animatedProgress },
+                                    modifier = Modifier.fillMaxSize(),
+                                    color = LocalAppPalette.current.primaryNeon,
+                                    trackColor = Color.Transparent
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
                         val canBuyTime = (balance > 0) && (boughtMinutesToday < dailyLimit)
 
-                        Button(
+                        OutlinedButton(
                             onClick = { showBuyTimeSheet = true },
                             enabled = canBuyTime,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = LocalAppPalette.current.primaryNeon,
-                                contentColor = SpaceBgStart,
-                                disabledContainerColor = GlassBackground,
+                            border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = LocalAppPalette.current.primaryNeon,
                                 disabledContentColor = TextSecondary
                             ),
                             shape = RoundedCornerShape(12.dp),
@@ -358,7 +438,7 @@ fun MainChildScreen(
 
                         Text(
                             text = stringResource(R.string.child_daily_limit_note, dailyLimit),
-                            color = TextSecondary,
+                            color = TextMuted,
                             fontSize = 12.sp
                         )
                     }
@@ -370,7 +450,10 @@ fun MainChildScreen(
                 StreakFlameCard(
                     streakDays = child.streakDays,
                     lastStreakDate = child.lastStreakDate,
-                    onCheckIn = { viewModel.checkInStreak(child.id) }
+                    onCheckIn = {
+                        RewardSoundPlayer.playCoin()
+                        viewModel.checkInStreak(child.id)
+                    }
                 )
             }
 
@@ -416,20 +499,22 @@ fun MainChildScreen(
             // ================= ВЫХОД / СМЕНА ПОЛЬЗОВАТЕЛЯ =================
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                TextButton(
+                OutlinedButton(
                     onClick = { showLogoutDialog = true },
+                    border = BorderStroke(1.dp, PenaltyRed.copy(alpha = 0.6f)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp)
                 ) {
                     Text(
                         text = "🚪 " + stringResource(R.string.logout_button),
-                        color = PenaltyRed,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
 
@@ -440,8 +525,8 @@ fun MainChildScreen(
                 flight.onFinished()
             }
         )
-        if (showConfetti) {
-            ConfettiOverlay(modifier = Modifier.fillMaxSize())
+        if (confettiTrigger > 0) {
+            ConfettiOverlay(trigger = confettiTrigger, modifier = Modifier.fillMaxSize())
         }
     }
 
@@ -494,8 +579,11 @@ fun MainChildScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text(logoutDialogCancel, color = TextSecondary)
+                TextButton(
+                    onClick = { showLogoutDialog = false },
+                    colors = ButtonDefaults.textButtonColors(contentColor = TextMuted)
+                ) {
+                    Text(logoutDialogCancel)
                 }
             }
         )

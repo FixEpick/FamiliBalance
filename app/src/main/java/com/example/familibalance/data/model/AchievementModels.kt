@@ -171,6 +171,13 @@ fun defaultAchievements(): List<AchievementConfig> = listOf(
     )
 )
 
+/** Тип условия ачивки — для плюрализации через plurals-ресурсы в UI. */
+enum class AchievementConditionKind {
+    FIVES,
+    WARDROBE_CLEAN,
+    ROOM_CLEAN
+}
+
 @Serializable
 data class AchievementItemData(
     val title: String,
@@ -182,7 +189,10 @@ data class AchievementItemData(
     val isCompleted: Boolean,
     val id: String = "",
     val rewardInt: Int = 0,
-    val isReadyToClaim: Boolean = false
+    val isReadyToClaim: Boolean = false,
+    val conditionKind: AchievementConditionKind? = null,
+    val conditionCount: Int = 0,
+    val progressCurrent: Int = 0
 )
 
 /**
@@ -212,6 +222,11 @@ fun getAchievements(child: ChildProfileState): List<AchievementItemData> {
         branchItems.forEach { ach ->
             val isFirst = prevClaimed == null
             val isLocked = if (isFirst) false else !(prevClaimed == true)
+            val conditionKind = when (branch) {
+                AchievementBranch.DIARY -> AchievementConditionKind.FIVES
+                AchievementBranch.WARDROBE -> AchievementConditionKind.WARDROBE_CLEAN
+                AchievementBranch.ROOM -> AchievementConditionKind.ROOM_CLEAN
+            }
             val condition = when (branch) {
                 AchievementBranch.DIARY -> "Получить ${ach.targetCount} пятёрок"
                 AchievementBranch.WARDROBE -> "Уборка в шкафу ${ach.targetCount} раз"
@@ -230,7 +245,9 @@ fun getAchievements(child: ChildProfileState): List<AchievementItemData> {
                     isCompleted = ach.isClaimed,
                     id = ach.id,
                     rewardInt = ach.reward,
-                    isReadyToClaim = !ach.isClaimed && !isLocked && currentCount >= ach.targetCount
+                    isReadyToClaim = !ach.isClaimed && !isLocked && currentCount >= ach.targetCount,
+                    conditionKind = conditionKind,
+                    conditionCount = ach.targetCount
                 )
             )
             prevClaimed = ach.isClaimed

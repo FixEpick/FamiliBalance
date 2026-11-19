@@ -1,6 +1,7 @@
 package com.example.familibalance
 
 import com.example.familibalance.data.model.*
+import com.example.familibalance.data.push.PushNotifier
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.ProfileSync
 import com.example.familibalance.data.supabase.SupabaseManager
@@ -272,6 +273,7 @@ class MainViewModel(
                 lastHonestAdmissionDate = today.toString()
             )
         )
+        PushNotifier.honestAdmissionSubmitted(child.parentUserId, child.name)
     }
 
     /** Сброс купленных минут экранного времени при смене дня. */

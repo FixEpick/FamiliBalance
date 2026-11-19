@@ -23,7 +23,9 @@ data class BonusQuest(
     val createdDate: String = "",
     val rejectReason: String? = null,
     val photoUrl: String? = null,
-    val comment: String = ""
+    val comment: String = "",
+    /** true — ребёнок обязан приложить фото; false — достаточно отправить на проверку. */
+    val requiresPhoto: Boolean = true
 )
 
 @Serializable
@@ -45,7 +47,9 @@ data class CustomQuest(
     val photoUrl: String? = null,
     val rejectReason: String? = null,
     val lastResetDate: String = "",
-    val comment: String = ""
+    val comment: String = "",
+    /** true — ребёнок обязан приложить фото; false — достаточно отправить на проверку. */
+    val requiresPhoto: Boolean = true
 )
 
 @Serializable

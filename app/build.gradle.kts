@@ -5,6 +5,13 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.google.services) apply false
+}
+
+// google-services.json нужен для FCM-пушей. Если файла нет — плагин не
+// применяется, чтобы debug-сборка не падала до настройки Firebase.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 // GitHub repo РґР»СЏ РїСЂРѕРІРµСЂРєРё РѕР±РЅРѕРІР»РµРЅРёР№ (owner/name). Р—Р°РјРµРЅРёС‚Рµ РЅР° СЂРµР°Р»СЊРЅС‹Р№.
@@ -54,8 +61,8 @@ android {
         applicationId = "com.example.familibalance"
         minSdk = 24
         targetSdk = 37
-        versionCode = 18
-        versionName = "1.9.5"
+        versionCode = 19
+        versionName = "1.10.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -186,6 +193,13 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.5.1")
     implementation("androidx.media3:media3-ui:1.5.1")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    // FCM-пуши: BoM подтягивает messaging; без google-services.json
+    // google-services плагин не применён, но зависимости безопасны.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    // Supabase Edge Functions (send-push)
+    implementation("io.github.jan-tennert.supabase:functions-kt")
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)

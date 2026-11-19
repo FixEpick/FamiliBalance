@@ -137,15 +137,25 @@
     <!-- Child main screen -->
     <string name="child_balance">Balance</string>
     <string name="child_bank_name">Cosmo-bank</string>
-    <string name="child_cashout_btn">Withdraw / Buy</string>
-    <string name="child_cashout_hint">*works when you\'re with dad</string>
+    <string name="child_cashout_btn">Withdraw cash</string>
+    <string name="child_cashout_hint">*works when you\'re with your parent</string>
     <string name="child_no_cashout_requests">No active withdrawal requests</string>
     <string name="child_cashout_requests_title">💵 Active withdrawal requests:</string>
     <string name="child_cashout_amount">Amount: %1$d ₽</string>
     <string name="child_cashout_comment">Comment: %1$s</string>
-    <string name="child_cashout_waiting">⏳ Waiting for dad\'s approval</string>
+    <string name="child_cashout_waiting">⏳ Waiting for parent\'s approval</string>
     <string name="child_dream_default_title">My goal</string>
     <string name="child_dream_reached">Goal reached! Tap to claim ✨</string>
+    <string name="child_dream_choose_title">🎯 Dream goal</string>
+    <string name="child_dream_choose_subtitle">Set a goal and save up for your dream!</string>
+    <string name="child_dream_choose_btn">Choose goal</string>
+    <string name="child_dream_change_btn">Change goal</string>
+    <string name="child_dream_cooldown">You can pick a new goal in %1$d d.</string>
+    <string name="dream_dialog_title">🎯 New goal</string>
+    <string name="dream_name_label">Goal name</string>
+    <string name="dream_amount_label">Amount (₽)</string>
+    <string name="dream_change_hint">You can change the goal after 7 days or after completing this dream.</string>
+    <string name="dream_deduct_hint">When you save up the amount, it will be deducted from your balance — and the goal will be reached.</string>
     <string name="child_screen_time_title">⏳ Screen time today</string>
     <string name="child_bought_minutes">Bought today: %1$d / %2$d min</string>
     <string name="child_buy_time_btn">Buy time</string>
@@ -153,13 +163,14 @@
     <string name="child_streak_title">Days without penalties</string>
     <string name="child_streak_day_label">%1$d d</string>
     <string name="child_streak_checkin">🔥 Check in today</string>
+    <string name="child_streak_checked_today">✓ Today is counted — your streak is safe</string>
     <string name="child_streak_bonus">+50 ₽ bonus on day 7</string>
     <string name="child_honest_cooldown">🐱 Honest admission • Available in %1$d d.</string>
     <string name="child_honest_btn">🐱 Honest admission</string>
     <string name="child_honest_approved_note">✓ Penalty will be halved on next violation</string>
-    <string name="child_honest_pending">• Admission is being reviewed by dad</string>
+    <string name="child_honest_pending">• Admission is being reviewed by your parent</string>
     <string name="child_honest_claimed">✓ 50%% discount already applied</string>
-    <string name="child_honest_ready">✓ Honest admission approved by dad (penalty halved)</string>
+    <string name="child_honest_ready">✓ Honest admission approved by your parent (penalty halved)</string>
     <string name="child_rules_btn">📜 Rules scroll</string>
     <string name="child_economy_btn">💰 Economy</string>
     <string name="child_cashout_dialog_title">💵 Withdraw cash</string>
@@ -169,7 +180,7 @@
     <string name="child_cashout_submit">Submit request</string>
 
     <!-- Buy time sheet -->
-    <string name="child_buytime_title">⏳ Exchange coins for time</string>
+    <string name="child_buytime_title">⏳ Exchange rubles for time</string>
     <string name="child_buytime_limit">Minutes per day: %1$d • available today: %2$d</string>
     <plurals name="child_tariff_minutes">
         <item quantity="one">⏳ %1$d minute</item>
@@ -180,17 +191,17 @@
     <string name="rules_title">📜 Rules scroll</string>
     <string name="rules_offline">No internet? Don\'t worry! All your quests and rewards are saved on the phone. As soon as the network is back, they\'ll be sent to the cloud automatically.</string>
     <string name="rules_balance_title">📖 How your balance works</string>
-    <string name="rules_balance_text">All earned rubles go to your wallet. You can exchange them for phone time (100 ₽ = 30 minutes) OR you can withdraw all your money at any time — take your whole balance as real paper money from dad!</string>
+    <string name="rules_balance_text">All earned rubles go to your wallet. You can exchange them for phone time (100 ₽ = 30 minutes) OR you can withdraw all your money at any time — take your whole balance as real paper money from your parent!</string>
     <string name="rules_earn_title">💰 How to earn:</string>
     <string name="rules_earn_text">• Grade "5" in diary: +50 ₽\n• Grade "4" in diary: +30 ₽\n• Wardrobe photo (perfect order): +%1$d ₽\n• Room photo (made bed and tidiness): +%2$d ₽\n• Achievement bonuses: from 10 ₽ to 500 ₽ for the "Server Legend" rank!</string>
     <string name="rules_penalty_title">🔴 What costs you money (Penalties)</string>
-    <string name="rules_penalty_text">Grade "3" costs -20 ₽, grade "2" costs -50 ₽. But if you lied or hid the truth and then honestly told dad through the kitty — dad will approve the admission and halve the penalty for that offense! (down to -10 ₽ for a three and -25 ₽ for a two).</string>
+    <string name="rules_penalty_text">Grade "3" costs −20 ₽, grade "2" costs −50 ₽. Mischief and fooling around cost −30 ₽, and lying or cheating costs a full −100 ₽. But if you honestly tell your parent through the kitty before they find out — the penalty is cut exactly in half! (−10 ₽ for a three, −25 ₽ for a two, −15 ₽ for mischief and −50 ₽ for lying).</string>
     <string name="rules_streak_title">🔥 Days without penalties</string>
     <string name="rules_streak_text">Check in every day and get +50 ₽ every 7 days without penalties! But any penalty burns all accumulated days — and each missed day extinguishes one flame.</string>
     <string name="rules_screentime_title">⏳ Screen time</string>
     <string name="rules_screentime_text">Limit 90 minutes per day. Tariffs: 30 min = 100 ₽, 60 min = 200 ₽, 90 min = 300 ₽.</string>
     <string name="rules_honest_title">🐱 Honest admission</string>
-    <string name="rules_honest_text">50%% discount on one penalty. Available once every 7 days — tell dad the truth through the kitty!</string>
+    <string name="rules_honest_text">50%% discount on any penalty — a two or a lie alike. Available once every 7 days — tell your parent the truth through the kitty!</string>
     <string name="rules_diary_title">📓 Diary</string>
     <string name="rules_diary_text">Submitted once a week. Grades: 5 (+50 ₽), 4 (+30 ₽), 3 (-20 ₽), 2 (-50 ₽).</string>
     <string name="rules_achievements_title">🏆 Achievements</string>
@@ -201,6 +212,7 @@
     <string name="economy_title">💰 Economy</string>
     <string name="economy_earn_section">💰 How to earn</string>
     <string name="economy_spend_section">💸 What to spend on</string>
+    <string name="economy_fines_section">🔴 What gets deducted (penalties)</string>
     <string name="economy_achievements_section">🏆 Achievements</string>
     <string name="eco_wardrobe_photo">📸 Wardrobe photo</string>
     <string name="eco_room_photo">🛏️ Room photo</string>
@@ -208,23 +220,26 @@
     <string name="eco_diary_grade4">📓 Diary: grade 4</string>
     <string name="eco_diary_grade3">📓 Diary: grade 3</string>
     <string name="eco_diary_grade2">📓 Diary: grade 2</string>
+    <string name="eco_mischief">🤪 Mischief &amp; rule-breaking</string>
+    <string name="eco_lie">🤥 Lying or cheating</string>
     <string name="eco_streak">🔥 No-penalty streak</string>
     <string name="eco_streak_value">+50 ₽ every 7 days</string>
     <string name="eco_dream">🎯 Dream goal</string>
-    <string name="eco_set_by_dad">amount set by dad</string>
+    <string name="eco_dream_value">you pick it</string>
+    <string name="eco_set_by_parent">amount set by your parent</string>
     <string name="eco_time30">⏳ 30 minutes of screen time</string>
     <string name="eco_time60">⏳ 60 minutes of screen time</string>
     <string name="eco_time90">⏳ 90 minutes of screen time</string>
     <string name="eco_honest">🐱 Honest admission</string>
     <string name="eco_honest_discount">−50% penalty discount</string>
-    <string name="eco_parent_fine">👨‍👦 Penalties from dad</string>
+    <string name="eco_parent_fine">👨‍👩‍👧 Penalties from your parent</string>
     <string name="eco_branch_diary">📓 Diary</string>
     <string name="eco_branch_wardrobe">📸 Wardrobe</string>
     <string name="eco_branch_room">🛏️ Room</string>
 
     <!-- Pending quests sheet -->
-    <string name="child_pending_title">⏳ Quests under review</string>
-    <string name="child_pending_subtitle">Tasks sent to dad. You can delete or retake them.</string>
+    <string name="child_pending_title">Quests under review</string>
+    <string name="child_pending_subtitle">Tasks sent to your parent. You can delete or retake them.</string>
     <string name="child_pending_empty">No quests under review</string>
 
     <!-- Quest frequency badges -->
@@ -234,22 +249,24 @@
 
     <!-- Tasks screen -->
     <string name="tasks_title">✨ TODAY\'S TASKS</string>
-    <string name="tasks_bonus_title">🎁 BONUS QUESTS FROM DAD</string>
-    <string name="tasks_bonus_default_desc">Bonus task from dad</string>
+    <string name="tasks_bonus_title">🎁 BONUS QUESTS FROM YOUR PARENT</string>
+    <string name="tasks_bonus_default_desc">Bonus task from your parent</string>
     <string name="tasks_custom_title">📋 Additional tasks</string>
     <string name="tasks_claim_reward">Claim +%1$d ₽</string>
     <string name="tasks_claim_reward_neg">Claim %1$d ₽</string>
     <string name="tasks_diary_reward">from +30 ₽ to ∞</string>
     <string name="tasks_under_review">Under review</string>
-    <string name="tasks_custom_default_desc">Task from dad</string>
+    <string name="tasks_custom_default_desc">Task from your parent</string>
     <string name="tasks_empty_title">No active tasks yet</string>
-    <string name="tasks_empty_subtitle">Ask dad to add some tasks</string>
+    <string name="tasks_empty_subtitle">Ask your parent to add some tasks</string>
     <string name="tasks_diary_report_header">📘 Diary report:</string>
     <string name="tasks_diary_grade5">Grade 5: %1$d pcs (+%2$d ₽)</string>
     <string name="tasks_diary_grade4">Grade 4: %1$d pcs (+%2$d ₽)</string>
     <string name="tasks_diary_grade3">Grade 3: %1$d pcs (-%2$d ₽)</string>
     <string name="tasks_diary_grade2">Grade 2: %1$d pcs (-%2$d ₽)</string>
     <string name="tasks_diary_total">Total to credit: +%1$d ₽</string>
+    <string name="tasks_diary_total_plain">Total to credit: %1$d ₽</string>
+    <string name="tasks_diary_grade_zero">Grade %1$d: 0 pcs (0 ₽)</string>
     <string name="child_player_role">Player</string>
     <string name="default_child_name">Child %1$s</string>
 
@@ -262,7 +279,19 @@
         <item quantity="one">Unlocked %1$d of %2$d rank</item>
         <item quantity="other">Unlocked %1$d of %2$d ranks</item>
     </plurals>
-    <string name="ach_gift_toast">The Main Secret Gift from dad for unlocking all 16 ranks!</string>
+    <plurals name="ach_condition_fives">
+        <item quantity="one">Get %d A</item>
+        <item quantity="other">Get %d As</item>
+    </plurals>
+    <plurals name="ach_condition_wardrobe">
+        <item quantity="one">Wardrobe cleanup %d time</item>
+        <item quantity="other">Wardrobe cleanup %d times</item>
+    </plurals>
+    <plurals name="ach_condition_room">
+        <item quantity="one">Room cleanup %d time</item>
+        <item quantity="other">Room cleanup %d times</item>
+    </plurals>
+    <string name="ach_gift_toast">The Main Secret Gift from your parent for unlocking all 16 ranks!</string>
     <string name="ach_locked_desc">Unlocks after completing the previous level</string>
     <string name="ach_claim_reward">🎁 Claim reward %1$s</string>
 
@@ -270,6 +299,7 @@
     <string name="theme_shop_title">🎨 Theme shop</string>
     <string name="theme_shop_subtitle">Pick the palette you like the most</string>
     <string name="theme_selected">✓ Selected</string>
+    <string name="theme_done">Done</string>
     <string name="theme_name_cosmic_blue">Cosmic blue</string>
     <string name="theme_name_cyber_pink">Cyber pink</string>
     <string name="theme_name_toxic_green">Toxic green</string>
@@ -287,8 +317,8 @@
     <string name="history_filter_fines">Penalties</string>
     <string name="history_filter_other">Other</string>
     <plurals name="history_pending_waiting">
-        <item quantity="one">%1$d waiting for dad\'s review • Tap to view</item>
-        <item quantity="other">%1$d waiting for dad\'s review • Tap to view</item>
+        <item quantity="one">%1$d waiting for parent\'s review • Tap to view</item>
+        <item quantity="other">%1$d waiting for parent\'s review • Tap to view</item>
     </plurals>
     <string name="history_version">App version: %1$s</string>
 
@@ -296,17 +326,17 @@
     <string name="hist_screen_time_purchase">Screen time purchase (%1$d min)</string>
     <string name="hist_streak_bonus">🔥 7-day no-fine bonus</string>
     <string name="hist_achievement_unlocked">Achievement unlocked: %1$s</string>
-    <string name="hist_cashout_given">Cash payout by dad (%1$s)</string>
+    <string name="hist_cashout_given">Cash payout by your parent (%1$s)</string>
     <string name="hist_cashout_request">Cash withdrawal (%1$s)</string>
     <string name="hist_custom_quest_done">Quest completed: %1$s</string>
     <string name="hist_admin_reward">Top-up: %1$s</string>
-    <string name="hist_admin_reward_plain">Top-up from dad</string>
+    <string name="hist_admin_reward_plain">Top-up from your parent</string>
     <string name="hist_admin_withdraw">Deduction: %1$s</string>
-    <string name="hist_admin_withdraw_plain">Deduction from dad</string>
+    <string name="hist_admin_withdraw_plain">Deduction from your parent</string>
     <string name="hist_fine">Fine: %1$s</string>
-    <string name="hist_fine_plain">Fine from dad</string>
+    <string name="hist_fine_plain">Fine from your parent</string>
     <string name="hist_fine_discount">Fine: %1$s (50%% honest-admission discount)</string>
-    <string name="hist_fine_plain_discount">Fine from dad (50%% honest-admission discount)</string>
+    <string name="hist_fine_plain_discount">Fine from your parent (50%% honest-admission discount)</string>
     <string name="hist_bonus_quest_approved">Bonus quest approved: %1$s</string>
     <string name="hist_quest_approved">Quest approved: %1$s</string>
     <string name="hist_honest_approved">Honest admission approved</string>
@@ -334,7 +364,7 @@
     <string name="delivery_photo_desc">Result photo</string>
     <string name="delivery_camera_hint">Tap to take a photo of the result.\nNo time limits!</string>
     <string name="delivery_retake">🔄 Retake photo</string>
-    <string name="delivery_comment_hint">Write a few words to dad about the photo if you want (e.g. "Everything is put away!")</string>
+    <string name="delivery_comment_hint">Write a few words to your parent about the photo if you want (e.g. "Everything is put away!")</string>
     <string name="delivery_submit">Attach photo and send for review</string>
     <string name="camera_capture_close">Close camera</string>
     <string name="camera_capture_switch">Switch camera</string>
@@ -342,17 +372,18 @@
     <string name="delivery_uploading">Sending photo…</string>
 
     <!-- Honest cat screen -->
-    <string name="honest_title">🐱 Honest admission to dad</string>
+    <string name="honest_title">🐱 Honest admission to your parent</string>
     <string name="honest_bonus">✨ Bonus: Penalty halved!</string>
-    <string name="honest_text">If you lied, hid the truth, or did something wrong — tell dad yourself through the kitty! Dad really values honesty, so he will definitely approve your admission and halve the penalty.</string>
-    <string name="honest_placeholder">Dad, I want to honestly admit that...</string>
-    <string name="honest_submit">Send to dad 🚀</string>
+    <string name="honest_text">If you lied, hid the truth, or did something wrong — tell your parent yourself through the kitty! Parent really values honesty, so they will definitely approve your admission and halve the penalty.</string>
+    <string name="honest_input_label">Admission text</string>
+    <string name="honest_placeholder">Parent, I want to honestly admit that...</string>
+    <string name="honest_submit">Send to your parent 🚀</string>
 
     <!-- Admin screen -->
     <string name="admin_cashout_title">💵 Cash payout</string>
     <string name="admin_cashout_message">Give %1$s %2$d ₽ in cash and zero the Cosmo-bank balance?</string>
     <string name="admin_cashout_confirm">Pay out and zero</string>
-    <string name="admin_panel_title">Dad\'s Panel</string>
+    <string name="admin_panel_title">Parent\'s Panel</string>
     <string name="admin_role">Administrator</string>
     <string name="admin_switch">🔄 Switch</string>
     <string name="admin_dream_title">🎯 Dream goal: %1$s</string>
@@ -396,9 +427,9 @@
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Claim reward</string>
-    <string name="task_rejected_by_dad">❌ Rejected by dad: %1$s</string>
+    <string name="task_rejected_by_parent">❌ Rejected by your parent: %1$s</string>
     <string name="task_execute">📷 Do it</string>
-    <string name="task_pending_review">• Under dad\'s review</string>
+    <string name="task_pending_review">• Under parent\'s review</string>
     <string name="task_done">✅ Done</string>
     <string name="task_view_report">📊 Grade report — tap to view</string>
     <string name="task_report_title">Diary report</string>
@@ -447,13 +478,23 @@
     <string name="admin_honest_title">🐱 Honest admission from %1$s</string>
     <string name="admin_honest_quote">“%1$s”</string>
     <string name="admin_approve_honest">✅ Approve (Penalty -50%)</string>
-    <string name="admin_quick_actions">⚡ Dad\'s quick actions (%1$s)</string>
+    <string name="admin_quick_actions">⚡ Parent\'s quick actions (%1$s)</string>
     <string name="admin_quick_actions_subtitle">Diary rewards, fines and manual amount entry for this profile.</string>
     <string name="admin_amount_hint">Amount ₽</string>
     <string name="admin_add">+ Add</string>
     <string name="admin_desc_label">Description (for what)</string>
     <string name="admin_withdraw">- Deduct</string>
     <string name="admin_is_fine">This is a fine (resets streak and applies discount)</string>
+    <string name="admin_fine_presets_label">Quick fines:</string>
+    <string name="admin_fine_preset_grade3">Grade 3 (−20 ₽)</string>
+    <string name="admin_fine_preset_grade2">Grade 2 (−50 ₽)</string>
+    <string name="admin_fine_preset_mischief">Mischief (−30 ₽)</string>
+    <string name="admin_fine_preset_lie">Lying (−100 ₽)</string>
+    <string name="admin_fine_reason_grade3">Grade 3</string>
+    <string name="admin_fine_reason_grade2">Grade 2</string>
+    <string name="admin_fine_reason_mischief">Mischief</string>
+    <string name="admin_fine_reason_lie">Lying</string>
+    <string name="admin_reject_fine_lie">Apply lying penalty (−100 ₽)</string>
     <string name="admin_cashout_button">💵 Give cash (%1$d ₽)</string>
 
     <!-- Admin settings screen -->
@@ -492,6 +533,7 @@
     <string name="admin_set_bonus_name">Quest name</string>
     <string name="admin_set_bonus_desc">Quest description</string>
     <string name="admin_set_bonus_reward">Reward (₽)</string>
+    <string name="admin_set_bonus_photo">📷 Photo report</string>
     <string name="admin_set_create">Create</string>
     <string name="admin_set_confirm_title">Confirmation</string>
     <string name="admin_set_confirm_message">Are you sure? This action cannot be undone</string>

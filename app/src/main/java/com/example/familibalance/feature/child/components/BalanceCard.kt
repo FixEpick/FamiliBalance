@@ -113,9 +113,9 @@ fun CashoutSection(
     ) {
         OutlinedButton(
             onClick = onCashOutClick,
+            border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
             colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = LocalAppPalette.current.primaryNeon,
-                contentColor = SpaceBgStart
+                contentColor = LocalAppPalette.current.primaryNeon
             ),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
@@ -133,7 +133,7 @@ fun CashoutSection(
 
         Text(
             text = stringResource(R.string.child_cashout_hint),
-            color = TextSecondary,
+            color = TextMuted,
             fontSize = 12.sp,
             textAlign = TextAlign.Center
         )

@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
+import com.example.familibalance.data.push.PushNotifier
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
@@ -11,14 +12,15 @@ import com.example.familibalance.util.PhotoStorage
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-fun MainViewModel.addCustomQuest(userId: String, title: String, reward: Int, frequency: QuestFrequency, description: String = "") {
+fun MainViewModel.addCustomQuest(userId: String, title: String, reward: Int, frequency: QuestFrequency, description: String = "", requiresPhoto: Boolean = true) {
     val profile = familyRepository.getChild(userId) ?: return
     val newQuest = CustomQuest(
         title = title,
         reward = reward,
         description = description,
         frequency = frequency,
-        lastResetDate = LocalDate.now().toString()
+        lastResetDate = LocalDate.now().toString(),
+        requiresPhoto = requiresPhoto
     )
     updateChildProfile(profile.copy(customQuests = profile.customQuests + newQuest))
 }
@@ -80,6 +82,11 @@ fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoU
     }
     if (updatedQuests != profile.customQuests) {
         updateChildProfile(profile.copy(customQuests = updatedQuests))
+        val cq = profile.customQuests.firstOrNull { it.id == questId }
+        PushNotifier.photoReportSubmitted(
+            profile.parentUserId, profile.name,
+            cq?.title ?: "", cq?.reward ?: 0
+        )
     }
 }
 

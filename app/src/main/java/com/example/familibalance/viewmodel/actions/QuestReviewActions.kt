@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
+import com.example.familibalance.data.push.PushNotifier
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
@@ -27,6 +28,12 @@ fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
         "diary", "дневник", "итоги" -> profile.diaryPhotoUrl
         else -> null
     }
+    val (approvedTitle, approvedReward) = when (questType.lowercase()) {
+        "closet", "шкаф" -> profile.wardrobeTitle to profile.wardrobeReward
+        "room", "комната" -> profile.roomTitle to profile.roomReward
+        "diary", "дневник", "итоги" -> profile.diaryTitle to profile.diaryApprovedReward
+        else -> null to 0
+    }
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
             closetStatus = QuestStatus.READY_TO_CLAIM,
@@ -49,6 +56,9 @@ fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
         else -> profile
     }
     updateChildProfile(updated)
+    if (approvedTitle != null) {
+        PushNotifier.questApproved(userId, approvedTitle, approvedReward)
+    }
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
@@ -66,6 +76,12 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
         "room", "комната" -> profile.roomPhotoUrl
         "diary", "дневник", "итоги" -> profile.diaryPhotoUrl
         else -> null
+    }
+    val (rejectedTitle, _) = when (questType.lowercase()) {
+        "closet", "шкаф" -> profile.wardrobeTitle to profile.wardrobeReward
+        "room", "комната" -> profile.roomTitle to profile.roomReward
+        "diary", "дневник", "итоги" -> profile.diaryTitle to profile.diaryApprovedReward
+        else -> null to 0
     }
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
@@ -93,6 +109,9 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
         else -> profile
     }
     updateChildProfile(updated)
+    if (rejectedTitle != null) {
+        PushNotifier.questRejected(userId, rejectedTitle, reason)
+    }
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
@@ -131,6 +150,7 @@ fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, co
             diaryCount2 = c2
         )
     )
+    PushNotifier.questApproved(childId, profile.diaryTitle, netReward)
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
@@ -151,6 +171,7 @@ fun MainViewModel.adminApproveBonusQuest(userId: String, questId: String) {
         if (q.id == questId) q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, photoUrl = null) else q
     }
     updateChildProfile(profile.copy(bonusQuests = updatedQuests))
+    PushNotifier.questApproved(userId, target.title, target.reward)
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
@@ -169,6 +190,7 @@ fun MainViewModel.adminRejectBonusQuest(userId: String, questId: String, reason:
         if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = reason, photoUrl = null) else q
     }
     updateChildProfile(profile.copy(bonusQuests = updatedQuests))
+    PushNotifier.questRejected(userId, target.title, reason)
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
@@ -186,6 +208,7 @@ fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
         if (q.id == questId) q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, photoUrl = null) else q
     }
     updateChildProfile(profile.copy(customQuests = updatedQuests))
+    PushNotifier.questApproved(userId, target.title, target.reward)
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch {
@@ -206,6 +229,7 @@ fun MainViewModel.adminRejectCustomQuest(userId: String, questId: String, reason
         if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = reason, photoUrl = null) else q
     }
     updateChildProfile(profile.copy(customQuests = updatedQuests))
+    PushNotifier.questRejected(userId, target.title, reason)
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch {

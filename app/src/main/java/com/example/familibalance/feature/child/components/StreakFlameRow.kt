@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
+import com.example.familibalance.ui.components.EmojiIcon
 import com.example.familibalance.ui.theme.*
 
 /** Карточка стрика: 7 огоньков дней без штрафов + кнопка чек-ина. */
@@ -38,7 +39,7 @@ fun StreakFlameCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(12.dp)
         ) {
             Text(
                 text = stringResource(R.string.child_streak_title),
@@ -47,7 +48,7 @@ fun StreakFlameCard(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -59,9 +60,9 @@ fun StreakFlameCard(
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            text = "🔥",
-                            fontSize = 24.sp,
+                        EmojiIcon(
+                            emoji = "🔥",
+                            size = 24.dp,
                             modifier = Modifier.alpha(if (isActive) 1f else 0.25f)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
@@ -75,7 +76,7 @@ fun StreakFlameCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             if (lastStreakDate.isBlank() || lastStreakDate != java.time.LocalDate.now().toString()) {
                 Spacer(modifier = Modifier.height(12.dp))
@@ -97,6 +98,15 @@ fun StreakFlameCard(
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
+                Text(
+                    text = stringResource(R.string.child_streak_checked_today),
+                    color = StatusGreen,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.child_streak_bonus),
                     color = LocalAppPalette.current.primaryNeon,
@@ -138,14 +148,12 @@ fun StreakBonusBanner(
                 modifier = Modifier.size(40.dp)
             ) {
                 val closeDesc = stringResource(R.string.a11y_close_button)
-                Text(
-                    text = "✕",
+                EmojiIcon(
+                    emoji = "✕",
+                    size = 22.dp,
                     color = LocalAppPalette.current.primaryNeon,
-                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.semantics {
-                        contentDescription = closeDesc
-                    }
+                    contentDescription = closeDesc
                 )
             }
         }

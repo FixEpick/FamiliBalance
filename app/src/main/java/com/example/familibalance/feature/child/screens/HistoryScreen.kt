@@ -138,7 +138,7 @@ internal fun historyTitleSpec(item: HistoryData): HistoryTitleSpec {
                             val resId = if (discounted) R.string.hist_fine_discount else R.string.hist_fine
                             HistoryTitleSpec(resId, listOf(reason))
                         }
-                        base == "Штраф от папы" -> {
+                        base == "Штраф от папы" || base == "Штраф от родителя" -> {
                             val resId = if (discounted) R.string.hist_fine_plain_discount else R.string.hist_fine_plain
                             HistoryTitleSpec(resId)
                         }
@@ -399,16 +399,19 @@ fun HistoryScreen(
             )
         }
 
-    }
+        item {
+            Text(
+                text = stringResource(R.string.history_version, com.example.familibalance.BuildConfig.VERSION_NAME),
+                color = TextSecondary.copy(alpha = 0.5f),
+                fontSize = 10.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp, bottom = 4.dp)
+            )
+        }
 
-    Text(
-        text = stringResource(R.string.history_version, com.example.familibalance.BuildConfig.VERSION_NAME),
-        color = TextSecondary.copy(alpha = 0.5f),
-        fontSize = 10.sp,
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .padding(bottom = 8.dp)
-    )
+    }
     }
 
     if (showPendingSheet) {

@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
+import com.example.familibalance.data.push.PushNotifier
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
@@ -65,6 +66,7 @@ fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
     )
 
     updateChildProfile(profile.copy(cashoutRequests = profile.cashoutRequests + request))
+    PushNotifier.cashoutRequested(profile.parentUserId, profile.name, amount)
     } finally {
         endProcessingAction()
     }
@@ -101,6 +103,7 @@ fun MainViewModel.approveCashoutRequest(childId: String, requestId: String) {
         cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId }
     )
     updateChildProfile(updated)
+    PushNotifier.cashoutApproved(childId, request.amount)
     } finally {
         endProcessingAction()
     }

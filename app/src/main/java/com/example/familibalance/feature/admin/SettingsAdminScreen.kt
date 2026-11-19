@@ -429,6 +429,7 @@ if (showAddBonusDialog) {
     var bonusTitle by rememberSaveable { mutableStateOf("") }
     var bonusDesc by rememberSaveable { mutableStateOf("") }
     var bonusReward by rememberSaveable { mutableStateOf("50") }
+    var bonusRequiresPhoto by rememberSaveable { mutableStateOf(true) }
     AlertDialog(
         onDismissRequest = { showAddBonusDialog = false },
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -442,6 +443,21 @@ if (showAddBonusDialog) {
                 OutlinedTextField(value = bonusTitle, onValueChange = { bonusTitle = it }, label = { Text(stringResource(R.string.admin_set_bonus_name), color = TextPrimary) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
                 OutlinedTextField(value = bonusDesc, onValueChange = { bonusDesc = it }, label = { Text(stringResource(R.string.admin_set_bonus_desc), color = TextPrimary) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
                 OutlinedTextField(value = bonusReward, onValueChange = { bonusReward = it }, label = { Text(stringResource(R.string.admin_set_bonus_reward), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Checkbox(
+                        checked = bonusRequiresPhoto,
+                        onCheckedChange = { bonusRequiresPhoto = it },
+                        colors = CheckboxDefaults.colors(checkedColor = AccentColor)
+                    )
+                    Text(
+                        text = stringResource(R.string.admin_set_bonus_photo),
+                        color = TextPrimary,
+                        fontSize = 14.sp
+                    )
+                }
             }
         },
         confirmButton = {
@@ -449,7 +465,7 @@ if (showAddBonusDialog) {
                 onClick = {
                     val rewardInt = bonusReward.toIntOrNull() ?: 50
                     if (bonusTitle.isNotBlank()) {
-                        viewModel.addBonusQuest(child.id, bonusTitle.trim(), rewardInt, bonusDesc.trim())
+                        viewModel.addBonusQuest(child.id, bonusTitle.trim(), rewardInt, bonusDesc.trim(), bonusRequiresPhoto)
                         viewModel.saveAndSync()
                         showAddBonusDialog = false
                     }

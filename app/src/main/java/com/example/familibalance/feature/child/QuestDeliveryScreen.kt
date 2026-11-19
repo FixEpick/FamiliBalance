@@ -65,10 +65,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
+import com.example.familibalance.data.push.rememberPushPermissionRequester
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
+import com.example.familibalance.ui.components.EmojiIcon
+import com.example.familibalance.ui.components.GameIcon
+import com.example.familibalance.ui.components.GameIconType
 import com.example.familibalance.feature.child.components.CameraCaptureScreen
 
 @Composable
@@ -136,6 +140,9 @@ private fun QuestDeliveryScreenContent(
     // иначе экран закрывался до завершения persist+push и пользователь видел
     // «выкидывание» на главный экран без подтверждения.
     var isSubmitting by remember { mutableStateOf(false) }
+    // Разрешение на уведомления просим в момент первой отправки квеста —
+    // ребёнок уже понял, зачем они нужны («узнать о проверке родителем»).
+    val requestNotifPermission = rememberPushPermissionRequester()
 
     // Единая логика «Назад»: удаляем файл фото (квест не отправлен) и
     // закрываем экран. Во время отправки игнорируем — как disabled-кнопка.
@@ -198,12 +205,10 @@ private fun QuestDeliveryScreenContent(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Text(
-                        text = "←",
-                        color = TextPrimary,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                    GameIcon(
+                        icon = GameIconType.ArrowBack,
+                        size = 20.dp,
+                        tint = TextPrimary
                     )
                 }
             }
@@ -251,7 +256,7 @@ private fun QuestDeliveryScreenContent(
                         verticalArrangement = Arrangement.Center,
                         modifier = Modifier.padding(16.dp)
                     ) {
-                        Text(text = "📷", fontSize = 54.sp)
+                        EmojiIcon(emoji = "📷", size = 54.dp)
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = stringResource(R.string.delivery_camera_hint),
@@ -311,6 +316,7 @@ private fun QuestDeliveryScreenContent(
             onClick = {
                 isSubmitting = true
                 onSendClick(commentText, capturedImageUri)
+                requestNotifPermission()
             },
             enabled = capturedImageUri != null && !isSubmitting,
             colors = ButtonDefaults.buttonColors(

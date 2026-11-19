@@ -1,0 +1,62 @@
+package com.example.familibalance.data.push
+
+import android.app.PendingIntent
+import android.content.Intent
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import com.example.familibalance.R
+import com.google.firebase.messaging.FirebaseMessagingService
+import com.google.firebase.messaging.RemoteMessage
+
+/**
+ * Приём FCM-пушей. Data-payload от Edge Function send-push:
+ *   title, body — текст; screen, role — deep-link; channel — id канала;
+ *   priority — "high"|"normal".
+ */
+class FamiliBalanceMessagingService : FirebaseMessagingService() {
+
+    override fun onNewToken(token: String) {
+        super.onNewToken(token)
+        PushTokenRegistrar.onTokenRefreshed(this, token)
+    }
+
+    override fun onMessageReceived(message: RemoteMessage) {
+        super.onMessageReceived(message)
+        val data = message.data
+        val title = data["title"] ?: message.notification?.title ?: return
+        val body = data["body"] ?: message.notification?.body ?: ""
+        val screen = data["screen"].orEmpty()
+        val role = data["role"].orEmpty()
+        val channelId = data["channel"]?.takeIf { it.isNotBlank() } ?: PushChannels.QUESTS
+        val highPriority = data["priority"] == "high"
+
+        PushChannels.ensureChannels(this)
+
+        val contentIntent = PendingIntent.getActivity(
+            this,
+            (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+            pushLaunchIntent(this, screen, role),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(
+                if (highPriority) NotificationCompat.PRIORITY_HIGH
+                else NotificationCompat.PRIORITY_DEFAULT
+            )
+            .setAutoCancel(true)
+            .setContentIntent(contentIntent)
+            .build()
+
+        runCatching {
+            NotificationManagerCompat.from(this).notify(
+                (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+                notification
+            )
+        }
+    }
+}

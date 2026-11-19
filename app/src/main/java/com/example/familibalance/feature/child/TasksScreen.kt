@@ -5,13 +5,9 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.content.pm.PackageManager
 import android.widget.Toast
-import android.media.AudioManager
-import android.media.ToneGenerator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.zIndex
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -147,32 +143,22 @@ fun TasksScreen(
         return
     }
 
-    val scope = rememberCoroutineScope()
     val haptic = LocalHapticFeedback.current
     var balanceBadgePosition by remember { mutableStateOf(Offset.Zero) }
     var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
-    var showConfetti by remember { mutableStateOf(false) }
+    var confettiTrigger by remember { mutableIntStateOf(0) }
 
-    LaunchedEffect(showConfetti) {
-        if (showConfetti) {
+    LaunchedEffect(confettiTrigger) {
+        if (confettiTrigger > 0) {
             delay(2500)
-            showConfetti = false
+            confettiTrigger = 0
         }
     }
 
     val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
-        showConfetti = true
+        confettiTrigger++
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        scope.launch(Dispatchers.IO) {
-            val toneGen = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 80)
-            try {
-                toneGen.startTone(ToneGenerator.TONE_PROP_ACK, 120)
-                delay(400)
-            } catch (_: Exception) {
-            } finally {
-                toneGen.release()
-            }
-        }
+        RewardSoundPlayer.playCoin()
 
         lateinit var flight: CoinFlightData
         flight = CoinFlightData(
@@ -229,7 +215,11 @@ fun TasksScreen(
                         borderColor = StatusYellow,
                         actionEnabled = !isProcessingAction,
                         onExecute = {
-                            activeDeliveryKey = "bonus:${bQuest.id}"
+                            if (bQuest.requiresPhoto) {
+                                activeDeliveryKey = "bonus:${bQuest.id}"
+                            } else {
+                                viewModel.submitBonusQuestByChild(child.id, bQuest.id, null, "")
+                            }
                         },
                         onClaim = { buttonOffset ->
                             triggerCoinFlight(buttonOffset) {
@@ -305,11 +295,26 @@ fun TasksScreen(
                     ) {
                         buildString {
                             appendLine(stringResource(R.string.tasks_diary_report_header))
-                            appendLine(stringResource(R.string.tasks_diary_grade5, child.diaryCount5, 50 * child.diaryCount5))
-                            appendLine(stringResource(R.string.tasks_diary_grade4, child.diaryCount4, 30 * child.diaryCount4))
-                            appendLine(stringResource(R.string.tasks_diary_grade3, child.diaryCount3, 20 * child.diaryCount3))
-                            appendLine(stringResource(R.string.tasks_diary_grade2, child.diaryCount2, 50 * child.diaryCount2))
-                            appendLine(stringResource(R.string.tasks_diary_total, diaryNetReward))
+                            appendLine(
+                                if (child.diaryCount5 == 0) stringResource(R.string.tasks_diary_grade_zero, 5)
+                                else stringResource(R.string.tasks_diary_grade5, child.diaryCount5, 50 * child.diaryCount5)
+                            )
+                            appendLine(
+                                if (child.diaryCount4 == 0) stringResource(R.string.tasks_diary_grade_zero, 4)
+                                else stringResource(R.string.tasks_diary_grade4, child.diaryCount4, 30 * child.diaryCount4)
+                            )
+                            appendLine(
+                                if (child.diaryCount3 == 0) stringResource(R.string.tasks_diary_grade_zero, 3)
+                                else stringResource(R.string.tasks_diary_grade3, child.diaryCount3, 20 * child.diaryCount3)
+                            )
+                            appendLine(
+                                if (child.diaryCount2 == 0) stringResource(R.string.tasks_diary_grade_zero, 2)
+                                else stringResource(R.string.tasks_diary_grade2, child.diaryCount2, 50 * child.diaryCount2)
+                            )
+                            appendLine(
+                                if (diaryNetReward > 0) stringResource(R.string.tasks_diary_total, diaryNetReward)
+                                else stringResource(R.string.tasks_diary_total_plain, diaryNetReward)
+                            )
                         }.trimEnd()
                     } else null
                     TaskCard(
@@ -367,7 +372,11 @@ fun TasksScreen(
                         claimButtonText = claimText,
                         actionEnabled = !isProcessingAction,
                         onExecute = {
-                            activeDeliveryKey = "custom:${quest.id}"
+                            if (quest.requiresPhoto) {
+                                activeDeliveryKey = "custom:${quest.id}"
+                            } else {
+                                viewModel.submitCustomQuestPhoto(child.id, quest.id, "", "")
+                            }
                         },
                         onClaim = { buttonOffset ->
                             triggerCoinFlight(buttonOffset) {
@@ -393,7 +402,7 @@ fun TasksScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Text(text = "📭", fontSize = 48.sp)
+                            EmojiIcon(emoji = "📭", size = 48.dp)
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 text = stringResource(R.string.tasks_empty_title),
@@ -420,8 +429,8 @@ fun TasksScreen(
                 flight.onFinished()
             }
         )
-        if (showConfetti) {
-            ConfettiOverlay(modifier = Modifier.fillMaxSize())
+        if (confettiTrigger > 0) {
+            ConfettiOverlay(trigger = confettiTrigger, modifier = Modifier.fillMaxSize())
         }
         }
     }

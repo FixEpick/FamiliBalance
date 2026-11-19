@@ -107,7 +107,6 @@ fun TaskCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 Surface(
                     color = PenaltyRed.copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, PenaltyRed),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
@@ -115,7 +114,7 @@ fun TaskCard(
                         color = PenaltyRed,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(10.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
             }
@@ -123,13 +122,14 @@ fun TaskCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 var showReportDialog by remember { mutableStateOf(false) }
                 Text(
-                    text = stringResource(R.string.task_view_report),
+                    text = stringResource(R.string.task_view_report) + " ›",
                     color = AccentColor,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.clickable { showReportDialog = true }
                 )
                 if (showReportDialog) {
+                    AppLocaleContent {
                     AlertDialog(
                         onDismissRequest = { showReportDialog = false },
                         containerColor = GlassBackground,
@@ -156,6 +156,7 @@ fun TaskCard(
                             }
                         }
                     )
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -207,8 +208,8 @@ fun TaskCard(
                                 )
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = StatusGreen,
-                                contentColor = TextPrimary
+                                containerColor = LocalAppPalette.current.primaryNeon,
+                                contentColor = SpaceBgStart
                             ),
                             shape = RoundedCornerShape(12.dp)
                         ) {
