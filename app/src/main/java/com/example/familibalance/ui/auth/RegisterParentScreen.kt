@@ -1,6 +1,5 @@
 package com.example.familibalance.ui.auth
 
-import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -40,7 +39,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,7 +53,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
-import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.ui.components.CyberBackground
 import com.example.familibalance.ui.components.ExitConfirmDialog
 import com.example.familibalance.util.asString
@@ -116,31 +113,15 @@ fun RegisterParentScreen(
     // Профиль, отправленный на подтверждение родителю (status = "pending")
     var pendingChild by remember { mutableStateOf<ChildProfileState?>(null) }
 
-    val context = LocalContext.current
-    var rememberMe by remember { mutableStateOf(false) }
     // Вход родителя по email/паролю — доступен по ссылке внизу формы
     var showParentLogin by remember { mutableStateOf(initialParentLogin) }
     var showExitDialog by remember { mutableStateOf(false) }
     BackHandler { showExitDialog = true }
 
-    // Восстанавливаем «Запомнить меня»: подставляем сохранённый email
-    LaunchedEffect(Unit) {
-        val prefs = SecurePrefs.get(context, "app_prefs")
-        if (prefs.getBoolean("is_remember_me", false)) {
-            rememberMe = true
-            prefs.getString("saved_admin_email", null)
-                ?.takeIf { it.isNotBlank() }
-                ?.let { viewModel.onEmailChange(it) }
-        }
-    }
-
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                AuthEvent.AuthSuccess -> {
-                    saveRememberMe(context, viewModel.uiState.value.email.trim(), rememberMe)
-                    onParentSuccess()
-                }
+                AuthEvent.AuthSuccess -> onParentSuccess()
                 AuthEvent.PlayerSuccess -> onPlayerSuccess()
             }
         }
@@ -190,9 +171,7 @@ fun RegisterParentScreen(
             if (showParentLogin) {
                 ParentLoginForm(
                     state = state,
-                    viewModel = viewModel,
-                    rememberMe = rememberMe,
-                    onRememberMeChange = { rememberMe = it }
+                    viewModel = viewModel
                 )
             } else {
                 PlayerRegisterForm(
@@ -402,9 +381,7 @@ fun PlayerRegisterForm(
 @Composable
 private fun ParentLoginForm(
     state: com.example.familibalance.viewmodel.AuthUiState,
-    viewModel: AuthViewModel,
-    rememberMe: Boolean,
-    onRememberMeChange: (Boolean) -> Unit
+    viewModel: AuthViewModel
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     var consent by remember { mutableStateOf(false) }
@@ -540,29 +517,6 @@ private fun ParentLoginForm(
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-
-            // «Запомнить меня» — сохраняет email в SharedPreferences
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { onRememberMeChange(!rememberMe) }
-                    .padding(vertical = 2.dp)
-            ) {
-                Checkbox(
-                    checked = rememberMe,
-                    onCheckedChange = onRememberMeChange,
-                    colors = CheckboxDefaults.colors(
-                        checkedColor = CyberLime,
-                        uncheckedColor = CyberTextSecondary
-                    )
-                )
-                Text(
-                    text = stringResource(R.string.remember_me),
-                    color = CyberTextSecondary,
-                    fontSize = 13.sp
-                )
-            }
 
             state.errorMessage?.let { error ->
                 Spacer(modifier = Modifier.height(12.dp))

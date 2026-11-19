@@ -36,10 +36,10 @@ data class AdminTab(
 /** Верхняя панель админки: заголовок, переключатель языка/профиля, выбор ребёнка. */
 @Composable
 fun AdminTopBar(
-    onSwitchProfile: () -> Unit,
     visibleChildren: List<ChildProfileState>,
     selectedChildId: String,
-    onSelectChild: (String) -> Unit
+    onSelectChild: (String) -> Unit,
+    onEnterChildMode: () -> Unit = {}
 ) {
     val parentPanelDesc = stringResource(R.string.a11y_parent_panel)
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -77,15 +77,6 @@ fun AdminTopBar(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LanguageSelectorButton()
-                OutlinedButton(
-                    onClick = onSwitchProfile,
-                    border = BorderStroke(1.dp, GlassStroke),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
-                    shape = RoundedCornerShape(10.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
-                ) {
-                    Text(stringResource(R.string.admin_switch), fontSize = 12.sp)
-                }
             }
         }
 
@@ -116,6 +107,28 @@ fun AdminTopBar(
                         )
                     }
                 }
+            }
+        }
+
+        // Вход под выбранным ребёнком без PIN — родитель остаётся
+        // в сессии и может вернуться в админку одной кнопкой.
+        if (visibleChildren.isNotEmpty()) {
+            OutlinedButton(
+                onClick = onEnterChildMode,
+                border = BorderStroke(1.dp, AccentColor.copy(alpha = 0.6f)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor),
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 6.dp)
+            ) {
+                Text(
+                    text = "🕹️ " + stringResource(R.string.admin_enter_child_mode),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

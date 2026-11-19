@@ -5,7 +5,6 @@
 
     <!-- Common -->
     <string name="common_back">← Back</string>
-    <string name="remember_me">Remember me</string>
 
     <!-- Player login -->
     <string name="login_title">Station login</string>
@@ -366,7 +365,7 @@
     <string name="admin_cashout_confirm">Pay out and zero</string>
     <string name="admin_panel_title">Parent\'s Panel</string>
     <string name="admin_role">Administrator</string>
-    <string name="admin_switch">🔄 Switch</string>
+    <string name="admin_enter_child_mode">Enter as child</string>
     <string name="admin_dream_title">🎯 Dream goal: %1$s</string>
     <string name="admin_dream_progress">Saved: %1$d ₽ of %2$d ₽</string>
     <string name="admin_dream_edit">✏️ Edit goal</string>
@@ -403,6 +402,7 @@
     <string name="a11y_locked_achievement">Achievement locked</string>
     <string name="a11y_achievement_completed">Achievement completed</string>
     <string name="a11y_parent_panel">Parent panel</string>
+    <string name="a11y_back_to_admin">Back to parent panel</string>
     <string name="a11y_camera_hint">Take a photo of the quest result</string>
     <string name="a11y_gift_icon">Gift</string>
 

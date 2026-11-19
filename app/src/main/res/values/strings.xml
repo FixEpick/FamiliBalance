@@ -5,7 +5,6 @@
 
     <!-- Common -->
     <string name="common_back">← Назад</string>
-    <string name="remember_me">Запомнить меня</string>
 
     <!-- Player login -->
     <string name="login_title">Вход на станцию</string>
@@ -378,7 +377,7 @@
     <string name="admin_cashout_confirm">Выдать и обнулить</string>
     <string name="admin_panel_title">Панель Родителя</string>
     <string name="admin_role">Администратор</string>
-    <string name="admin_switch">🔄 Сменить</string>
+    <string name="admin_enter_child_mode">Войти как ребёнок</string>
     <string name="admin_dream_title">🎯 Цель-мечта: %1$s</string>
     <string name="admin_dream_progress">Накоплено: %1$d ₽ из %2$d ₽</string>
     <string name="admin_dream_edit">✏️ Изменить цель</string>
@@ -415,6 +414,7 @@
     <string name="a11y_locked_achievement">Достижение заблокировано</string>
     <string name="a11y_achievement_completed">Достижение выполнено</string>
     <string name="a11y_parent_panel">Панель родителя</string>
+    <string name="a11y_back_to_admin">Вернуться в панель родителя</string>
     <string name="a11y_camera_hint">Сделать фото результата задания</string>
     <string name="a11y_gift_icon">Подарок</string>
 

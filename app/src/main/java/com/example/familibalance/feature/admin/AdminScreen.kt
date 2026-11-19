@@ -83,9 +83,9 @@ import io.github.jan.supabase.auth.status.SessionStatus
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminScreen(
-    onSwitchProfile: () -> Unit,
     viewModel: MainViewModel,
     modifier: Modifier = Modifier,
+    onEnterChildMode: (String) -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
@@ -199,6 +199,14 @@ fun AdminScreen(
 
     val hasPending = visibleChildren.any { it.hasPendingItems() }
 
+    // При входе на вкладку «Проверка» сразу запускаем синхронизацию —
+    // родитель видит актуальные заявки без pull-to-refresh.
+    LaunchedEffect(selectedTabRoute) {
+        if (selectedTabRoute == AdminVerificationRoute) {
+            viewModel.forceSync()
+        }
+    }
+
     if (showCashOutDialog) {
         AlertDialog(
             onDismissRequest = { showCashOutDialog = false },
@@ -255,10 +263,14 @@ fun AdminScreen(
             containerColor = Color.Transparent,
             topBar = {
                 AdminTopBar(
-                    onSwitchProfile = onSwitchProfile,
                     visibleChildren = visibleChildren,
                     selectedChildId = familyState.selectedChildId,
-                    onSelectChild = { viewModel.selectChild(it, pushRemote = true) }
+                    onSelectChild = { viewModel.selectChild(it, pushRemote = true) },
+                    onEnterChildMode = {
+                        val target = visibleChildren.firstOrNull { it.id == familyState.selectedChildId }
+                            ?: visibleChildren.firstOrNull()
+                        target?.let { onEnterChildMode(it.id) }
+                    }
                 )
             },
             bottomBar = {

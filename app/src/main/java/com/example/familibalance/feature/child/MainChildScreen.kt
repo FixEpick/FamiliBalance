@@ -75,6 +75,7 @@ fun MainChildScreen(
     modifier: Modifier = Modifier,
     onNavigateToTasks: () -> Unit = {},
     onLogout: () -> Unit = {},
+    showLogout: Boolean = true,
     viewModel: MainViewModel
 ) {
     val context = LocalContext.current
@@ -497,7 +498,7 @@ fun MainChildScreen(
             }
 
             // ================= ВЫХОД / СМЕНА ПОЛЬЗОВАТЕЛЯ =================
-            item {
+            if (showLogout) item {
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedButton(
                     onClick = { showLogoutDialog = true },

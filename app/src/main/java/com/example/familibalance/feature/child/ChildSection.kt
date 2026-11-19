@@ -92,7 +92,9 @@ private data class ChildTab(
 fun ChildSection(
     viewModel: MainViewModel,
     onSwitchProfile: () -> Unit,
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    isParentPreview: Boolean = false,
+    onBackToAdmin: () -> Unit = {}
 ) {
     val childNavController = rememberNavController()
     var showThemeSheet by remember { mutableStateOf(false) }
@@ -306,6 +308,7 @@ fun ChildSection(
                             MainChildScreen(
                                 onNavigateToTasks = { navigateToTab(ChildTasksRoute) },
                                 onLogout = onLogout,
+                                showLogout = !isParentPreview,
                                 viewModel = viewModel
                             )
                         }

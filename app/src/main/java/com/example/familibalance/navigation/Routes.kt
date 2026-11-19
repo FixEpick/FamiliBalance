@@ -15,7 +15,7 @@ data class RegisterParentRoute(val parentLogin: Boolean = false)
 object AdminRoute
 
 @Serializable
-object ChildRoute
+data class ChildRoute(val asParent: Boolean = false)
 
 @Serializable
 object ChildMainRoute

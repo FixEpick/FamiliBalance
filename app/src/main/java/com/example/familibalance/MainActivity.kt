@@ -185,10 +185,23 @@ class MainActivity : FragmentActivity() {
                 val isMainSection = topBackStackEntry?.destination?.let {
                     it.hasRoute<ChildRoute>() || it.hasRoute<AdminRoute>()
                 } == true
+                // Родительский предпросмотр детского интерфейса: «Назад»
+                // возвращает в админку, а не показывает диалог выхода.
+                val isChildPreview = topBackStackEntry?.let { entry ->
+                    entry.destination.hasRoute<ChildRoute>() &&
+                        runCatching { entry.toRoute<ChildRoute>().asParent }.getOrDefault(false)
+                } == true
                 var showExitDialog by remember { mutableStateOf(false) }
                 val activity = LocalActivity.current
                 BackHandler(enabled = isMainSection) {
-                    showExitDialog = true
+                    if (isChildPreview) {
+                        while (navController.popBackStack()) {
+                            // pop до пустого стека, затем чистый корень
+                        }
+                        navController.navigate(AdminRoute)
+                    } else {
+                        showExitDialog = true
+                    }
                 }
 
                 // Р–РёР·РЅРµРЅРЅС‹Р№ С†РёРєР» Realtime Рё СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё:
@@ -292,7 +305,7 @@ class MainActivity : FragmentActivity() {
                     // автоматическим переходом.
                     startDestination = when {
                         isParentSession -> AdminRoute
-                        autoLoginChildId != null -> ChildRoute
+                        autoLoginChildId != null -> ChildRoute()
                         else -> OnboardingRoute
                     }
                 ) {
@@ -316,7 +329,7 @@ class MainActivity : FragmentActivity() {
                             authViewModel = authViewModel,
                             onBack = { navController.popBackStack() },
                             onLoginSuccess = {
-                                navigateToRoot(ChildRoute)
+                                navigateToRoot(ChildRoute())
                             }
                         )
                     }
@@ -327,7 +340,7 @@ class MainActivity : FragmentActivity() {
                             mainViewModel = viewModel,
                             initialParentLogin = route.parentLogin,
                             onPlayerSuccess = {
-                                navigateToRoot(ChildRoute)
+                                navigateToRoot(ChildRoute())
                             },
                             onParentSuccess = {
                                 // Р¤Р»Р°Рі Р°РІС‚РѕРІС…РѕРґР° СЂРѕРґРёС‚РµР»СЏ: РїСЂРё РїРµСЂРµР·Р°РїСѓСЃРєРµ
@@ -345,11 +358,11 @@ class MainActivity : FragmentActivity() {
                     }
                     composable<AdminRoute> {
                         AdminScreen(
-                            onSwitchProfile = {
-                                PushTokenRegistrar.unregister(context)
-                                backToLogin()
-                            },
                             viewModel = viewModel,
+                            onEnterChildMode = { childId ->
+                                viewModel.selectChild(childId)
+                                navigateToRoot(ChildRoute(asParent = true))
+                            },
                             onLogout = {
                                 PushTokenRegistrar.unregister(context)
                                 authViewModel.signOut()
@@ -364,17 +377,24 @@ class MainActivity : FragmentActivity() {
                             }
                         )
                     }
-                    composable<ChildRoute> {
+                    composable<ChildRoute> { backStackEntry ->
+                        val childRoute = backStackEntry.toRoute<ChildRoute>()
                         ChildSection(
                             viewModel = viewModel,
+                            isParentPreview = childRoute.asParent,
+                            onBackToAdmin = { navigateToRoot(AdminRoute) },
                             onSwitchProfile = {
                                 PushTokenRegistrar.unregister(context)
                                 backToLogin()
                             },
                             onLogout = {
-                                PushTokenRegistrar.unregister(context)
-                                viewModel.logoutChild()
-                                navigateToRoot(OnboardingRoute)
+                                if (childRoute.asParent) {
+                                    navigateToRoot(AdminRoute)
+                                } else {
+                                    PushTokenRegistrar.unregister(context)
+                                    viewModel.logoutChild()
+                                    navigateToRoot(OnboardingRoute)
+                                }
                             }
                         )
                     }

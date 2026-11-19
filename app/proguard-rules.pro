@@ -20,6 +20,11 @@
     public <methods>;
 }
 
+# R8 full mode repackages kotlin-stdlib multifile classes (StringsKt__*)
+# into the default package. Package-private kotlin.text.StringsKt__IndentKt
+# then becomes inaccessible to its subclass -> IllegalAccessError on startup.
+-keep class kotlin.** { *; }
+
 # =====================
 # Coroutines
 # =====================
