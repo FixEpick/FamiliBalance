@@ -121,7 +121,14 @@ object AppStateStorage {
                 // (approve/reject) терялись, пока профиль был dirty.
                 if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) {
                     val local = AppSharedState.children[userId]
-                    if (local != null && local.stateUpdatedAt >= dto.stateUpdatedAt) return@withContext
+                    if (local != null && local.stateUpdatedAt >= dto.stateUpdatedAt) {
+                        android.util.Log.w(
+                            "AppStateStorage",
+                            "remote update SKIPPED (dirty+LWW): user=$userId " +
+                                "local.ts=${local.stateUpdatedAt} remote.ts=${dto.stateUpdatedAt}"
+                        )
+                        return@withContext
+                    }
                 }
                 val profile = ChildProfileState.fromDto(dto)
                     .copy(
@@ -131,6 +138,11 @@ object AppStateStorage {
                     )
                 AppSharedState.children[userId] = profile
                 saveLocalOnly(context)
+                android.util.Log.d(
+                    "AppStateStorage",
+                    "remote update APPLIED: user=$userId ts=${dto.stateUpdatedAt} " +
+                        "closet=${profile.closetStatus} room=${profile.roomStatus} diary=${profile.diaryStatus}"
+                )
                 // См. applyRemoteChildJson: применённая удалённая версия
                 // делает локальные правки устаревшими — dirty снимаем,
                 // иначе старый PENDING перезапишет статус админа.

@@ -143,6 +143,12 @@ Deno.serve(async (req) => {
         android: {
           priority: highPriority ? "HIGH" : "NORMAL",
           notification: {
+            // title/body обязательны: когда приложение свёрнуто, FCM SDK
+            // показывает уведомление сам по этому блоку — без них получается
+            // пустое «Expand to view». В foreground onMessageReceived
+            // получает data и строит своё уведомление.
+            title,
+            body: body ?? "",
             channel_id: channel ?? "quests_and_rewards",
             sound: "default",
           },
