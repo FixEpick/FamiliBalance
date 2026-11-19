@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import java.io.File
 import java.util.UUID
 
@@ -23,7 +24,7 @@ object PhotoStorage {
     fun persistIfNeeded(context: Context, uriString: String?): String? {
         if (uriString.isNullOrBlank()) return uriString
 
-        val uri = runCatching { Uri.parse(uriString) }.getOrNull() ?: return uriString
+        val uri = runCatching { uriString.toUri() }.getOrNull() ?: return uriString
         val ourProvider = "${context.packageName}.fileprovider"
 
         val alreadyPersistent = when (uri.scheme) {
@@ -58,7 +59,7 @@ object PhotoStorage {
      */
     fun deleteLocalFileIfPresent(context: Context, uriString: String?) {
         if (uriString.isNullOrBlank()) return
-        val uri = runCatching { Uri.parse(uriString) }.getOrNull() ?: return
+        val uri = runCatching { uriString.toUri() }.getOrNull() ?: return
         val ourProvider = "${context.packageName}.fileprovider"
         val file = when (uri.scheme) {
             "file" -> uri.path?.let { File(it) }

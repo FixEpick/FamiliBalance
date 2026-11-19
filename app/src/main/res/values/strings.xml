@@ -2,10 +2,6 @@
     <string name="app_name">FamiliBalance</string>
 
     <!-- Welcome -->
-    <string name="welcome_subtitle">Семейная квестовая вселенная</string>
-    <string name="welcome_greeting">Привет, космический исследователь! Готов к новым квестам? 🚀</string>
-    <string name="welcome_btn_player">Войти</string>
-    <string name="welcome_btn_create">Зарегистрироваться</string>
 
     <!-- Common -->
     <string name="common_back">← Назад</string>
@@ -13,7 +9,6 @@
 
     <!-- Player login -->
     <string name="login_title">Вход на станцию</string>
-    <string name="login_create_account">Создать аккаунт</string>
     <string name="login_pin_error">Неверный ПИН-код</string>
     <string name="login_field_email">Email родителя</string>
     <string name="login_field_name">Никнейм</string>
@@ -32,15 +27,6 @@
     <string name="reg_nickname">Никнейм</string>
     <string name="reg_pin">PIN-код</string>
     <string name="reg_pin_hint">4 цифры — ребёнок будет входить по ним</string>
-    <string name="reg_interests">ИНТЕРЕСЫ</string>
-    <string name="interest_coding">💻 Кодинг</string>
-    <string name="interest_science">🔬 Наука</string>
-    <string name="interest_games">🎮 Игры</string>
-    <string name="interest_drawing">🎨 Рисование</string>
-    <string name="interest_sport">⚽ Спорт</string>
-    <string name="interest_books">📚 Книги</string>
-    <string name="interest_space">🚀 Космос</string>
-    <string name="interest_animals">🐶 Животные</string>
     <string name="reg_parent_email">Email родителя</string>
     <string name="reg_submit">Создать героя и в бой!</string>
     <string name="parent_email">Email</string>
@@ -68,9 +54,6 @@
     <string name="auth_err_email">Введите email</string>
     <string name="child_pin_hint">Забыл PIN? Попроси родителя посмотреть его в кабинете</string>
     <string name="reg_parent_email_hint">Почта, на которую уже зарегистрирован родитель</string>
-    <string name="a11y_show_password">Показать пароль</string>
-    <string name="a11y_hide_password">Скрыть пароль</string>
-    <string name="parent_no_account">Нет аккаунта? Зарегистрируйтесь через кнопку выше на вкладке «Новый игрок» или попросите администратора.</string>
 
     <!-- Pending request -->
     <string name="pending_title">ЗАПРОС ОТПРАВЛЕН!</string>
@@ -93,7 +76,6 @@
     <string name="language_en">English</string>
 
     <!-- App title / PIN dialogs -->
-    <string name="app_title_welcome">КВЕСТЛАБ</string>
     <string name="pin_parent_check_title">ПРОВЕРКА РОДИТЕЛЯ</string>
     <string name="pin_parent_check_subtitle">Введи родительский ПИН-код</string>
     <string name="pin_parent_title">РОДИТЕЛЬСКИЙ ПИН-КОД</string>
@@ -371,7 +353,6 @@
 
     <!-- Quest delivery screen -->
     <string name="delivery_error_photo">Ошибка обработки фото: %1$s</string>
-    <string name="delivery_error_camera">Не удалось запустить камеру: %1$s</string>
     <string name="delivery_camera_permission">Требуется разрешение на использование камеры</string>
     <string name="delivery_photo_desc">Фото результата</string>
     <string name="delivery_camera_hint">Нажми, чтобы сфотографировать результат.\nНикаких ограничений по времени!</string>
@@ -388,7 +369,7 @@
     <string name="honest_bonus">✨ Бонус: Штраф в половину!</string>
     <string name="honest_text">Если ты обманул или скрыл правду, или совершил проступок — поделись этим с родителем сам через кошечку! Родитель очень ценит честность, поэтому обязательно одобрит твоё признание и уменьшит штраф в половину.</string>
     <string name="honest_input_label">Текст признания</string>
-    <string name="honest_placeholder">Родитель, я хочу честно признаться в том, что...</string>
+    <string name="honest_placeholder">Родитель, я хочу честно признаться в том, что…</string>
     <string name="honest_submit">Отправить родителю 🚀</string>
 
     <!-- Admin screen -->
@@ -630,6 +611,4 @@
     <string name="onboarding_c_diary_time_desc">Отмечай успехи в школе: за пятёрки — бонусные монеты. А на квестах зарабатывай минуты для игр.</string>
     <string name="onboarding_c_rewards_title">Награды и призы</string>
     <string name="onboarding_c_rewards_desc">Копи монеты и обменивай их на настоящие призы и подарки — проверку делает родитель.</string>
-    <string name="welcome_how_it_works">Как всё устроено</string>
-    <string name="onboarding_have_account">Есть аккаунт? Войти</string>
 </resources>

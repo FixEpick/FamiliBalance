@@ -82,6 +82,5 @@ class PendingRequestsViewModel(
 
     override fun onCleared() {
         pollJob?.cancel()
-        super.onCleared()
     }
 }

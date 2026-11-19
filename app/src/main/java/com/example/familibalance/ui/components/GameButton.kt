@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -79,7 +80,7 @@ fun GameButton(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(height)
-                .offset(y = depth)
+                .offset { IntOffset(0, depth.roundToPx()) }
                 .clip(shape)
                 .background(if (enabled) variant.shadow else variant.shadow.copy(alpha = 0.4f))
         )
@@ -89,7 +90,7 @@ fun GameButton(
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .height(height)
-                .offset(y = faceOffset)
+                .offset { IntOffset(0, faceOffset.roundToPx()) }
                 .clip(shape)
                 .background(if (enabled) variant.background else variant.background.copy(alpha = 0.5f))
                 .then(

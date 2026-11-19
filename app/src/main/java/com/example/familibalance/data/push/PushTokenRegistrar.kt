@@ -2,6 +2,7 @@ package com.example.familibalance.data.push
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.google.firebase.messaging.FirebaseMessaging
@@ -86,11 +87,11 @@ object PushTokenRegistrar {
                     }
                 )
             }.onSuccess {
-                SecurePrefs.get(context, PREFS).edit()
-                    .putString(KEY_USER_ID, userId)
-                    .putString(KEY_ROLE, role)
-                    .putString(KEY_TOKEN, token)
-                    .apply()
+                SecurePrefs.get(context, PREFS).edit {
+                    putString(KEY_USER_ID, userId)
+                    putString(KEY_ROLE, role)
+                    putString(KEY_TOKEN, token)
+                }
                 Log.d("PushTokenRegistrar", "token registered: role=$role user=$userId")
             }.onFailure {
                 Log.w("PushTokenRegistrar", "token upsert failed: ${it.message}")
@@ -108,7 +109,7 @@ object PushTokenRegistrar {
         val userId = prefs.getString(KEY_USER_ID, null)
         val role = prefs.getString(KEY_ROLE, null)
         val token = prefs.getString(KEY_TOKEN, null)
-        prefs.edit().clear().apply()
+        prefs.edit { clear() }
         if (userId.isNullOrBlank() || token.isNullOrBlank()) return
         val supabase = SupabaseManager.client ?: return
         scope.launch {

@@ -2,6 +2,7 @@ package com.example.familibalance.data.storage
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.content.edit
 import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.data.model.ChildProfileDto
 import com.example.familibalance.data.model.ChildProfileState
@@ -62,9 +63,9 @@ object AppStateStorage {
             rootObj.put("children", childrenObj)
             rootObj.put("selectedChildId", AppSharedState.selectedChildId)
 
-            prefs.edit()
-                .putString(KEY_STATE, rootObj.toString())
-                .apply()
+            prefs.edit {
+                putString(KEY_STATE, rootObj.toString())
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -215,10 +216,10 @@ object AppStateStorage {
             val savedWeekly = prefs.getString(KEY_LAST_WEEKLY, null)
 
             if (savedDaily == null || savedWeekly == null) {
-                prefs.edit()
-                    .putString(KEY_LAST_DAILY, todayStr)
-                    .putString(KEY_LAST_WEEKLY, currentWeekStr)
-                    .apply()
+                prefs.edit {
+                    putString(KEY_LAST_DAILY, todayStr)
+                    putString(KEY_LAST_WEEKLY, currentWeekStr)
+                }
                 return changedChildren
             }
 
@@ -247,12 +248,12 @@ object AppStateStorage {
                     if (reset != child) changedChildren += reset
                     reset
                 }
-                prefs.edit().putString(KEY_LAST_DAILY, todayStr).apply()
+                prefs.edit { putString(KEY_LAST_DAILY, todayStr) }
                 changed = true
             }
 
             if (savedWeekly != currentWeekStr) {
-                prefs.edit().putString(KEY_LAST_WEEKLY, currentWeekStr).apply()
+                prefs.edit { putString(KEY_LAST_WEEKLY, currentWeekStr) }
             }
 
             if (changed) {

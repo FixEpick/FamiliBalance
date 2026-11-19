@@ -107,6 +107,14 @@ android {
             )
         }
     }
+    // Приложение переключает локаль динамически (AppLocaleState) —
+    // language-split'ы AAB убрали бы переводы из базового APK.
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
@@ -173,44 +181,42 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
-    implementation("io.coil-kt.coil3:coil-compose:3.6.3")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.6.3")
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
 
-    val supabaseVersion = "3.1.4"
-    val ktorVersion = "3.3.1"
-    implementation(platform("io.github.jan-tennert.supabase:bom:$supabaseVersion"))
-    implementation("io.github.jan-tennert.supabase:postgrest-kt")
-    implementation("io.github.jan-tennert.supabase:auth-kt")
-    implementation("io.github.jan-tennert.supabase:realtime-kt")
-    implementation("io.github.jan-tennert.supabase:storage-kt")
-    implementation("io.ktor:ktor-client-okhttp:$ktorVersion")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
+    implementation(platform(libs.supabase.bom))
+    implementation(libs.supabase.postgrest.kt)
+    implementation(libs.supabase.auth.kt)
+    implementation(libs.supabase.realtime.kt)
+    implementation(libs.supabase.storage.kt)
+    implementation(libs.ktor.client.okhttp)
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
     // Unbundled ML Kit: РјРѕРґРµР»СЊ OCR СЃРєР°С‡РёРІР°РµС‚СЃСЏ С‡РµСЂРµР· Play Services вЂ” APK РЅР° ~35 РњР‘ Р»РµРіС‡Рµ.
     // API РёРґРµРЅС‚РёС‡РµРЅ bundled-РІР°СЂРёР°РЅС‚Сѓ (com.google.mlkit.vision.text.*), РёРјРїРѕСЂС‚С‹ РЅРµ РјРµРЅСЏСЋС‚СЃСЏ.
-    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
-    implementation("androidx.biometric:biometric:1.1.0")
-    implementation("androidx.media3:media3-exoplayer:1.5.1")
-    implementation("androidx.media3:media3-ui:1.5.1")
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation(libs.mlkit.text.recognition)
+    implementation(libs.androidx.biometric)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
+    implementation(libs.security.crypto)
     // FCM-пуши: BoM подтягивает messaging; без google-services.json
     // google-services плагин не применён, но зависимости безопасны.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    implementation(libs.coroutines.play.services)
     // Supabase Edge Functions (send-push)
-    implementation("io.github.jan-tennert.supabase:functions-kt")
+    implementation(libs.supabase.functions.kt)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     testImplementation(libs.junit)
-    testImplementation("io.mockk:mockk:1.13.17")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
-    testImplementation("androidx.arch.core:core-testing:2.2.0")
-    testImplementation("org.robolectric:robolectric:4.15.1")
+    testImplementation(libs.mockk)
+    testImplementation(libs.coroutines.test)
+    testImplementation(libs.core.testing)
+    testImplementation(libs.robolectric)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

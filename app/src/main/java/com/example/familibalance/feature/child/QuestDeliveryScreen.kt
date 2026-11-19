@@ -3,6 +3,7 @@ package com.example.familibalance.feature.child
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.content.pm.PackageManager
+import androidx.core.net.toUri
 import android.widget.Toast
 import android.media.AudioManager
 import android.media.ToneGenerator
@@ -126,7 +127,7 @@ private fun QuestDeliveryScreenContent(
     // переживают process death (камера — отдельная Activity).
     var capturedImageUriString by rememberSaveable { mutableStateOf<String?>(null) }
     val capturedImageUri = capturedImageUriString?.let {
-        runCatching { Uri.parse(it) }.getOrNull()
+        runCatching { it.toUri() }.getOrNull()
     }
     // Файл фото в filesDir/quest_photos — единственная копия. Удаляем его
     // только при явной отмене (стрелка «Назад»/системный back) или при

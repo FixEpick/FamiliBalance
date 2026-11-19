@@ -9,7 +9,7 @@ import com.example.familibalance.util.*
 
 import android.app.Application
 import android.content.Context
-import android.provider.Settings
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.data.SecurePrefs
@@ -184,10 +184,10 @@ class MainViewModel(
                     emitFamilyState()
                     _autoLoginChildId.value = savedChildId
                 } else {
-                    prefs.edit()
-                        .putBoolean("is_logged_in", false)
-                        .remove("logged_in_child_id")
-                        .apply()
+                    prefs.edit {
+                        putBoolean("is_logged_in", false)
+                        remove("logged_in_child_id")
+                    }
                 }
             }
             } finally {
@@ -300,10 +300,10 @@ class MainViewModel(
             }
             getApplication<Application>()
                 .let { SecurePrefs.get(it, "app_prefs") }
-                .edit()
-                .putBoolean("is_logged_in", false)
-                .remove("logged_in_child_id")
-                .apply()
+                .edit {
+                    putBoolean("is_logged_in", false)
+                    remove("logged_in_child_id")
+                }
             familyRepository.saveLocal()
             emitFamilyState()
         }
@@ -326,11 +326,11 @@ class MainViewModel(
                 if (ok) {
                     getApplication<Application>()
                         .let { SecurePrefs.get(it, "app_prefs") }
-                        .edit()
-                        .putBoolean("is_logged_in", false)
-                        .putBoolean("is_admin_logged_in", false)
-                        .remove("logged_in_child_id")
-                        .apply()
+                        .edit {
+                            putBoolean("is_logged_in", false)
+                            putBoolean("is_admin_logged_in", false)
+                            remove("logged_in_child_id")
+                        }
                     clearState()
                 }
                 onResult(ok)

@@ -1,9 +1,13 @@
 package com.example.familibalance.data.push
 
+import android.Manifest
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import com.example.familibalance.R
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -40,7 +44,7 @@ class FamiliBalanceMessagingService : FirebaseMessagingService() {
         )
 
         val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
@@ -52,11 +56,19 @@ class FamiliBalanceMessagingService : FirebaseMessagingService() {
             .setContentIntent(contentIntent)
             .build()
 
-        runCatching {
-            NotificationManagerCompat.from(this).notify(
-                (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
-                notification
-            )
+        val notificationsAllowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+        if (notificationsAllowed) {
+            runCatching {
+                NotificationManagerCompat.from(this).notify(
+                    (System.currentTimeMillis() % Int.MAX_VALUE).toInt(),
+                    notification
+                )
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.familibalance.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.example.familibalance.data.supabase.SupabaseManager
 import io.github.jan.supabase.auth.auth
 
@@ -46,9 +47,9 @@ object ParentPinManager {
 
     fun setPin(context: Context, pin: String) {
         val prefs = SecurePrefs.get(context, PREFS_NAME)
-        prefs.edit()
-            .putString(pinKey(), PinHasher.hash(pin, PinHasher.generateSalt()))
-            .putBoolean(KEY_PIN_SET, true)
-            .apply()
+        prefs.edit {
+            putString(pinKey(), PinHasher.hash(pin, PinHasher.generateSalt()))
+            putBoolean(KEY_PIN_SET, true)
+        }
     }
 }

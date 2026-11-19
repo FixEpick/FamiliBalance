@@ -1,6 +1,7 @@
 package com.example.familibalance.ui.auth
 
 import android.content.Context
+import androidx.core.content.edit
 import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.viewmodel.AuthUiState
 import com.example.familibalance.viewmodel.AuthViewModel
@@ -28,14 +29,12 @@ fun restoreRememberMe(context: Context, viewModel: AuthViewModel): Boolean {
 /** Сохраняет/удаляет email родителя по флагу «Запомнить меня». */
 fun saveRememberMe(context: Context, email: String, remember: Boolean) {
     val prefs = SecurePrefs.get(context, "app_prefs")
-    prefs.edit()
-        .putBoolean("is_remember_me", remember)
-        .apply {
-            if (remember && email.isNotBlank()) {
-                putString("saved_admin_email", email)
-            } else {
-                remove("saved_admin_email")
-            }
+    prefs.edit {
+        putBoolean("is_remember_me", remember)
+        if (remember && email.isNotBlank()) {
+            putString("saved_admin_email", email)
+        } else {
+            remove("saved_admin_email")
         }
-        .apply()
+    }
 }

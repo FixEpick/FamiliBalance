@@ -152,6 +152,5 @@ class AdminViewModel(
 
     override fun onCleared() {
         pollJob?.cancel()
-        super.onCleared()
     }
 }

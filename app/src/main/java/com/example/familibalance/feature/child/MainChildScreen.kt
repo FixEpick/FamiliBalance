@@ -72,10 +72,10 @@ import java.time.temporal.ChronoUnit
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainChildScreen(
+    modifier: Modifier = Modifier,
     onNavigateToTasks: () -> Unit = {},
     onLogout: () -> Unit = {},
-    viewModel: MainViewModel,
-    modifier: Modifier = Modifier
+    viewModel: MainViewModel
 ) {
     val context = LocalContext.current
     val dailyLimit = 90

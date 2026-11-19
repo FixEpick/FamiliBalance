@@ -36,7 +36,7 @@ private class ConfettiParticle(
  * Частицы падают сверху вниз с покачиванием и вращением, цвета — из текущей темы.
  */
 @Composable
-fun ConfettiOverlay(trigger: Int = 0, modifier: Modifier = Modifier) {
+fun ConfettiOverlay(modifier: Modifier = Modifier, trigger: Int = 0) {
     val palette = LocalAppPalette.current
     val particleColors = remember(palette) {
         listOf(

@@ -1,7 +1,7 @@
 package com.example.familibalance.viewmodel.actions
 
 import android.app.Application
-import android.provider.Settings
+import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.DiaryScanState
 import com.example.familibalance.LoginResult
@@ -100,11 +100,11 @@ fun MainViewModel.createChildProfile(
         if (status == "active") {
             getApplication<Application>()
                 .let { SecurePrefs.get(it, "app_prefs") }
-                .edit()
-                .putBoolean("is_logged_in", true)
-                .putString("logged_in_child_id", childId)
-                .putBoolean("is_admin_logged_in", false)
-                .apply()
+                .edit {
+                    putBoolean("is_logged_in", true)
+                    putString("logged_in_child_id", childId)
+                    putBoolean("is_admin_logged_in", false)
+                }
         }
         onResult?.invoke(profile)
     }
@@ -113,7 +113,7 @@ fun MainViewModel.createChildProfile(
 /**
  * Вход ребёнка по email родителя + имени + PIN.
  * При успехе: профиль импортируется в локальный стейт, сохраняется
- * ANDROID_ID устройства (для будущих пушей) и выбирается активным.
+ * UUID устройства (для будущих пушей) и выбирается активным.
  */
 fun MainViewModel.loginChild(
     parentEmail: String,
@@ -136,21 +136,21 @@ fun MainViewModel.loginChild(
     }
     // Блокировка истекла — подчищаем устаревший ключ.
     if (lockedUntil > 0L) {
-        ratePrefs.edit().remove(lockKey).apply()
+        ratePrefs.edit { remove(lockKey) }
     }
 
     fun registerFailure() {
         val attempts = ratePrefs.getInt(attemptsKey, 0) + 1
-        val editor = ratePrefs.edit()
-        if (attempts >= LOGIN_MAX_ATTEMPTS) {
-            // Блокировка растёт с каждой новой серией неудач: 60с, 120с, ...
-            val lockMs = LOGIN_LOCK_BASE_MS * attempts.coerceAtMost(10)
-            editor.putLong(lockKey, System.currentTimeMillis() + lockMs)
-                .remove(attemptsKey)
-        } else {
-            editor.putInt(attemptsKey, attempts)
+        ratePrefs.edit {
+            if (attempts >= LOGIN_MAX_ATTEMPTS) {
+                // Блокировка растёт с каждой новой серией неудач: 60с, 120с, ...
+                val lockMs = LOGIN_LOCK_BASE_MS * attempts.coerceAtMost(10)
+                putLong(lockKey, System.currentTimeMillis() + lockMs)
+                remove(attemptsKey)
+            } else {
+                putInt(attemptsKey, attempts)
+            }
         }
-        editor.apply()
     }
 
     viewModelScope.launch {
@@ -172,10 +172,10 @@ fun MainViewModel.loginChild(
             return@launch
         }
         // Успешный вход — сбрасываем счётчик и блокировку.
-        ratePrefs.edit()
-            .remove(attemptsKey)
-            .remove(lockKey)
-            .apply()
+        ratePrefs.edit {
+            remove(attemptsKey)
+            remove(lockKey)
+        }
 
         // Устройство ребёнка должно иметь собственную анонимную сессию Supabase:
         // её auth.uid сохраняем в authUserId, чтобы Realtime/RLS могли
@@ -196,10 +196,15 @@ fun MainViewModel.loginChild(
         } else {
             profile.pinCode
         }
-        val deviceId = Settings.Secure.getString(
-            getApplication<Application>().contentResolver,
-            Settings.Secure.ANDROID_ID
-        ).orEmpty()
+        // ANDROID_ID не используем: Google Play считает его device identifier
+        // и может отклонить приложение. Вместо него — случайный UUID,
+        // один раз сгенерированный и сохранённый в SecurePrefs.
+        val appPrefs = SecurePrefs.get(getApplication<Application>(), "app_prefs")
+        val deviceId = appPrefs.getString("device_uuid", null) ?: run {
+            java.util.UUID.randomUUID().toString().also {
+                appPrefs.edit { putString("device_uuid", it) }
+            }
+        }
         val updated = profile.copy(
             deviceId = deviceId,
             authUserId = authUid.ifBlank { profile.authUserId },
@@ -212,11 +217,11 @@ fun MainViewModel.loginChild(
         // Флаги автовхода: при следующем запуске откроем ChildSection без Welcome
         getApplication<Application>()
             .let { SecurePrefs.get(it, "app_prefs") }
-            .edit()
-            .putBoolean("is_logged_in", true)
-            .putString("logged_in_child_id", updated.id)
-            .putBoolean("is_admin_logged_in", false)
-            .apply()
+            .edit {
+                putBoolean("is_logged_in", true)
+                putString("logged_in_child_id", updated.id)
+                putBoolean("is_admin_logged_in", false)
+            }
         onResult(LoginResult.Success)
     }
 }

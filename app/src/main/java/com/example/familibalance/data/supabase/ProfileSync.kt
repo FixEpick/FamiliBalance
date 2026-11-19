@@ -2,6 +2,7 @@ package com.example.familibalance.data.supabase
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import android.util.Log
 import com.example.familibalance.data.model.ChildProfileDto
 import com.example.familibalance.data.model.ChildProfileState
@@ -151,7 +152,7 @@ internal object ProfileSync {
                 // Сетевые загрузки — на IO (мы уже в scope с Dispatchers.IO)
                 suspend fun uploadIfLocal(current: String?): String? {
                     if (current.isNullOrBlank()) return current
-                    val uri = runCatching { Uri.parse(current) }.getOrNull() ?: return current
+                    val uri = runCatching { current.toUri() }.getOrNull() ?: return current
                     val scheme = uri.scheme?.lowercase()
                     if (scheme == "http" || scheme == "https") return current
                     val publicUrl = withTimeoutOrNull(30_000) {
@@ -186,7 +187,7 @@ internal object ProfileSync {
                                 com.example.familibalance.util.PhotoStorage
                                     .deleteLocalFileIfPresent(context, uri.toString())
                                 hasUploadedNewPhoto = true
-                                index to Uri.parse(publicUrl)
+                                index to publicUrl.toUri()
                             } else {
                                 uploadFailed = true
                                 index to uri

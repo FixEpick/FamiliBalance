@@ -2,6 +2,7 @@ package com.example.familibalance.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.example.familibalance.data.SecurePrefs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,14 +49,16 @@ object SyncStatus {
     }
 
     private fun persistDirtyIds() {
-        prefs?.edit()?.putStringSet(KEY_DIRTY_CHILD_IDS, dirtyChildIds.toSet())?.apply()
+        prefs?.edit { putStringSet(KEY_DIRTY_CHILD_IDS, dirtyChildIds.toSet()) }
     }
 
     private fun persistCloudVersions() {
-        prefs?.edit()?.putStringSet(
-            KEY_CLOUD_VERSIONS,
-            cloudVersions.map { "${it.key}|${it.value}" }.toSet()
-        )?.apply()
+        prefs?.edit {
+            putStringSet(
+                KEY_CLOUD_VERSIONS,
+                cloudVersions.map { "${it.key}|${it.value}" }.toSet()
+            )
+        }
     }
 
     /** Server updated_at последней синхронизированной версии ("" — ещё не синхронизировали). */

@@ -45,10 +45,10 @@ import com.example.familibalance.viewmodel.actions.*
 @Composable
 fun AdminSettingsScreen(
     viewModel: MainViewModel,
+    modifier: Modifier = Modifier,
     onOpenQuestsEditor: () -> Unit = {},
     onOpenAchievementsEditor: () -> Unit = {},
-    onLogout: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()

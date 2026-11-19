@@ -1,6 +1,7 @@
 package com.example.familibalance.viewmodel
 
 import android.app.Application
+import androidx.core.content.edit
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -200,7 +201,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 repo.resetPassword(state.email.trim())
                 val now = System.currentTimeMillis()
-                appPrefs.edit().putLong("last_password_reset_at", now).apply()
+                appPrefs.edit { putLong("last_password_reset_at", now) }
                 update {
                     copy(
                         noticeMessage = UiText.Res(R.string.auth_reset_sent),

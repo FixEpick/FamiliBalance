@@ -85,8 +85,8 @@ import io.github.jan.supabase.auth.status.SessionStatus
 fun AdminScreen(
     onSwitchProfile: () -> Unit,
     viewModel: MainViewModel,
-    onLogout: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLogout: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val parentPanelDesc = stringResource(R.string.a11y_parent_panel)

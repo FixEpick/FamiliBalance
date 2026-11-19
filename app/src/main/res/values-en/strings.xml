@@ -2,10 +2,6 @@
     <string name="app_name">FamiliBalance</string>
 
     <!-- Welcome -->
-    <string name="welcome_subtitle">Family quest universe</string>
-    <string name="welcome_greeting">Hi, space explorer! Ready for new quests? 🚀</string>
-    <string name="welcome_btn_player">Log in</string>
-    <string name="welcome_btn_create">Sign up</string>
 
     <!-- Common -->
     <string name="common_back">← Back</string>
@@ -13,7 +9,6 @@
 
     <!-- Player login -->
     <string name="login_title">Station login</string>
-    <string name="login_create_account">Create account</string>
     <string name="login_pin_error">Wrong PIN</string>
     <string name="login_field_email">Parent\'s email</string>
     <string name="login_field_name">Nickname</string>
@@ -32,15 +27,6 @@
     <string name="reg_nickname">Nickname</string>
     <string name="reg_pin">PIN code</string>
     <string name="reg_pin_hint">4 digits — your child will use them to log in</string>
-    <string name="reg_interests">INTERESTS</string>
-    <string name="interest_coding">💻 Coding</string>
-    <string name="interest_science">🔬 Science</string>
-    <string name="interest_games">🎮 Games</string>
-    <string name="interest_drawing">🎨 Drawing</string>
-    <string name="interest_sport">⚽ Sports</string>
-    <string name="interest_books">📚 Books</string>
-    <string name="interest_space">🚀 Space</string>
-    <string name="interest_animals">🐶 Animals</string>
     <string name="reg_parent_email">Parent\'s email</string>
     <string name="reg_submit">Create hero and fight!</string>
     <string name="parent_email">Email</string>
@@ -68,9 +54,6 @@
     <string name="auth_err_email">Enter your email</string>
     <string name="child_pin_hint">Forgot PIN? Ask your parent to check it in their dashboard</string>
     <string name="reg_parent_email_hint">The email your parent registered with</string>
-    <string name="a11y_show_password">Show password</string>
-    <string name="a11y_hide_password">Hide password</string>
-    <string name="parent_no_account">No account? Register via the button above on the «New player» tab or ask the administrator.</string>
 
     <!-- Pending request -->
     <string name="pending_title">REQUEST SENT!</string>
@@ -93,7 +76,6 @@
     <string name="language_en">English</string>
 
     <!-- App title / PIN dialogs -->
-    <string name="app_title_welcome">QUESTLAB</string>
     <string name="pin_parent_check_title">PARENT CHECK</string>
     <string name="pin_parent_check_subtitle">Enter parent PIN</string>
     <string name="pin_parent_title">PARENT PIN</string>
@@ -226,6 +208,7 @@
     <string name="eco_streak_value">+50 ₽ every 7 days</string>
     <string name="eco_dream">🎯 Dream goal</string>
     <string name="eco_dream_value">you pick it</string>
+    <string name="eco_set_by_dad">amount set by parent</string>
     <string name="eco_time30">⏳ 30 minutes of screen time</string>
     <string name="eco_time60">⏳ 60 minutes of screen time</string>
     <string name="eco_time90">⏳ 90 minutes of screen time</string>
@@ -358,7 +341,6 @@
 
     <!-- Quest delivery screen -->
     <string name="delivery_error_photo">Photo processing error: %1$s</string>
-    <string name="delivery_error_camera">Failed to launch camera: %1$s</string>
     <string name="delivery_camera_permission">Camera permission is required</string>
     <string name="delivery_photo_desc">Result photo</string>
     <string name="delivery_camera_hint">Tap to take a photo of the result.\nNo time limits!</string>
@@ -375,7 +357,7 @@
     <string name="honest_bonus">✨ Bonus: Penalty halved!</string>
     <string name="honest_text">If you lied, hid the truth, or did something wrong — tell your parent yourself through the kitty! Parent really values honesty, so they will definitely approve your admission and halve the penalty.</string>
     <string name="honest_input_label">Admission text</string>
-    <string name="honest_placeholder">Parent, I want to honestly admit that...</string>
+    <string name="honest_placeholder">Parent, I want to honestly admit that…</string>
     <string name="honest_submit">Send to your parent 🚀</string>
 
     <!-- Admin screen -->
@@ -426,6 +408,7 @@
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Claim reward</string>
+    <string name="task_rejected_by_dad">❌ Rejected by parent: %1$s</string>
     <string name="task_execute">📷 Do it</string>
     <string name="task_pending_review">• Under parent\'s review</string>
     <string name="task_done">✅ Done</string>
@@ -616,6 +599,4 @@
     <string name="onboarding_c_diary_time_desc">Mark your school wins: A grades give bonus coins. Earn extra game minutes on quests.</string>
     <string name="onboarding_c_rewards_title">Rewards and prizes</string>
     <string name="onboarding_c_rewards_desc">Save coins and trade them for real prizes and gifts — a parent approves.</string>
-    <string name="welcome_how_it_works">How it works</string>
-    <string name="onboarding_have_account">Have an account? Sign in</string>
 </resources>

@@ -25,8 +25,8 @@ import com.example.familibalance.ui.theme.PenaltyRed
  */
 @Composable
 fun PulseBadge(
-    color: Color = PenaltyRed,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    color: Color = PenaltyRed
 ) {
     val transition = rememberInfiniteTransition(label = "pulseBadge")
     val alpha by transition.animateFloat(

@@ -1,9 +1,10 @@
 package com.example.familibalance.ui.update
 
 import android.content.Intent
-import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -131,8 +132,15 @@ fun UpdateDialog(
             confirmButton = {
                 Button(onClick = {
                     try {
-                        val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-                            data = Uri.parse("package:${context.packageName}")
+                        val action = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES
+                        } else {
+                            Settings.ACTION_SECURITY_SETTINGS
+                        }
+                        val intent = Intent(action).apply {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                data = "package:${context.packageName}".toUri()
+                            }
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                         context.startActivity(intent)

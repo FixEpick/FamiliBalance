@@ -40,7 +40,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -267,7 +270,7 @@ private fun SlidePager(
                 ProgressBar(
                     pageCount = slides.size,
                     currentPage = pagerState.currentPage,
-                    pageOffsetFraction = pagerState.currentPageOffsetFraction
+                    pageOffsetFraction = { pagerState.currentPageOffsetFraction }
                 )
             }
             TextButton(onClick = onFinish) {
@@ -287,18 +290,18 @@ private fun SlidePager(
                 .fillMaxWidth()
                 .weight(1f)
         ) { page ->
-            val pageOffset = (
-                (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
-                ).absoluteValue.coerceIn(0f, 1f)
-            val alpha = 1f - pageOffset
-            val scale = 1f - pageOffset * 0.12f
-
             SlidePage(
                 slide = slides[page],
                 modifier = Modifier.graphicsLayer {
-                    this.alpha = alpha
-                    scaleX = scale
-                    scaleY = scale
+                    // currentPageOffsetFraction читается в graphicsLayer-блоке
+                    // (не в composition) — иначе каждый кадр скролла
+                    // триггерил бы рекомпозицию всего онбординга.
+                    val pageOffset = (
+                        (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+                        ).absoluteValue.coerceIn(0f, 1f)
+                    alpha = 1f - pageOffset
+                    scaleX = 1f - pageOffset * 0.12f
+                    scaleY = 1f - pageOffset * 0.12f
                 }
             )
         }
@@ -373,17 +376,15 @@ private fun SlidePager(
 }
 
 @Composable
-private fun ProgressBar(pageCount: Int, currentPage: Int, pageOffsetFraction: Float) {
+private fun ProgressBar(pageCount: Int, currentPage: Int, pageOffsetFraction: () -> Float) {
+    // AccentColor — @Composable-геттер темы: читаем в composition,
+    // drawBehind-фаза composable вызывать не может.
+    val accentColor = AccentColor
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         repeat(pageCount) { index ->
-            val progress = when {
-                index < currentPage -> 1f
-                index == currentPage -> 1f - pageOffsetFraction.coerceIn(0f, 1f)
-                else -> 0f
-            }
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -391,12 +392,26 @@ private fun ProgressBar(pageCount: Int, currentPage: Int, pageOffsetFraction: Fl
                     .clip(RoundedCornerShape(3.dp))
                     .background(GlassStroke)
             ) {
+                // Прогресс рисуется в drawBehind: pageOffsetFraction —
+                // frequently-changing state, читать его нужно в draw-фазе,
+                // а не в composition.
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(progress)
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(AccentColor)
+                        .matchParentSize()
+                        .drawBehind {
+                            val progress = when {
+                                index < currentPage -> 1f
+                                index == currentPage -> 1f - pageOffsetFraction().coerceIn(0f, 1f)
+                                else -> 0f
+                            }
+                            if (progress > 0f) {
+                                drawRoundRect(
+                                    color = accentColor,
+                                    size = Size(size.width * progress, size.height),
+                                    cornerRadius = CornerRadius(3.dp.toPx())
+                                )
+                            }
+                        }
                 )
             }
         }

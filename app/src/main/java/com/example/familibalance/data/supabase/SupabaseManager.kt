@@ -121,9 +121,12 @@ object SupabaseManager {
             return
         }
         runCatching {
-            supabase.handleDeeplinks(intent) { session ->
-                Log.d("SupabaseManager", "Auth session imported from deeplink: user=${session.user?.id}")
-            }
+            supabase.handleDeeplinks(
+                intent,
+                onSessionSuccess = { session ->
+                    Log.d("SupabaseManager", "Auth session imported from deeplink: user=${session.user?.id}")
+                }
+            )
         }.onFailure { Log.e("SupabaseManager", "handleDeeplinks failed", it) }
     }
 

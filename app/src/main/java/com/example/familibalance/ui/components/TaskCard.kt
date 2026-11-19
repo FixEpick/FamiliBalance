@@ -32,6 +32,7 @@ fun TaskCard(
     description: String,
     reward: String,
     status: QuestStatus,
+    modifier: Modifier = Modifier,
     rejectReason: String? = null,
     claimButtonText: String? = null,
     frequencyBadge: String? = null,
@@ -41,8 +42,7 @@ fun TaskCard(
     borderColor: Color = GlassStroke,
     actionEnabled: Boolean = true,
     onExecute: () -> Unit,
-    onClaim: (Offset) -> Unit,
-    modifier: Modifier = Modifier
+    onClaim: (Offset) -> Unit
 ) {
     val resolvedClaimText = claimButtonText ?: stringResource(R.string.task_claim_reward)
     Card(

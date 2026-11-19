@@ -75,9 +75,9 @@ private fun builtInFreqBadge(frequency: QuestFrequency): String = when (frequenc
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(
+    modifier: Modifier = Modifier,
     onScrollToRules: () -> Unit = {},
-    viewModel: MainViewModel,
-    modifier: Modifier = Modifier
+    viewModel: MainViewModel
 ) {
     val context = LocalContext.current
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()

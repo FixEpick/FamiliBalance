@@ -6,6 +6,7 @@ import com.example.familibalance.util.*
 
 import android.content.Context
 import android.content.res.Configuration
+import androidx.core.content.edit
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -40,7 +41,7 @@ object AppLocaleState {
         if (newTag == tag) return
         tag = newTag
         SecurePrefs.get(context, PREFS)
-            .edit().putString(KEY_LOCALE, newTag).apply()
+            .edit { putString(KEY_LOCALE, newTag) }
     }
 }
 

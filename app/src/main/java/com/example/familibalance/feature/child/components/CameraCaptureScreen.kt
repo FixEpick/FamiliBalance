@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -57,6 +58,7 @@ fun CameraCaptureScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val appContext = remember { context.applicationContext }
     val lifecycleOwner = LocalLifecycleOwner.current
     val mainExecutor = remember { ContextCompat.getMainExecutor(context) }
 
@@ -73,6 +75,10 @@ fun CameraCaptureScreen(
 
     var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     var isCapturing by remember { mutableStateOf(false) }
+
+    val closeDescription = stringResource(R.string.camera_capture_close)
+    val switchDescription = stringResource(R.string.camera_capture_switch)
+    val shootDescription = stringResource(R.string.camera_capture_shoot)
 
     // Прячем нижний таб-бар на время съёмки — иначе случайные нажатия
     // по навигации уводят с экрана доставки фото.
@@ -120,8 +126,8 @@ fun CameraCaptureScreen(
             override fun onError(exception: ImageCaptureException) {
                 isCapturing = false
                 Toast.makeText(
-                    context,
-                    context.getString(R.string.delivery_error_photo, exception.message),
+                    appContext,
+                    appContext.getString(R.string.delivery_error_photo, exception.message),
                     Toast.LENGTH_SHORT
                 ).show()
             }
@@ -153,7 +159,7 @@ fun CameraCaptureScreen(
                     .size(44.dp)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.45f))
-                    .semantics { contentDescription = context.getString(R.string.camera_capture_close) }
+                    .semantics { contentDescription = closeDescription }
             ) {
                 Text("✕", color = TextPrimary, fontSize = 20.sp)
             }
@@ -169,7 +175,7 @@ fun CameraCaptureScreen(
                     .size(44.dp)
                     .clip(CircleShape)
                     .background(Color.Black.copy(alpha = 0.45f))
-                    .semantics { contentDescription = context.getString(R.string.camera_capture_switch) }
+                    .semantics { contentDescription = switchDescription }
             ) {
                 Text("🔄", fontSize = 20.sp)
             }
@@ -186,7 +192,7 @@ fun CameraCaptureScreen(
                 .background(Color.White)
                 .border(4.dp, Color.Black.copy(alpha = 0.3f), CircleShape)
                 .clickable(enabled = !isCapturing, onClick = capturePhoto)
-                .semantics { contentDescription = context.getString(R.string.camera_capture_shoot) },
+                .semantics { contentDescription = shootDescription },
             contentAlignment = Alignment.Center
         ) {
             Box(

@@ -7,6 +7,7 @@ import com.example.familibalance.util.*
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.core.content.edit
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.fragment.app.FragmentActivity
@@ -248,12 +249,12 @@ class MainActivity : FragmentActivity() {
                             ?.let { PushTokenRegistrar.registerParent(context, it) }
                         // РЎРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµРј Р»РѕРєР°Р»СЊРЅС‹Р№ С„Р»Р°Рі Р°РІС‚РѕРІС…РѕРґР° СЃ Supabase-СЃРµСЃСЃРёРµР№
                         SecurePrefs.get(context, "app_prefs")
-                            .edit()
-                            .putBoolean("is_admin_logged_in", true)
-                            .putBoolean("is_logged_in", false)
-                            .putBoolean("onboarding_done", true)
-                            .remove("logged_in_child_id")
-                            .apply()
+                            .edit {
+                                putBoolean("is_admin_logged_in", true)
+                                putBoolean("is_logged_in", false)
+                                putBoolean("onboarding_done", true)
+                                remove("logged_in_child_id")
+                            }
                         // Переход в AdminRoute выполняет startDestination NavHost
                     }
                 }
@@ -267,18 +268,18 @@ class MainActivity : FragmentActivity() {
                         // Регистрация FCM-токена ребёнка для пушей «Игрок»
                         PushTokenRegistrar.registerChild(context, autoLoginChildId!!)
                         SecurePrefs.get(context, "app_prefs")
-                            .edit()
-                            .putBoolean("onboarding_done", true)
-                            .apply()
+                            .edit {
+                                putBoolean("onboarding_done", true)
+                            }
                         // Переход в ChildRoute выполняет startDestination NavHost
                     }
                 }
 
                 fun completeOnboarding(navigate: () -> Unit) {
                     SecurePrefs.get(context, "app_prefs")
-                        .edit()
-                        .putBoolean("onboarding_done", true)
-                        .apply()
+                        .edit {
+                            putBoolean("onboarding_done", true)
+                        }
                     navigate()
                 }
 
@@ -332,11 +333,11 @@ class MainActivity : FragmentActivity() {
                                 // Р¤Р»Р°Рі Р°РІС‚РѕРІС…РѕРґР° СЂРѕРґРёС‚РµР»СЏ: РїСЂРё РїРµСЂРµР·Р°РїСѓСЃРєРµ
                                 // isParentSession (Supabase) + СЌС‚РѕС‚ С„Р»Р°Рі в†’ AdminRoute
                                 SecurePrefs.get(context, "app_prefs")
-                                    .edit()
-                                    .putBoolean("is_admin_logged_in", true)
-                                    .putBoolean("is_logged_in", false)
-                                    .remove("logged_in_child_id")
-                                    .apply()
+                                    .edit {
+                                        putBoolean("is_admin_logged_in", true)
+                                        putBoolean("is_logged_in", false)
+                                        remove("logged_in_child_id")
+                                    }
                                 navigateToRoot(AdminRoute)
                             },
                             onBack = { navController.popBackStack() }
@@ -354,11 +355,11 @@ class MainActivity : FragmentActivity() {
                                 authViewModel.signOut()
                                 viewModel.clearState()
                                 SecurePrefs.get(context, "app_prefs")
-                                    .edit()
-                                    .putBoolean("is_admin_logged_in", false)
-                                    .putBoolean("is_logged_in", false)
-                                    .remove("logged_in_child_id")
-                                    .apply()
+                                    .edit {
+                                        putBoolean("is_admin_logged_in", false)
+                                        putBoolean("is_logged_in", false)
+                                        remove("logged_in_child_id")
+                                    }
                                 navigateToRoot(OnboardingRoute)
                             }
                         )

@@ -37,13 +37,13 @@ fun AchievementCard(
     progress: String,
     isLocked: Boolean,
     isCompleted: Boolean,
+    modifier: Modifier = Modifier,
     isReadyToClaim: Boolean = false,
     onClaimClick: (() -> Unit)? = null,
     conditionKind: AchievementConditionKind? = null,
     conditionCount: Int = 0,
     progressCurrent: Int = 0,
-    progressTarget: Int = 0,
-    modifier: Modifier = Modifier
+    progressTarget: Int = 0
 ) {
     val displayTitle = title
     val displayCondition = when (conditionKind) {

@@ -109,8 +109,8 @@ fun RegisterParentScreen(
     onPlayerSuccess: () -> Unit,
     onParentSuccess: () -> Unit,
     onBack: () -> Unit,
-    initialParentLogin: Boolean = false,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    initialParentLogin: Boolean = false
 ) {
     val state by viewModel.uiState.collectAsState()
     // Профиль, отправленный на подтверждение родителю (status = "pending")
