@@ -49,6 +49,7 @@ fun GameButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     emoji: String? = null,
+    icon: GameIconType? = null,
     variant: GameButtonVariant = GameButtonVariant.Lime,
     enabled: Boolean = true,
     height: Dp = 56.dp,
@@ -105,7 +106,14 @@ fun GameButton(
             contentAlignment = Alignment.Center
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (!emoji.isNullOrBlank()) {
+                if (icon != null) {
+                    GameIcon(
+                        icon = icon,
+                        tint = if (enabled) variant.text else variant.text.copy(alpha = 0.6f),
+                        size = 22.dp
+                    )
+                    Box(modifier = Modifier.padding(start = 8.dp))
+                } else if (!emoji.isNullOrBlank()) {
                     Text(text = emoji, fontSize = 20.sp)
                     Box(modifier = Modifier.padding(start = 8.dp))
                 }

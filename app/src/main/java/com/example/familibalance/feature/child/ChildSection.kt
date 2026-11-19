@@ -58,13 +58,11 @@ import com.example.familibalance.navigation.ChildRoute
 import com.example.familibalance.navigation.ChildTasksRoute
 import com.example.familibalance.navigation.PlayerLoginRoute
 import com.example.familibalance.navigation.RegisterParentRoute
-import com.example.familibalance.navigation.WelcomeRoute
 import com.example.familibalance.feature.admin.AdminScreen
 import com.example.familibalance.feature.child.MainChildScreen
 import com.example.familibalance.feature.child.TasksScreen
 import com.example.familibalance.ui.auth.PlayerLoginScreen
 import com.example.familibalance.ui.auth.RegisterParentScreen
-import com.example.familibalance.ui.auth.WelcomeScreen
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.feature.child.screens.*

@@ -1,6 +1,7 @@
 package com.example.familibalance.data.supabase
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
 import com.example.familibalance.BuildConfig
 import com.example.familibalance.SupabaseConfig
@@ -10,6 +11,7 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.SettingsSessionManager
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.handleDeeplinks
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
@@ -60,6 +62,10 @@ object SupabaseManager {
                     install(Auth) {
                         // SharedPreferences для сохранения сессии (автовход)
                         sessionManager = SettingsSessionManager()
+                        // Deeplink для auth-писем (сброс пароля и т.п.):
+                        // Supabase шлёт ссылку familibalance://auth#access_token=...
+                        scheme = "familibalance"
+                        host = "auth"
                     }
                     install(Realtime)
                     install(Storage)
@@ -89,6 +95,33 @@ object SupabaseManager {
             runCatching { supabase.auth.signInAnonymously() }
                 .onFailure { Log.w("SupabaseManager", "signInAnonymously failed: ${it.message}") }
         }
+    }
+
+    /**
+     * Перехватывает auth deep link (сброс пароля, подтверждение email)
+     * и импортирует сессию из fragment/code ссылки.
+     */
+    fun handleAuthDeepLink(intent: Intent) {
+        val supabase = client ?: return
+        val data = intent.data
+        Log.d("SupabaseManager", "Auth deeplink received: host=${data?.host}, hasFragment=${!data?.fragment.isNullOrBlank()}")
+        // Логируем только ИМЕНА параметров фрагмента — значения содержат токены.
+        data?.fragment?.split("&")?.forEach { part ->
+            val key = part.substringBefore("=")
+            if (key.isNotBlank()) Log.d("SupabaseManager", "deeplink fragment param: $key")
+        }
+        // Supabase может вернуть error-фрагмент (протухшая/использованная ссылка) —
+        // в нём нет access_token, handleDeeplinks упадёт. Логируем и выходим.
+        val fragment = data?.fragment.orEmpty()
+        if (fragment.contains("error=") || fragment.contains("error_code=")) {
+            Log.e("SupabaseManager", "Auth deeplink contains error params — link expired or invalid")
+            return
+        }
+        runCatching {
+            supabase.handleDeeplinks(intent) { session ->
+                Log.d("SupabaseManager", "Auth session imported from deeplink: user=${session.user?.id}")
+            }
+        }.onFailure { Log.e("SupabaseManager", "handleDeeplinks failed", it) }
     }
 
     /**

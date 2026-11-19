@@ -1,6 +1,7 @@
 package com.example.familibalance.ui.auth
 
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,12 +16,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -35,12 +38,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,10 +57,14 @@ import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.ui.components.CyberBackground
+import com.example.familibalance.ui.components.ExitConfirmDialog
 import com.example.familibalance.util.asString
 import com.example.familibalance.ui.components.GameButton
 import com.example.familibalance.ui.components.GameButtonVariant
+import com.example.familibalance.ui.components.GameIcon
+import com.example.familibalance.ui.components.GameIconType
 import com.example.familibalance.ui.components.LanguageSelectorButton
+import kotlinx.coroutines.delay
 import com.example.familibalance.ui.components.childDisplayName
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.currentStateAsState
@@ -74,19 +83,8 @@ private val CyberLime = Color(0xFFA3E635)
 private val CyberRed = Color(0xFFEF4444)
 
 private val playerAvatars = listOf(
-    "🦄", "🧚‍♀️", "🦸‍♀️", "🧜‍♀️", "🐱", "🐰",
-    "🦖", "🦸‍♂️", "🐉", "🐺", "🚀", "🤖",
-    "🦊", "👾", "🐼", "👽"
-)
-private val interestChips = listOf(
-    R.string.interest_coding to "coding",
-    R.string.interest_science to "science",
-    R.string.interest_games to "games",
-    R.string.interest_drawing to "drawing",
-    R.string.interest_sport to "sport",
-    R.string.interest_books to "books",
-    R.string.interest_space to "space",
-    R.string.interest_animals to "animals"
+    "🤖", "🚀", "👾", "👽", "🦊", "🐉",
+    "🦸‍♂️", "🐱", "🐼", "🐺"
 )
 
 private val CyberFieldColors
@@ -111,6 +109,7 @@ fun RegisterParentScreen(
     onPlayerSuccess: () -> Unit,
     onParentSuccess: () -> Unit,
     onBack: () -> Unit,
+    initialParentLogin: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -120,7 +119,9 @@ fun RegisterParentScreen(
     val context = LocalContext.current
     var rememberMe by remember { mutableStateOf(false) }
     // Вход родителя по email/паролю — доступен по ссылке внизу формы
-    var showParentLogin by remember { mutableStateOf(false) }
+    var showParentLogin by remember { mutableStateOf(initialParentLogin) }
+    var showExitDialog by remember { mutableStateOf(false) }
+    BackHandler { showExitDialog = true }
 
     // Восстанавливаем «Запомнить меня»: подставляем сохранённый email
     LaunchedEffect(Unit) {
@@ -171,21 +172,15 @@ fun RegisterParentScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(CyberSlate)
-                        .border(1.dp, CyberSlateBorder, RoundedCornerShape(10.dp))
-                        .clickable(onClick = onBack)
-                        .padding(horizontal = 14.dp, vertical = 8.dp)
-                ) {
-                    Text(stringResource(R.string.common_back), color = CyberTextPrimary, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                }
                 Text(
-                    text = stringResource(R.string.register_title),
+                    text = stringResource(
+                        if (showParentLogin) R.string.parent_area_title else R.string.register_title
+                    ),
                     color = CyberTextPrimary,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f)
                 )
                 LanguageSelectorButton()
             }
@@ -199,22 +194,6 @@ fun RegisterParentScreen(
                     rememberMe = rememberMe,
                     onRememberMeChange = { rememberMe = it }
                 )
-                Spacer(modifier = Modifier.height(12.dp))
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable { showParentLogin = false }
-                        .padding(vertical = 10.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = stringResource(R.string.register_title),
-                        color = CyberLime,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
             } else {
                 PlayerRegisterForm(
                     state = state,
@@ -247,24 +226,49 @@ fun RegisterParentScreen(
                         .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(R.string.parent_area_link),
-                        color = CyberTextSecondary,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        GameIcon(icon = GameIconType.Trophy, tint = CyberTextSecondary, size = 16.dp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.parent_area_link),
+                            color = CyberTextSecondary,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
+        }
+
+        if (showExitDialog) {
+            ExitConfirmDialog(
+                title = stringResource(R.string.auth_exit_title),
+                message = stringResource(R.string.auth_exit_message),
+                confirmText = stringResource(R.string.auth_exit_confirm),
+                cancelText = stringResource(R.string.action_cancel),
+                onConfirm = {
+                    showExitDialog = false
+                    onBack()
+                },
+                onDismiss = { showExitDialog = false }
+            )
         }
     }
 }
 
 @Composable
-private fun PlayerRegisterForm(
+fun PlayerRegisterForm(
     state: com.example.familibalance.viewmodel.AuthUiState,
     viewModel: AuthViewModel,
     onSubmit: () -> Unit
 ) {
+    var pinVisible by remember { mutableStateOf(false) }
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = CyberPanelBg,
+        border = androidx.compose.foundation.BorderStroke(1.dp, CyberSlateBorder)
+    ) {
+    Column(modifier = Modifier.padding(20.dp)) {
     // Аватар — сетка 6 колонок
     Text(
         text = stringResource(R.string.reg_avatar),
@@ -323,54 +327,27 @@ private fun PlayerRegisterForm(
             onValueChange = viewModel::onPinChange,
             label = { Text(stringResource(R.string.reg_pin)) },
             singleLine = true,
+            visualTransformation = if (pinVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             colors = CyberFieldColors,
+            trailingIcon = {
+                IconButton(onClick = { pinVisible = !pinVisible }) {
+                    GameIcon(
+                        icon = if (pinVisible) GameIconType.EyeOff else GameIconType.Eye,
+                        tint = CyberTextSecondary,
+                        size = 20.dp
+                    )
+                }
+            },
             modifier = Modifier.weight(1f)
         )
     }
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    // Интересы — чипы мультивыбора
     Text(
-        text = stringResource(R.string.reg_interests),
+        text = stringResource(R.string.reg_pin_hint),
         color = CyberTextSecondary,
         fontSize = 11.sp,
-        fontWeight = FontWeight.Bold,
-        letterSpacing = 2.sp
+        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
     )
-    Spacer(modifier = Modifier.height(10.dp))
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        interestChips.chunked(2).forEach { rowChips ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                rowChips.forEach { (labelRes, id) ->
-                    val selected = id in state.selectedInterests
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (selected) CyberLime.copy(alpha = 0.15f) else CyberPanelBg)
-                            .border(
-                                1.dp,
-                                if (selected) CyberLime else CyberSlateBorder,
-                                RoundedCornerShape(10.dp)
-                            )
-                            .clickable { viewModel.onInterestToggle(id) }
-                            .padding(vertical = 10.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(labelRes),
-                            color = if (selected) CyberLime else CyberTextPrimary,
-                            fontSize = 13.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
-                }
-                if (rowChips.size == 1) Spacer(modifier = Modifier.weight(1f))
-            }
-        }
-    }
 
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -382,6 +359,13 @@ private fun PlayerRegisterForm(
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         colors = CyberFieldColors,
+        supportingText = {
+            Text(
+                text = stringResource(R.string.reg_parent_email_hint),
+                color = CyberTextSecondary,
+                fontSize = 11.sp
+            )
+        },
         modifier = Modifier.fillMaxWidth()
     )
 
@@ -400,11 +384,19 @@ private fun PlayerRegisterForm(
 
     GameButton(
         text = stringResource(R.string.reg_submit),
-        emoji = "🚀",
+        icon = GameIconType.Rocket,
         variant = GameButtonVariant.Lime,
         enabled = isPlayerFormValid(state),
-        onClick = onSubmit
+        onClick = onSubmit,
+        modifier = Modifier.shadow(
+            elevation = 12.dp,
+            shape = RoundedCornerShape(16.dp),
+            ambientColor = CyberLime,
+            spotColor = CyberLime
+        )
     )
+    }
+    }
 }
 
 @Composable
@@ -414,12 +406,63 @@ private fun ParentLoginForm(
     rememberMe: Boolean,
     onRememberMeChange: (Boolean) -> Unit
 ) {
+    var passwordVisible by remember { mutableStateOf(false) }
+    var consent by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = CyberPanelBg,
         border = androidx.compose.foundation.BorderStroke(1.dp, CyberSlateBorder)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
+            // Переключатель Вход / Регистрация для родителя — над полями
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(CyberSlate)
+                    .border(1.dp, CyberSlateBorder, RoundedCornerShape(12.dp))
+                    .padding(3.dp)
+            ) {
+                listOf(
+                    Triple(false, R.string.parent_login, GameIconType.Lock),
+                    Triple(true, R.string.parent_register, GameIconType.Rocket)
+                ).forEach { (isReg, labelRes, tabIcon) ->
+                    val selected = state.isParentRegisterMode == isReg
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(9.dp))
+                            .background(if (selected) CyberLime.copy(alpha = 0.15f) else Color.Transparent)
+                            .border(
+                                1.dp,
+                                if (selected) CyberLime else Color.Transparent,
+                                RoundedCornerShape(9.dp)
+                            )
+                            .clickable { if (!selected) viewModel.toggleParentMode() }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            GameIcon(
+                                icon = tabIcon,
+                                tint = if (selected) CyberLime else CyberTextSecondary,
+                                size = 16.dp
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(labelRes),
+                                color = if (selected) CyberLime else CyberTextSecondary,
+                                fontSize = 13.sp,
+                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             OutlinedTextField(
                 value = state.email,
                 onValueChange = viewModel::onEmailChange,
@@ -437,11 +480,64 @@ private fun ParentLoginForm(
                 onValueChange = viewModel::onPasswordChange,
                 label = { Text(stringResource(R.string.parent_password)) },
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 colors = CyberFieldColors,
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        GameIcon(
+                            icon = if (passwordVisible) GameIconType.EyeOff else GameIconType.Eye,
+                            tint = CyberTextSecondary,
+                            size = 20.dp
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            if (!state.isParentRegisterMode) {
+                val cooldownUntil = state.resetCooldownUntilMs
+                var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
+                LaunchedEffect(cooldownUntil) {
+                    while (cooldownUntil > System.currentTimeMillis()) {
+                        nowMs = System.currentTimeMillis()
+                        delay(1000)
+                    }
+                    nowMs = System.currentTimeMillis()
+                }
+                if (cooldownUntil > nowMs) {
+                    val remainingSec = ((cooldownUntil - nowMs) / 1000).coerceAtLeast(0)
+                    Text(
+                        text = stringResource(
+                            R.string.auth_reset_cooldown,
+                            remainingSec / 60,
+                            remainingSec % 60
+                        ),
+                        color = CyberTextSecondary,
+                        fontSize = 11.sp,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable { showResetDialog = true }
+                            .padding(vertical = 4.dp),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        Text(
+                            text = stringResource(R.string.auth_forgot_password),
+                            color = CyberLime,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -479,35 +575,39 @@ private fun ParentLoginForm(
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            state.noticeMessage?.let { notice ->
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = notice.asString(),
+                    color = CyberLime,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
-            // Переключатель Вход / Регистрация для родителя
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(CyberSlate)
-                    .border(1.dp, CyberSlateBorder, RoundedCornerShape(10.dp))
-                    .padding(3.dp)
-            ) {
-                listOf(false to R.string.parent_login, true to R.string.parent_register).forEach { (isReg, labelRes) ->
-                    val selected = state.isParentRegisterMode == isReg
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (selected) CyberLime.copy(alpha = 0.2f) else Color.Transparent)
-                            .clickable { if (!selected) viewModel.toggleParentMode() }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = stringResource(labelRes),
-                            color = if (selected) CyberLime else CyberTextSecondary,
-                            fontSize = 12.sp,
-                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+            if (state.isParentRegisterMode) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { consent = !consent }
+                        .padding(vertical = 2.dp)
+                ) {
+                    Checkbox(
+                        checked = consent,
+                        onCheckedChange = { consent = it },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = CyberLime,
+                            uncheckedColor = CyberTextSecondary
                         )
-                    }
+                    )
+                    Text(
+                        text = stringResource(R.string.parent_consent),
+                        color = CyberTextSecondary,
+                        fontSize = 12.sp
+                    )
                 }
             }
 
@@ -515,23 +615,27 @@ private fun ParentLoginForm(
 
             GameButton(
                 text = stringResource(if (state.isParentRegisterMode) R.string.parent_btn_register else R.string.parent_btn_login),
-                emoji = "🔑",
+                icon = GameIconType.Lock,
                 variant = GameButtonVariant.Electric,
-                enabled = isParentFormEnabled(state),
+                enabled = isParentFormEnabled(state) && (!state.isParentRegisterMode || consent),
                 onClick = {
                     if (state.isParentRegisterMode) viewModel.signUpParent() else viewModel.signIn()
                 }
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = stringResource(R.string.parent_no_account),
-                color = CyberTextSecondary,
-                fontSize = 11.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+            if (showResetDialog) {
+                ExitConfirmDialog(
+                    title = stringResource(R.string.reset_confirm_title),
+                    message = stringResource(R.string.reset_confirm_message, state.email.trim()),
+                    confirmText = stringResource(R.string.reset_confirm_send),
+                    cancelText = stringResource(R.string.action_cancel),
+                    onConfirm = {
+                        showResetDialog = false
+                        viewModel.resetPassword()
+                    },
+                    onDismiss = { showResetDialog = false }
+                )
+            }
         }
     }
 }
@@ -542,7 +646,7 @@ private fun ParentLoginForm(
  * обновляет локальный профиль и вызывает [onApproved] (переход в ChildRoute).
  */
 @Composable
-private fun PendingRequestScreen(
+fun PendingRequestScreen(
     child: ChildProfileState,
     mainViewModel: MainViewModel,
     onApproved: () -> Unit
@@ -572,7 +676,7 @@ private fun PendingRequestScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("⏳", fontSize = 64.sp)
+        GameIcon(icon = GameIconType.Hourglass, tint = CyberLime, size = 64.dp)
         Spacer(modifier = Modifier.height(20.dp))
         Text(
             text = stringResource(R.string.pending_title),

@@ -1,11 +1,14 @@
 package com.example.familibalance.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -36,11 +39,21 @@ fun LanguageSelectorButton(modifier: Modifier = Modifier) {
 
     val langDesc = stringResource(R.string.a11y_language_button)
     IconButton(onClick = { showSheet = true }, modifier = modifier.size(40.dp)) {
-        Text(
-            "🌐",
-            fontSize = 20.sp,
-            modifier = Modifier.semantics { contentDescription = langDesc }
-        )
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(AccentColor.copy(alpha = 0.12f))
+                .border(1.dp, AccentColor.copy(alpha = 0.4f), androidx.compose.foundation.shape.CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            GameIcon(
+                icon = GameIconType.Language,
+                tint = AccentColor,
+                size = 18.dp,
+                modifier = Modifier.semantics { contentDescription = langDesc }
+            )
+        }
     }
 
     if (showSheet) {

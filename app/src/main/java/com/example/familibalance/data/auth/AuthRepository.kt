@@ -89,6 +89,16 @@ class AuthRepository private constructor(private val client: SupabaseClient) {
         }
     }
 
+    /** Отправляет письмо для сброса пароля на указанный email. */
+    suspend fun resetPassword(email: String) {
+        client.auth.resetPasswordForEmail(email.trim())
+    }
+
+    /** Устанавливает новый пароль для текущей recovery-сессии (после deep link). */
+    suspend fun updatePassword(newPassword: String) {
+        client.auth.updateUser { password = newPassword }
+    }
+
     /** Выход: очистка сессии. */
     suspend fun signOut() {
         client.auth.signOut()

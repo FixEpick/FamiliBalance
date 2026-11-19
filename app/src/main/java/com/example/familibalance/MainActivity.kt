@@ -5,6 +5,7 @@ import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
@@ -40,6 +41,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.navigation.AdminRoute
 import com.example.familibalance.navigation.ChildAchievementsRoute
@@ -50,14 +52,13 @@ import com.example.familibalance.navigation.ChildTasksRoute
 import com.example.familibalance.navigation.OnboardingRoute
 import com.example.familibalance.navigation.PlayerLoginRoute
 import com.example.familibalance.navigation.RegisterParentRoute
-import com.example.familibalance.navigation.WelcomeRoute
 import com.example.familibalance.feature.admin.AdminScreen
 import com.example.familibalance.feature.child.ChildSection
 import com.example.familibalance.feature.child.MainChildScreen
 import com.example.familibalance.feature.child.TasksScreen
 import com.example.familibalance.ui.auth.PlayerLoginScreen
 import com.example.familibalance.ui.auth.RegisterParentScreen
-import com.example.familibalance.ui.auth.WelcomeScreen
+import com.example.familibalance.ui.auth.ResetPasswordScreen
 import com.example.familibalance.ui.onboarding.OnboardingScreen
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
@@ -77,6 +78,25 @@ class MainActivity : FragmentActivity() {
     private lateinit var viewModel: MainViewModel
     private lateinit var updateViewModel: UpdateViewModel
     private lateinit var authViewModel: AuthViewModel
+    /** true — открыт сценарий сброса пароля по deep link familibalance://auth. */
+    private val passwordResetPending = mutableStateOf(false)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleAuthDeepLink(intent)
+    }
+
+    /**
+     * Ловит auth deep link (сброс пароля): помечает сценарий и передаёт
+     * intent в Supabase — handleDeeplinks импортирует recovery-сессию.
+     */
+    private fun handleAuthDeepLink(intent: Intent?) {
+        val data = intent?.data ?: return
+        if (data.scheme == "familibalance" && data.host == "auth") {
+            passwordResetPending.value = true
+            SupabaseManager.handleAuthDeepLink(intent)
+        }
+    }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,6 +110,7 @@ class MainActivity : FragmentActivity() {
         updateViewModel = ViewModelProvider(this)[UpdateViewModel::class.java]
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
         AppLocaleState.init(this)
+        handleAuthDeepLink(intent)
 
         enableEdgeToEdge()
         setContent {
@@ -110,7 +131,7 @@ class MainActivity : FragmentActivity() {
                 // РїРѕРєР°Р·С‹РІР°РµРј splash, С‡С‚РѕР±С‹ РЅРµ РјРёРіР°Р» СЌРєСЂР°РЅ РІС…РѕРґР° РїРµСЂРµРґ Р°РґРјРёРЅРєРѕР№.
                 var splashMinTimeElapsed by remember { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
-                    kotlinx.coroutines.delay(2200)
+                    kotlinx.coroutines.delay(2400)
                     splashMinTimeElapsed = true
                 }
                 // supabase-kt на Android может кратковременно эмитить
@@ -136,6 +157,18 @@ class MainActivity : FragmentActivity() {
                     AppSplashScreen()
                     return@FamiliBalanceTheme
                 }
+
+                // Сценарий сброса пароля по deep link: recovery-сессия уже
+                // импортирована, показываем экран нового пароля вместо NavHost.
+                if (passwordResetPending.value) {
+                    ResetPasswordScreen(
+                        viewModel = authViewModel,
+                        onDone = { passwordResetPending.value = false },
+                        onCancel = { passwordResetPending.value = false }
+                    )
+                    return@FamiliBalanceTheme
+                }
+
                 val navController = rememberNavController()
 
                 // В«РќР°Р·Р°РґВ» РЅР° РіР»Р°РІРЅС‹С… СЂР°Р·РґРµР»Р°С… (ChildRoute / AdminRoute) вЂ”
@@ -191,7 +224,7 @@ class MainActivity : FragmentActivity() {
                     navController.navigate(target)
                 }
                 fun backToLogin() {
-                    navigateToRoot(WelcomeRoute)
+                    navigateToRoot(OnboardingRoute)
                 }
 
                 // РђРЅРѕРЅРёРјРЅР°СЏ СЃРµСЃСЃРёСЏ (СѓСЃС‚СЂРѕР№СЃС‚РІРѕ СЂРµР±С‘РЅРєР°) РЅРµ СЃС‡РёС‚Р°РµС‚СЃСЏ СЂРѕРґРёС‚РµР»СЊСЃРєРѕР№:
@@ -230,13 +263,6 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
-                // Onboarding is shown only to a new user; the flag lives
-                // in app_prefs (SecurePrefs), same as other login flags.
-                val onboardingDone = remember {
-                    SecurePrefs.get(context, "app_prefs")
-                        .getBoolean("onboarding_done", false)
-                }
-
                 fun completeOnboarding(navigate: () -> Unit) {
                     SecurePrefs.get(context, "app_prefs")
                         .edit()
@@ -249,12 +275,12 @@ class MainActivity : FragmentActivity() {
                     navController = navController,
                     // Стартовый destination выбирается после разрешения сессии:
                     // активная родительская сессия → кабинет, автовход ребёнка →
-                    // ChildRoute, иначе онбординг/Welcome. Так WelcomeRoute не
-                    // успевает отрисоваться перед автоматическим переходом.
+                    // ChildRoute, иначе онбординг (выбор роли → слайды → вход).
+                    // Так OnboardingRoute не успевает отрисоваться перед
+                    // автоматическим переходом.
                     startDestination = when {
                         isParentSession -> AdminRoute
                         autoLoginChildId != null -> ChildRoute
-                        onboardingDone -> WelcomeRoute
                         else -> OnboardingRoute
                     }
                 ) {
@@ -262,41 +288,32 @@ class MainActivity : FragmentActivity() {
                         OnboardingScreen(
                             onParentClick = {
                                 completeOnboarding {
-                                    navigateToRoot(RegisterParentRoute)
+                                    navigateToRoot(RegisterParentRoute(parentLogin = true))
                                 }
                             },
                             onChildClick = {
                                 completeOnboarding {
                                     navigateToRoot(PlayerLoginRoute)
                                 }
-                            },
-                            onSkip = {
-                                completeOnboarding {
-                                    navigateToRoot(WelcomeRoute)
-                                }
                             }
-                        )
-                    }
-                    composable<WelcomeRoute> {
-                        WelcomeScreen(
-                            onPlayerClick = { navController.navigate(PlayerLoginRoute) },
-                            onRegisterClick = { navController.navigate(RegisterParentRoute) }
                         )
                     }
                     composable<PlayerLoginRoute> {
                         PlayerLoginScreen(
                             viewModel = viewModel,
+                            authViewModel = authViewModel,
                             onBack = { navController.popBackStack() },
                             onLoginSuccess = {
                                 navigateToRoot(ChildRoute)
-                            },
-                            onCreateAccount = { navController.navigate(RegisterParentRoute) }
+                            }
                         )
                     }
-                    composable<RegisterParentRoute> {
+                    composable<RegisterParentRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<RegisterParentRoute>()
                         RegisterParentScreen(
                             viewModel = authViewModel,
                             mainViewModel = viewModel,
+                            initialParentLogin = route.parentLogin,
                             onPlayerSuccess = {
                                 navigateToRoot(ChildRoute)
                             },
@@ -327,7 +344,7 @@ class MainActivity : FragmentActivity() {
                                     .putBoolean("is_logged_in", false)
                                     .remove("logged_in_child_id")
                                     .apply()
-                                navigateToRoot(WelcomeRoute)
+                                navigateToRoot(OnboardingRoute)
                             }
                         )
                     }
@@ -337,7 +354,7 @@ class MainActivity : FragmentActivity() {
                             onSwitchProfile = { backToLogin() },
                             onLogout = {
                                 viewModel.logoutChild()
-                                navigateToRoot(WelcomeRoute)
+                                navigateToRoot(OnboardingRoute)
                             }
                         )
                     }

@@ -1,9 +1,12 @@
 package com.example.familibalance.viewmodel
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.BuildConfig
 import com.example.familibalance.R
+import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.data.auth.AuthRepository
 import com.example.familibalance.util.UiText
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -32,7 +35,11 @@ data class AuthUiState(
     /** Вкладка «Родитель»: false — вход, true — регистрация. */
     val isParentRegisterMode: Boolean = false,
     val isLoading: Boolean = false,
-    val errorMessage: UiText? = null
+    val errorMessage: UiText? = null,
+    /** Нейтральное уведомление (например, «письмо отправлено») — не ошибка. */
+    val noticeMessage: UiText? = null,
+    /** Момент (epoch ms), до которого заблокирован повторный запрос сброса пароля. */
+    val resetCooldownUntilMs: Long = 0
 )
 
 sealed interface AuthEvent {
@@ -46,9 +53,24 @@ sealed interface AuthEvent {
  * MVI-ViewModel для экранов авторизации.
  * Вся работа с Supabase Auth/RPC инкапсулирована в [AuthRepository].
  */
-class AuthViewModel : ViewModel() {
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private val authRepository: AuthRepository? = runCatching { AuthRepository() }.getOrNull()
+
+    /** Минимальный интервал между запросами сброса пароля (30 минут). */
+    private val resetCooldownMs = 30 * 60 * 1000L
+    private val appPrefs by lazy {
+        SecurePrefs.get(getApplication(), "app_prefs")
+    }
+
+    init {
+        // Восстанавливаем cooldown после перезапуска приложения.
+        val lastResetAt = appPrefs.getLong("last_password_reset_at", 0L)
+        val until = lastResetAt + resetCooldownMs
+        if (until > System.currentTimeMillis()) {
+            update { copy(resetCooldownUntilMs = until) }
+        }
+    }
 
     /** Статус сессии Supabase (NotAuthenticated / Authenticated / RefreshFailure). */
     val sessionStatus: StateFlow<SessionStatus> =
@@ -156,6 +178,59 @@ class AuthViewModel : ViewModel() {
                 update { copy(errorMessage = authError(e, R.string.auth_error_register_generic)) }
             } finally {
                 update { copy(isLoading = false) }
+            }
+        }
+    }
+
+    /** Сброс пароля родителя: Supabase шлёт письмо со ссылкой. */
+    fun resetPassword() {
+        val state = _uiState.value
+        if (state.email.isBlank()) {
+            update { copy(errorMessage = UiText.Res(R.string.auth_err_email)) }
+            return
+        }
+        // Клиентский cooldown: не чаще одного письма в 30 минут.
+        if (System.currentTimeMillis() < _uiState.value.resetCooldownUntilMs) return
+        val repo = authRepository ?: run {
+            update { copy(errorMessage = UiText.Res(R.string.auth_err_supabase)) }
+            return
+        }
+        viewModelScope.launch {
+            update { copy(isLoading = true, errorMessage = null, noticeMessage = null) }
+            try {
+                repo.resetPassword(state.email.trim())
+                val now = System.currentTimeMillis()
+                appPrefs.edit().putLong("last_password_reset_at", now).apply()
+                update {
+                    copy(
+                        noticeMessage = UiText.Res(R.string.auth_reset_sent),
+                        resetCooldownUntilMs = now + resetCooldownMs
+                    )
+                }
+            } catch (e: Exception) {
+                update { copy(errorMessage = authError(e, R.string.auth_error_login_generic)) }
+            } finally {
+                update { copy(isLoading = false) }
+            }
+        }
+    }
+
+    /**
+     * Устанавливает новый пароль в recovery-сессии (после перехода
+     * по ссылке из письма). onResult(true) — пароль сохранён.
+     */
+    fun updatePassword(newPassword: String, onResult: (Boolean, String?) -> Unit) {
+        val repo = authRepository ?: run {
+            onResult(false, null)
+            return
+        }
+        viewModelScope.launch {
+            try {
+                repo.updatePassword(newPassword)
+                onResult(true, null)
+            } catch (e: Exception) {
+                android.util.Log.e("AuthViewModel", "updatePassword failed", e)
+                onResult(false, if (BuildConfig.DEBUG) e.message else null)
             }
         }
     }

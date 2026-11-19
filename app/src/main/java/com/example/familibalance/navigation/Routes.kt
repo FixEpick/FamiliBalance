@@ -6,13 +6,10 @@ import kotlinx.serialization.Serializable
 object OnboardingRoute
 
 @Serializable
-object WelcomeRoute
-
-@Serializable
 object PlayerLoginRoute
 
 @Serializable
-object RegisterParentRoute
+data class RegisterParentRoute(val parentLogin: Boolean = false)
 
 @Serializable
 object AdminRoute

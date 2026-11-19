@@ -16,21 +16,22 @@
     <string name="login_create_account">Создать аккаунт</string>
     <string name="login_pin_error">Неверный ПИН-код</string>
     <string name="login_field_email">Email родителя</string>
-    <string name="login_field_name">Имя ребёнка</string>
+    <string name="login_field_name">Никнейм</string>
     <string name="login_field_pin">PIN-код (4 цифры)</string>
     <string name="login_submit">Войти</string>
-    <string name="error_invalid_credentials">Неверный Email, имя или PIN-код.</string>
+    <string name="error_invalid_credentials">Неверный email, никнейм или PIN-код.</string>
     <string name="error_rate_limited">Слишком много попыток. Подождите минуту.</string>
     <string name="error_network">Ошибка сети. Проверьте подключение.</string>
     <string name="login_loading">Входим…</string>
-    <string name="parent_area_link">👑 Вход для родителей</string>
+    <string name="parent_area_link">Вход для родителей</string>
     <string name="sync_success">Данные успешно синхронизированы</string>
 
     <!-- Register / auth -->
     <string name="register_title">Регистрация</string>
     <string name="reg_avatar">АВАТАР</string>
     <string name="reg_nickname">Никнейм</string>
-    <string name="reg_pin">ПИН</string>
+    <string name="reg_pin">PIN-код</string>
+    <string name="reg_pin_hint">4 цифры — ребёнок будет входить по ним</string>
     <string name="reg_interests">ИНТЕРЕСЫ</string>
     <string name="interest_coding">💻 Кодинг</string>
     <string name="interest_science">🔬 Наука</string>
@@ -44,10 +45,31 @@
     <string name="reg_submit">Создать героя и в бой!</string>
     <string name="parent_email">Email</string>
     <string name="parent_password">Пароль</string>
-    <string name="parent_login">🔑 Вход</string>
-    <string name="parent_register">🚀 Регистрация</string>
+    <string name="parent_area_title">Кабинет родителя</string>
+    <string name="parent_login">Вход</string>
+    <string name="parent_register">Регистрация</string>
     <string name="parent_btn_register">Создать аккаунт родителя</string>
-    <string name="parent_btn_login">Войти</string>
+        <string name="parent_btn_login">Войти</string>
+    <string name="parent_consent">Я согласен с политикой конфиденциальности и пользовательским соглашением</string>
+    <string name="auth_forgot_password">Забыли пароль?</string>
+    <string name="auth_reset_sent">Письмо для сброса пароля отправлено. Повторный запрос — не чаще, чем раз в 30 минут.</string>
+    <string name="reset_confirm_title">Сброс пароля</string>
+    <string name="reset_confirm_message">На адрес %1$s будет отправлено письмо со ссылкой для сброса пароля. Откройте ссылку в приложении FamiliBalance и задайте новый пароль.</string>
+    <string name="reset_confirm_send">Отправить</string>
+    <string name="auth_reset_cooldown">Следующий запрос — через %1$d:%2$02d</string>
+    <string name="reset_password_title">Новый пароль</string>
+    <string name="reset_password_new">Новый пароль</string>
+    <string name="reset_password_confirm">Повторите пароль</string>
+    <string name="reset_password_submit">Сохранить</string>
+    <string name="reset_password_mismatch">Пароли не совпадают</string>
+    <string name="reset_password_short">Пароль должен быть не короче 6 символов</string>
+    <string name="reset_password_failed">Не удалось сменить пароль. Попробуйте ещё раз.</string>
+    <string name="reset_password_no_session">Ссылка недействительна или устарела. Запросите новую.</string>
+    <string name="auth_err_email">Введите email</string>
+    <string name="child_pin_hint">Забыл PIN? Попроси родителя посмотреть его в кабинете</string>
+    <string name="reg_parent_email_hint">Почта, на которую уже зарегистрирован родитель</string>
+    <string name="a11y_show_password">Показать пароль</string>
+    <string name="a11y_hide_password">Скрыть пароль</string>
     <string name="parent_no_account">Нет аккаунта? Зарегистрируйтесь через кнопку выше на вкладке «Новый игрок» или попросите администратора.</string>
 
     <!-- Pending request -->
@@ -93,6 +115,11 @@
     <string name="exit_dialog_title">Выход из приложения</string>
     <string name="exit_dialog_message">Вы уверены, что хотите закрыть FamiliBalance?</string>
     <string name="exit_dialog_confirm">Выйти</string>
+
+    <!-- Auth exit dialog -->
+    <string name="auth_exit_title">Выход из регистрации</string>
+    <string name="auth_exit_message">Вы уверены, что хотите вернуться к выбору роли?</string>
+    <string name="auth_exit_confirm">Выйти</string>
 
     <!-- Update dialog -->
     <string name="update_title">Доступно обновление %1$s</string>
@@ -527,25 +554,34 @@
     <string name="a11y_fullscreen_diary_photo">Полноэкранное фото дневника</string>
 
     <!-- Onboarding -->
-    <string name="onboarding_welcome_title">Добро пожаловать в КвестЛаб!</string>
-    <string name="onboarding_welcome_desc">Семейная квестовая вселенная, где дети учатся, а родители контролируют прогресс.</string>
-    <string name="onboarding_quests_title">Квесты</string>
-    <string name="onboarding_quests_desc">Родитель создаёт задания, ребёнок их выполняет и получает награду.</string>
-    <string name="onboarding_coins_title">Монеты и баланс</string>
-    <string name="onboarding_coins_desc">За выполненные квесты ребёнок копит монеты на своём балансе.</string>
-    <string name="onboarding_achievements_title">Достижения</string>
-    <string name="onboarding_achievements_desc">Система достижений мотивирует ребёнка развиваться и не бросать начатое.</string>
-    <string name="onboarding_diary_title">Дневник и оценки</string>
-    <string name="onboarding_diary_desc">Ребёнок ведёт дневник, а оценки конвертируются в монеты или штрафы.</string>
-    <string name="onboarding_rewards_title">Награды и вывод средств</string>
-    <string name="onboarding_rewards_desc">Накопленные монеты можно обменять на реальные награды — родитель подтверждает вывод.</string>
-    <string name="onboarding_screentime_title">Экранное время</string>
-    <string name="onboarding_screentime_desc">Родитель управляет лимитом экранного времени, а ребёнок может докупить минуты за монеты.</string>
-    <string name="onboarding_role_title">Кто будет пользоваться?</string>
-    <string name="onboarding_role_desc">Выберите свою роль, чтобы начать.</string>
+    <string name="onboarding_role_title">Кто за пультом?</string>
+    <string name="onboarding_role_desc">Укажите свою роль, чтобы настроить пространство под себя.</string>
     <string name="onboarding_role_parent">Я родитель</string>
     <string name="onboarding_role_child">Я ребёнок</string>
     <string name="onboarding_next">Далее</string>
     <string name="onboarding_back">Назад</string>
     <string name="onboarding_skip">Пропустить</string>
+    <string name="onboarding_start">Начать</string>
+
+    <!-- Onboarding: parent slides -->
+    <string name="onboarding_p_welcome_title">Добро пожаловать в КвестЛаб!</string>
+    <string name="onboarding_p_welcome_desc">Инструмент для развития самостоятельности: понятные задачи, мотивация и контроль прогресса.</string>
+    <string name="onboarding_p_quests_achievements_title">Квесты и достижения</string>
+    <string name="onboarding_p_quests_achievements_desc">Задавайте задачи, проверяйте отчёты и начисляйте награды. Серии выполненных дел закрепляются достижениями и прогрессом.</string>
+    <string name="onboarding_p_coins_rewards_title">Монеты и награды</string>
+    <string name="onboarding_p_coins_rewards_desc">Ребёнок видит баланс, копит на цели и обменивает монеты на согласованные награды — подтверждение за вами.</string>
+    <string name="onboarding_p_diary_screentime_title">Дневник и экранное время</string>
+    <string name="onboarding_p_diary_screentime_desc">Учебные результаты — в дневник, а экранное время ребёнок зарабатывает монетами. Лимиты и бонусы под вашим контролем.</string>
+
+    <!-- Onboarding: child slides -->
+    <string name="onboarding_c_missions_title">Миссии и фотоотчёт</string>
+    <string name="onboarding_c_missions_desc">Твоя база заданий и прокачки: бери миссии, присылай фотоотчёт и забирай награду, когда всё готово.</string>
+    <string name="onboarding_c_coins_title">Монеты и цели</string>
+    <string name="onboarding_c_coins_desc">За каждую миссию монеты летят в кошелёк и приближают к мечте. Держи серию дней и собирай достижения.</string>
+    <string name="onboarding_c_diary_time_title">Дневник и экранное время</string>
+    <string name="onboarding_c_diary_time_desc">Отмечай успехи в школе: за пятёрки — бонусные монеты. А на квестах зарабатывай минуты для игр.</string>
+    <string name="onboarding_c_rewards_title">Награды и призы</string>
+    <string name="onboarding_c_rewards_desc">Копи монеты и обменивай их на настоящие призы и подарки — проверку делает родитель.</string>
+    <string name="welcome_how_it_works">Как всё устроено</string>
+    <string name="onboarding_have_account">Есть аккаунт? Войти</string>
 </resources>
