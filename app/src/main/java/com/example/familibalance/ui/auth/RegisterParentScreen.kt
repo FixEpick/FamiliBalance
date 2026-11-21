@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -84,16 +85,16 @@ private val playerAvatars = listOf(
     "🦸‍♂️", "🐱", "🐼", "🐺"
 )
 
-private val CyberFieldColors
-    @Composable get() = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = CyberLime,
-        unfocusedBorderColor = CyberSlateBorder,
-        focusedLabelColor = CyberLime,
-        unfocusedLabelColor = CyberTextSecondary,
-        focusedTextColor = CyberTextPrimary,
-        unfocusedTextColor = CyberTextPrimary,
-        cursorColor = CyberLime
-    )
+@Composable
+private fun cyberFieldColors(hasError: Boolean = false) = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = if (hasError) CyberRed else CyberLime,
+    unfocusedBorderColor = if (hasError) CyberRed else CyberSlateBorder,
+    focusedLabelColor = if (hasError) CyberRed else CyberLime,
+    unfocusedLabelColor = CyberTextSecondary,
+    focusedTextColor = CyberTextPrimary,
+    unfocusedTextColor = CyberTextPrimary,
+    cursorColor = if (hasError) CyberRed else CyberLime
+)
 
 /**
  * Экран регистрации/входа в стиле «КвестЛаб».
@@ -143,6 +144,7 @@ fun RegisterParentScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp)
                 .padding(top = 24.dp, bottom = 32.dp)
@@ -171,7 +173,8 @@ fun RegisterParentScreen(
             if (showParentLogin) {
                 ParentLoginForm(
                     state = state,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    credentialsError = state.highlightCredentials
                 )
             } else {
                 PlayerRegisterForm(
@@ -298,7 +301,7 @@ fun PlayerRegisterForm(
             onValueChange = viewModel::onNicknameChange,
             label = { Text(stringResource(R.string.reg_nickname)) },
             singleLine = true,
-            colors = CyberFieldColors,
+            colors = cyberFieldColors(),
             modifier = Modifier.weight(1f)
         )
         OutlinedTextField(
@@ -308,7 +311,7 @@ fun PlayerRegisterForm(
             singleLine = true,
             visualTransformation = if (pinVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-            colors = CyberFieldColors,
+            colors = cyberFieldColors(),
             trailingIcon = {
                 IconButton(onClick = { pinVisible = !pinVisible }) {
                     GameIcon(
@@ -337,7 +340,7 @@ fun PlayerRegisterForm(
         label = { Text(stringResource(R.string.reg_parent_email)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-        colors = CyberFieldColors,
+        colors = cyberFieldColors(),
         supportingText = {
             Text(
                 text = stringResource(R.string.reg_parent_email_hint),
@@ -381,7 +384,8 @@ fun PlayerRegisterForm(
 @Composable
 private fun ParentLoginForm(
     state: com.example.familibalance.viewmodel.AuthUiState,
-    viewModel: AuthViewModel
+    viewModel: AuthViewModel,
+    credentialsError: Boolean
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     var consent by remember { mutableStateOf(false) }
@@ -446,7 +450,7 @@ private fun ParentLoginForm(
                 label = { Text(stringResource(R.string.parent_email)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                colors = CyberFieldColors,
+                colors = cyberFieldColors(credentialsError),
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -459,7 +463,7 @@ private fun ParentLoginForm(
                 singleLine = true,
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                colors = CyberFieldColors,
+                colors = cyberFieldColors(credentialsError),
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
                         GameIcon(
@@ -520,13 +524,24 @@ private fun ParentLoginForm(
 
             state.errorMessage?.let { error ->
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = error.asString(),
-                    color = CyberRed,
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(CyberRed.copy(alpha = 0.12f))
+                        .border(1.dp, CyberRed.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    GameIcon(icon = GameIconType.Warning, tint = CyberRed, size = 18.dp)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = error.asString(),
+                        color = CyberRed,
+                        fontSize = 13.sp,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
 
             state.noticeMessage?.let { notice ->

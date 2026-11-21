@@ -26,7 +26,6 @@ import com.example.familibalance.util.*
 fun HistoryItem(
     title: String,
     time: String,
-    date: String,
     amount: String,
     isIncome: Boolean,
     modifier: Modifier = Modifier
@@ -59,21 +58,13 @@ fun HistoryItem(
                     fontSize = 12.sp
                 )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = amount,
-                    color = if (isIncome) AccentColor else PenaltyRed,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = date,
-                    color = TextSecondary,
-                    fontSize = 12.sp
-                )
-            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = amount,
+                color = if (isIncome) AccentColor else PenaltyRed,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }

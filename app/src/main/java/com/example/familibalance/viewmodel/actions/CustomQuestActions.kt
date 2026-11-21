@@ -37,11 +37,25 @@ fun MainViewModel.deleteCustomQuest(userId: String, questId: String) {
     }
 }
 
-fun MainViewModel.updateCustomQuest(userId: String, questId: String, title: String, desc: String, reward: Int) {
+fun MainViewModel.updateCustomQuest(
+    userId: String,
+    questId: String,
+    title: String,
+    desc: String,
+    reward: Int,
+    frequency: QuestFrequency? = null,
+    requiresPhoto: Boolean? = null
+) {
     val profile = familyRepository.getChild(userId) ?: return
     val updatedQuests = profile.customQuests.map { quest ->
         if (quest.id == questId) {
-            quest.copy(title = title, description = desc, reward = reward)
+            quest.copy(
+                title = title,
+                description = desc,
+                reward = reward,
+                frequency = frequency ?: quest.frequency,
+                requiresPhoto = requiresPhoto ?: quest.requiresPhoto
+            )
         } else quest
     }
     if (updatedQuests != profile.customQuests) {

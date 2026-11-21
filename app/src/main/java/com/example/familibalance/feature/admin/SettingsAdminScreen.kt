@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import com.example.familibalance.ui.auth.ChangeParentPinDialog
 import com.example.familibalance.ui.auth.SetChildPinDialog
+import com.example.familibalance.ui.components.LanguageSelectorRow
 import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.viewmodel.AdminEvent
 import com.example.familibalance.viewmodel.AdminViewModel
@@ -61,6 +62,7 @@ fun AdminSettingsScreen(
     var isDeletingAccount by rememberSaveable { mutableStateOf(false) }
     var showResets by rememberSaveable { mutableStateOf(false) }
     var showPinPicker by rememberSaveable { mutableStateOf(false) }
+    var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
     var pinTarget by rememberSaveable { mutableStateOf<String?>(null) } // "parent" или childId
     var pendingResetAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
@@ -332,8 +334,21 @@ item {
             }
         }
         item {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = GlassBackground,
+                border = BorderStroke(1.dp, GlassStroke),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                LanguageSelectorRow(
+                    label = stringResource(R.string.admin_set_language),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
+        }
+        item {
             OutlinedButton(
-                onClick = onLogout,
+                onClick = { showLogoutDialog = true },
                 border = BorderStroke(1.dp, PenaltyRed),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
                 shape = RoundedCornerShape(10.dp),
@@ -351,7 +366,12 @@ item {
             }
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.history_version, BuildConfig.VERSION_NAME),
+                text = stringResource(
+                    R.string.history_version,
+                    BuildConfig.VERSION_NAME + " (" + stringResource(
+                        if (BuildConfig.DEBUG) R.string.build_type_debug else R.string.build_type_release
+                    ) + ")"
+                ),
                 color = TextSecondary.copy(alpha = 0.5f),
                 fontSize = 10.sp,
                 modifier = Modifier.fillMaxWidth(),
@@ -388,8 +408,13 @@ if (showPinPicker) {
         },
         confirmButton = {},
         dismissButton = {
-            TextButton(onClick = { showPinPicker = false }) {
-                Text(stringResource(R.string.action_cancel), color = TextSecondary)
+            OutlinedButton(
+                onClick = { showPinPicker = false },
+                border = BorderStroke(1.dp, GlassStroke),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
             }
         }
     )
@@ -489,6 +514,37 @@ if (showConfirmDialog && pendingResetAction != null) {
             }
         },
         dismissButton = { TextButton(onClick = { showConfirmDialog = false; pendingResetAction = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
+    )
+}
+// Подтверждение выхода из аккаунта
+if (showLogoutDialog) {
+    AlertDialog(
+        onDismissRequest = { showLogoutDialog = false },
+        containerColor = SpaceBgStart,
+        title = { Text(stringResource(R.string.admin_set_logout_title), color = AccentColor, fontWeight = FontWeight.Bold) },
+        text = { Text(stringResource(R.string.admin_set_logout_message), color = TextPrimary) },
+        confirmButton = {
+            Button(
+                onClick = {
+                    showLogoutDialog = false
+                    onLogout()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed, contentColor = Color.White),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(stringResource(R.string.admin_set_logout_confirm), fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = { showLogoutDialog = false },
+                border = BorderStroke(1.dp, GlassStroke),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
+            }
+        }
     )
 }
 // Удаление аккаунта (Google Play): необратимо, с подтверждением и спиннером

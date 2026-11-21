@@ -52,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
@@ -73,6 +74,12 @@ import com.example.familibalance.feature.child.components.*
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.components.*
 import com.example.familibalance.viewmodel.actions.*
+import android.text.format.DateFormat
+import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Date
+import java.util.Locale
 
 
 /** Спецификация локализованного заголовка: resId + аргументы для stringResource. resId == null → показываем title как есть. */
@@ -171,6 +178,7 @@ internal const val HIST_FILTER_ACHIEVEMENTS = 2
 internal const val HIST_FILTER_SCREEN_TIME = 3
 internal const val HIST_FILTER_FINES = 4
 internal const val HIST_FILTER_OTHER = 5
+internal const val HIST_FILTER_MANUAL = 6
 
 /**
  * Маппинг записи истории на индекс фильтра — по [HistoryData.type],
@@ -184,11 +192,13 @@ internal fun historyFilterIndex(item: HistoryData): Int = when (item.type) {
     HistoryType.QUEST_REWARD, HistoryType.QUEST_APPROVED,
     HistoryType.CUSTOM_QUEST_DONE, HistoryType.BONUS_QUEST_DONE,
     HistoryType.BONUS_QUEST_APPROVED, HistoryType.DIARY_GRADE_5,
-    HistoryType.DIARY_GRADE_4, HistoryType.HONEST_APPROVED,
-    HistoryType.ADMIN_REWARD -> HIST_FILTER_QUESTS
+    HistoryType.DIARY_GRADE_4, HistoryType.HONEST_APPROVED -> HIST_FILTER_QUESTS
     HistoryType.ACHIEVEMENT_UNLOCKED, HistoryType.STREAK_BONUS -> HIST_FILTER_ACHIEVEMENTS
     HistoryType.SCREEN_TIME_PURCHASE -> HIST_FILTER_SCREEN_TIME
-    HistoryType.FINE, HistoryType.ADMIN_WITHDRAW -> HIST_FILTER_FINES
+    HistoryType.FINE -> HIST_FILTER_FINES
+    // Ручные пополнения/списания родителя — не квесты и не штрафы:
+    // показываем только в «Все» и отдельном фильтре «Ручные операции».
+    HistoryType.ADMIN_REWARD, HistoryType.ADMIN_WITHDRAW -> HIST_FILTER_MANUAL
     HistoryType.CASHOUT_GIVEN, HistoryType.CASHOUT_REQUEST,
     HistoryType.DREAM_SET -> HIST_FILTER_OTHER
     else -> when (item.category) {
@@ -211,6 +221,41 @@ private fun localizedHistoryTitle(item: HistoryData): String {
     }
 }
 
+/** Заголовок-разделитель дня: «Сегодня»/«Вчера»/«19 ноября» (или «19 November»). */
+@Composable
+private fun HistoryDateHeader(date: String) {
+    val parsedDate = remember(date) {
+        val parts = date.split(".")
+        if (parts.size == 3) {
+            runCatching {
+                LocalDate.of(parts[2].toInt(), parts[1].toInt(), parts[0].toInt())
+            }.getOrNull()
+        } else {
+            null
+        }
+    }
+    val label = when {
+        parsedDate == null -> date
+        parsedDate == LocalDate.now() -> stringResource(R.string.history_today)
+        parsedDate == LocalDate.now().minusDays(1) -> stringResource(R.string.history_yesterday)
+        else -> {
+            // getBestDateTimePattern подбирает падеж месяца под локаль
+            // («22 ноября» в RU, «22 November» в EN).
+            val pattern = DateFormat.getBestDateTimePattern(Locale.getDefault(), "dMMMM")
+            SimpleDateFormat(pattern, Locale.getDefault()).format(
+                Date.from(parsedDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+            )
+        }
+    }
+    Text(
+        text = label,
+        color = TextSecondary,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(top = 10.dp, bottom = 2.dp)
+    )
+}
+
 @Composable
 fun HistoryScreen(
     viewModel: MainViewModel,
@@ -228,7 +273,8 @@ fun HistoryScreen(
         stringResource(R.string.history_filter_achievements),
         stringResource(R.string.history_filter_screentime),
         stringResource(R.string.history_filter_fines),
-        stringResource(R.string.history_filter_other)
+        stringResource(R.string.history_filter_other),
+        stringResource(R.string.history_filter_manual)
     )
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val currentChild = familyState.children[familyState.selectedChildId]
@@ -257,6 +303,13 @@ fun HistoryScreen(
         } else {
             historyItems.filter { historyFilterIndex(it) == selectedFilter }
         }
+    }
+
+    // Группировка по дате (строка "dd.MM.yyyy") с сохранением порядка:
+    // история отсортирована от новых к старым, LinkedHashMap groupBy
+    // даёт группы в том же порядке.
+    val groupedHistory = remember(filteredItems) {
+        filteredItems.groupBy { it.date }
     }
 
     // Количество квестов, ожидающих проверки папой
@@ -358,30 +411,44 @@ fun HistoryScreen(
         }
 
         item {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(filterLabels.size) { index ->
-                    FilterChip(
-                        selected = selectedFilter == index,
-                        onClick = { selectedFilter = index },
-                        label = { Text(filterLabels[index], fontSize = 14.sp) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = AccentColor.copy(alpha = 0.2f),
-                            selectedLabelColor = AccentColor,
-                            containerColor = GlassBackground,
-                            labelColor = TextSecondary
-                        ),
-                        border = FilterChipDefaults.filterChipBorder(
-                            enabled = true,
+            // Строка фильтров с фейдом справа — намёк на горизонтальный скролл.
+            Box(modifier = Modifier.fillMaxWidth()) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(filterLabels.size) { index ->
+                        FilterChip(
                             selected = selectedFilter == index,
-                            borderColor = GlassStroke,
-                            selectedBorderColor = AccentColor
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                            onClick = { selectedFilter = index },
+                            label = { Text(filterLabels[index], fontSize = 14.sp) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = AccentColor.copy(alpha = 0.2f),
+                                selectedLabelColor = AccentColor,
+                                containerColor = GlassBackground,
+                                labelColor = TextSecondary
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = selectedFilter == index,
+                                borderColor = GlassStroke,
+                                selectedBorderColor = AccentColor
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    }
                 }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .fillMaxHeight()
+                        .width(40.dp)
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(Color.Transparent, SpaceBgStart)
+                            )
+                        )
+                )
             }
         }
 
@@ -389,14 +456,37 @@ fun HistoryScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
 
-        items(filteredItems) { item ->
-            HistoryItem(
-                title = localizedHistoryTitle(item),
-                time = item.time,
-                date = item.date,
-                amount = item.amount,
-                isIncome = item.isIncome
-            )
+        if (filteredItems.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.history_empty_filter),
+                        color = TextSecondary,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            // Группировка по дням: заголовок-разделитель + карточки только со временем.
+            groupedHistory.forEach { (date, dayItems) ->
+                item(key = "hist_header_$date") {
+                    HistoryDateHeader(date = date)
+                }
+                items(dayItems) { item ->
+                    HistoryItem(
+                        title = localizedHistoryTitle(item),
+                        time = item.time,
+                        amount = item.amount,
+                        isIncome = item.isIncome
+                    )
+                }
+            }
         }
 
         item {

@@ -175,6 +175,43 @@ class MainViewModel(
             // существовать в загруженном стейте. Иначе флаг сбрасываем.
             val prefs = getApplication<Application>()
                 .let { SecurePrefs.get(it, "app_prefs") }
+            // Режим бенчмарка админки: подставляем тестовых детей,
+            // чтобы AdminRoute открылся с наполненным кабинетом.
+            // parentUserId берём из анонимной сессии — AdminScreen
+            // фильтрует детей по uid родителя.
+            if (com.example.familibalance.util.BenchmarkSession.adminRequested) {
+                SupabaseManager.ensureSession()
+                val uid = runCatching {
+                    SupabaseManager.client?.auth?.currentUserOrNull()?.id
+                }.getOrNull().orEmpty()
+                val benchChildren =
+                    com.example.familibalance.util.BenchmarkSession.createAdminChildren(uid)
+                benchChildren.forEach { AppSharedState.children[it.id] = it }
+                AppSharedState.selectedChildId = benchChildren.first().id
+                prefs.edit {
+                    putBoolean("is_admin_logged_in", true)
+                    putBoolean("onboarding_done", true)
+                    putBoolean("is_logged_in", false)
+                    remove("logged_in_child_id")
+                }
+                emitFamilyState()
+            }
+            // Режим бенчмарка Baseline Profile: collect переустанавливает
+            // приложение (свежий стейт), поэтому подставляем тестовый
+            // профиль и флаги автовхода — ChildSection открывается сразу,
+            // минуя онбординг и форму входа. В обычной жизни флаг false.
+            if (com.example.familibalance.util.BenchmarkSession.requested) {
+                val bench = com.example.familibalance.util.BenchmarkSession.createChildProfile()
+                AppSharedState.children[bench.id] = bench
+                AppSharedState.selectedChildId = bench.id
+                prefs.edit {
+                    putBoolean("is_logged_in", true)
+                    putString("logged_in_child_id", bench.id)
+                    putBoolean("onboarding_done", true)
+                    putBoolean("is_admin_logged_in", false)
+                }
+                emitFamilyState()
+            }
             val savedChildId = prefs.getString("logged_in_child_id", null)
             if (prefs.getBoolean("is_logged_in", false)) {
                 if (!savedChildId.isNullOrBlank() &&

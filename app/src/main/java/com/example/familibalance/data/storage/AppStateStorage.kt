@@ -137,11 +137,22 @@ object AppStateStorage {
                 if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) {
                     val local = AppSharedState.children[userId]
                     if (local != null && local.stateUpdatedAt >= dto.stateUpdatedAt) {
-                        android.util.Log.w(
-                            "AppStateStorage",
-                            "remote update SKIPPED (dirty+LWW): user=$userId " +
-                                "local.ts=${local.stateUpdatedAt} remote.ts=${dto.stateUpdatedAt}"
-                        )
+                        // local.ts == remote.ts — это эхо собственного push'а
+                        // (в облаке лежит наш же снапшот): не проблема, debug.
+                        // local.ts > remote.ts — реальные локальные правки ещё
+                        // не ушли в облако: пропуск осознанный, warning.
+                        if (local.stateUpdatedAt == dto.stateUpdatedAt) {
+                            android.util.Log.d(
+                                "AppStateStorage",
+                                "remote update SKIPPED (dirty+echo): user=$userId ts=${dto.stateUpdatedAt}"
+                            )
+                        } else {
+                            android.util.Log.w(
+                                "AppStateStorage",
+                                "remote update SKIPPED (dirty+LWW): user=$userId " +
+                                    "local.ts=${local.stateUpdatedAt} remote.ts=${dto.stateUpdatedAt}"
+                            )
+                        }
                         return@withContext
                     }
                 }

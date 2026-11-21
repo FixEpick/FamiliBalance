@@ -2,6 +2,7 @@ package com.example.familibalance.feature.admin
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
 import com.example.familibalance.data.model.ChildProfileState
-import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.ui.theme.*
 
@@ -46,6 +46,7 @@ fun AdminTopBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(TopBarBg.copy(alpha = 0.85f))
                 .statusBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -73,10 +74,6 @@ fun AdminTopBar(
                     Text(stringResource(R.string.admin_panel_title), color = TextSecondary, fontSize = 11.sp)
                     Text(stringResource(R.string.admin_role), color = TextPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LanguageSelectorButton()
             }
         }
 

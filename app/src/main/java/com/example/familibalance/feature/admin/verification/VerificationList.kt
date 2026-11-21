@@ -340,16 +340,63 @@ fun VerificationAdminContent(
                     )
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    var depositInput by remember { mutableStateOf("") }
-                    var depositDesc by remember { mutableStateOf("") }
+                    var isDeposit by remember { mutableStateOf(true) }
+                    var amountInput by remember { mutableStateOf("") }
+                    var descInput by remember { mutableStateOf("") }
+                    var isFine by remember { mutableStateOf(false) }
+
+                    // Переключатель режима: начислить / списать — единая капсула
+                    Surface(
+                        shape = RoundedCornerShape(50),
+                        color = GlassBackground,
+                        border = BorderStroke(1.dp, GlassStroke)
+                    ) {
+                        Row(modifier = Modifier.padding(4.dp)) {
+                            listOf(true to R.string.admin_mode_deposit, false to R.string.admin_mode_withdraw)
+                                .forEach { (deposit, labelRes) ->
+                                    val selected = isDeposit == deposit
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(
+                                                when {
+                                                    selected && deposit -> StatusGreen
+                                                    selected -> PenaltyRed
+                                                    else -> Color.Transparent
+                                                }
+                                            )
+                                            .clickable {
+                                                isDeposit = deposit
+                                                if (deposit) isFine = false
+                                            }
+                                            .padding(vertical = 10.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = stringResource(labelRes),
+                                            color = if (selected) {
+                                                if (deposit) SpaceBgStart else Color.White
+                                            } else {
+                                                if (deposit) StatusGreen else PenaltyRed
+                                            },
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedTextField(
-                            value = depositInput,
-                            onValueChange = { depositInput = it },
+                            value = amountInput,
+                            onValueChange = { amountInput = it },
                             placeholder = { Text(stringResource(R.string.admin_amount_hint), color = TextSecondary.copy(alpha = 0.6f)) },
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                                 keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
@@ -359,7 +406,7 @@ fun VerificationAdminContent(
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedContainerColor = SpaceBgStart,
                                 unfocusedContainerColor = SpaceBgStart,
-                                focusedBorderColor = AccentColor,
+                                focusedBorderColor = if (isDeposit) StatusGreen else PenaltyRed,
                                 unfocusedBorderColor = GlassStroke,
                                 focusedTextColor = Color.White,
                                 unfocusedTextColor = Color.White
@@ -367,24 +414,40 @@ fun VerificationAdminContent(
                         )
                         Button(
                             onClick = {
-                                val amount = depositInput.toIntOrNull()
+                                val amount = amountInput.toIntOrNull()
                                 if (amount != null && amount > 0) {
-                                    viewModel.adminDeposit(child.id, amount, depositDesc)
-                                    depositInput = ""
-                                    depositDesc = ""
+                                    if (isDeposit) {
+                                        viewModel.adminDeposit(child.id, amount, descInput)
+                                    } else if (isFine) {
+                                        viewModel.applyFine(child.id, amount, descInput)
+                                    } else {
+                                        viewModel.adminWithdraw(child.id, amount, descInput)
+                                    }
+                                    amountInput = ""
+                                    descInput = ""
+                                    isFine = false
                                 }
                             },
-                            enabled = !isProcessingAction,
-                            colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
-                            shape = RoundedCornerShape(12.dp),
+                            enabled = !isProcessingAction &&
+                                (amountInput.toIntOrNull()?.let { it > 0 } == true),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isDeposit) StatusGreen else PenaltyRed,
+                                contentColor = if (isDeposit) SpaceBgStart else Color.White,
+                                disabledContainerColor = GlassBackground,
+                                disabledContentColor = TextSecondary
+                            ),
+                            shape = RoundedCornerShape(50),
                             modifier = Modifier.height(56.dp)
                         ) {
-                            Text(stringResource(R.string.admin_add), fontWeight = FontWeight.Bold)
+                            Text(
+                                stringResource(R.string.admin_apply),
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                     OutlinedTextField(
-                        value = depositDesc,
-                        onValueChange = { depositDesc = it },
+                        value = descInput,
+                        onValueChange = { descInput = it },
                         label = { Text(stringResource(R.string.admin_desc_label), color = TextPrimary) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
@@ -398,134 +461,72 @@ fun VerificationAdminContent(
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    var withdrawInput by remember { mutableStateOf("") }
-                    var withdrawDesc by remember { mutableStateOf("") }
-                    var isFine by remember { mutableStateOf(false) }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = withdrawInput,
-                            onValueChange = { withdrawInput = it },
-                            placeholder = { Text(stringResource(R.string.admin_amount_hint), color = TextSecondary.copy(alpha = 0.6f)) },
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                            ),
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = SpaceBgStart,
-                                unfocusedContainerColor = SpaceBgStart,
-                                focusedBorderColor = PenaltyRed,
-                                unfocusedBorderColor = GlassStroke,
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            )
-                        )
-                        Button(
-                            onClick = {
-                                val amount = withdrawInput.toIntOrNull()
-                                if (amount != null && amount > 0) {
-                                    if (isFine) {
-                                        viewModel.applyFine(child.id, amount, withdrawDesc)
-                                    } else {
-                                        viewModel.adminWithdraw(child.id, amount, withdrawDesc)
-                                    }
-                                    withdrawInput = ""
-                                    withdrawDesc = ""
-                                    isFine = false
-                                }
-                            },
-                            enabled = !isProcessingAction,
-                            colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.height(56.dp)
+                    if (!isDeposit) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(stringResource(R.string.admin_withdraw), fontWeight = FontWeight.Bold)
-                        }
-                    }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Switch(
-                            checked = isFine,
-                            onCheckedChange = { isFine = it },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = PenaltyRed,
-                                checkedTrackColor = PenaltyRed.copy(alpha = 0.4f)
+                            Switch(
+                                checked = isFine,
+                                onCheckedChange = { isFine = it },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = PenaltyRed,
+                                    checkedTrackColor = PenaltyRed.copy(alpha = 0.4f)
+                                )
                             )
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.admin_is_fine),
+                                color = TextSecondary,
+                                fontSize = 12.sp
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = stringResource(R.string.admin_is_fine),
+                            text = stringResource(R.string.admin_fine_presets_label),
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
-                    }
-                    OutlinedTextField(
-                        value = withdrawDesc,
-                        onValueChange = { withdrawDesc = it },
-                        label = { Text(stringResource(R.string.admin_desc_label), color = TextPrimary) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = SpaceBgStart,
-                            unfocusedContainerColor = SpaceBgStart,
-                            focusedBorderColor = PenaltyRed,
-                            unfocusedBorderColor = GlassStroke,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                        Spacer(modifier = Modifier.height(6.dp))
+                        val finePresetReasons = listOf(
+                            stringResource(R.string.admin_fine_reason_grade3),
+                            stringResource(R.string.admin_fine_reason_grade2),
+                            stringResource(R.string.admin_fine_reason_mischief),
+                            stringResource(R.string.admin_fine_reason_lie)
                         )
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = stringResource(R.string.admin_fine_presets_label),
-                        color = TextSecondary,
-                        fontSize = 12.sp
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    val finePresetReasons = listOf(
-                        stringResource(R.string.admin_fine_reason_grade3),
-                        stringResource(R.string.admin_fine_reason_grade2),
-                        stringResource(R.string.admin_fine_reason_mischief),
-                        stringResource(R.string.admin_fine_reason_lie)
-                    )
-                    val finePresets = listOf(
-                        Triple(R.string.admin_fine_preset_grade3, 20, finePresetReasons[0]),
-                        Triple(R.string.admin_fine_preset_grade2, 50, finePresetReasons[1]),
-                        Triple(R.string.admin_fine_preset_mischief, 30, finePresetReasons[2]),
-                        Triple(R.string.admin_fine_preset_lie, 100, finePresetReasons[3])
-                    )
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(finePresets) { (labelRes, amount, reason) ->
-                            FilterChip(
-                                selected = false,
-                                onClick = {
-                                    isFine = true
-                                    withdrawInput = amount.toString()
-                                    withdrawDesc = reason
-                                },
-                                label = { Text(stringResource(labelRes), fontSize = 12.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = PenaltyRed.copy(alpha = 0.12f),
-                                    labelColor = PenaltyRed
-                                ),
-                                border = FilterChipDefaults.filterChipBorder(
-                                    enabled = true,
+                        val finePresets = listOf(
+                            Triple(R.string.admin_fine_preset_grade3, 20, finePresetReasons[0]),
+                            Triple(R.string.admin_fine_preset_grade2, 50, finePresetReasons[1]),
+                            Triple(R.string.admin_fine_preset_mischief, 30, finePresetReasons[2]),
+                            Triple(R.string.admin_fine_preset_lie, 100, finePresetReasons[3])
+                        )
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(finePresets) { (labelRes, amount, reason) ->
+                                FilterChip(
                                     selected = false,
-                                    borderColor = PenaltyRed.copy(alpha = 0.4f),
-                                    selectedBorderColor = PenaltyRed
-                                ),
-                                shape = RoundedCornerShape(10.dp)
-                            )
+                                    onClick = {
+                                        isFine = true
+                                        amountInput = amount.toString()
+                                        descInput = reason
+                                    },
+                                    label = { Text(stringResource(labelRes), fontSize = 12.sp) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        containerColor = PenaltyRed.copy(alpha = 0.12f),
+                                        labelColor = PenaltyRed
+                                    ),
+                                    border = FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = false,
+                                        borderColor = PenaltyRed.copy(alpha = 0.4f),
+                                        selectedBorderColor = PenaltyRed
+                                    ),
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                            }
                         }
                     }
 

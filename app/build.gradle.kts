@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.google.services) apply false
+    alias(libs.plugins.androidx.baselineprofile)
 }
 
 // google-services.json нужен для FCM-пушей. Если файла нет — плагин не
@@ -61,8 +62,8 @@ android {
         applicationId = "com.example.familibalance"
         minSdk = 24
         targetSdk = 37
-        versionCode = 23
-        versionName = "2.0.3"
+        versionCode = 24
+        versionName = "2.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -135,6 +136,13 @@ android {
 // РџСѓС‚СЊ РІС‹С‡РёСЃР»СЏРµРј РЅР° СЌС‚Р°РїРµ РєРѕРЅС„РёРіСѓСЂР°С†РёРё: doFirst РЅРµ РґРѕР»Р¶РµРЅ Р·Р°С…РІР°С‚С‹РІР°С‚СЊ
 // Project (РёРЅР°С‡Рµ configuration cache РЅРµ РјРѕР¶РµС‚ СЃРµСЂРёР°Р»РёР·РѕРІР°С‚СЊ Р·Р°РґР°С‡Сѓ).
 val keyPropertiesPath = rootProject.file("key.properties").absolutePath
+
+// Baseline Profile: единый профиль для всех вариантов, исходник коммитим
+// в репозиторий (src/main/generated/baselineProfiles/).
+baselineProfile {
+    saveInSrc = true
+    mergeIntoMain = true
+}
 
 // Release guard lives in a top-level function: the doFirst lambda must not
 // capture the Gradle script object, otherwise the configuration cache cannot
@@ -211,6 +219,10 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    // Установка Baseline Profile на устройстве при первом запуске.
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":baselineprofile"))
 
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

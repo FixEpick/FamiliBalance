@@ -24,4 +24,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "FamiliBalance"
 include(":app")
+include(":baselineprofile")
  

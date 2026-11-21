@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -55,7 +56,8 @@ enum class GameIconType(val image: ImageVector) {
     Person(Icons.Filled.Person),
     Settings(Icons.Filled.Settings),
     Eye(Icons.Filled.Visibility),
-    EyeOff(Icons.Filled.VisibilityOff)
+    EyeOff(Icons.Filled.VisibilityOff),
+    Warning(Icons.Filled.Warning)
 }
 
 @Composable

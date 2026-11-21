@@ -3,5 +3,15 @@
 
     <style name="Theme.FamiliBalance" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/splash_background</item>
+        <!-- Edge-to-edge включается вручную через enableEdgeToEdge() в MainActivity.
+             Opt-out отключает принудительный edge-to-edge Android 15+ для окон
+             диалогов, чтобы поп-апы не уезжали под статус-бар/вырез. -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+        <item name="android:dialogTheme">@style/Theme.FamiliBalance.Dialog</item>
+    </style>
+
+    <style name="Theme.FamiliBalance.Dialog" parent="android:Theme.Material.Light.Dialog">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 </resources>

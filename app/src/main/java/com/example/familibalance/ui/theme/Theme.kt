@@ -17,11 +17,11 @@ data class AppThemePalette(
 
 val AppThemes = listOf(
     AppThemePalette("COSMIC_BLUE", Color(0xFF5CE1E6), Color(0xFF7B61FF)),
-    AppThemePalette("CYBER_PINK", Color(0xFFFF0080), Color(0xFFE91E63)),
+    AppThemePalette("CYBER_PINK", Color(0xFFFF4D94), Color(0xFFFF8AB0)),
     AppThemePalette("TOXIC_GREEN", Color(0xFF39FF14), Color(0xFF00FF41)),
     AppThemePalette("SOLAR_GOLD", Color(0xFFFFD700), Color(0xFFFFA500)),
-    AppThemePalette("INFERNO_RED", Color(0xFFFF0040), Color(0xFFFF1744)),
-    AppThemePalette("GALAXY_PURPLE", Color(0xFFB000FF), Color(0xFF8A2BE2)),
+    AppThemePalette("INFERNO_RED", Color(0xFFFF6B6B), Color(0xFFFF8A80)),
+    AppThemePalette("GALAXY_PURPLE", Color(0xFFCC77FF), Color(0xFFAA66FF)),
     AppThemePalette("ARCTIC_ICE", Color(0xFF00FFFF), Color(0xFF87CEEB)),
     AppThemePalette("SUNSET_ORANGE", Color(0xFFFF8C00), Color(0xFFFF4500))
 )

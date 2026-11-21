@@ -106,7 +106,11 @@ fun AdminScreen(
 
     // Показываем только детей, привязанных к текущему родителю.
     // Гость (uid == null) видит всех — как раньше.
-    val visibleChildren = if (currentUid == null) {
+    // Режим бенчмарка: Supabase-сессии родителя нет, показываем
+    // всех тестовых детей независимо от uid.
+    val visibleChildren = if (
+        com.example.familibalance.util.BenchmarkSession.adminRequested || currentUid == null
+    ) {
         familyState.children.values.toList()
     } else {
         familyState.children.values.filter { it.parentUserId == currentUid }
@@ -179,7 +183,11 @@ fun AdminScreen(
     val requestNotifPermission = rememberPushPermissionRequester()
     var notifPermissionAsked by remember { mutableStateOf(false) }
     LaunchedEffect(visibleChildren.isNotEmpty()) {
-        if (!notifPermissionAsked && visibleChildren.isNotEmpty()) {
+        // В режиме бенчмарка системный диалог разрешения сломал бы
+        // сценарий генератора профиля — пропускаем.
+        if (!com.example.familibalance.util.BenchmarkSession.adminRequested &&
+            !notifPermissionAsked && visibleChildren.isNotEmpty()
+        ) {
             notifPermissionAsked = true
             requestNotifPermission()
         }
@@ -207,28 +215,96 @@ fun AdminScreen(
         }
     }
 
+    // Диалог выдачи наличных: сумма + «Макс», динамический текст и кнопка.
+    var cashoutAmountText by remember { mutableStateOf("") }
+    LaunchedEffect(showCashOutDialog, child.id) {
+        if (showCashOutDialog) cashoutAmountText = child.balance.toString()
+    }
     if (showCashOutDialog) {
+        val cashoutAmount = cashoutAmountText.toIntOrNull()
+        val cashoutValid = cashoutAmount != null && cashoutAmount > 0 && cashoutAmount <= child.balance
+        val cashoutRemaining = child.balance - (cashoutAmount ?: 0)
         AlertDialog(
             onDismissRequest = { showCashOutDialog = false },
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.admin_cashout_title), color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.admin_cashout_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
             text = {
-                Text(
-                    stringResource(R.string.admin_cashout_message, childDisplayName(child), child.balance),
-                    color = TextPrimary
-                )
+                AppLocaleContent {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(
+                            stringResource(
+                                R.string.admin_cashout_available,
+                                child.balance,
+                                cashoutRemaining
+                            ),
+                            color = TextPrimary,
+                            fontSize = 14.sp
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = cashoutAmountText,
+                                onValueChange = { cashoutAmountText = it.filter(Char::isDigit) },
+                                label = { Text(stringResource(R.string.admin_cashout_amount_label), color = TextPrimary) },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedContainerColor = SpaceBgStart,
+                                    unfocusedContainerColor = SpaceBgStart,
+                                    focusedBorderColor = AccentColor,
+                                    unfocusedBorderColor = GlassStroke,
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+                            Surface(
+                                onClick = { cashoutAmountText = child.balance.toString() },
+                                shape = RoundedCornerShape(10.dp),
+                                color = AccentColor.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, AccentColor.copy(alpha = 0.6f))
+                            ) {
+                                Text(
+                                    stringResource(R.string.admin_cashout_max),
+                                    color = AccentColor,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)
+                                )
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        viewModel.adminCashoutAll(child.id)
+                        cashoutAmount?.let { viewModel.adminCashoutAmount(child.id, it) }
                         showCashOutDialog = false
                     },
-                    enabled = !isProcessingAction,
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
+                    enabled = cashoutValid && !isProcessingAction,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AccentColor,
+                        contentColor = SpaceBgStart,
+                        disabledContainerColor = GlassBackground,
+                        disabledContentColor = TextSecondary
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(stringResource(R.string.admin_cashout_confirm), fontWeight = FontWeight.Bold)
+                    AppLocaleContent {
+                        Text(
+                            if (cashoutAmount == child.balance) {
+                                stringResource(R.string.admin_cashout_confirm)
+                            } else {
+                                stringResource(R.string.admin_cashout_submit_partial, cashoutAmount ?: 0)
+                            },
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             },
             dismissButton = {
@@ -238,12 +314,15 @@ fun AdminScreen(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(stringResource(R.string.action_cancel))
+                    AppLocaleContent { Text(stringResource(R.string.action_cancel)) }
                 }
             }
         )
     }
 
+    // Панель родителя не зависит от темы ребёнка: фиксируем
+    // стабильную сине-голубую палитру (COSMIC_BLUE) для всего кабинета.
+    CompositionLocalProvider(LocalAppPalette provides AppThemes.first()) {
     Box(
         modifier = modifier.fillMaxSize()
     ) {
@@ -339,5 +418,6 @@ fun AdminScreen(
                 }
             }
         }
+    }
     }
 }

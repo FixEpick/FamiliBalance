@@ -13,6 +13,7 @@ import androidx.activity.compose.LocalActivity
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -110,6 +111,19 @@ class MainActivity : FragmentActivity() {
             android.view.WindowManager.LayoutParams.FLAG_SECURE,
             android.view.WindowManager.LayoutParams.FLAG_SECURE
         )
+        // Baseline Profile: генератор передаёт extra — пропускаем
+        // онбординг/вход. Значение "admin" — кабинет родителя с тестовыми
+        // детьми, "child" или boolean true — детский раздел.
+        val benchMode = intent.getStringExtra(
+            com.example.familibalance.util.BenchmarkSession.EXTRA_SKIP_ONBOARDING
+        )
+        com.example.familibalance.util.BenchmarkSession.adminRequested = benchMode == "admin"
+        com.example.familibalance.util.BenchmarkSession.requested =
+            benchMode == "child" ||
+                (benchMode == null && intent.getBooleanExtra(
+                    com.example.familibalance.util.BenchmarkSession.EXTRA_SKIP_ONBOARDING,
+                    false
+                ))
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         updateViewModel = ViewModelProvider(this)[UpdateViewModel::class.java]
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
@@ -118,7 +132,22 @@ class MainActivity : FragmentActivity() {
         handleAuthDeepLink(intent)
         handlePushIntent(intent)
 
-        enableEdgeToEdge()
+        // Debug-сборка: одноразовый Toast при каждом запуске,
+        // чтобы сразу было видно, какая сборка установлена.
+        if (BuildConfig.DEBUG) {
+            android.widget.Toast.makeText(
+                this,
+                getString(R.string.debug_build_toast),
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
+
+        // Тёмный UI → светлые иконки системных баров (иначе часы/батарея
+        // сливаются с тёмным фоном статус-бара).
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        )
         setContent {
             val updateState by updateViewModel.uiState.collectAsStateWithLifecycle()
             LaunchedEffect(Unit) { updateViewModel.checkOnLaunch() }
@@ -304,6 +333,9 @@ class MainActivity : FragmentActivity() {
                     // Так OnboardingRoute не успевает отрисоваться перед
                     // автоматическим переходом.
                     startDestination = when {
+                        // Режим бенчмарка админки: Supabase-сессии родителя
+                        // нет, открываем AdminRoute напрямую с тестовыми детьми.
+                        com.example.familibalance.util.BenchmarkSession.adminRequested -> AdminRoute
                         isParentSession -> AdminRoute
                         autoLoginChildId != null -> ChildRoute()
                         else -> OnboardingRoute
@@ -415,9 +447,11 @@ class MainActivity : FragmentActivity() {
                         cancelText = exitDialogCancel,
                         onConfirm = {
                             showExitDialog = false
+                            // finishAffinity завершает все Activity задачи —
+                            // killProcess не нужен: он убивает процесс сигналом
+                            // SIGKILL, система считает это аварийной гибелью
+                            // (WIN DEATH, потеря состояния, блокировка рестарта).
                             activity?.finishAffinity()
-                            // Р“Р°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅС‹Р№ РІС‹С…РѕРґ, РµСЃР»Рё finishAffinity РЅРµ СЃСЂР°Р±РѕС‚Р°Р»
-                            android.os.Process.killProcess(android.os.Process.myPid())
                         },
                         onDismiss = { showExitDialog = false }
                     )

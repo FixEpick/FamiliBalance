@@ -138,8 +138,9 @@ fun QuestVerificationCard(
         AlertDialog(
             onDismissRequest = { showRejectDialog = false },
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) },
+            title = { AppLocaleContent { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) } },
             text = {
+                AppLocaleContent {
                 Column {
                     OutlinedTextField(
                         value = rejectReasonText,
@@ -170,6 +171,7 @@ fun QuestVerificationCard(
                         }
                     }
                 }
+                }
             },
             confirmButton = {
                 Button(onClick = {
@@ -182,12 +184,12 @@ fun QuestVerificationCard(
                     applyLieFine = false
                     showRejectDialog = false
                 }, enabled = actionEnabled) {
-                    Text(stringResource(R.string.admin_reject))
+                    AppLocaleContent { Text(stringResource(R.string.admin_reject)) }
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRejectDialog = false }) {
-                    Text(stringResource(R.string.action_cancel))
+                    AppLocaleContent { Text(stringResource(R.string.action_cancel)) }
                 }
             }
         )

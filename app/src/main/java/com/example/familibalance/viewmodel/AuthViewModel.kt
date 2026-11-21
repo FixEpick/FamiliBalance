@@ -10,7 +10,9 @@ import com.example.familibalance.R
 import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.data.auth.AuthRepository
 import com.example.familibalance.util.UiText
+import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.status.SessionStatus
+import io.github.jan.supabase.exceptions.RestException
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -37,6 +39,8 @@ data class AuthUiState(
     val isParentRegisterMode: Boolean = false,
     val isLoading: Boolean = false,
     val errorMessage: UiText? = null,
+    /** true — ошибка invalid_credentials: подсветить поля email/пароль красным. */
+    val highlightCredentials: Boolean = false,
     /** Нейтральное уведомление (например, «письмо отправлено») — не ошибка. */
     val noticeMessage: UiText? = null,
     /** Момент (epoch ms), до которого заблокирован повторный запрос сброса пароля. */
@@ -90,15 +94,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     val events: SharedFlow<AuthEvent> = _events.asSharedFlow()
 
     // --- Общие ---
-    fun onEmailChange(value: String) = update { copy(email = value, errorMessage = null) }
-    fun onPasswordChange(value: String) = update { copy(password = value, errorMessage = null) }
+    fun onEmailChange(value: String) = update { copy(email = value, errorMessage = null, highlightCredentials = false) }
+    fun onPasswordChange(value: String) = update { copy(password = value, errorMessage = null, highlightCredentials = false) }
     fun toggleAuthMode() = update {
-        copy(isRegisterMode = !isRegisterMode, errorMessage = null)
+        copy(isRegisterMode = !isRegisterMode, errorMessage = null, highlightCredentials = false)
     }
 
     /** Переключает режим на вкладке «Родитель»: вход ↔ регистрация. */
     fun toggleParentMode() = update {
-        copy(isParentRegisterMode = !isParentRegisterMode, errorMessage = null)
+        copy(isParentRegisterMode = !isParentRegisterMode, errorMessage = null, highlightCredentials = false)
     }
 
     // --- Регистрация игрока ---
@@ -148,12 +152,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         viewModelScope.launch {
-            update { copy(isLoading = true, errorMessage = null) }
+            update { copy(isLoading = true, errorMessage = null, highlightCredentials = false) }
             try {
                 repo.signIn(state.email.trim(), state.password)
                 _events.emit(AuthEvent.AuthSuccess)
             } catch (e: Exception) {
-                update { copy(errorMessage = authError(e, R.string.auth_error_login_generic)) }
+                update {
+                    copy(
+                        errorMessage = authError(e, R.string.auth_err_login_failed),
+                        highlightCredentials = isInvalidCredentials(e)
+                    )
+                }
             } finally {
                 update { copy(isLoading = false) }
             }
@@ -171,12 +180,17 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         viewModelScope.launch {
-            update { copy(isLoading = true, errorMessage = null) }
+            update { copy(isLoading = true, errorMessage = null, highlightCredentials = false) }
             try {
                 repo.signUpParent(state.email.trim(), state.password)
                 _events.emit(AuthEvent.AuthSuccess)
             } catch (e: Exception) {
-                update { copy(errorMessage = authError(e, R.string.auth_error_register_generic)) }
+                update {
+                    copy(
+                        errorMessage = authError(e, R.string.auth_error_register_generic),
+                        highlightCredentials = false
+                    )
+                }
             } finally {
                 update { copy(isLoading = false) }
             }
@@ -197,7 +211,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         viewModelScope.launch {
-            update { copy(isLoading = true, errorMessage = null, noticeMessage = null) }
+            update { copy(isLoading = true, errorMessage = null, noticeMessage = null, highlightCredentials = false) }
             try {
                 repo.resetPassword(state.email.trim())
                 val now = System.currentTimeMillis()
@@ -209,7 +223,12 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 }
             } catch (e: Exception) {
-                update { copy(errorMessage = authError(e, R.string.auth_error_login_generic)) }
+                update {
+                    copy(
+                        errorMessage = authError(e, R.string.auth_error_login_generic),
+                        highlightCredentials = false
+                    )
+                }
             } finally {
                 update { copy(isLoading = false) }
             }
@@ -243,16 +262,46 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Ошибка auth-операции: в debug показываем сырое e.message
-     * (может содержать stack/URL — только для отладки),
-     * в release — generic-строку, чтобы не утекали внутренние детали.
+     * Маппит ошибку Supabase Auth/сети на локализованное сообщение.
+     * Сырой текст исключения (URL, заголовки, параметры SDK) пользователю
+     * не показывается — в лог уходит только в debug.
      */
-    private fun authError(e: Exception, @androidx.annotation.StringRes genericResId: Int): UiText =
+    private fun authError(e: Exception, @androidx.annotation.StringRes genericResId: Int): UiText {
         if (BuildConfig.DEBUG) {
-            UiText.RawString(e.message ?: "error")
-        } else {
-            UiText.Res(genericResId)
+            android.util.Log.w("AuthViewModel", "auth request failed", e)
         }
+        val rest = findCause<RestException>(e)
+        if (rest != null) {
+            val code = (rest as? AuthRestException)?.errorCode?.value ?: rest.error
+            when (code) {
+                "invalid_credentials" -> return UiText.Res(R.string.auth_err_invalid_credentials)
+                "email_not_confirmed" -> return UiText.Res(R.string.auth_err_email_not_confirmed)
+                "user_not_found" -> return UiText.Res(R.string.auth_err_user_not_found)
+                "over_request_rate_limit", "over_email_send_rate_limit", "too_many_requests" ->
+                    return UiText.Res(R.string.auth_err_rate_limited)
+                "weak_password" -> return UiText.Res(R.string.auth_err_weak_password)
+                "email_exists" -> return UiText.Res(R.string.auth_err_email_exists)
+                "email_address_invalid" -> return UiText.Res(R.string.auth_err_email_invalid)
+            }
+            if (rest.statusCode == 429) return UiText.Res(R.string.auth_err_rate_limited)
+        }
+        if (findCause<java.io.IOException>(e) != null) {
+            return UiText.Res(R.string.auth_err_network)
+        }
+        return UiText.Res(genericResId)
+    }
+
+    /** true, если ошибка — неверный email/пароль (для подсветки полей). */
+    private fun isInvalidCredentials(e: Exception): Boolean {
+        val rest = findCause<RestException>(e) ?: return false
+        val code = (rest as? AuthRestException)?.errorCode?.value ?: rest.error
+        return code == "invalid_credentials"
+    }
+
+    private inline fun <reified T : Throwable> findCause(e: Throwable): T? =
+        generateSequence<Throwable>(e) { it.cause }
+            .filterIsInstance<T>()
+            .firstOrNull()
 
     private inline fun update(transform: AuthUiState.() -> AuthUiState) {
         _uiState.value = _uiState.value.transform()

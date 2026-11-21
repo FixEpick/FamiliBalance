@@ -35,8 +35,7 @@ class HistoryFilterTest {
             HistoryType.BONUS_QUEST_APPROVED,
             HistoryType.DIARY_GRADE_5,
             HistoryType.DIARY_GRADE_4,
-            HistoryType.HONEST_APPROVED,
-            HistoryType.ADMIN_REWARD
+            HistoryType.HONEST_APPROVED
         )
         questTypes.forEach { type ->
             assertEquals("type=$type", HIST_FILTER_QUESTS, historyFilterIndex(item(type = type)))
@@ -56,9 +55,16 @@ class HistoryFilterTest {
     }
 
     @Test
-    fun `fine and admin withdraw map to fines filter`() {
-        listOf(HistoryType.FINE, HistoryType.ADMIN_WITHDRAW).forEach { type ->
-            assertEquals("type=$type", HIST_FILTER_FINES, historyFilterIndex(item(type = type)))
+    fun `fine maps to fines filter`() {
+        assertEquals(HIST_FILTER_FINES, historyFilterIndex(item(type = HistoryType.FINE)))
+    }
+
+    @Test
+    fun `manual parent operations map to manual filter`() {
+        // Ручные пополнения/списания родителя — не квесты и не штрафы:
+        // отдельный фильтр «Ручные операции» + «Все».
+        listOf(HistoryType.ADMIN_REWARD, HistoryType.ADMIN_WITHDRAW).forEach { type ->
+            assertEquals("type=$type", HIST_FILTER_MANUAL, historyFilterIndex(item(type = type)))
         }
     }
 

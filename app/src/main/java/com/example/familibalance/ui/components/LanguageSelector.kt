@@ -69,6 +69,63 @@ fun LanguageSelectorButton(modifier: Modifier = Modifier) {
 }
 
 /**
+ * Строка выбора языка: вся область кликабельна, справа показан
+ * текущий язык и шеврон. Открывает [LanguageSelectionBottomSheet].
+ */
+@Composable
+fun LanguageSelectorRow(
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var showSheet by remember { mutableStateOf(false) }
+    val currentNameRes = languageOptions
+        .firstOrNull { it.tag == AppLocaleState.tag }
+        ?.nameRes ?: R.string.language_ru
+    val currentName = stringResource(currentNameRes)
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+            .clickable { showSheet = true }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            color = TextPrimary,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = currentName,
+            color = AccentColor,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.width(4.dp))
+        GameIcon(
+            icon = GameIconType.ArrowForward,
+            tint = AccentColor,
+            size = 16.dp
+        )
+    }
+
+    if (showSheet) {
+        LanguageSelectionBottomSheet(
+            currentTag = AppLocaleState.tag,
+            onSelect = { tag ->
+                AppLocaleState.set(context, tag)
+                showSheet = false
+            },
+            onDismiss = { showSheet = false }
+        )
+    }
+}
+
+/**
  * BottomSheet выбора языка в киберпанк-стиле.
  */
 @OptIn(ExperimentalMaterial3Api::class)

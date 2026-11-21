@@ -307,6 +307,10 @@
     <string name="history_filter_screentime">Экранное время</string>
     <string name="history_filter_fines">Штрафы</string>
     <string name="history_filter_other">Прочее</string>
+    <string name="history_filter_manual">Ручные операции</string>
+    <string name="history_empty_filter">Операций в этой категории пока нет</string>
+    <string name="history_today">Сегодня</string>
+    <string name="history_yesterday">Вчера</string>
     <plurals name="history_pending_waiting">
         <item quantity="one">%1$d ждёт проверки родителем • Нажми, чтобы посмотреть</item>
         <item quantity="few">%1$d ждут проверки родителем • Нажми, чтобы посмотреть</item>
@@ -314,6 +318,9 @@
         <item quantity="other">%1$d ждут проверки родителем • Нажми, чтобы посмотреть</item>
     </plurals>
     <string name="history_version">Версия приложения: %1$s</string>
+    <string name="build_type_debug">Отладка</string>
+    <string name="build_type_release">Релиз</string>
+    <string name="debug_build_toast">Установлена отладочная сборка</string>
 
     <!-- History item titles (HistoryData.type → stringRes, fallback = title) -->
     <string name="hist_screen_time_purchase">Покупка экранного времени (%1$d мин)</string>
@@ -346,6 +353,15 @@
     <string name="auth_err_supabase">Supabase не настроен</string>
     <string name="auth_error_login_generic">Ошибка входа</string>
     <string name="auth_error_register_generic">Ошибка регистрации</string>
+    <string name="auth_err_login_failed">Не удалось войти. Попробуйте позже или обратитесь в поддержку.</string>
+    <string name="auth_err_invalid_credentials">Неверный email или пароль. Проверьте данные и попробуйте снова.</string>
+    <string name="auth_err_email_not_confirmed">Почта не подтверждена. Перейдите по ссылке из письма, которое мы отправили при регистрации.</string>
+    <string name="auth_err_user_not_found">Аккаунт с таким email не найден.</string>
+    <string name="auth_err_rate_limited">Слишком много попыток входа. Подождите пару минут и повторите.</string>
+    <string name="auth_err_network">Нет подключения к интернету. Проверьте сеть и повторите попытку.</string>
+    <string name="auth_err_weak_password">Пароль слишком простой. Используйте не менее 6 символов.</string>
+    <string name="auth_err_email_exists">Аккаунт с таким email уже существует. Попробуйте войти.</string>
+    <string name="auth_err_email_invalid">Некорректный email. Проверьте адрес.</string>
     <string name="admin_err_no_session">Ошибка: нет активной сессии</string>
     <string name="admin_err_approve">Ошибка при одобрении запроса</string>
     <string name="admin_req_approved">Запрос одобрен — ребёнок добавлен в семью</string>
@@ -382,9 +398,11 @@
     <string name="admin_dream_progress">Накоплено: %1$d ₽ из %2$d ₽</string>
     <string name="admin_dream_edit">✏️ Изменить цель</string>
     <string name="admin_dream_set">🎯 Задать цель</string>
+    <string name="admin_dream_empty_title">🎯 Цель-мечта не задана</string>
+    <string name="admin_dream_empty_hint">Задайте цель, чтобы ребёнок видел, к чему стремится и сколько уже накопил.</string>
     <string name="admin_goal_name_label">Название цели</string>
     <string name="admin_stats_title">📈 Статистика квестов</string>
-    <string name="admin_stat_quests">Выполнено квестов</string>
+    <string name="admin_stat_quests">Квестов</string>
     <string name="admin_stat_earned">Всего заработано</string>
     <string name="admin_stat_balance">Текущий баланс</string>
     <string name="admin_achievements_title">🏅 Достижения (%1$d)</string>
@@ -472,12 +490,15 @@
     <string name="admin_honest_quote">«%1$s»</string>
     <string name="admin_approve_honest">✅ Одобрить (Штраф -50%)</string>
     <string name="admin_quick_actions">⚡ Быстрые действия родителя (%1$s)</string>
-    <string name="admin_quick_actions_subtitle">Начисление за дневник, штрафы и ручной ввод суммы для этого профиля.</string>
+    <string name="admin_quick_actions_subtitle">Начисление, штрафы и ручной ввод суммы для этого профиля.</string>
     <string name="admin_amount_hint">Сумма ₽</string>
     <string name="admin_add">+ Добавить</string>
     <string name="admin_desc_label">Описание (за что)</string>
     <string name="admin_withdraw">- Списать</string>
-    <string name="admin_is_fine">Это штраф (сбросит стрик и применит скидку)</string>
+    <string name="admin_mode_deposit">＋ Начислить</string>
+    <string name="admin_mode_withdraw">− Списать</string>
+    <string name="admin_apply">Применить</string>
+    <string name="admin_is_fine">Это штраф</string>
     <string name="admin_fine_presets_label">Быстрые штрафы:</string>
     <string name="admin_fine_preset_grade3">Оценка 3 (−20 ₽)</string>
     <string name="admin_fine_preset_grade2">Оценка 2 (−50 ₽)</string>
@@ -489,6 +510,10 @@
     <string name="admin_fine_reason_lie">Обман</string>
     <string name="admin_reject_fine_lie">Списать штраф за обман (−100 ₽)</string>
     <string name="admin_cashout_button">💵 Выдать наличные (%1$d ₽)</string>
+    <string name="admin_cashout_amount_label">Сумма выдачи ₽</string>
+    <string name="admin_cashout_max">Макс</string>
+    <string name="admin_cashout_available">Доступно в Космо-банке: %1$d ₽. После выдачи останется: %2$d ₽</string>
+    <string name="admin_cashout_submit_partial">Выдать %1$d ₽</string>
 
     <!-- Admin settings screen -->
     <string name="admin_set_quests_editor">📋 Редактор заданий</string>
@@ -518,7 +543,11 @@
     <string name="admin_set_reset_theme_label">Сбросить тему оформления</string>
     <string name="admin_set_reset_all">Обнулить всё</string>
     <string name="admin_set_sync">🔄 Синхронизировать с сервером</string>
+    <string name="admin_set_language">🌐 Язык интерфейса</string>
     <string name="admin_set_logout">🚪 Выйти из аккаунта</string>
+    <string name="admin_set_logout_title">Выход из аккаунта</string>
+    <string name="admin_set_logout_message">Вы уверены, что хотите выйти из кабинета родителя?</string>
+    <string name="admin_set_logout_confirm">Выйти</string>
     <string name="admin_set_delete_account">🗑 Удалить аккаунт</string>
     <string name="admin_set_my_pin">🛡️ Мой ПИН (Родитель)</string>
     <string name="admin_set_pin_updated">ПИН-код для %1$s обновлён</string>
@@ -550,19 +579,19 @@
     <string name="achadm_b_diary">Дневник</string>
     <string name="achadm_b_wardrobe">Шкаф</string>
     <string name="achadm_b_room">Комната</string>
-    <string name="achadm_meta">%1$s · Цель: %2$d · Награда: %3$d ₽</string>
+    <string name="achadm_meta">%1$s · Цель: %2$d · %3$d&#160;₽</string>
     <string name="achadm_edit_title">✏️ Редактирование достижения</string>
     <string name="achadm_field_name">Название</string>
     <string name="achadm_field_desc">Описание</string>
     <string name="achadm_field_target">Цель (количество раз/пятёрок)</string>
     <string name="achadm_field_target_short">Цель (кол-во)</string>
-    <string name="achadm_field_reward">Награда ₽</string>
+    <string name="achadm_field_reward">Награда (₽)</string>
     <string name="achadm_branch_label">Ветка достижения:</string>
     <string name="achadm_delete_title">Удаление достижения</string>
     <string name="achadm_delete_message">Вы уверены, что хотите удалить это достижение?</string>
     <string name="achadm_create_btn">➕ Создать новое достижение</string>
-    <string name="achadm_new_title">Новое достижение</string>
-    <string name="achadm_edit_dialog_title">Редактировать достижение</string>
+    <string name="achadm_new_title">🏆 Новое достижение</string>
+    <string name="achadm_edit_dialog_title">🏆 Редактировать достижение</string>
     <string name="achadm_delete_confirm">Удалить достижение «%1$s»?</string>
 
     <!-- Quests editor (admin) -->
@@ -573,10 +602,10 @@
     <string name="quested_freq_weekly_adv">Еженедельно</string>
     <string name="quested_create">➕ Создать новое задание</string>
     <string name="quested_by_grades">по оценкам</string>
-    <string name="quested_new_title">Новое задание</string>
-    <string name="quested_edit_title">Редактировать задание</string>
-    <string name="quested_frequency">Частота</string>
-    <string name="quested_delete_title">Удалить задание?</string>
+    <string name="quested_new_title">🎁 Новое задание</string>
+    <string name="quested_edit_title">🎁 Редактировать задание</string>
+    <string name="quested_frequency">Периодичность</string>
+    <string name="quested_delete_title">Удалить задание «%1$s»?</string>
 
     <!-- Accessibility: fullscreen photo -->
     <string name="a11y_fullscreen_photo">Полноэкранное фото</string>

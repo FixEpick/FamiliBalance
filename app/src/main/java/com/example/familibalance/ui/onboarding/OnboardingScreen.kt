@@ -137,8 +137,9 @@ fun OnboardingScreen(
                 cancelText = stringResource(R.string.action_cancel),
                 onConfirm = {
                     showExitDialog = false
+                    // Без killProcess: finishAffinity корректно закрывает задачу,
+                    // а SIGKILL система воспринимает как аварийную гибель процесса.
                     activity?.finishAffinity()
-                    android.os.Process.killProcess(android.os.Process.myPid())
                 },
                 onDismiss = { showExitDialog = false }
             )
@@ -366,8 +367,9 @@ private fun SlidePager(
                 cancelText = stringResource(R.string.action_cancel),
                 onConfirm = {
                     showExitDialog = false
+                    // Без killProcess: finishAffinity корректно закрывает задачу,
+                    // а SIGKILL система воспринимает как аварийную гибель процесса.
                     activity?.finishAffinity()
-                    android.os.Process.killProcess(android.os.Process.myPid())
                 },
                 onDismiss = { showExitDialog = false }
             )

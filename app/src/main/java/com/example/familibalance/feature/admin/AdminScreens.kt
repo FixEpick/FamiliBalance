@@ -67,10 +67,11 @@ internal fun EditorItemRow(
     ) {
         val editDesc = stringResource(R.string.a11y_edit_button)
         val deleteDesc = stringResource(R.string.a11y_delete_button)
-        IconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
+        IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
             Text("✏️", fontSize = 15.sp, modifier = Modifier.semantics { contentDescription = editDesc })
         }
-        IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+        Spacer(Modifier.width(8.dp))
+        IconButton(onClick = onDelete, modifier = Modifier.size(40.dp)) {
             Text("🗑️", fontSize = 15.sp, modifier = Modifier.semantics { contentDescription = deleteDesc })
         }
         Spacer(Modifier.width(8.dp))
@@ -111,7 +112,9 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     var editDesc by rememberSaveable { mutableStateOf("") }
     var editReward by rememberSaveable { mutableStateOf("") }
     var editFreq by rememberSaveable { mutableStateOf(QuestFrequency.DAILY) }
+    var editRequiresPhoto by rememberSaveable { mutableStateOf(true) }
     var deleteConfirmAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var deleteConfirmName by remember { mutableStateOf("") }
     val switchColors = SwitchDefaults.colors(
         checkedThumbColor = AccentColor,
         checkedTrackColor = AccentColor.copy(alpha = 0.35f),
@@ -144,22 +147,22 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         if (!child.isWardrobeDeleted) {
             item {
                 EditorItemRow(
-                    title = child.wardrobeTitle, subtitle = "${builtInFreqLabel(child.wardrobeFrequency)} • ${child.wardrobeReward} ₽",
+                    title = child.wardrobeTitle, subtitle = "${builtInFreqLabel(child.wardrobeFrequency)} • ${child.wardrobeReward} ₽",
                     checked = child.isWardrobeVisible, switchColors = switchColors,
                     onCheckedChange = { viewModel.toggleQuestVisibility(child.id, "closet", it) },
                     onEdit = { editKind = "wardrobe"; editTitle = child.wardrobeTitle; editDesc = child.wardrobeDesc; editReward = child.wardrobeReward.toString(); editFreq = child.wardrobeFrequency },
-                    onDelete = { deleteConfirmAction = { viewModel.deleteBuiltInQuest(child.id, "wardrobe") } }
+                    onDelete = { deleteConfirmName = child.wardrobeTitle; deleteConfirmAction = { viewModel.deleteBuiltInQuest(child.id, "wardrobe") } }
                 )
             }
         }
         if (!child.isRoomDeleted) {
             item {
                 EditorItemRow(
-                    title = child.roomTitle, subtitle = "${builtInFreqLabel(child.roomFrequency)} • ${child.roomReward} ₽",
+                    title = child.roomTitle, subtitle = "${builtInFreqLabel(child.roomFrequency)} • ${child.roomReward} ₽",
                     checked = child.isRoomVisible, switchColors = switchColors,
                     onCheckedChange = { viewModel.toggleQuestVisibility(child.id, "room", it) },
                     onEdit = { editKind = "room"; editTitle = child.roomTitle; editDesc = child.roomDesc; editReward = child.roomReward.toString(); editFreq = child.roomFrequency },
-                    onDelete = { deleteConfirmAction = { viewModel.deleteBuiltInQuest(child.id, "room") } }
+                    onDelete = { deleteConfirmName = child.roomTitle; deleteConfirmAction = { viewModel.deleteBuiltInQuest(child.id, "room") } }
                 )
             }
         }
@@ -170,7 +173,7 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     checked = child.isDiaryVisible, switchColors = switchColors,
                     onCheckedChange = { viewModel.toggleQuestVisibility(child.id, "diary", it) },
                     onEdit = { editKind = "diary"; editTitle = child.diaryTitle; editDesc = child.diaryDesc; editReward = ""; editFreq = child.diaryFrequency },
-                    onDelete = { deleteConfirmAction = { viewModel.deleteBuiltInQuest(child.id, "diary") } }
+                    onDelete = { deleteConfirmName = child.diaryTitle; deleteConfirmAction = { viewModel.deleteBuiltInQuest(child.id, "diary") } }
                 )
             }
         }
@@ -181,11 +184,11 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 QuestFrequency.WEEKLY -> stringResource(R.string.quested_freq_weekly)
             }
             EditorItemRow(
-                title = q.title, subtitle = "$badge • ${q.reward} ₽",
+                title = q.title, subtitle = "$badge • ${q.reward} ₽",
                 checked = q.isVisible, switchColors = switchColors,
                 onCheckedChange = { viewModel.toggleQuestVisibility(child.id, q.id, it) },
-                onEdit = { editKind = "custom"; editQuestId = q.id; editTitle = q.title; editDesc = q.description; editReward = q.reward.toString() },
-                onDelete = { deleteConfirmAction = { viewModel.deleteCustomQuest(child.id, q.id) } }
+                onEdit = { editKind = "custom"; editQuestId = q.id; editTitle = q.title; editDesc = q.description; editReward = q.reward.toString(); editFreq = q.frequency; editRequiresPhoto = q.requiresPhoto },
+                onDelete = { deleteConfirmName = q.title; deleteConfirmAction = { viewModel.deleteCustomQuest(child.id, q.id) } }
             )
         }
     }
@@ -203,12 +206,16 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
                     OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
                     OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { newFreq = QuestFrequency.ONCE }, border = BorderStroke(1.dp, if (newFreq == QuestFrequency.ONCE) AccentColor else GlassStroke), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
+                            Text(stringResource(R.string.quested_freq_once), color = if (newFreq == QuestFrequency.ONCE) AccentColor else Color.White, fontSize = 13.sp)
+                        }
                         OutlinedButton(onClick = { newFreq = QuestFrequency.DAILY }, border = BorderStroke(1.dp, if (newFreq == QuestFrequency.DAILY) AccentColor else GlassStroke), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
-                            Text(stringResource(R.string.freq_daily), color = if (newFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
+                            Text(stringResource(R.string.quested_freq_daily), color = if (newFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
                         }
                         OutlinedButton(onClick = { newFreq = QuestFrequency.WEEKLY }, border = BorderStroke(1.dp, if (newFreq == QuestFrequency.WEEKLY) AccentColor else GlassStroke), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
-                            Text(stringResource(R.string.freq_weekly), color = if (newFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
+                            Text(stringResource(R.string.quested_freq_weekly), color = if (newFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
                         }
                     }
                     Row(
@@ -276,6 +283,47 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             }
                         }
                     }
+                    if (editKind == "custom") {
+                        Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { editFreq = QuestFrequency.ONCE },
+                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.ONCE) AccentColor else GlassStroke),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(stringResource(R.string.quested_freq_once), color = if (editFreq == QuestFrequency.ONCE) AccentColor else Color.White, fontSize = 13.sp)
+                            }
+                            OutlinedButton(
+                                onClick = { editFreq = QuestFrequency.DAILY },
+                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.DAILY) AccentColor else GlassStroke),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(stringResource(R.string.quested_freq_daily), color = if (editFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
+                            }
+                            OutlinedButton(
+                                onClick = { editFreq = QuestFrequency.WEEKLY },
+                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.WEEKLY) AccentColor else GlassStroke),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(stringResource(R.string.quested_freq_weekly), color = if (editFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
+                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Checkbox(
+                                checked = editRequiresPhoto,
+                                onCheckedChange = { editRequiresPhoto = it },
+                                colors = CheckboxDefaults.colors(checkedColor = AccentColor)
+                            )
+                            Text(
+                                text = stringResource(R.string.admin_set_bonus_photo),
+                                color = TextPrimary,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
@@ -297,7 +345,7 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                                 viewModel.updateBuiltInQuest(child.id, "diary", editTitle.trim(), editDesc.trim(), r)
                                 viewModel.updateBuiltInQuestFrequency(child.id, "diary", editFreq)
                             }
-                            "custom" -> viewModel.updateCustomQuest(child.id, editQuestId, editTitle.trim(), editDesc.trim(), r)
+                            "custom" -> viewModel.updateCustomQuest(child.id, editQuestId, editTitle.trim(), editDesc.trim(), r, editFreq, editRequiresPhoto)
                         }
                         editKind = null
                     }
@@ -310,7 +358,7 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         AlertDialog(
             onDismissRequest = { deleteConfirmAction = null },
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.quested_delete_title), color = PenaltyRed, fontWeight = FontWeight.Bold) },
+            title = { Text(stringResource(R.string.quested_delete_title, deleteConfirmName), color = PenaltyRed, fontWeight = FontWeight.Bold) },
             confirmButton = {
                 Button(colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), onClick = { action(); deleteConfirmAction = null }) {
                     Text(stringResource(R.string.admin_set_delete), color = Color.White, fontWeight = FontWeight.Bold)

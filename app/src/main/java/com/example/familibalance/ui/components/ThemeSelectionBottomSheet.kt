@@ -60,6 +60,7 @@ fun ThemeSelectionBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
+                .statusBarsPadding()
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
         ) {
@@ -105,7 +106,7 @@ fun ThemeSelectionBottomSheet(
                         colors = CardDefaults.cardColors(
                             containerColor = if (isSelected)
                                 theme.primaryNeon.copy(alpha = 0.12f)
-                            else GlassBackground
+                            else GlassBackground.copy(alpha = 1f)
                         )
                     ) {
                         Column(
@@ -115,29 +116,37 @@ fun ThemeSelectionBottomSheet(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            // Мини-превью: тёмная карточка + акцентная полоса и вторичная линия
+                            // Мини-макет карточки: строка баланса + залитая акцентная кнопка
                             Box(
                                 modifier = Modifier
                                     .size(width = 72.dp, height = 40.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(SpaceBgStart)
                                     .border(1.dp, GlassStroke, RoundedCornerShape(8.dp))
-                                    .padding(6.dp)
+                                    .padding(horizontal = 7.dp, vertical = 5.dp)
                             ) {
                                 Column {
                                     Box(
                                         modifier = Modifier
-                                            .fillMaxWidth(0.65f)
-                                            .height(7.dp)
-                                            .clip(RoundedCornerShape(4.dp))
-                                            .background(theme.primaryNeon)
+                                            .width(30.dp)
+                                            .height(6.dp)
+                                            .clip(RoundedCornerShape(3.dp))
+                                            .background(TextPrimary.copy(alpha = 0.75f))
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Box(
                                         modifier = Modifier
-                                            .width(26.dp)
-                                            .height(5.dp)
-                                            .clip(RoundedCornerShape(3.dp))
+                                            .fillMaxWidth()
+                                            .height(11.dp)
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(theme.primaryNeon)
+                                    )
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .width(20.dp)
+                                            .height(4.dp)
+                                            .clip(RoundedCornerShape(2.dp))
                                             .background(theme.secondaryNeon.copy(alpha = 0.8f))
                                     )
                                 }

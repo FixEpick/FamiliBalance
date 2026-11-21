@@ -13,6 +13,7 @@ key.properties
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
+/baselineprofile/build
 /captures
 .externalNativeBuild
 .cxx

@@ -48,6 +48,38 @@ fun MainViewModel.adminCashoutAll(userId: String) {
     }
 }
 
+/** Админ выдаёт наличные частично: списывает сумму, пишет в историю. */
+fun MainViewModel.adminCashoutAmount(userId: String, amount: Int) {
+    if (!tryStartProcessingAction()) return
+    try {
+        val profile = familyRepository.getChild(userId) ?: return
+        if (amount <= 0 || amount > profile.balance) return
+        val newBalance = profile.balance - amount
+        updateChildProfile(
+            profile.copy(
+                balance = newBalance,
+                // Баланс обнулился — гасим заявки на вывод, как в adminCashoutAll.
+                cashoutRequests = if (newBalance == 0) emptyList() else profile.cashoutRequests,
+                historyItems = listOf(
+                    HistoryData(
+                        title = "Выдача наличных папой (${profile.name})",
+                        time = getCurrentTimeString(),
+                        date = getCurrentDateString(),
+                        amount = "-$amount ₽",
+                        isIncome = false,
+                        category = "Вывод средств",
+                        type = HistoryType.CASHOUT_GIVEN,
+                        amountValue = -amount,
+                        arg = profile.name
+                    )
+                ) + profile.historyItems
+            )
+        )
+    } finally {
+        endProcessingAction()
+    }
+}
+
 fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
     if (!tryStartProcessingAction()) return
     try {
