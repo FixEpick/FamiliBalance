@@ -63,7 +63,7 @@ jobs:
           echo "FAIL: assembleRelease прошёл успешно — guard key.properties сломан!"
           exit 1
         fi
-        if ! grep -q "key.properties отсутствует" release_build.log; then
+        if ! grep -q "key.properties is missing! Release build is forbidden" release_build.log; then
           echo "FAIL: сборка упала, но не с ожидаемой ошибкой guard'а:"
           cat release_build.log
           exit 1
