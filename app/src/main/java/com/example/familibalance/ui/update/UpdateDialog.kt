@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedButton
@@ -29,7 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.data.update.UpdateError
-import com.example.familibalance.ui.theme.SpaceBgStart
+import com.example.familibalance.ui.components.AppDialog
 import com.example.familibalance.ui.theme.TextPrimary
 import com.example.familibalance.ui.theme.TextSecondary
 import com.example.familibalance.viewmodel.UpdateUiState
@@ -47,9 +46,8 @@ fun UpdateDialog(
         UpdateUiState.Checking,
         UpdateUiState.Dismissed -> Unit
 
-        is UpdateUiState.Available -> AlertDialog(
+        is UpdateUiState.Available -> AppDialog(
             onDismissRequest = onDismiss,
-            containerColor = SpaceBgStart,
             title = {
                 AppLocaleContent {
                 Text(
@@ -98,9 +96,8 @@ fun UpdateDialog(
             }
         )
 
-        is UpdateUiState.Downloading -> AlertDialog(
+        is UpdateUiState.Downloading -> AppDialog(
             onDismissRequest = {},
-            containerColor = SpaceBgStart,
             title = { AppLocaleContent { Text(stringResource(R.string.update_downloading_title), color = TextPrimary, fontWeight = FontWeight.Bold) } },
             text = {
                 AppLocaleContent {
@@ -128,9 +125,8 @@ fun UpdateDialog(
             }
         }
 
-        is UpdateUiState.NeedInstallPermission -> AlertDialog(
+        is UpdateUiState.NeedInstallPermission -> AppDialog(
             onDismissRequest = onDismiss,
-            containerColor = SpaceBgStart,
             title = { AppLocaleContent { Text(stringResource(R.string.update_permission_title), color = TextPrimary, fontWeight = FontWeight.Bold) } },
             text = {
                 AppLocaleContent {
@@ -178,9 +174,8 @@ fun UpdateDialog(
             }
         )
 
-        is UpdateUiState.NeedPermission -> AlertDialog(
+        is UpdateUiState.NeedPermission -> AppDialog(
             onDismissRequest = onDismiss,
-            containerColor = SpaceBgStart,
             title = { AppLocaleContent { Text(stringResource(R.string.update_permission_title), color = TextPrimary, fontWeight = FontWeight.Bold) } },
             text = {
                 AppLocaleContent {
@@ -207,9 +202,8 @@ fun UpdateDialog(
             }
         )
 
-        is UpdateUiState.Error -> AlertDialog(
+        is UpdateUiState.Error -> AppDialog(
             onDismissRequest = onDismiss,
-            containerColor = SpaceBgStart,
             title = { AppLocaleContent { Text(stringResource(R.string.update_error_title), color = TextPrimary, fontWeight = FontWeight.Bold) } },
             text = { AppLocaleContent { Text(updateErrorMessage(state.error), color = TextSecondary, fontSize = 13.sp) } },
             confirmButton = {

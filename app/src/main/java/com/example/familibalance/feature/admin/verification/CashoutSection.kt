@@ -11,11 +11,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.data.model.CashoutRequest
 import com.example.familibalance.data.model.CashoutStatus
 import com.example.familibalance.util.*
+import com.example.familibalance.ui.components.AppDialog
+import com.example.familibalance.ui.components.AppOutlinedField
 import com.example.familibalance.ui.theme.*
 
 /** Секция заявок на вывод наличных: approve/reject по каждой заявке. */
@@ -107,35 +108,22 @@ fun CashoutSection(
     // Диалог причины отклонения — по аналогии с отклонением фотоотчёта.
     rejectTarget?.let { target ->
         val defaultRejectReason = stringResource(R.string.admin_reject_default_reason)
-        AlertDialog(
+        AppDialog(
             onDismissRequest = { rejectTarget = null },
-            containerColor = SpaceBgStart,
             title = {
-                AppLocaleContent {
-                    Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary)
-                }
+                Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary)
             },
             text = {
-                AppLocaleContent {
-                    OutlinedTextField(
-                        value = rejectReasonText,
-                        onValueChange = { rejectReasonText = it },
-                        label = {
-                            Text(
-                                stringResource(R.string.admin_reject_reason_hint),
-                                color = TextSecondary
-                            )
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedContainerColor = GlassBackground,
-                            unfocusedContainerColor = GlassBackground,
-                            focusedBorderColor = AccentColor,
-                            unfocusedBorderColor = GlassStroke
+                AppOutlinedField(
+                    value = rejectReasonText,
+                    onValueChange = { rejectReasonText = it },
+                    label = {
+                        Text(
+                            stringResource(R.string.admin_reject_reason_hint),
+                            color = TextSecondary
                         )
-                    )
-                }
+                    }
+                )
             },
             confirmButton = {
                 Button(
@@ -146,12 +134,12 @@ fun CashoutSection(
                     },
                     enabled = actionEnabled
                 ) {
-                    AppLocaleContent { Text(stringResource(R.string.admin_reject)) }
+                    Text(stringResource(R.string.admin_reject))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { rejectTarget = null }) {
-                    AppLocaleContent { Text(stringResource(R.string.action_cancel)) }
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )

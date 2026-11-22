@@ -1,54 +1,36 @@
 package com.example.familibalance
 
-import com.example.familibalance.data.supabase.SupabaseManager
-import com.example.familibalance.util.*
-
 import android.content.Intent
 import android.os.Bundle
-import androidx.core.content.edit
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
-import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.SystemBarStyle
+import androidx.fragment.app.FragmentActivity
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.example.familibalance.data.SecurePrefs
-import com.example.familibalance.data.push.PushTokenRegistrar
-import com.example.familibalance.data.push.handlePushIntent
 import com.example.familibalance.navigation.AdminRoute
+import com.example.familibalance.navigation.AppNavGraph
 import com.example.familibalance.navigation.ChildRoute
-import com.example.familibalance.navigation.OnboardingRoute
-import com.example.familibalance.navigation.PlayerLoginRoute
-import com.example.familibalance.navigation.RegisterParentRoute
-import com.example.familibalance.feature.admin.AdminScreen
-import com.example.familibalance.feature.child.ChildSection
-import com.example.familibalance.ui.auth.PlayerLoginScreen
-import com.example.familibalance.ui.auth.RegisterParentScreen
+import com.example.familibalance.ui.AppSessionEffects
 import com.example.familibalance.ui.auth.ResetPasswordScreen
-import com.example.familibalance.ui.onboarding.OnboardingScreen
-import com.example.familibalance.viewmodel.AuthViewModel
-import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.ui.components.AppSplashScreen
 import com.example.familibalance.ui.components.ExitConfirmDialog
 import com.example.familibalance.ui.theme.*
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.status.SessionStatus
 import com.example.familibalance.ui.update.UpdateDialog
+import com.example.familibalance.util.RewardSoundPlayer
+import com.example.familibalance.util.finishApp
+import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.UpdateViewModel
+import io.github.jan.supabase.auth.status.SessionStatus
 
 class MainActivity : FragmentActivity() {
     private lateinit var viewModel: MainViewModel
@@ -56,29 +38,19 @@ class MainActivity : FragmentActivity() {
     private lateinit var authViewModel: AuthViewModel
     /** true — открыт сценарий сброса пароля по deep link familibalance://auth. */
     private val passwordResetPending = mutableStateOf(false)
+    private val intents by lazy {
+        MainActivityIntents { passwordResetPending.value = true }
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        handleAuthDeepLink(intent)
-        handlePushIntent(intent)
-    }
-
-    /**
-     * Ловит auth deep link (сброс пароля): помечает сценарий и передаёт
-     * intent в Supabase — handleDeeplinks импортирует recovery-сессию.
-     */
-    private fun handleAuthDeepLink(intent: Intent?) {
-        val data = intent?.data ?: return
-        if (data.scheme == "familibalance" && data.host == "auth") {
-            passwordResetPending.value = true
-            SupabaseManager.handleAuthDeepLink(intent)
-        }
+        intents.handle(intent)
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Р—Р°С‰РёС‚Р° РѕС‚ СЃРєСЂРёРЅС€РѕС‚РѕРІ Рё Р·Р°РїРёСЃРё СЌРєСЂР°РЅР°
+        // Защита от скриншотов и записи экрана
         window.setFlags(
             android.view.WindowManager.LayoutParams.FLAG_SECURE,
             android.view.WindowManager.LayoutParams.FLAG_SECURE
@@ -101,8 +73,7 @@ class MainActivity : FragmentActivity() {
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
         AppLocaleState.init(this)
         RewardSoundPlayer.init(this)
-        handleAuthDeepLink(intent)
-        handlePushIntent(intent)
+        intents.handle(intent)
 
         // Debug-сборка: одноразовый Toast при каждом запуске,
         // чтобы сразу было видно, какая сборка установлена.
@@ -124,7 +95,6 @@ class MainActivity : FragmentActivity() {
             val updateState by updateViewModel.uiState.collectAsStateWithLifecycle()
             LaunchedEffect(Unit) { updateViewModel.checkOnLaunch() }
 
-            val context = androidx.compose.ui.platform.LocalContext.current
             val familyState by viewModel.familyState.collectAsStateWithLifecycle()
             val sessionStatus by authViewModel.sessionStatus.collectAsStateWithLifecycle()
             val autoLoginChildId by viewModel.autoLoginChildId.collectAsStateWithLifecycle()
@@ -134,8 +104,8 @@ class MainActivity : FragmentActivity() {
             val currentThemeId = themeChild?.selectedThemeId ?: "COSMIC_BLUE"
             LocalizedAppContent {
             FamiliBalanceTheme(themeId = currentThemeId) {
-                // РџРѕРєР° РіСЂСѓР·РёС‚СЃСЏ Р»РѕРєР°Р»СЊРЅС‹Р№ СЃС‚РµР№С‚ Рё Supabase РІРѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ СЃРµСЃСЃРёСЋ вЂ”
-                // РїРѕРєР°Р·С‹РІР°РµРј splash, С‡С‚РѕР±С‹ РЅРµ РјРёРіР°Р» СЌРєСЂР°РЅ РІС…РѕРґР° РїРµСЂРµРґ Р°РґРјРёРЅРєРѕР№.
+                // Пока грузится локальный стейт и Supabase восстанавливает сессию —
+                // показываем splash, чтобы не мигал экран входа перед админкой.
                 var splashMinTimeElapsed by remember { mutableStateOf(false) }
                 LaunchedEffect(Unit) {
                     kotlinx.coroutines.delay(2400)
@@ -178,10 +148,10 @@ class MainActivity : FragmentActivity() {
 
                 val navController = rememberNavController()
 
-                // В«РќР°Р·Р°РґВ» РЅР° РіР»Р°РІРЅС‹С… СЂР°Р·РґРµР»Р°С… (ChildRoute / AdminRoute) вЂ”
-                // РґРёР°Р»РѕРі РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ РІС‹С…РѕРґР° РІРјРµСЃС‚Рѕ РґРІРѕР№РЅРѕРіРѕ РЅР°Р¶Р°С‚РёСЏ.
-                // РќР° СЌРєСЂР°РЅР°С… РІС…РѕРґР°/СЂРµРіРёСЃС‚СЂР°С†РёРё Рё РІРЅСѓС‚СЂРµРЅРЅРёС… РјР°СЂС€СЂСѓС‚Р°С…
-                // СЂР°Р±РѕС‚Р°РµС‚ РѕР±С‹С‡РЅР°СЏ РЅР°РІРёРіР°С†РёСЏ (popBackStack).
+                // «Назад» на главных разделах (ChildRoute / AdminRoute) —
+                // диалог подтверждения выхода вместо двойного нажатия.
+                // На экранах входа/регистрации и внутренних маршрутах
+                // работает обычная навигация (popBackStack).
                 val topBackStackEntry by navController.currentBackStackEntryAsState()
                 val isMainSection = topBackStackEntry?.destination?.let {
                     it.hasRoute<ChildRoute>() || it.hasRoute<AdminRoute>()
@@ -205,207 +175,30 @@ class MainActivity : FragmentActivity() {
                     }
                 }
 
-                // Р–РёР·РЅРµРЅРЅС‹Р№ С†РёРєР» Realtime Рё СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёРё:
-                //  - ON_START: РїРѕРґРїРёСЃРєР° Р°РєС‚РёРІРЅР° РІСЃРµРіРґР°, РІРєР»СЋС‡Р°СЏ С„РѕРЅ
-                //    (startRealtimeSync РёРґРµРјРїРѕС‚РµРЅС‚РµРЅ вЂ” РїРѕРІС‚РѕСЂРЅС‹Р№ РІС‹Р·РѕРІ no-op);
-                //  - ON_RESUME: РґРѕСЃС‹Р»Р°РµРј РЅРµСЃРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°РЅРЅС‹Рµ РґР°РЅРЅС‹Рµ Рё РѕР±РЅРѕРІР»РµРЅРёСЏ.
-                val lifecycleOwner = LocalLifecycleOwner.current
-                DisposableEffect(lifecycleOwner) {
-                    val observer = LifecycleEventObserver { _, event ->
-                        when (event) {
-                            Lifecycle.Event.ON_START -> {
-                                if (sessionStatus is SessionStatus.Authenticated) {
-                                    SupabaseManager.startRealtimeSync(context)
-                                }
-                            }
-                            Lifecycle.Event.ON_RESUME -> {
-                                viewModel.forceSync()
-                                // Р•СЃР»Рё Р¶РґР°Р»Рё СЂР°Р·СЂРµС€РµРЅРёСЏ РЅР° СѓСЃС‚Р°РЅРѕРІРєСѓ вЂ” РїСЂРѕРґРѕР»Р¶Р°РµРј РѕР±РЅРѕРІР»РµРЅРёРµ
-                                updateViewModel.onResume()
-                            }
-                            else -> {}
-                        }
-                    }
-                    lifecycleOwner.lifecycle.addObserver(observer)
-                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-                }
+                // Жизненный цикл синхронизации (Realtime + forceSync +
+                // проверка обновлений) — в AppSessionEffects.
+                AppSessionEffects(
+                    viewModel = viewModel,
+                    updateViewModel = updateViewModel,
+                    sessionStatus = sessionStatus
+                )
 
-                // РџРµСЂРµС…РѕРґ В«РІ РєРѕСЂРµРЅСЊВ»: startDestination РјРѕР¶РµС‚ Р±С‹С‚СЊ СѓР¶Рµ СѓРґР°Р»С‘РЅ
-                // РёР· back stack РїРѕСЃР»Рµ РїРµСЂРІРѕРіРѕ popUpTo(inclusive = true),
-                // РїРѕСЌС‚РѕРјСѓ popUpTo(graph.startDestinationId) РїРµСЂРµСЃС‚Р°С‘С‚ РЅР°С…РѕРґРёС‚СЊ
-                // С†РµР»СЊ Рё back stack РЅРµ РѕС‡РёС‰Р°РµС‚СЃСЏ. РЎРЅРёРјР°РµРј РІСЃРµ destination'С‹
-                // РґРѕ РїСѓСЃС‚РѕРіРѕ СЃС‚РµРєР° (popBackStack() РІРѕР·РІСЂР°С‰Р°РµС‚ false, РєРѕРіРґР°
-                // СЃРЅРёРјР°С‚СЊ Р±РѕР»СЊС€Рµ РЅРµС‡РµРіРѕ), Р·Р°С‚РµРј navigate СЃРѕР·РґР°С‘С‚ С‡РёСЃС‚С‹Р№ РєРѕСЂРµРЅСЊ
-                // Р±РµР· СЃС‚Р°СЂС‹С… СЌРєСЂР°РЅРѕРІ Р°РІС‚РѕСЂРёР·Р°С†РёРё Рё РґСѓР±Р»РµР№ РјР°СЂС€СЂСѓС‚РѕРІ.
-                fun navigateToRoot(target: Any) {
-                    while (navController.popBackStack()) {
-                        // pop РґРѕ С‚РµС… РїРѕСЂ, РїРѕРєР° СЃС‚РµРє РЅРµ РѕРїСѓСЃС‚РµРµС‚
-                    }
-                    navController.navigate(target)
-                }
-                fun backToLogin() {
-                    navigateToRoot(OnboardingRoute)
-                }
-
-                // РђРЅРѕРЅРёРјРЅР°СЏ СЃРµСЃСЃРёСЏ (СѓСЃС‚СЂРѕР№СЃС‚РІРѕ СЂРµР±С‘РЅРєР°) РЅРµ СЃС‡РёС‚Р°РµС‚СЃСЏ СЂРѕРґРёС‚РµР»СЊСЃРєРѕР№:
-                // РІ AdminRoute РїСѓСЃРєР°РµРј С‚РѕР»СЊРєРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№ СЃ email.
+                // Анонимная сессия (устройство ребёнка) не считается родительской:
+                // в AdminRoute пускаем только пользователей с email.
                 val isParentSession = (sessionStatus as? SessionStatus.Authenticated)
                     ?.session?.user?.email?.isNotBlank() == true
 
-                // Р•СЃР»Рё СЃРµСЃСЃРёСЏ СЂРѕРґРёС‚РµР»СЏ СѓР¶Рµ Р°РєС‚РёРІРЅР° вЂ” СЃСЂР°Р·Сѓ РІ СЂРѕРґРёС‚РµР»СЊСЃРєРёР№ РєР°Р±РёРЅРµС‚
-                var autoNavigatedToAdmin by remember { mutableStateOf(false) }
-                LaunchedEffect(isParentSession) {
-                    if (!autoNavigatedToAdmin && isParentSession) {
-                        autoNavigatedToAdmin = true
-                        // Регистрация FCM-токена родителя для пушей «Панель Родителя»
-                        (sessionStatus as? SessionStatus.Authenticated)
-                            ?.session?.user?.id
-                            ?.let { PushTokenRegistrar.registerParent(context, it) }
-                        // РЎРёРЅС…СЂРѕРЅРёР·РёСЂСѓРµРј Р»РѕРєР°Р»СЊРЅС‹Р№ С„Р»Р°Рі Р°РІС‚РѕРІС…РѕРґР° СЃ Supabase-СЃРµСЃСЃРёРµР№
-                        SecurePrefs.get(context, "app_prefs")
-                            .edit {
-                                putBoolean("is_admin_logged_in", true)
-                                putBoolean("is_logged_in", false)
-                                putBoolean("onboarding_done", true)
-                                remove("logged_in_child_id")
-                            }
-                        // Переход в AdminRoute выполняет startDestination NavHost
-                    }
-                }
-
-                // РђРІС‚РѕРІС…РѕРґ СЂРµР±С‘РЅРєР°: MainViewModel РІС‹СЃС‚Р°РІР»СЏРµС‚ autoLoginChildId
-                // РїРѕСЃР»Рµ Р·Р°РіСЂСѓР·РєРё Р»РѕРєР°Р»СЊРЅРѕРіРѕ СЃС‚РµР№С‚Р°, РµСЃР»Рё СЃС‚РѕРёС‚ С„Р»Р°Рі is_logged_in.
-                var autoChildNavigated by remember { mutableStateOf(false) }
-                LaunchedEffect(autoLoginChildId) {
-                    if (!autoChildNavigated && autoLoginChildId != null) {
-                        autoChildNavigated = true
-                        // Регистрация FCM-токена ребёнка для пушей «Игрок»
-                        PushTokenRegistrar.registerChild(context, autoLoginChildId!!)
-                        SecurePrefs.get(context, "app_prefs")
-                            .edit {
-                                putBoolean("onboarding_done", true)
-                            }
-                        // Переход в ChildRoute выполняет startDestination NavHost
-                    }
-                }
-
-                fun completeOnboarding(navigate: () -> Unit) {
-                    SecurePrefs.get(context, "app_prefs")
-                        .edit {
-                            putBoolean("onboarding_done", true)
-                        }
-                    navigate()
-                }
-
-                NavHost(
+                AppNavGraph(
                     navController = navController,
-                    // Стартовый destination выбирается после разрешения сессии:
-                    // активная родительская сессия → кабинет, автовход ребёнка →
-                    // ChildRoute, иначе онбординг (выбор роли → слайды → вход).
-                    // Так OnboardingRoute не успевает отрисоваться перед
-                    // автоматическим переходом.
-                    startDestination = when {
-                        // Режим бенчмарка админки: Supabase-сессии родителя
-                        // нет, открываем AdminRoute напрямую с тестовыми детьми.
-                        com.example.familibalance.util.BenchmarkSession.adminRequested -> AdminRoute
-                        isParentSession -> AdminRoute
-                        autoLoginChildId != null -> ChildRoute()
-                        else -> OnboardingRoute
-                    }
-                ) {
-                    composable<OnboardingRoute> {
-                        OnboardingScreen(
-                            onParentClick = {
-                                completeOnboarding {
-                                    navigateToRoot(RegisterParentRoute(parentLogin = true))
-                                }
-                            },
-                            onChildClick = {
-                                completeOnboarding {
-                                    navigateToRoot(PlayerLoginRoute)
-                                }
-                            }
-                        )
-                    }
-                    composable<PlayerLoginRoute> {
-                        PlayerLoginScreen(
-                            viewModel = viewModel,
-                            authViewModel = authViewModel,
-                            onBack = { navController.popBackStack() },
-                            onLoginSuccess = {
-                                navigateToRoot(ChildRoute())
-                            }
-                        )
-                    }
-                    composable<RegisterParentRoute> { backStackEntry ->
-                        val route = backStackEntry.toRoute<RegisterParentRoute>()
-                        RegisterParentScreen(
-                            viewModel = authViewModel,
-                            mainViewModel = viewModel,
-                            initialParentLogin = route.parentLogin,
-                            onPlayerSuccess = {
-                                navigateToRoot(ChildRoute())
-                            },
-                            onParentSuccess = {
-                                // Р¤Р»Р°Рі Р°РІС‚РѕРІС…РѕРґР° СЂРѕРґРёС‚РµР»СЏ: РїСЂРё РїРµСЂРµР·Р°РїСѓСЃРєРµ
-                                // isParentSession (Supabase) + СЌС‚РѕС‚ С„Р»Р°Рі в†’ AdminRoute
-                                SecurePrefs.get(context, "app_prefs")
-                                    .edit {
-                                        putBoolean("is_admin_logged_in", true)
-                                        putBoolean("is_logged_in", false)
-                                        remove("logged_in_child_id")
-                                    }
-                                navigateToRoot(AdminRoute)
-                            },
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable<AdminRoute> {
-                        AdminScreen(
-                            viewModel = viewModel,
-                            onEnterChildMode = { childId ->
-                                viewModel.selectChild(childId)
-                                navigateToRoot(ChildRoute(asParent = true))
-                            },
-                            onLogout = {
-                                PushTokenRegistrar.unregister(context)
-                                authViewModel.signOut()
-                                viewModel.clearState()
-                                SecurePrefs.get(context, "app_prefs")
-                                    .edit {
-                                        putBoolean("is_admin_logged_in", false)
-                                        putBoolean("is_logged_in", false)
-                                        remove("logged_in_child_id")
-                                    }
-                                navigateToRoot(OnboardingRoute)
-                            }
-                        )
-                    }
-                    composable<ChildRoute> { backStackEntry ->
-                        val childRoute = backStackEntry.toRoute<ChildRoute>()
-                        ChildSection(
-                            viewModel = viewModel,
-                            isParentPreview = childRoute.asParent,
-                            onBackToAdmin = { navigateToRoot(AdminRoute) },
-                            onSwitchProfile = {
-                                PushTokenRegistrar.unregister(context)
-                                backToLogin()
-                            },
-                            onLogout = {
-                                if (childRoute.asParent) {
-                                    navigateToRoot(AdminRoute)
-                                } else {
-                                    PushTokenRegistrar.unregister(context)
-                                    viewModel.logoutChild()
-                                    navigateToRoot(OnboardingRoute)
-                                }
-                            }
-                        )
-                    }
-                }
+                    viewModel = viewModel,
+                    authViewModel = authViewModel,
+                    isParentSession = isParentSession,
+                    autoLoginChildId = autoLoginChildId,
+                    sessionStatus = sessionStatus
+                )
 
-                // РЎС‚СЂРѕРєРё РґРёР°Р»РѕРіР° РІС‹С…РѕРґР° РІС‹С‡РёСЃР»СЏРµРј Р·РґРµСЃСЊ, Р° РЅРµ РІРЅСѓС‚СЂРё AlertDialog:
-                // Dialog СЃРѕР·РґР°С‘С‚ РѕС‚РґРµР»СЊРЅРѕРµ РѕРєРЅРѕ Рё РјРѕР¶РµС‚ РїРѕС‚РµСЂСЏС‚СЊ Р»РѕРєР°Р»РёР·РѕРІР°РЅРЅС‹Р№ РєРѕРЅС‚РµРєСЃС‚.
+                // Строки диалога выхода вычисляем здесь, а не внутри AlertDialog:
+                // Dialog создаёт отдельное окно и может потерять локализованный контекст.
                 val exitDialogTitle = stringResource(R.string.exit_dialog_title)
                 val exitDialogMessage = stringResource(R.string.exit_dialog_message)
                 val exitDialogConfirm = stringResource(R.string.exit_dialog_confirm)
@@ -436,4 +229,3 @@ class MainActivity : FragmentActivity() {
         }
     }
 }
-

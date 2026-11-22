@@ -4,6 +4,26 @@
 
 ---
 
+## v2.2.2
+
+### 🎨 Улучшения UI
+- **Единый `AppDialog`** — все ~25 диалогов приложения переведены на общий компонент: единый тёмный стиль, `usePlatformDefaultWidth = false`, автоматическая локализация через `AppLocaleContent`
+- **`AppOutlinedField`** — переиспользуемое поле ввода со стилями приложения (neon-вариант для детских диалогов)
+- **Чистка диалогов** — убраны дубли `AlertDialog` + кастомные `OutlinedTextField` в админке и детской секции
+
+### ⚙️ Архитектура
+- **`MainActivity` разгружена** (440 → ~230 строк): граф навигации вынесен в `navigation/AppNavGraph.kt`, обработка intent'ов (auth deep link + push) — в `MainActivityIntents.kt`, lifecycle-синхронизация — в `ui/AppSessionEffects.kt`
+- **Новые компоненты** — `AchievementDialogs`, `AchievementsEditorSubScreen`, `HonestAdmissionCard`, `QuickActionsCard`, диалоги настроек в `feature/admin/settings/`
+
+### 🧪 Тесты
+- **13 новых тестов** — Robolectric + Compose UI: `AuthViewModelTest` (вход родителя, PIN), `CashOutDialogTest` (вывод средств), `QuestReviewCardTest` (проверка квеста), `AppDialogTest`, `TaskCardTest`
+
+### ⚙️ Установка
+Скачайте APK и установите поверх — данные и баланс сохранятся.
+
+---
+SHA256: bf62ac937a1ddd51be7f6996230cba76df517dd3a434cc7568af72bf7439c568
+
 ## v2.2.1
 
 ### 🐛 Исправления

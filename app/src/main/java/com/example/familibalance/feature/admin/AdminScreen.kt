@@ -39,6 +39,7 @@ import kotlinx.coroutines.delay
 
 import com.example.familibalance.R
 import com.example.familibalance.MainViewModel
+import com.example.familibalance.ui.components.AppDialog
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
@@ -196,9 +197,8 @@ fun AdminScreen(
         val cashoutAmount = cashoutAmountText.toIntOrNull()
         val cashoutValid = cashoutAmount != null && cashoutAmount > 0 && cashoutAmount <= child.balance
         val cashoutRemaining = child.balance - (cashoutAmount ?: 0)
-        AlertDialog(
+        AppDialog(
             onDismissRequest = { showCashOutDialog = false },
-            containerColor = SpaceBgStart,
             title = { AppLocaleContent { Text(stringResource(R.string.admin_cashout_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
             text = {
                 AppLocaleContent {

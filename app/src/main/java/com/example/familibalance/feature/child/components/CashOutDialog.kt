@@ -10,9 +10,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.util.*
+import com.example.familibalance.ui.components.AppDialog
+import com.example.familibalance.ui.components.AppOutlinedField
+import com.example.familibalance.ui.components.appOutlinedFieldColorsNeon
 import com.example.familibalance.ui.theme.*
 
 /** Диалог вывода наличных: сумма + комментарий, валидация по доступному балансу. */
@@ -32,36 +34,24 @@ fun CashOutDialog(
     val isAmountExceeded = amountInt != null && amountInt > availableBalance
     val canSubmit = amountInt != null && amountInt > 0 && amountInt <= availableBalance
 
-    AlertDialog(
+    AppDialog(
         onDismissRequest = onDismiss,
-        containerColor = SpaceBgStart,
         title = {
-            AppLocaleContent {
             Text(
                 text = stringResource(R.string.child_cashout_dialog_title),
                 color = LocalAppPalette.current.primaryNeon,
                 fontWeight = FontWeight.Bold
             )
-            }
         },
         text = {
-            AppLocaleContent {
             Column {
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                AppOutlinedField(
                     value = amountText,
                     onValueChange = { amountText = it },
                     label = { Text(currencyString(R.string.child_cashout_amount_label)) },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = LocalAppPalette.current.primaryNeon,
-                        focusedBorderColor = LocalAppPalette.current.primaryNeon,
-                        unfocusedBorderColor = GlassStroke,
-                        focusedContainerColor = CardBgDark.copy(alpha = 0.8f),
-                        unfocusedContainerColor = CardBgDark.copy(alpha = 0.8f)
-                    ),
+                    colors = appOutlinedFieldColorsNeon(),
                     shape = RoundedCornerShape(12.dp)
                 )
                 if (isAmountExceeded) {
@@ -73,27 +63,17 @@ fun CashOutDialog(
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
+                AppOutlinedField(
                     value = commentText,
                     onValueChange = { commentText = it },
                     label = { Text(stringResource(R.string.child_cashout_comment_label)) },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        cursorColor = LocalAppPalette.current.primaryNeon,
-                        focusedBorderColor = LocalAppPalette.current.primaryNeon,
-                        unfocusedBorderColor = GlassStroke,
-                        focusedContainerColor = CardBgDark.copy(alpha = 0.8f),
-                        unfocusedContainerColor = CardBgDark.copy(alpha = 0.8f)
-                    ),
+                    colors = appOutlinedFieldColorsNeon(),
                     shape = RoundedCornerShape(12.dp)
                 )
             }
-            }
         },
         confirmButton = {
-            AppLocaleContent {
             Button(
                 onClick = {
                     if (canSubmit) {
@@ -111,16 +91,13 @@ fun CashOutDialog(
             ) {
                 Text(stringResource(R.string.child_cashout_submit), fontWeight = FontWeight.Bold)
             }
-            }
         },
         dismissButton = {
-            AppLocaleContent {
             TextButton(
                 onClick = onDismiss,
                 colors = ButtonDefaults.textButtonColors(contentColor = TextMuted)
             ) {
                 Text(stringResource(R.string.action_cancel))
-            }
             }
         }
     )

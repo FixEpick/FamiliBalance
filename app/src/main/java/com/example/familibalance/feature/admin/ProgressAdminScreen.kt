@@ -156,16 +156,13 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
         }
     }
     if (showDreamGoalDialog) {
-        AlertDialog(
+        AppDialog(
             onDismissRequest = { showDreamGoalDialog = false },
-            containerColor = SpaceBgStart,
-            title = { AppLocaleContent { Text(if (child.dreamTarget > 0) stringResource(R.string.admin_dream_edit) else stringResource(R.string.admin_dream_set), color = AccentColor, fontWeight = FontWeight.Bold) } },
+            title = { Text(if (child.dreamTarget > 0) stringResource(R.string.admin_dream_edit) else stringResource(R.string.admin_dream_set), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
-                AppLocaleContent {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedTextField(value = dreamTitle, onValueChange = { dreamTitle = it }, label = { Text(stringResource(R.string.admin_goal_name_label), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = if (dreamTargetVal > 0) dreamTargetVal.toString() else "", onValueChange = { dreamTargetVal = it.toIntOrNull() ?: 0 }, label = { Text(currencyString(R.string.child_cashout_amount_label), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = editorFieldColors())
-                }
+                    AppOutlinedField(value = dreamTitle, onValueChange = { dreamTitle = it }, label = { Text(stringResource(R.string.admin_goal_name_label), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    AppOutlinedField(value = if (dreamTargetVal > 0) dreamTargetVal.toString() else "", onValueChange = { dreamTargetVal = it.toIntOrNull() ?: 0 }, label = { Text(currencyString(R.string.child_cashout_amount_label), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = editorFieldColors())
                 }
             },
             confirmButton = {
@@ -173,18 +170,16 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                     enabled = dreamTitle.isNotBlank() && dreamTargetVal > 0,
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = GlassStroke, disabledContentColor = TextSecondary),
                     onClick = { viewModel.setDreamGoal(child.id, dreamTitle.trim(), dreamTargetVal); showDreamGoalDialog = false }
-                ) { AppLocaleContent { Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold) } }
+                ) { Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold) }
             },
-            dismissButton = { TextButton(onClick = { showDreamGoalDialog = false }) { AppLocaleContent { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
+            dismissButton = { TextButton(onClick = { showDreamGoalDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
     if (showAchievementsDialog) {
-        AlertDialog(
+        AppDialog(
             onDismissRequest = { showAchievementsDialog = false },
-            containerColor = SpaceBgStart,
-            title = { AppLocaleContent { Text(stringResource(R.string.admin_achievements_title, allAchievements.size), color = AccentColor, fontWeight = FontWeight.Bold) } },
+            title = { Text(stringResource(R.string.admin_achievements_title, allAchievements.size), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
-                AppLocaleContent {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -196,13 +191,12 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                         AchievementCard(title = systemTitle(ach.title), condition = ach.condition, description = systemDesc(ach.description), reward = ach.reward, progress = ach.progress, isLocked = ach.isLocked, isCompleted = ach.isCompleted, conditionKind = ach.conditionKind, conditionCount = ach.conditionCount, progressCurrent = ach.progressCurrent, progressTarget = ach.conditionCount)
                     }
                 }
-                }
             },
             confirmButton = {
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
                     onClick = { showAchievementsDialog = false }
-                ) { AppLocaleContent { Text(stringResource(R.string.update_btn_close), fontWeight = FontWeight.Bold) } }
+                ) { Text(stringResource(R.string.update_btn_close), fontWeight = FontWeight.Bold) }
             }
         )
     }

@@ -127,8 +127,7 @@ fun TaskCard(
                     modifier = Modifier.clickable { showReportDialog = true }
                 )
                 if (showReportDialog) {
-                    AppLocaleContent {
-                    AlertDialog(
+                    AppDialog(
                         onDismissRequest = { showReportDialog = false },
                         containerColor = GlassBackground,
                         title = {
@@ -154,7 +153,6 @@ fun TaskCard(
                             }
                         }
                     )
-                    }
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))

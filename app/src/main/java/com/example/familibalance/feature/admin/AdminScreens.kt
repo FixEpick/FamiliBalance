@@ -1,6 +1,5 @@
 package com.example.familibalance.feature.admin
 
-import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 
@@ -29,7 +28,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
+import com.example.familibalance.ui.components.AppDialog
+import com.example.familibalance.ui.components.AppOutlinedField
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.viewmodel.actions.*
 
@@ -193,20 +193,17 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         }
     }
     if (showCreateDialog) {
-        AlertDialog(
+        AppDialog(
             onDismissRequest = { showCreateDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            containerColor = SpaceBgStart,
-            title = { AppLocaleContent { Text(stringResource(R.string.quested_new_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
+            title = { Text(stringResource(R.string.quested_new_title), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
-                AppLocaleContent {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
-                    OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text(currencyString(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    AppOutlinedField(value = newTitle, onValueChange = { newTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    AppOutlinedField(value = newDesc, onValueChange = { newDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
+                    AppOutlinedField(value = newReward, onValueChange = { newReward = it }, label = { Text(currencyString(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { newFreq = QuestFrequency.ONCE }, border = BorderStroke(1.dp, if (newFreq == QuestFrequency.ONCE) AccentColor else GlassStroke), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
@@ -235,10 +232,8 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         )
                     }
                 }
-                }
             },
             confirmButton = {
-                AppLocaleContent {
                 Button(
                     enabled = newTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
@@ -247,19 +242,15 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         newTitle = ""; newDesc = ""; newReward = "50"; newRequiresPhoto = true; showCreateDialog = false
                     }
                 ) { Text(stringResource(R.string.admin_set_create), fontWeight = FontWeight.Bold) }
-                }
             },
-            dismissButton = { AppLocaleContent { TextButton(onClick = { showCreateDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
+            dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
     if (editKind != null) {
-        AlertDialog(
+        AppDialog(
             onDismissRequest = { editKind = null },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            containerColor = SpaceBgStart,
-            title = { AppLocaleContent { Text(stringResource(R.string.quested_edit_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
+            title = { Text(stringResource(R.string.quested_edit_title), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
-                AppLocaleContent {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -267,10 +258,10 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     // Для системных (не изменённых родителем) названий/описаний
                     // показываем перевод; state хранит исходный русский текст,
                     // поэтому сохранение без правок не ломает data-контракт.
-                    OutlinedTextField(value = systemTitle(editTitle), onValueChange = { editTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = systemDesc(editDesc), onValueChange = { editDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
+                    AppOutlinedField(value = systemTitle(editTitle), onValueChange = { editTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    AppOutlinedField(value = systemDesc(editDesc), onValueChange = { editDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
                     if (editKind != "diary") {
-                        OutlinedTextField(value = editReward, onValueChange = { editReward = it }, label = { Text(currencyString(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                        AppOutlinedField(value = editReward, onValueChange = { editReward = it }, label = { Text(currencyString(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     }
                     Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -312,10 +303,8 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         )
                     }
                 }
-                }
             },
             confirmButton = {
-                AppLocaleContent {
                 Button(
                     enabled = editTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
@@ -342,24 +331,20 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         editKind = null
                     }
                 ) { Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold) }
-                }
             },
-            dismissButton = { AppLocaleContent { TextButton(onClick = { editKind = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
+            dismissButton = { TextButton(onClick = { editKind = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
     deleteConfirmAction?.let { action ->
-        AlertDialog(
+        AppDialog(
             onDismissRequest = { deleteConfirmAction = null },
-            containerColor = SpaceBgStart,
-            title = { AppLocaleContent { Text(stringResource(R.string.quested_delete_title, systemTitle(deleteConfirmName)), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
+            title = { Text(stringResource(R.string.quested_delete_title, systemTitle(deleteConfirmName)), color = PenaltyRed, fontWeight = FontWeight.Bold) },
             confirmButton = {
-                AppLocaleContent {
                 Button(colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), onClick = { action(); deleteConfirmAction = null }) {
                     Text(stringResource(R.string.admin_set_delete), color = Color.White, fontWeight = FontWeight.Bold)
                 }
-                }
             },
-            dismissButton = { AppLocaleContent { TextButton(onClick = { deleteConfirmAction = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
+            dismissButton = { TextButton(onClick = { deleteConfirmAction = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
         )
     }
 }

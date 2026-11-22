@@ -13,9 +13,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.util.*
+import com.example.familibalance.ui.components.AppDialog
+import com.example.familibalance.ui.components.AppOutlinedField
+import com.example.familibalance.ui.components.appOutlinedFieldColorsNeon
 import com.example.familibalance.ui.theme.*
 
 /** Диалог выбора/смены цели-мечты: название + сумма, подсказка про кулдаун 7 дней. */
@@ -31,93 +33,76 @@ fun DreamGoalDialog(
     val target = amountText.toIntOrNull() ?: 0
     val canConfirm = target > 0
 
-    val fieldColors = OutlinedTextFieldDefaults.colors(
-        focusedTextColor = Color.White,
-        unfocusedTextColor = Color.White,
-        cursorColor = LocalAppPalette.current.primaryNeon,
-        focusedBorderColor = LocalAppPalette.current.primaryNeon,
-        unfocusedBorderColor = GlassStroke,
-        focusedContainerColor = CardBgDark.copy(alpha = 0.8f),
-        unfocusedContainerColor = CardBgDark.copy(alpha = 0.8f)
-    )
+    val fieldColors = appOutlinedFieldColorsNeon()
 
-    AlertDialog(
+    AppDialog(
         onDismissRequest = onDismiss,
-        containerColor = SpaceBgStart,
         title = {
-            AppLocaleContent {
+            Text(
+                text = stringResource(R.string.dream_dialog_title),
+                color = AccentColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+        },
+        text = {
+            Column {
+                AppOutlinedField(
+                    value = title,
+                    onValueChange = { title = it.take(40) },
+                    label = { Text(stringResource(R.string.dream_name_label)) },
+                    singleLine = true,
+                    colors = fieldColors,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                AppOutlinedField(
+                    value = amountText,
+                    onValueChange = { amountText = it.filter { c -> c.isDigit() }.take(7) },
+                    label = { Text(currencyString(R.string.dream_amount_label)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = fieldColors,
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = stringResource(R.string.dream_dialog_title),
-                    color = AccentColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+                    text = stringResource(R.string.dream_change_hint),
+                    color = TextMuted,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    textAlign = TextAlign.Start
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = stringResource(R.string.dream_deduct_hint),
+                    color = TextMuted,
+                    fontSize = 12.sp,
+                    lineHeight = 16.sp,
+                    textAlign = TextAlign.Start
                 )
             }
         },
-        text = {
-            AppLocaleContent {
-                Column {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it.take(40) },
-                        label = { Text(stringResource(R.string.dream_name_label)) },
-                        singleLine = true,
-                        colors = fieldColors,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedTextField(
-                        value = amountText,
-                        onValueChange = { amountText = it.filter { c -> c.isDigit() }.take(7) },
-                        label = { Text(currencyString(R.string.dream_amount_label)) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        colors = fieldColors,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = stringResource(R.string.dream_change_hint),
-                        color = TextMuted,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                        textAlign = TextAlign.Start
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(R.string.dream_deduct_hint),
-                        color = TextMuted,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                        textAlign = TextAlign.Start
-                    )
-                }
-            }
-        },
         confirmButton = {
-            AppLocaleContent {
-                Button(
-                    onClick = { onConfirm(title.trim(), target) },
-                    enabled = canConfirm,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = AccentColor,
-                        contentColor = SpaceBgStart,
-                        disabledContainerColor = GlassBackground,
-                        disabledContentColor = TextSecondary
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
-                }
+            Button(
+                onClick = { onConfirm(title.trim(), target) },
+                enabled = canConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentColor,
+                    contentColor = SpaceBgStart,
+                    disabledContainerColor = GlassBackground,
+                    disabledContentColor = TextSecondary
+                ),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
-            AppLocaleContent {
-                TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.action_cancel), color = TextSecondary)
-                }
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel), color = TextSecondary)
             }
         }
     )

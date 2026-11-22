@@ -27,6 +27,8 @@ import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 
 import com.example.familibalance.R
+import com.example.familibalance.ui.components.AppDialog
+import com.example.familibalance.ui.components.AppOutlinedField
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.*
 import com.example.familibalance.util.*
@@ -120,25 +122,15 @@ fun QuestVerificationCard(
 
     if (showRejectDialog) {
         val defaultRejectReason = stringResource(R.string.admin_reject_default_reason)
-        AlertDialog(
+        AppDialog(
             onDismissRequest = { showRejectDialog = false },
-            containerColor = SpaceBgStart,
-            title = { AppLocaleContent { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) } },
+            title = { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) },
             text = {
-                AppLocaleContent {
                 Column {
-                    OutlinedTextField(
+                    AppOutlinedField(
                         value = rejectReasonText,
                         onValueChange = { rejectReasonText = it },
-                        label = { Text(stringResource(R.string.admin_reject_reason_hint), color = TextSecondary) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White,
-                            focusedContainerColor = GlassBackground,
-                            unfocusedContainerColor = GlassBackground,
-                            focusedBorderColor = AccentColor,
-                            unfocusedBorderColor = GlassStroke
-                        )
+                        label = { Text(stringResource(R.string.admin_reject_reason_hint), color = TextSecondary) }
                     )
                     if (onRejectWithFine != null) {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -156,7 +148,6 @@ fun QuestVerificationCard(
                         }
                     }
                 }
-                }
             },
             confirmButton = {
                 Button(onClick = {
@@ -169,12 +160,12 @@ fun QuestVerificationCard(
                     applyLieFine = false
                     showRejectDialog = false
                 }, enabled = actionEnabled) {
-                    AppLocaleContent { Text(stringResource(R.string.admin_reject)) }
+                    Text(stringResource(R.string.admin_reject))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showRejectDialog = false }) {
-                    AppLocaleContent { Text(stringResource(R.string.action_cancel)) }
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )

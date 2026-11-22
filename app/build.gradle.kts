@@ -66,8 +66,8 @@ android {
         applicationId = "com.example.familibalance"
         minSdk = 24
         targetSdk = 37
-        versionCode = 27
-        versionName = "2.2.1"
+        versionCode = 28
+        versionName = "2.2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -79,6 +79,10 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
+
+        // Приложение поддерживает только ru/en — вырезаем переводы
+        // из зависимостей (Material, Play Services и т.д.).
+        resourceConfigurations += listOf("ru", "en")
     }
 
     signingConfigs {
@@ -231,6 +235,7 @@ dependencies {
     testImplementation(libs.coroutines.test)
     testImplementation(libs.core.testing)
     testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

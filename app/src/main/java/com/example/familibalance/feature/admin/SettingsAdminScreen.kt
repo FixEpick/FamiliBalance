@@ -9,22 +9,17 @@ import com.example.familibalance.data.model.*
 import com.example.familibalance.util.*
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -35,6 +30,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.familibalance.ui.theme.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
+import com.example.familibalance.feature.admin.settings.*
 import com.example.familibalance.ui.auth.ChangeParentPinDialog
 import com.example.familibalance.ui.auth.SetChildPinDialog
 import com.example.familibalance.ui.components.LanguageSelectorRow
@@ -63,12 +59,10 @@ fun AdminSettingsScreen(
     // Цель удаления: "account" — весь аккаунт, childId — профиль ребёнка.
     var deleteTarget by rememberSaveable { mutableStateOf<String?>(null) }
     var isDeletingAccount by rememberSaveable { mutableStateOf(false) }
-    var showResets by rememberSaveable { mutableStateOf(false) }
     var showPinPicker by rememberSaveable { mutableStateOf(false) }
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
-    var selectedResetIndex by rememberSaveable { mutableIntStateOf(-1) }
     var pinTarget by rememberSaveable { mutableStateOf<String?>(null) } // "parent" или childId
-    var pendingResetAction by remember { mutableStateOf<(() -> Unit)?>(null) }
+    var pendingReset by rememberSaveable { mutableStateOf<ResetKind?>(null) }
 
     // --- Ручная синхронизация: индикатор + Toast по завершении ---
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
@@ -124,8 +118,8 @@ fun AdminSettingsScreen(
         }
     }
 
-    fun requestReset(action: () -> Unit) {
-        pendingResetAction = action
+    fun requestReset(kind: ResetKind) {
+        pendingReset = kind
         showConfirmDialog = true
     }
 
@@ -168,60 +162,10 @@ fun AdminSettingsScreen(
             }
         }
 
-item {
-    Spacer(modifier = Modifier.height(6.dp))
-    Text(text = stringResource(R.string.admin_set_requests_title), color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-}
-if (pendingRequests.isEmpty()) {
-    item {
-        Text(
-            text = stringResource(R.string.admin_set_no_requests),
-            color = TextSecondary,
-            fontSize = 13.sp,
-            modifier = Modifier.padding(vertical = 8.dp)
+        pendingRequestsSection(
+            requests = pendingRequests,
+            onApprove = { adminVm.approveRequest(it) }
         )
-        Spacer(modifier = Modifier.height(12.dp))
-    }
-} else {
-    items(pendingRequests, key = { it.id }) { row ->
-        Surface(
-            shape = RoundedCornerShape(14.dp),
-            color = GlassBackground,
-            border = BorderStroke(1.dp, StatusYellow.copy(alpha = 0.5f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(row.avatar, fontSize = 28.sp)
-                Spacer(modifier = Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.admin_set_request_join, row.name),
-                        color = TextPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = stringResource(R.string.admin_set_request_email, row.email),
-                        color = TextSecondary,
-                        fontSize = 11.sp
-                    )
-                }
-                Button(
-                    onClick = { adminVm.approveRequest(row.id) },
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentColor),
-                    shape = RoundedCornerShape(10.dp)
-                ) {
-                    Text(stringResource(R.string.admin_set_approve), color = Color.Black, fontWeight = FontWeight.Bold)
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(10.dp))
-    }
-    item { Spacer(modifier = Modifier.height(12.dp)) }
-}
 item {
     Spacer(modifier = Modifier.height(6.dp))
     Text(text = stringResource(R.string.admin_set_security), color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -238,100 +182,9 @@ item {
     }
     Spacer(modifier = Modifier.height(20.dp))
 }
-        item {
-            OutlinedButton(
-                onClick = { showResets = !showResets },
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, PenaltyRed.copy(alpha = 0.6f)),
-                colors = ButtonDefaults.outlinedButtonColors(containerColor = GlassBackground, contentColor = PenaltyRed)
-            ) {
-                Text(
-                    text = if (showResets) stringResource(R.string.admin_set_resets_open) else stringResource(R.string.admin_set_resets_closed),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-        }
-        if (showResets) {
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    val resetOptions = listOf(
-                        stringResource(R.string.admin_set_reset_quests_label) to { viewModel.resetActiveQuests(child.id) },
-                        stringResource(R.string.admin_set_reset_visibility_label) to { viewModel.resetQuestVisibility(child.id) },
-                        stringResource(R.string.admin_set_reset_achievements_label) to { viewModel.resetAchievements(child.id) },
-                        stringResource(R.string.admin_set_reset_counters_label) to { viewModel.resetGradeCounters(child.id) },
-                        stringResource(R.string.admin_set_reset_honest_label) to { viewModel.resetHonestAdmission(child.id) },
-                        stringResource(R.string.admin_set_reset_history_label) to { viewModel.clearHistory(child.id) },
-                        stringResource(R.string.admin_set_reset_balance_label) to { viewModel.resetBalance(child.id) },
-                        stringResource(R.string.admin_set_reset_streak_label) to { viewModel.resetStreakAndTime(child.id) },
-                        stringResource(R.string.admin_set_reset_dream_label) to { viewModel.resetDream(child.id) },
-                        stringResource(R.string.admin_set_reset_theme_label) to { viewModel.resetTheme(child.id) }
-                    )
-                    var resetMenuExpanded by remember { mutableStateOf(false) }
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedButton(
-                            onClick = { resetMenuExpanded = true },
-                            modifier = Modifier.fillMaxWidth().height(50.dp),
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(1.dp, GlassStroke),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary)
-                        ) {
-                            Text(
-                                text = resetOptions.getOrNull(selectedResetIndex)?.first
-                                    ?: stringResource(R.string.admin_set_reset_select),
-                                color = if (selectedResetIndex >= 0) TextPrimary else TextSecondary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = resetMenuExpanded,
-                            onDismissRequest = { resetMenuExpanded = false },
-                            containerColor = SpaceBgStart,
-                            shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, GlassStroke)
-                        ) {
-                            resetOptions.forEachIndexed { index, (label, _) ->
-                                DropdownMenuItem(
-                                    text = { Text(label, color = TextPrimary, fontSize = 14.sp) },
-                                    onClick = {
-                                        selectedResetIndex = index
-                                        resetMenuExpanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                    Button(
-                        onClick = {
-                            resetOptions.getOrNull(selectedResetIndex)?.second?.let { action ->
-                                requestReset(action)
-                            }
-                        },
-                        enabled = selectedResetIndex >= 0,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = PenaltyRed,
-                            disabledContainerColor = GlassStroke
-                        ),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth().height(50.dp)
-                    ) {
-                        Text(stringResource(R.string.admin_set_reset_execute), color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { requestReset { viewModel.resetAllChildData(child.id) } },
-                        colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth().height(50.dp)
-                    ) {
-                        Text(stringResource(R.string.admin_set_reset_all), color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-        }
+        resetsSection(
+            onRequestReset = { kind -> requestReset(kind) }
+        )
         item {
             OutlinedButton(
                 onClick = {
@@ -371,84 +224,10 @@ item {
             }
         }
         item {
-            var showCurrency by rememberSaveable { mutableStateOf(false) }
-            val currentCurrency = child.rewardCurrency
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = GlassBackground,
-                border = BorderStroke(1.dp, GlassStroke),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showCurrency = !showCurrency }
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.admin_set_currency),
-                            color = TextPrimary,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = RewardCurrency.symbolOf(currentCurrency),
-                            color = AccentColor,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = if (showCurrency) "▲" else "▼",
-                            color = TextSecondary,
-                            fontSize = 12.sp
-                        )
-                    }
-                    if (showCurrency) {
-                        RewardCurrency.all.forEach { cur ->
-                            val isSelected = cur.code == currentCurrency
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        viewModel.setRewardCurrency(cur.code)
-                                        showCurrency = false
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(cur.symbol, fontSize = 18.sp)
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    text = cur.code,
-                                    color = TextPrimary,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = currencyName(cur.code),
-                                    color = TextSecondary,
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                if (isSelected) {
-                                    Text("✓", color = AccentColor, fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                        Text(
-                            text = stringResource(R.string.admin_set_currency_note),
-                            color = TextSecondary,
-                            fontSize = 11.sp,
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-                        )
-                    }
-                }
-            }
+            CurrencyCard(
+                currentCurrency = child.rewardCurrency,
+                onSelect = { viewModel.setRewardCurrency(it) }
+            )
         }
         item {
             OutlinedButton(
@@ -485,46 +264,13 @@ item {
 }
 // Выбор, чей ПИН-код менять
 if (showPinPicker) {
-    val childrenList = familyState.children.values.sortedBy { it.name }
-    AlertDialog(
-        onDismissRequest = { showPinPicker = false },
-        containerColor = SpaceBgStart,
-        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_pin_management), color = AccentColor, fontWeight = FontWeight.Bold) } },
-        text = {
-            AppLocaleContent {
-            val options = listOf("parent" to stringResource(R.string.admin_set_my_pin)) +
-                childrenList.map { it.id to "👦 ${childDisplayName(it)}" }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                options.forEach { (target, label) ->
-                OutlinedButton(
-                    onClick = {
-                        showPinPicker = false
-                        pinTarget = target
-                    },
-                    border = BorderStroke(1.dp, GlassStroke),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(label, fontWeight = FontWeight.Bold)
-                }
-                }
-            }
-            }
+    PinPickerDialog(
+        children = familyState.children.values.sortedBy { it.name },
+        onSelect = { target ->
+            showPinPicker = false
+            pinTarget = target
         },
-        confirmButton = {},
-        dismissButton = {
-            AppLocaleContent {
-            OutlinedButton(
-                onClick = { showPinPicker = false },
-                border = BorderStroke(1.dp, GlassStroke),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
-            }
-            }
-        }
+        onDismiss = { showPinPicker = false }
     )
 }
 
@@ -559,209 +305,67 @@ pinTarget?.let { targetId ->
     }
 }
 if (showAddBonusDialog) {
-    var bonusTitle by rememberSaveable { mutableStateOf("") }
-    var bonusDesc by rememberSaveable { mutableStateOf("") }
-    var bonusReward by rememberSaveable { mutableStateOf("50") }
-    var bonusRequiresPhoto by rememberSaveable { mutableStateOf(true) }
-    AlertDialog(
-        onDismissRequest = { showAddBonusDialog = false },
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        containerColor = SpaceBgStart,
-        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_bonus_title, childDisplayName(child)), color = AccentColor, fontWeight = FontWeight.Bold) } },
-        text = {
-            AppLocaleContent {
-            Column(
-                modifier = Modifier.imePadding(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(value = bonusTitle, onValueChange = { bonusTitle = it }, label = { Text(stringResource(R.string.admin_set_bonus_name), color = TextPrimary) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
-                OutlinedTextField(value = bonusDesc, onValueChange = { bonusDesc = it }, label = { Text(stringResource(R.string.admin_set_bonus_desc), color = TextPrimary) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
-                OutlinedTextField(value = bonusReward, onValueChange = { bonusReward = it }, label = { Text(currencyString(R.string.admin_set_bonus_reward), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Checkbox(
-                        checked = bonusRequiresPhoto,
-                        onCheckedChange = { bonusRequiresPhoto = it },
-                        colors = CheckboxDefaults.colors(checkedColor = AccentColor)
-                    )
-                    Text(
-                        text = stringResource(R.string.admin_set_bonus_photo),
-                        color = TextPrimary,
-                        fontSize = 14.sp
-                    )
-                }
-            }
-            }
+    AddBonusQuestDialog(
+        child = child,
+        onConfirm = { title, desc, reward, requiresPhoto ->
+            viewModel.addBonusQuest(child.id, title, reward, desc, requiresPhoto)
+            viewModel.saveAndSync()
+            showAddBonusDialog = false
         },
-        confirmButton = {
-            AppLocaleContent {
-            Button(
-                onClick = {
-                    val rewardInt = bonusReward.toIntOrNull() ?: 50
-                    if (bonusTitle.isNotBlank()) {
-                        viewModel.addBonusQuest(child.id, bonusTitle.trim(), rewardInt, bonusDesc.trim(), bonusRequiresPhoto)
-                        viewModel.saveAndSync()
-                        showAddBonusDialog = false
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
-                shape = RoundedCornerShape(10.dp)
-            ) { Text(stringResource(R.string.admin_set_create), fontWeight = FontWeight.Bold) }
-            }
-        },
-        dismissButton = { AppLocaleContent { TextButton(onClick = { showAddBonusDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
+        onDismiss = { showAddBonusDialog = false }
     )
 }
-if (showConfirmDialog && pendingResetAction != null) {
-    AlertDialog(
-        onDismissRequest = { showConfirmDialog = false; pendingResetAction = null },
-        containerColor = SpaceBgStart,
-        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_confirm_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
-        text = { AppLocaleContent { Text(stringResource(R.string.admin_set_confirm_message), color = TextPrimary) } },
-        confirmButton = {
-            AppLocaleContent {
-            Button(onClick = { pendingResetAction?.invoke(); showConfirmDialog = false; pendingResetAction = null }, colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), shape = RoundedCornerShape(10.dp)) {
-                Text(stringResource(R.string.admin_set_confirm), color = Color.White, fontWeight = FontWeight.Bold)
-            }
-            }
+if (showConfirmDialog && pendingReset != null) {
+    ResetConfirmDialog(
+        onConfirm = {
+            pendingReset?.execute(viewModel, child.id)
+            showConfirmDialog = false
+            pendingReset = null
         },
-        dismissButton = { AppLocaleContent { TextButton(onClick = { showConfirmDialog = false; pendingResetAction = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
+        onDismiss = {
+            showConfirmDialog = false
+            pendingReset = null
+        }
     )
 }
 // Подтверждение выхода из аккаунта
 if (showLogoutDialog) {
-    AlertDialog(
-        onDismissRequest = { showLogoutDialog = false },
-        containerColor = SpaceBgStart,
-        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_logout_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
-        text = { AppLocaleContent { Text(stringResource(R.string.admin_set_logout_message), color = TextPrimary) } },
-        confirmButton = {
-            AppLocaleContent {
-            Button(
-                onClick = {
-                    showLogoutDialog = false
-                    onLogout()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed, contentColor = Color.White),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(stringResource(R.string.admin_set_logout_confirm), fontWeight = FontWeight.Bold)
-            }
-            }
+    LogoutConfirmDialog(
+        onConfirm = {
+            showLogoutDialog = false
+            onLogout()
         },
-        dismissButton = {
-            AppLocaleContent {
-            OutlinedButton(
-                onClick = { showLogoutDialog = false },
-                border = BorderStroke(1.dp, GlassStroke),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
-            }
-            }
-        }
+        onDismiss = { showLogoutDialog = false }
     )
 }
 // Меню удаления: аккаунт целиком или профиль конкретного ребёнка
 if (showDeletePicker) {
     val childrenList = familyState.children.values.sortedBy { it.name }
-    AlertDialog(
-        onDismissRequest = { showDeletePicker = false },
-        containerColor = SpaceBgStart,
-        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_delete_pick_title), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
-        text = {
-            AppLocaleContent {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = {
-                        showDeletePicker = false
-                        deleteTarget = "account"
-                    },
-                    border = BorderStroke(1.dp, PenaltyRed),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.admin_set_delete_all), fontWeight = FontWeight.Bold)
-                }
-                if (childrenList.isNotEmpty()) {
-                    OutlinedButton(
-                        onClick = {
-                            showDeletePicker = false
-                            // Один ребёнок — сразу к подтверждению, несколько — список профилей.
-                            deleteTarget = if (childrenList.size == 1) {
-                                childrenList.first().id
-                            } else {
-                                "child_picker"
-                            }
-                        },
-                        border = BorderStroke(1.dp, GlassStroke),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.admin_set_delete_child_profile), fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
+    DeleteTargetPickerDialog(
+        children = childrenList,
+        onSelectAccount = {
+            showDeletePicker = false
+            deleteTarget = "account"
+        },
+        onSelectChild = {
+            showDeletePicker = false
+            // Один ребёнок — сразу к подтверждению, несколько — список профилей.
+            deleteTarget = if (childrenList.size == 1) {
+                childrenList.first().id
+            } else {
+                "child_picker"
             }
         },
-        confirmButton = {},
-        dismissButton = {
-            AppLocaleContent {
-            OutlinedButton(
-                onClick = { showDeletePicker = false },
-                border = BorderStroke(1.dp, GlassStroke),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
-            }
-            }
-        }
+        onDismiss = { showDeletePicker = false }
     )
 }
 
 // Выбор профиля ребёнка для удаления (несколько детей)
 if (deleteTarget == "child_picker") {
-    val childrenList = familyState.children.values.sortedBy { it.name }
-    AlertDialog(
-        onDismissRequest = { deleteTarget = null },
-        containerColor = SpaceBgStart,
-        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_delete_pick_title), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
-        text = {
-            AppLocaleContent {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                childrenList.forEach { childProfile ->
-                    OutlinedButton(
-                        onClick = { deleteTarget = childProfile.id },
-                        border = BorderStroke(1.dp, GlassStroke),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("👦 ${childDisplayName(childProfile)}", fontWeight = FontWeight.Bold)
-                    }
-                }
-            }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            AppLocaleContent {
-            OutlinedButton(
-                onClick = { deleteTarget = null },
-                border = BorderStroke(1.dp, GlassStroke),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
-            }
-            }
-        }
+    ChildDeletePickerDialog(
+        children = familyState.children.values.sortedBy { it.name },
+        onSelect = { deleteTarget = it },
+        onDismiss = { deleteTarget = null }
     )
 }
 
@@ -773,94 +377,42 @@ deleteTarget?.let { target ->
         deleteTarget = null
         return@let
     }
-    val isAccountDelete = target == "account"
-    val targetName = targetChild?.let { childDisplayName(it) }.orEmpty()
-    AlertDialog(
-        onDismissRequest = { if (!isDeletingAccount) deleteTarget = null },
-        containerColor = SpaceBgStart,
-        title = {
-            AppLocaleContent {
-                Text(
-                    if (isAccountDelete) stringResource(R.string.admin_set_delete_account_confirm_title)
-                    else stringResource(R.string.admin_set_delete_child_title, targetName),
-                    color = PenaltyRed,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        },
-        text = {
-            AppLocaleContent {
-            Text(
-                if (isAccountDelete) stringResource(R.string.admin_set_delete_account_confirm_msg)
-                else stringResource(R.string.admin_set_delete_child_msg, targetName),
-                color = TextPrimary
-            )
-            }
-        },
-        confirmButton = {
-            AppLocaleContent {
-            Button(
-                onClick = {
-                    isDeletingAccount = true
-                    if (isAccountDelete) {
-                        viewModel.deleteAccount { success ->
-                            isDeletingAccount = false
-                            deleteTarget = null
-                            if (success) {
-                                onLogout()
-                            } else {
-                                android.widget.Toast.makeText(
-                                    context,
-                                    deleteErrorText,
-                                    android.widget.Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
+    DeleteConfirmDialog(
+        target = target,
+        targetChild = targetChild,
+        isDeleting = isDeletingAccount,
+        onConfirm = {
+            isDeletingAccount = true
+            if (target == "account") {
+                viewModel.deleteAccount { success ->
+                    isDeletingAccount = false
+                    deleteTarget = null
+                    if (success) {
+                        onLogout()
                     } else {
-                        viewModel.deleteChildProfile(target) { success ->
-                            isDeletingAccount = false
-                            if (success) {
-                                deleteTarget = null
-                            } else {
-                                android.widget.Toast.makeText(
-                                    context,
-                                    deleteErrorText,
-                                    android.widget.Toast.LENGTH_LONG
-                                ).show()
-                            }
-                        }
+                        android.widget.Toast.makeText(
+                            context,
+                            deleteErrorText,
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
                     }
-                },
-                enabled = !isDeletingAccount,
-                colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed, contentColor = Color.White),
-                shape = RoundedCornerShape(10.dp)
-            ) {
-                if (isDeletingAccount) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(
-                    if (isAccountDelete) stringResource(R.string.admin_set_delete_forever)
-                    else stringResource(R.string.admin_set_delete_child_btn),
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            } else {
+                viewModel.deleteChildProfile(target) { success ->
+                    isDeletingAccount = false
+                    if (success) {
+                        deleteTarget = null
+                    } else {
+                        android.widget.Toast.makeText(
+                            context,
+                            deleteErrorText,
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
             }
         },
-        dismissButton = {
-            AppLocaleContent {
-            TextButton(
-                onClick = { deleteTarget = null },
-                enabled = !isDeletingAccount
-            ) {
-                Text(stringResource(R.string.action_cancel), color = TextSecondary)
-            }
-            }
-        }
+        onDismiss = { deleteTarget = null }
     )
 }
 }

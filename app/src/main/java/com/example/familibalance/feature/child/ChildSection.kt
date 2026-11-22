@@ -39,6 +39,7 @@ import com.example.familibalance.navigation.ChildTasksRoute
 import com.example.familibalance.feature.child.components.CameraCaptureVisibility
 import com.example.familibalance.feature.child.components.InfoBottomSheet
 import com.example.familibalance.feature.child.screens.*
+import com.example.familibalance.ui.components.AppDialog
 import com.example.familibalance.ui.components.EmojiIcon
 import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.ui.components.childDisplayName
@@ -321,9 +322,8 @@ fun ChildSection(
                 )
             }
             if (showLogoutDialog) {
-                AlertDialog(
+                AppDialog(
                     onDismissRequest = { showLogoutDialog = false },
-                    containerColor = SpaceBgStart,
                     title = {
                         Text(
                             text = logoutDialogTitle,

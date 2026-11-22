@@ -17,11 +17,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.data.model.CashoutRequest
 import com.example.familibalance.data.model.CashoutStatus
 import com.example.familibalance.util.*
+import com.example.familibalance.ui.components.AppDialog
 import com.example.familibalance.ui.theme.*
 
 /** Карточка баланса: аватар, сумма, бейдж банка. onBadgePositioned — для CoinFlightOverlay. */
@@ -235,27 +235,22 @@ fun CashoutSection(
 
     // Окно с причиной отклонения: «Понятно» убирает плашку с главного экрана.
     reasonDialogRequest?.let { request ->
-        AlertDialog(
+        AppDialog(
             onDismissRequest = { reasonDialogRequest = null },
-            containerColor = SpaceBgStart,
             title = {
-                AppLocaleContent {
-                    Text(
-                        stringResource(R.string.child_cashout_rejected),
-                        color = PenaltyRed
-                    )
-                }
+                Text(
+                    stringResource(R.string.child_cashout_rejected),
+                    color = PenaltyRed
+                )
             },
             text = {
-                AppLocaleContent {
-                    Text(
-                        text = request.rejectReason.orEmpty().ifBlank {
-                            stringResource(R.string.admin_reject_default_reason)
-                        },
-                        color = TextPrimary,
-                        fontSize = 15.sp
-                    )
-                }
+                Text(
+                    text = request.rejectReason.orEmpty().ifBlank {
+                        stringResource(R.string.admin_reject_default_reason)
+                    },
+                    color = TextPrimary,
+                    fontSize = 15.sp
+                )
             },
             confirmButton = {
                 Button(
@@ -264,9 +259,7 @@ fun CashoutSection(
                         reasonDialogRequest = null
                     }
                 ) {
-                    AppLocaleContent {
-                        Text(stringResource(R.string.child_cashout_reason_ok))
-                    }
+                    Text(stringResource(R.string.child_cashout_reason_ok))
                 }
             }
         )
