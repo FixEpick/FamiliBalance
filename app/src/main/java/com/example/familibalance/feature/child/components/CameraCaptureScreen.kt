@@ -34,6 +34,9 @@ import androidx.exifinterface.media.ExifInterface
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.TextPrimary
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /** true, пока открыта встроенная камера — ChildSection прячет нижний таб-бар. */
@@ -61,6 +64,7 @@ fun CameraCaptureScreen(
     val appContext = remember { context.applicationContext }
     val lifecycleOwner = LocalLifecycleOwner.current
     val mainExecutor = remember { ContextCompat.getMainExecutor(context) }
+    val scope = rememberCoroutineScope()
 
     val previewView = remember {
         PreviewView(context).apply {
@@ -119,9 +123,15 @@ fun CameraCaptureScreen(
         val options = ImageCapture.OutputFileOptions.Builder(photoFile).build()
         imageCapture.takePicture(options, mainExecutor, object : ImageCapture.OnImageSavedCallback {
             override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                downscaleQuestPhoto(photoFile)
-                isCapturing = false
-                onImageCaptured(photoFile)
+                // Даунскейл/EXIF/перезапись JPEG — тяжёлая работа, уводим
+                // с main thread: иначе Choreographer пропускает кадры.
+                scope.launch {
+                    withContext(Dispatchers.IO) {
+                        downscaleQuestPhoto(photoFile)
+                    }
+                    isCapturing = false
+                    onImageCaptured(photoFile)
+                }
             }
 
             override fun onError(exception: ImageCaptureException) {
