@@ -429,7 +429,6 @@
     <string name="a11y_camera_hint">Take a photo of the quest result</string>
     <string name="a11y_gift_icon">Gift</string>
     <string name="a11y_info_button">Info: rules and rates</string>
-    <string name="a11y_profile_menu">Profile: log out or switch user</string>
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Claim reward</string>
@@ -522,9 +521,7 @@
     <string name="admin_set_resets_open">🗑 Cleanup &amp; resets ▲</string>
     <string name="admin_set_resets_closed">🗑 Cleanup &amp; resets ▼</string>
     <string name="admin_set_reset_quests_label">Reset progress of all quests</string>
-    <string name="admin_set_reset_visibility_label">Restore hidden and deleted quests</string>
     <string name="admin_set_reset_achievements_label">Reset achievements and stats</string>
-    <string name="admin_set_reset_counters_label">Zero grade and cleaning counters</string>
     <string name="admin_set_reset_honest_label">Reset honest admission</string>
     <string name="admin_set_reset_history_label">Clear operation history</string>
     <string name="admin_set_reset_balance_label">Zero balance</string>

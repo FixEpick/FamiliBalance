@@ -441,7 +441,6 @@
     <string name="a11y_camera_hint">Сделать фото результата задания</string>
     <string name="a11y_gift_icon">Подарок</string>
     <string name="a11y_info_button">Информация: правила и тарифы</string>
-    <string name="a11y_profile_menu">Профиль: выход или смена пользователя</string>
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Получить награду</string>
@@ -534,9 +533,7 @@
     <string name="admin_set_resets_open">🗑 Очистка и сбросы ▲</string>
     <string name="admin_set_resets_closed">🗑 Очистка и сбросы ▼</string>
     <string name="admin_set_reset_quests_label">Сбросить прогресс всех заданий</string>
-    <string name="admin_set_reset_visibility_label">Вернуть скрытые и удалённые задания</string>
     <string name="admin_set_reset_achievements_label">Сбросить достижения и статистику</string>
-    <string name="admin_set_reset_counters_label">Обнулить счётчики оценок и уборок</string>
     <string name="admin_set_reset_honest_label">Сбросить честное признание</string>
     <string name="admin_set_reset_history_label">Очистить историю операций</string>
     <string name="admin_set_reset_balance_label">Обнулить баланс</string>

@@ -165,66 +165,53 @@ private fun MainViewModel.deleteQuestPhotos(urls: List<String?>) {
 
 fun MainViewModel.resetActiveQuests(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
-    // Квесты «в полёте» не трогаем: PENDING ждёт проверки родителем
-    // (сброс стёр бы photoUrl и отзыв родителя), READY_TO_CLAIM —
-    // одобрен и ждёт получения награды ребёнком.
-    fun QuestStatus.inFlight() = this == QuestStatus.PENDING || this == QuestStatus.READY_TO_CLAIM
-
-    val resetCloset = !profile.closetStatus.inFlight()
-    val resetRoom = !profile.roomStatus.inFlight()
-    val resetDiary = !profile.diaryStatus.inFlight()
-
+    // Полный сброс в изначальное состояние: ВСЕ квесты → AVAILABLE,
+    // включая ONCE, бонусные и «в полёте» (PENDING/READY_TO_CLAIM).
     val updatedQuests = profile.customQuests.map { quest ->
-        // ONCE-квесты не сбрасываем — они выполняются один раз
-        if (quest.isVisible && quest.frequency != QuestFrequency.ONCE && !quest.status.inFlight()) {
-            quest.copy(
-                status = QuestStatus.AVAILABLE,
-                photoUrl = null,
-                rejectReason = null
-            )
-        } else quest
+        quest.copy(
+            status = QuestStatus.AVAILABLE,
+            photoUrl = null,
+            rejectReason = null,
+            lastResetDate = ""
+        )
     }
     val updatedBonusQuests = profile.bonusQuests.map { bq ->
-        if (!bq.status.inFlight()) {
-            bq.copy(
-                status = QuestStatus.AVAILABLE,
-                photoUrl = null,
-                rejectReason = null
-            )
-        } else bq
+        bq.copy(
+            status = QuestStatus.AVAILABLE,
+            photoUrl = null,
+            rejectReason = null
+        )
     }
-    // Чистим фото, которые сбрасываются ниже (built-in + custom + bonus), из Storage.
+    // Чистим фото всех сбрасываемых квестов из Storage.
     deleteQuestPhotos(
-        buildList {
-            if (resetCloset) add(profile.closetPhotoUrl)
-            if (resetRoom) add(profile.roomPhotoUrl)
-            if (resetDiary) add(profile.diaryPhotoUrl)
-            updatedQuests.filter { it.status == QuestStatus.AVAILABLE && it.photoUrl == null }
-                .forEach { q -> add(profile.customQuests.firstOrNull { it.id == q.id }?.photoUrl) }
-            updatedBonusQuests.filter { it.status == QuestStatus.AVAILABLE && it.photoUrl == null }
-                .forEach { bq -> add(profile.bonusQuests.firstOrNull { it.id == bq.id }?.photoUrl) }
-        }
+        listOf(profile.closetPhotoUrl, profile.roomPhotoUrl, profile.diaryPhotoUrl) +
+            profile.customQuests.map { it.photoUrl } +
+            profile.bonusQuests.map { it.photoUrl }
     )
     updateChildProfile(
         profile.copy(
-            closetStatus = if (resetCloset) QuestStatus.AVAILABLE else profile.closetStatus,
-            closetRejectReason = if (resetCloset) null else profile.closetRejectReason,
-            closetPhotoUrl = if (resetCloset) null else profile.closetPhotoUrl,
-            closetComment = if (resetCloset) "" else profile.closetComment,
-            roomStatus = if (resetRoom) QuestStatus.AVAILABLE else profile.roomStatus,
-            roomRejectReason = if (resetRoom) null else profile.roomRejectReason,
-            roomPhotoUrl = if (resetRoom) null else profile.roomPhotoUrl,
-            roomComment = if (resetRoom) "" else profile.roomComment,
-            diaryStatus = if (resetDiary) QuestStatus.AVAILABLE else profile.diaryStatus,
-            diaryRejectReason = if (resetDiary) null else profile.diaryRejectReason,
-            diaryPhotoUrl = if (resetDiary) null else profile.diaryPhotoUrl,
-            diaryComment = if (resetDiary) "" else profile.diaryComment,
-            diaryCount5 = if (resetDiary) 0 else profile.diaryCount5,
-            diaryCount4 = if (resetDiary) 0 else profile.diaryCount4,
-            diaryCount3 = if (resetDiary) 0 else profile.diaryCount3,
-            diaryCount2 = if (resetDiary) 0 else profile.diaryCount2,
+            closetStatus = QuestStatus.AVAILABLE,
+            closetRejectReason = null,
+            closetPhotoUrl = null,
+            closetComment = "",
+            closetResetDate = "",
+            roomStatus = QuestStatus.AVAILABLE,
+            roomRejectReason = null,
+            roomPhotoUrl = null,
+            roomComment = "",
+            roomResetDate = "",
+            diaryStatus = QuestStatus.AVAILABLE,
+            diaryRejectReason = null,
+            diaryPhotoUrl = null,
+            diaryComment = "",
+            diaryResetDate = "",
+            diaryCount5 = 0,
+            diaryCount4 = 0,
+            diaryCount3 = 0,
+            diaryCount2 = 0,
             customQuests = updatedQuests,
-            bonusQuests = updatedBonusQuests
+            bonusQuests = updatedBonusQuests,
+            pendingQuests = emptyList()
         )
     )
 }
@@ -232,13 +219,6 @@ fun MainViewModel.resetActiveQuests(userId: String) {
 fun MainViewModel.updateTheme(userId: String, themeId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     updateChildProfile(profile.copy(selectedThemeId = themeId))
-}
-
-fun MainViewModel.resetGradeCounters(userId: String) {
-    val profile = familyRepository.getChild(userId) ?: return
-    updateChildProfile(
-        profile.copy(fivesCount = 0, wardrobeCount = 0, roomCount = 0)
-    )
 }
 
 fun MainViewModel.resetDream(userId: String) {
@@ -265,21 +245,6 @@ fun MainViewModel.resetTheme(userId: String) {
         profile.copy(
             selectedThemeId = "COSMIC_BLUE",
             unlockedThemes = listOf("COSMIC_BLUE")
-        )
-    )
-}
-
-fun MainViewModel.resetQuestVisibility(userId: String) {
-    val profile = familyRepository.getChild(userId) ?: return
-    updateChildProfile(
-        profile.copy(
-            isWardrobeVisible = true,
-            isRoomVisible = true,
-            isDiaryVisible = true,
-            isWardrobeDeleted = false,
-            isRoomDeleted = false,
-            isDiaryDeleted = false,
-            customQuests = profile.customQuests.map { it.copy(isVisible = true) }
         )
     )
 }

@@ -82,9 +82,7 @@ private fun ResetsContent(
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         val resetOptions = listOf(
             ResetKind.QUESTS to stringResource(R.string.admin_set_reset_quests_label),
-            ResetKind.VISIBILITY to stringResource(R.string.admin_set_reset_visibility_label),
             ResetKind.ACHIEVEMENTS to stringResource(R.string.admin_set_reset_achievements_label),
-            ResetKind.COUNTERS to stringResource(R.string.admin_set_reset_counters_label),
             ResetKind.HONEST to stringResource(R.string.admin_set_reset_honest_label),
             ResetKind.HISTORY to stringResource(R.string.admin_set_reset_history_label),
             ResetKind.BALANCE to stringResource(R.string.admin_set_reset_balance_label),

@@ -7,7 +7,6 @@ import com.example.familibalance.util.*
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -109,7 +108,6 @@ fun ChildSection(
     val offlineDesc = stringResource(R.string.a11y_offline_status)
     val themeDesc = stringResource(R.string.a11y_theme_button)
     val infoDesc = stringResource(R.string.a11y_info_button)
-    val profileMenuDesc = stringResource(R.string.a11y_profile_menu)
     val logoutDialogTitle = stringResource(R.string.logout_title)
     val logoutDialogMessage = stringResource(R.string.logout_message)
     val logoutDialogConfirm = stringResource(R.string.logout_confirm)
@@ -182,21 +180,6 @@ fun ChildSection(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = if (isParentPreview) Modifier else Modifier
-                            .clickable { showLogoutDialog = true }
-                            .semantics { contentDescription = profileMenuDesc }
-                    ) {
-                        Text(child.avatar, fontSize = 20.sp)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "${childDisplayName(child)} (${stringResource(R.string.child_player_role)})",
-                            color = TextPrimary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (!isSynced) {
                             EmojiIcon(
@@ -222,6 +205,16 @@ fun ChildSection(
                                 contentDescription = themeDesc
                             )
                         }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(child.avatar, fontSize = 20.sp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${childDisplayName(child)} (${stringResource(R.string.child_player_role)})",
+                            color = TextPrimary,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             },
@@ -299,6 +292,7 @@ fun ChildSection(
                         composable<ChildMainRoute> {
                             MainChildScreen(
                                 onNavigateToTasks = { navigateToTab(ChildTasksRoute) },
+                                onAvatarClick = if (isParentPreview) null else ({ showLogoutDialog = true }),
                                 viewModel = viewModel
                             )
                         }

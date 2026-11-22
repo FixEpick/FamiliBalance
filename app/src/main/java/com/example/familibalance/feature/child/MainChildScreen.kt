@@ -45,6 +45,7 @@ import java.time.temporal.ChronoUnit
 fun MainChildScreen(
     modifier: Modifier = Modifier,
     onNavigateToTasks: () -> Unit = {},
+    onAvatarClick: (() -> Unit)? = null,
     viewModel: MainViewModel
 ) {
     val dailyLimit = 90
@@ -211,7 +212,8 @@ fun MainChildScreen(
                 BalanceCard(
                     avatar = child.avatar,
                     animatedBalance = animatedBalance,
-                    onBadgePositioned = { balanceBadgePosition = it }
+                    onBadgePositioned = { balanceBadgePosition = it },
+                    onAvatarClick = onAvatarClick
                 )
             }
 

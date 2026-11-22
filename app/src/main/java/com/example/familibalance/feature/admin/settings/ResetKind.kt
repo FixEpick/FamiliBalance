@@ -13,9 +13,7 @@ import com.example.familibalance.viewmodel.actions.*
  */
 enum class ResetKind {
     QUESTS,
-    VISIBILITY,
     ACHIEVEMENTS,
-    COUNTERS,
     HONEST,
     HISTORY,
     BALANCE,
@@ -27,9 +25,7 @@ enum class ResetKind {
     fun execute(viewModel: MainViewModel, childId: String) {
         when (this) {
             QUESTS -> viewModel.resetActiveQuests(childId)
-            VISIBILITY -> viewModel.resetQuestVisibility(childId)
             ACHIEVEMENTS -> viewModel.resetAchievements(childId)
-            COUNTERS -> viewModel.resetGradeCounters(childId)
             HONEST -> viewModel.resetHonestAdmission(childId)
             HISTORY -> viewModel.clearHistory(childId)
             BALANCE -> viewModel.resetBalance(childId)

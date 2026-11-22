@@ -1,6 +1,8 @@
 package com.example.familibalance.util
 
 import android.app.Activity
+import android.os.Handler
+import android.os.Looper
 import kotlin.system.exitProcess
 
 /**
@@ -15,5 +17,8 @@ import kotlin.system.exitProcess
  */
 fun Activity.finishApp() {
     finishAffinity()
-    window.decorView.postDelayed({ exitProcess(0) }, 400)
+    // Handler на главном Looper, а не View.postDelayed: после finishAffinity
+    // decorView отсоединяется, и postDelayed на отсоединённом View никогда
+    // не выполнится — приложение оставалось живым («Выйти» не работало).
+    Handler(Looper.getMainLooper()).postDelayed({ exitProcess(0) }, 400)
 }

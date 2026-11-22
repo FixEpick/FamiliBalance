@@ -24,12 +24,14 @@ import com.example.familibalance.util.*
 import com.example.familibalance.ui.components.AppDialog
 import com.example.familibalance.ui.theme.*
 
-/** Карточка баланса: аватар, сумма, бейдж банка. onBadgePositioned — для CoinFlightOverlay. */
+/** Карточка баланса: аватар, сумма, бейдж банка. onBadgePositioned — для CoinFlightOverlay.
+ *  onAvatarClick != null — аватар кликабелен (выход из аккаунта ребёнка). */
 @Composable
 fun BalanceCard(
     avatar: String,
     animatedBalance: Int,
-    onBadgePositioned: (Offset) -> Unit
+    onBadgePositioned: (Offset) -> Unit,
+    onAvatarClick: (() -> Unit)? = null
 ) {
     Card(
         modifier = Modifier
@@ -57,7 +59,9 @@ fun BalanceCard(
                     shape = CircleShape,
                     color = LocalAppPalette.current.primaryNeon.copy(alpha = 0.2f),
                     border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clickable(enabled = onAvatarClick != null) { onAvatarClick?.invoke() }
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(avatar, fontSize = 24.sp)
