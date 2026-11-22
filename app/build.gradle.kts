@@ -208,8 +208,6 @@ dependencies {
     // API РёРґРµРЅС‚РёС‡РµРЅ bundled-РІР°СЂРёР°РЅС‚Сѓ (com.google.mlkit.vision.text.*), РёРјРїРѕСЂС‚С‹ РЅРµ РјРµРЅСЏСЋС‚СЃСЏ.
     implementation(libs.mlkit.text.recognition)
     implementation(libs.androidx.biometric)
-    implementation(libs.media3.exoplayer)
-    implementation(libs.media3.ui)
     implementation(libs.security.crypto)
     // FCM-пуши: BoM подтягивает messaging; без google-services.json
     // google-services плагин не применён, но зависимости безопасны.
