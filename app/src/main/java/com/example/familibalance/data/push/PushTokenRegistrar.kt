@@ -51,6 +51,7 @@ object PushTokenRegistrar {
         register(context, parentAuthUid, "parent")
     }
 
+    @Suppress("DEPRECATION")
     private fun register(context: Context, userId: String, role: String) {
         val prefs = SecurePrefs.get(context, PREFS)
         Log.d("PushTokenRegistrar", "register called: role=$role user=$userId")

@@ -1,5 +1,6 @@
 package com.example.familibalance.feature.admin
 
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 
@@ -222,9 +223,10 @@ fun AdminAchievementsScreen(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
             title = {
-                Text(stringResource(R.string.achadm_edit_title), color = AccentColor, fontWeight = FontWeight.Bold)
+                AppLocaleContent { Text(stringResource(R.string.achadm_edit_title), color = AccentColor, fontWeight = FontWeight.Bold) }
             },
             text = {
+                AppLocaleContent {
                 Column(modifier = Modifier.imePadding()) {
                     OutlinedTextField(
                         value = editTitle,
@@ -319,8 +321,10 @@ fun AdminAchievementsScreen(
                         }
                     }
                 }
+                }
             },
             confirmButton = {
+                AppLocaleContent {
                 Button(
                     onClick = { saveEdit() },
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
@@ -329,10 +333,13 @@ fun AdminAchievementsScreen(
                 ) {
                     Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
                 }
+                }
             },
             dismissButton = {
+                AppLocaleContent {
                 TextButton(onClick = { cancelEdit() }) {
                     Text(stringResource(R.string.action_cancel), color = TextSecondary)
+                }
                 }
             }
         )
@@ -343,12 +350,13 @@ fun AdminAchievementsScreen(
             onDismissRequest = { showDeleteConfirm = false },
             containerColor = SpaceBgStart,
             title = {
-                Text(stringResource(R.string.achadm_delete_title), color = PenaltyRed, fontWeight = FontWeight.Bold)
+                AppLocaleContent { Text(stringResource(R.string.achadm_delete_title), color = PenaltyRed, fontWeight = FontWeight.Bold) }
             },
             text = {
-                Text(stringResource(R.string.achadm_delete_message), color = TextPrimary)
+                AppLocaleContent { Text(stringResource(R.string.achadm_delete_message), color = TextPrimary) }
             },
             confirmButton = {
+                AppLocaleContent {
                 Button(
                     onClick = { confirmDelete() },
                     colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed, contentColor = Color.White),
@@ -356,10 +364,13 @@ fun AdminAchievementsScreen(
                 ) {
                     Text(stringResource(R.string.admin_set_delete), fontWeight = FontWeight.Bold)
                 }
+                }
             },
             dismissButton = {
+                AppLocaleContent {
                 TextButton(onClick = { showDeleteConfirm = false }) {
                     Text(stringResource(R.string.action_cancel), color = TextSecondary)
+                }
                 }
             }
         )
@@ -446,8 +457,9 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             onDismissRequest = { showCreateDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.achadm_new_title), color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.achadm_new_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
             text = {
+                AppLocaleContent {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -465,8 +477,10 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
+                }
             },
             confirmButton = {
+                AppLocaleContent {
                 Button(
                     enabled = newTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
@@ -475,8 +489,9 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         newTitle = ""; newDesc = ""; newTarget = "5"; newReward = "50"; showCreateDialog = false
                     }
                 ) { Text(stringResource(R.string.admin_set_create), fontWeight = FontWeight.Bold) }
+                }
             },
-            dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
+            dismissButton = { AppLocaleContent { TextButton(onClick = { showCreateDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
         )
     }
     editingAch?.let { ach ->
@@ -484,8 +499,9 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             onDismissRequest = { editingAch = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.achadm_edit_dialog_title), color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.achadm_edit_dialog_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
             text = {
+                AppLocaleContent {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -503,8 +519,10 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
+                }
             },
             confirmButton = {
+                AppLocaleContent {
                 Button(
                     enabled = editTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
@@ -513,21 +531,24 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         editingAch = null
                     }
                 ) { Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold) }
+                }
             },
-            dismissButton = { TextButton(onClick = { editingAch = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
+            dismissButton = { AppLocaleContent { TextButton(onClick = { editingAch = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
         )
     }
     deletingAch?.let { ach ->
         AlertDialog(
             onDismissRequest = { deletingAch = null },
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.achadm_delete_confirm, ach.title), color = PenaltyRed, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.achadm_delete_confirm, ach.title), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
             confirmButton = {
+                AppLocaleContent {
                 Button(colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), onClick = { viewModel.deleteAchievement(child.id, ach.id); deletingAch = null }) {
                     Text(stringResource(R.string.admin_set_delete), color = Color.White, fontWeight = FontWeight.Bold)
                 }
+                }
             },
-            dismissButton = { TextButton(onClick = { deletingAch = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
+            dismissButton = { AppLocaleContent { TextButton(onClick = { deletingAch = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
         )
     }
 }

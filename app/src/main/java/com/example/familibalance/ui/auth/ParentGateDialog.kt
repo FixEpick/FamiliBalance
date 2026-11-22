@@ -34,10 +34,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.data.ParentPinManager
 import kotlinx.coroutines.launch
@@ -194,6 +194,7 @@ fun ParentGateDialog(
     }
 
     Dialog(onDismissRequest = onDismiss) {
+        AppLocaleContent {
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = CyberPanelBg,
@@ -272,6 +273,7 @@ fun ParentGateDialog(
                     Text(stringResource(R.string.action_cancel), color = CyberTextSecondary, fontSize = 13.sp)
                 }
             }
+        }
         }
     }
 }

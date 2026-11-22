@@ -25,6 +25,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 
 /** Полноэкранный просмотр фото с pinch-zoom и двойным тапом для сброса. */
@@ -37,6 +38,7 @@ fun FullScreenImageDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        AppLocaleContent {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -98,6 +100,7 @@ fun FullScreenImageDialog(
                     modifier = Modifier.semantics { contentDescription = closeDesc }
                 )
             }
+        }
         }
     }
 }

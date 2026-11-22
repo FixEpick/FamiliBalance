@@ -55,6 +55,7 @@ object UpdateInstaller {
      * Сравнивает сертификаты подписанта скачанного APK и текущего приложения.
      * На API 28+ используется GET_SIGNING_CERTIFICATES, на более старых — GET_SIGNATURES.
      */
+    @Suppress("DEPRECATION")
     private fun hasSameSignature(context: Context, apk: File): Boolean {
         val pm = context.packageManager
         // На API 28+ запрашиваем оба флага: signingInfo может быть null

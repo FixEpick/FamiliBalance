@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 
 private val CyberTextPrimary = Color(0xFFE2E8F0)
@@ -54,6 +55,7 @@ fun SetChildPinDialog(
     }
 
     Dialog(onDismissRequest = onDismiss) {
+        AppLocaleContent {
         Surface(
             shape = RoundedCornerShape(24.dp),
             color = CyberPanelBg,
@@ -106,6 +108,7 @@ fun SetChildPinDialog(
                     Text(stringResource(R.string.action_cancel), color = CyberTextSecondary, fontSize = 13.sp)
                 }
             }
+        }
         }
     }
 }

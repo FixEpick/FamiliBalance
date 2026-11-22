@@ -19,6 +19,7 @@ import com.google.firebase.messaging.RemoteMessage
  */
 class FamiliBalanceMessagingService : FirebaseMessagingService() {
 
+    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         PushTokenRegistrar.onTokenRefreshed(this, token)

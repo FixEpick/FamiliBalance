@@ -309,16 +309,16 @@ internal object ProfileSync {
                 if (remoteChanged) {
                     // Облако изменилось с нашей последней синхронизации — возможен
                     // конфликт. Tiebreak по клиентским часам (редкий случай).
-                    val remoteIsNewer = remoteRow?.let { row ->
+                    val remoteIsNewer = remoteRow.let { row ->
                         runCatching {
                             val remoteTs = stateJsonFormat
                                 .decodeFromString<ChildProfileDto>(row.state_json)
                                 .stateUpdatedAt
                             remoteTs > 0 && remoteTs > updatedChild.stateUpdatedAt
                         }.getOrDefault(false)
-                    } == true
+                    }
                     if (remoteIsNewer) {
-                        remoteRow?.let { row ->
+                        remoteRow.let { row ->
                             AppStateStorage.applyRemoteChildJsonAsync(
                                 context, row.user_id, row.state_json,
                                 row.parentUserId, row.status, row.authUserId, row.updatedAt

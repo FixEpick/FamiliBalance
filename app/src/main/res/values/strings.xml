@@ -542,6 +542,8 @@
     <string name="admin_set_section_theme">🎨 Оформление</string>
     <string name="admin_set_reset_theme_label">Сбросить тему оформления</string>
     <string name="admin_set_reset_all">Обнулить всё</string>
+    <string name="admin_set_reset_select">Выберите, что сбросить…</string>
+    <string name="admin_set_reset_execute">Выполнить сброс</string>
     <string name="admin_set_sync">🔄 Синхронизировать с сервером</string>
     <string name="admin_set_language">🌐 Язык интерфейса</string>
     <string name="admin_set_logout">🚪 Выйти из аккаунта</string>

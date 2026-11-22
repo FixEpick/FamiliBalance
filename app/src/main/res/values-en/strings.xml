@@ -530,6 +530,8 @@
     <string name="admin_set_section_theme">🎨 Appearance</string>
     <string name="admin_set_reset_theme_label">Reset theme</string>
     <string name="admin_set_reset_all">Reset everything</string>
+    <string name="admin_set_reset_select">Select what to reset…</string>
+    <string name="admin_set_reset_execute">Perform reset</string>
     <string name="admin_set_sync">🔄 Sync with server</string>
     <string name="admin_set_language">🌐 Interface language</string>
     <string name="admin_set_logout">🚪 Log out</string>

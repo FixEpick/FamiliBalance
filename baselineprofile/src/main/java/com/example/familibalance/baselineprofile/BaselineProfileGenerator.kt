@@ -71,7 +71,7 @@ class BaselineProfileGenerator {
 
             // 1. Админка: 4 вкладки (Проверка/Прогресс/История/Настройки).
             for (i in 0..3) {
-                device.click((w * (2 * i + 1) / 8).toInt(), navY)
+                device.click(w * (2 * i + 1) / 8, navY)
                 Thread.sleep(1500)
                 scrollList()
             }
@@ -84,7 +84,7 @@ class BaselineProfileGenerator {
             // 3. Детский раздел (предпросмотр родителя): 4 вкладки
             //    (Главная/Задания/Достижения/История).
             for (i in 0..3) {
-                device.click((w * (2 * i + 1) / 8).toInt(), navY)
+                device.click(w * (2 * i + 1) / 8, navY)
                 Thread.sleep(1500)
                 scrollList()
             }

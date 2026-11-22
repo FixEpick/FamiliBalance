@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.data.update.UpdateError
 import com.example.familibalance.ui.theme.SpaceBgStart
@@ -51,13 +52,16 @@ fun UpdateDialog(
             onDismissRequest = onDismiss,
             containerColor = SpaceBgStart,
             title = {
+                AppLocaleContent {
                 Text(
                     stringResource(R.string.update_title, state.release.tagName),
                     color = TextPrimary,
                     fontWeight = FontWeight.Bold
                 )
+                }
             },
             text = {
+                AppLocaleContent {
                 Column {
                     val notes = state.release.body.lineSequence()
                         .filter { it.isNotBlank() }
@@ -81,20 +85,26 @@ fun UpdateDialog(
                         )
                     }
                 }
+                }
             },
             confirmButton = {
+                AppLocaleContent {
                 Button(onClick = onUpdate) { Text(stringResource(R.string.update_btn_update)) }
+                }
             },
             dismissButton = {
+                AppLocaleContent {
                 TextButton(onClick = onDismiss) { Text(stringResource(R.string.update_btn_later)) }
+                }
             }
         )
 
         is UpdateUiState.Downloading -> AlertDialog(
             onDismissRequest = {},
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.update_downloading_title), color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.update_downloading_title), color = TextPrimary, fontWeight = FontWeight.Bold) } },
             text = {
+                AppLocaleContent {
                 Column {
                     LinearProgressIndicator(
                         progress = { state.progress / 100f },
@@ -102,6 +112,7 @@ fun UpdateDialog(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("${state.progress}%", color = TextSecondary, fontSize = 13.sp)
+                }
                 }
             },
             confirmButton = {}
@@ -121,15 +132,18 @@ fun UpdateDialog(
         is UpdateUiState.NeedInstallPermission -> AlertDialog(
             onDismissRequest = onDismiss,
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.update_permission_title), color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.update_permission_title), color = TextPrimary, fontWeight = FontWeight.Bold) } },
             text = {
+                AppLocaleContent {
                 Text(
                     stringResource(R.string.update_install_permission_text),
                     color = TextSecondary,
                     fontSize = 13.sp
                 )
+                }
             },
             confirmButton = {
+                AppLocaleContent {
                 Button(onClick = {
                     try {
                         val action = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -156,42 +170,53 @@ fun UpdateDialog(
                         }
                     }
                 }) { Text(stringResource(R.string.update_btn_open_settings)) }
+                }
             },
             dismissButton = {
+                AppLocaleContent {
                 OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+                }
             }
         )
 
         is UpdateUiState.NeedPermission -> AlertDialog(
             onDismissRequest = onDismiss,
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.update_permission_title), color = TextPrimary, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.update_permission_title), color = TextPrimary, fontWeight = FontWeight.Bold) } },
             text = {
+                AppLocaleContent {
                 Text(
                     stringResource(R.string.update_permission_text),
                     color = TextSecondary,
                     fontSize = 13.sp
                 )
+                }
             },
             confirmButton = {
+                AppLocaleContent {
                 Button(onClick = {
                     state.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     context.startActivity(state.intent)
                     onDismiss()
                 }) { Text(stringResource(R.string.update_btn_open_settings)) }
+                }
             },
             dismissButton = {
+                AppLocaleContent {
                 OutlinedButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+                }
             }
         )
 
         is UpdateUiState.Error -> AlertDialog(
             onDismissRequest = onDismiss,
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.update_error_title), color = TextPrimary, fontWeight = FontWeight.Bold) },
-            text = { Text(updateErrorMessage(state.error), color = TextSecondary, fontSize = 13.sp) },
+            title = { AppLocaleContent { Text(stringResource(R.string.update_error_title), color = TextPrimary, fontWeight = FontWeight.Bold) } },
+            text = { AppLocaleContent { Text(updateErrorMessage(state.error), color = TextSecondary, fontSize = 13.sp) } },
             confirmButton = {
+                AppLocaleContent {
                 Button(onClick = onDismiss) { Text(stringResource(R.string.update_btn_close)) }
+                }
             }
         )
     }
@@ -221,7 +246,7 @@ private fun stripMarkdown(text: String): String {
         .replace(Regex("__([^_]+)__"), "$1")             // жирный __
         .replace(Regex("\\*([^*\\n]+)\\*"), "$1")        // курсив *
         .replace(Regex("~~([^~]+)~~"), "$1")             // зачёркнутый
-        .replace(Regex("\\[([^\\]]+)\\]\\([^)]+\\)"), "$1") // ссылки [text](url)
+        .replace(Regex("""\[([^\]]+)]\([^)]+\)"""), "$1") // ссылки [text](url)
         .replace(Regex("^\\s*[-*+]\\s+", RegexOption.MULTILINE), "• ") // маркеры списков
         .replace(Regex("^\\s*\\d+\\.\\s+", RegexOption.MULTILINE), "• ") // нумерованные списки
 }

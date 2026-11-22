@@ -44,6 +44,7 @@ object SecurePrefs {
         return cache.putIfAbsent(fileName, prefs) ?: prefs
     }
 
+    @Suppress("DEPRECATION")
     private fun create(context: Context, fileName: String): SharedPreferences {
         val masterKey = MasterKey.Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)

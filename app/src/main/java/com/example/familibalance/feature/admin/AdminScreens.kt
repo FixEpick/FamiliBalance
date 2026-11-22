@@ -1,5 +1,6 @@
 package com.example.familibalance.feature.admin
 
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 
@@ -197,8 +198,9 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             onDismissRequest = { showCreateDialog = false },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.quested_new_title), color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.quested_new_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
             text = {
+                AppLocaleContent {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -234,8 +236,10 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         )
                     }
                 }
+                }
             },
             confirmButton = {
+                AppLocaleContent {
                 Button(
                     enabled = newTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
@@ -244,8 +248,9 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         newTitle = ""; newDesc = ""; newReward = "50"; newRequiresPhoto = true; showCreateDialog = false
                     }
                 ) { Text(stringResource(R.string.admin_set_create), fontWeight = FontWeight.Bold) }
+                }
             },
-            dismissButton = { TextButton(onClick = { showCreateDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
+            dismissButton = { AppLocaleContent { TextButton(onClick = { showCreateDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
         )
     }
     if (editKind != null) {
@@ -253,8 +258,9 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             onDismissRequest = { editKind = null },
             properties = DialogProperties(usePlatformDefaultWidth = false),
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.quested_edit_title), color = AccentColor, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.quested_edit_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
             text = {
+                AppLocaleContent {
                 Column(
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -267,6 +273,13 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     if (editKind != "custom") {
                         Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { editFreq = QuestFrequency.ONCE },
+                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.ONCE) AccentColor else GlassStroke),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(stringResource(R.string.quested_freq_once), color = if (editFreq == QuestFrequency.ONCE) AccentColor else Color.White, fontSize = 13.sp)
+                            }
                             OutlinedButton(
                                 onClick = { editFreq = QuestFrequency.DAILY },
                                 border = BorderStroke(1.dp, if (editFreq == QuestFrequency.DAILY) AccentColor else GlassStroke),
@@ -325,8 +338,10 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         }
                     }
                 }
+                }
             },
             confirmButton = {
+                AppLocaleContent {
                 Button(
                     enabled = editTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
@@ -350,21 +365,24 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         editKind = null
                     }
                 ) { Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold) }
+                }
             },
-            dismissButton = { TextButton(onClick = { editKind = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
+            dismissButton = { AppLocaleContent { TextButton(onClick = { editKind = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
         )
     }
     deleteConfirmAction?.let { action ->
         AlertDialog(
             onDismissRequest = { deleteConfirmAction = null },
             containerColor = SpaceBgStart,
-            title = { Text(stringResource(R.string.quested_delete_title, deleteConfirmName), color = PenaltyRed, fontWeight = FontWeight.Bold) },
+            title = { AppLocaleContent { Text(stringResource(R.string.quested_delete_title, deleteConfirmName), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
             confirmButton = {
+                AppLocaleContent {
                 Button(colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), onClick = { action(); deleteConfirmAction = null }) {
                     Text(stringResource(R.string.admin_set_delete), color = Color.White, fontWeight = FontWeight.Bold)
                 }
+                }
             },
-            dismissButton = { TextButton(onClick = { deleteConfirmAction = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
+            dismissButton = { AppLocaleContent { TextButton(onClick = { deleteConfirmAction = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
         )
     }
 }

@@ -1,5 +1,6 @@
 package com.example.familibalance.feature.admin
 
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 import com.example.familibalance.BuildConfig
@@ -63,6 +64,7 @@ fun AdminSettingsScreen(
     var showResets by rememberSaveable { mutableStateOf(false) }
     var showPinPicker by rememberSaveable { mutableStateOf(false) }
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
+    var selectedResetIndex by rememberSaveable { mutableIntStateOf(-1) }
     var pinTarget by rememberSaveable { mutableStateOf<String?>(null) } // "parent" или childId
     var pendingResetAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
@@ -123,34 +125,6 @@ fun AdminSettingsScreen(
     fun requestReset(action: () -> Unit) {
         pendingResetAction = action
         showConfirmDialog = true
-    }
-
-    @Composable
-    fun ResetSectionHeader(title: String) {
-        Text(
-            text = title,
-            color = AccentColor,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 4.dp)
-        )
-    }
-
-    @Composable
-    fun ResetRow(label: String, buttonText: String, onConfirm: () -> Unit) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(text = label, color = TextPrimary, fontSize = 14.sp)
-            Spacer(modifier = Modifier.height(6.dp))
-            Button(
-                onClick = { requestReset(onConfirm) },
-                colors = ButtonDefaults.buttonColors(containerColor = GlassBackground),
-                shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(1.dp, GlassStroke),
-                modifier = Modifier.fillMaxWidth().height(40.dp)
-            ) {
-                Text(buttonText, color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            }
-        }
     }
 
     LazyColumn(
@@ -280,21 +254,66 @@ item {
         if (showResets) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ResetSectionHeader(stringResource(R.string.admin_set_section_progress))
-                    ResetRow(stringResource(R.string.admin_set_reset_quests_label), stringResource(R.string.admin_set_btn_reset)) { viewModel.resetActiveQuests(child.id) }
-                    ResetRow(stringResource(R.string.admin_set_reset_visibility_label), stringResource(R.string.admin_set_btn_restore)) { viewModel.resetQuestVisibility(child.id) }
-                    ResetRow(stringResource(R.string.admin_set_reset_achievements_label), stringResource(R.string.admin_set_btn_reset)) { viewModel.resetAchievements(child.id) }
-                    ResetRow(stringResource(R.string.admin_set_reset_counters_label), stringResource(R.string.admin_set_btn_zero)) { viewModel.resetGradeCounters(child.id) }
-                    ResetRow(stringResource(R.string.admin_set_reset_honest_label), stringResource(R.string.admin_set_btn_reset)) { viewModel.resetHonestAdmission(child.id) }
-                    ResetRow(stringResource(R.string.admin_set_reset_history_label), stringResource(R.string.admin_set_btn_clear)) { viewModel.clearHistory(child.id) }
-
-                    ResetSectionHeader(stringResource(R.string.admin_set_section_balance))
-                    ResetRow(stringResource(R.string.admin_set_reset_balance_label), stringResource(R.string.admin_set_btn_zero)) { viewModel.resetBalance(child.id) }
-                    ResetRow(stringResource(R.string.admin_set_reset_streak_label), stringResource(R.string.admin_set_btn_reset)) { viewModel.resetStreakAndTime(child.id) }
-                    ResetRow(stringResource(R.string.admin_set_reset_dream_label), stringResource(R.string.admin_set_btn_delete)) { viewModel.resetDream(child.id) }
-
-                    ResetSectionHeader(stringResource(R.string.admin_set_section_theme))
-                    ResetRow(stringResource(R.string.admin_set_reset_theme_label), stringResource(R.string.admin_set_btn_reset)) { viewModel.resetTheme(child.id) }
+                    val resetOptions = listOf(
+                        stringResource(R.string.admin_set_reset_quests_label) to { viewModel.resetActiveQuests(child.id) },
+                        stringResource(R.string.admin_set_reset_visibility_label) to { viewModel.resetQuestVisibility(child.id) },
+                        stringResource(R.string.admin_set_reset_achievements_label) to { viewModel.resetAchievements(child.id) },
+                        stringResource(R.string.admin_set_reset_counters_label) to { viewModel.resetGradeCounters(child.id) },
+                        stringResource(R.string.admin_set_reset_honest_label) to { viewModel.resetHonestAdmission(child.id) },
+                        stringResource(R.string.admin_set_reset_history_label) to { viewModel.clearHistory(child.id) },
+                        stringResource(R.string.admin_set_reset_balance_label) to { viewModel.resetBalance(child.id) },
+                        stringResource(R.string.admin_set_reset_streak_label) to { viewModel.resetStreakAndTime(child.id) },
+                        stringResource(R.string.admin_set_reset_dream_label) to { viewModel.resetDream(child.id) },
+                        stringResource(R.string.admin_set_reset_theme_label) to { viewModel.resetTheme(child.id) }
+                    )
+                    var resetMenuExpanded by remember { mutableStateOf(false) }
+                    Box(modifier = Modifier.fillMaxWidth()) {
+                        OutlinedButton(
+                            onClick = { resetMenuExpanded = true },
+                            modifier = Modifier.fillMaxWidth().height(50.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, GlassStroke),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary)
+                        ) {
+                            Text(
+                                text = resetOptions.getOrNull(selectedResetIndex)?.first
+                                    ?: stringResource(R.string.admin_set_reset_select),
+                                color = if (selectedResetIndex >= 0) TextPrimary else TextSecondary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = resetMenuExpanded,
+                            onDismissRequest = { resetMenuExpanded = false }
+                        ) {
+                            resetOptions.forEachIndexed { index, (label, _) ->
+                                DropdownMenuItem(
+                                    text = { Text(label, color = TextPrimary, fontSize = 14.sp) },
+                                    onClick = {
+                                        selectedResetIndex = index
+                                        resetMenuExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    Button(
+                        onClick = {
+                            resetOptions.getOrNull(selectedResetIndex)?.second?.let { action ->
+                                requestReset(action)
+                            }
+                        },
+                        enabled = selectedResetIndex >= 0,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = PenaltyRed,
+                            disabledContainerColor = GlassStroke
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth().height(50.dp)
+                    ) {
+                        Text(stringResource(R.string.admin_set_reset_execute), color = Color.White, fontWeight = FontWeight.Bold)
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
@@ -385,8 +404,9 @@ if (showPinPicker) {
     AlertDialog(
         onDismissRequest = { showPinPicker = false },
         containerColor = SpaceBgStart,
-        title = { Text(stringResource(R.string.admin_set_pin_management), color = AccentColor, fontWeight = FontWeight.Bold) },
+        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_pin_management), color = AccentColor, fontWeight = FontWeight.Bold) } },
         text = {
+            AppLocaleContent {
             val options = listOf("parent" to stringResource(R.string.admin_set_my_pin)) +
                 childrenList.map { it.id to "👦 ${childDisplayName(it)}" }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -405,9 +425,11 @@ if (showPinPicker) {
                 }
                 }
             }
+            }
         },
         confirmButton = {},
         dismissButton = {
+            AppLocaleContent {
             OutlinedButton(
                 onClick = { showPinPicker = false },
                 border = BorderStroke(1.dp, GlassStroke),
@@ -415,6 +437,7 @@ if (showPinPicker) {
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
+            }
             }
         }
     )
@@ -459,8 +482,9 @@ if (showAddBonusDialog) {
         onDismissRequest = { showAddBonusDialog = false },
         properties = DialogProperties(usePlatformDefaultWidth = false),
         containerColor = SpaceBgStart,
-        title = { Text(stringResource(R.string.admin_set_bonus_title, childDisplayName(child)), color = AccentColor, fontWeight = FontWeight.Bold) },
+        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_bonus_title, childDisplayName(child)), color = AccentColor, fontWeight = FontWeight.Bold) } },
         text = {
+            AppLocaleContent {
             Column(
                 modifier = Modifier.imePadding(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -484,8 +508,10 @@ if (showAddBonusDialog) {
                     )
                 }
             }
+            }
         },
         confirmButton = {
+            AppLocaleContent {
             Button(
                 onClick = {
                     val rewardInt = bonusReward.toIntOrNull() ?: 50
@@ -498,22 +524,25 @@ if (showAddBonusDialog) {
                 colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
                 shape = RoundedCornerShape(10.dp)
             ) { Text(stringResource(R.string.admin_set_create), fontWeight = FontWeight.Bold) }
+            }
         },
-        dismissButton = { TextButton(onClick = { showAddBonusDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
+        dismissButton = { AppLocaleContent { TextButton(onClick = { showAddBonusDialog = false }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
     )
 }
 if (showConfirmDialog && pendingResetAction != null) {
     AlertDialog(
         onDismissRequest = { showConfirmDialog = false; pendingResetAction = null },
         containerColor = SpaceBgStart,
-        title = { Text(stringResource(R.string.admin_set_confirm_title), color = AccentColor, fontWeight = FontWeight.Bold) },
-        text = { Text(stringResource(R.string.admin_set_confirm_message), color = TextPrimary) },
+        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_confirm_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
+        text = { AppLocaleContent { Text(stringResource(R.string.admin_set_confirm_message), color = TextPrimary) } },
         confirmButton = {
+            AppLocaleContent {
             Button(onClick = { pendingResetAction?.invoke(); showConfirmDialog = false; pendingResetAction = null }, colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), shape = RoundedCornerShape(10.dp)) {
                 Text(stringResource(R.string.admin_set_confirm), color = Color.White, fontWeight = FontWeight.Bold)
             }
+            }
         },
-        dismissButton = { TextButton(onClick = { showConfirmDialog = false; pendingResetAction = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } }
+        dismissButton = { AppLocaleContent { TextButton(onClick = { showConfirmDialog = false; pendingResetAction = null }) { Text(stringResource(R.string.action_cancel), color = TextSecondary) } } }
     )
 }
 // Подтверждение выхода из аккаунта
@@ -521,9 +550,10 @@ if (showLogoutDialog) {
     AlertDialog(
         onDismissRequest = { showLogoutDialog = false },
         containerColor = SpaceBgStart,
-        title = { Text(stringResource(R.string.admin_set_logout_title), color = AccentColor, fontWeight = FontWeight.Bold) },
-        text = { Text(stringResource(R.string.admin_set_logout_message), color = TextPrimary) },
+        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_logout_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
+        text = { AppLocaleContent { Text(stringResource(R.string.admin_set_logout_message), color = TextPrimary) } },
         confirmButton = {
+            AppLocaleContent {
             Button(
                 onClick = {
                     showLogoutDialog = false
@@ -534,8 +564,10 @@ if (showLogoutDialog) {
             ) {
                 Text(stringResource(R.string.admin_set_logout_confirm), fontWeight = FontWeight.Bold)
             }
+            }
         },
         dismissButton = {
+            AppLocaleContent {
             OutlinedButton(
                 onClick = { showLogoutDialog = false },
                 border = BorderStroke(1.dp, GlassStroke),
@@ -543,6 +575,7 @@ if (showLogoutDialog) {
                 shape = RoundedCornerShape(10.dp)
             ) {
                 Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
+            }
             }
         }
     )
@@ -552,14 +585,17 @@ if (showDeleteAccountDialog) {
     AlertDialog(
         onDismissRequest = { if (!isDeletingAccount) showDeleteAccountDialog = false },
         containerColor = SpaceBgStart,
-        title = { Text(stringResource(R.string.admin_set_delete_title), color = PenaltyRed, fontWeight = FontWeight.Bold) },
+        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_delete_title), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
         text = {
+            AppLocaleContent {
             Text(
                 stringResource(R.string.admin_set_delete_message),
                 color = TextPrimary
             )
+            }
         },
         confirmButton = {
+            AppLocaleContent {
             Button(
                 onClick = {
                     isDeletingAccount = true
@@ -591,13 +627,16 @@ if (showDeleteAccountDialog) {
                 }
                 Text(stringResource(R.string.admin_set_delete), fontWeight = FontWeight.Bold)
             }
+            }
         },
         dismissButton = {
+            AppLocaleContent {
             TextButton(
                 onClick = { showDeleteAccountDialog = false },
                 enabled = !isDeletingAccount
             ) {
                 Text(stringResource(R.string.action_cancel), color = TextSecondary)
+            }
             }
         }
     )
