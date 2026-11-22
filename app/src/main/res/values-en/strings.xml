@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FamiliBalance</string>
+    <string name="app_name">Family Balance</string>
 
     <!-- Welcome -->
 
@@ -27,7 +27,7 @@
     <string name="reg_pin">PIN code</string>
     <string name="reg_pin_hint">4 digits — your child will use them to log in</string>
     <string name="reg_parent_email">Parent\'s email</string>
-    <string name="reg_submit">Create hero and fight!</string>
+    <string name="reg_submit">Create hero and start!</string>
     <string name="parent_email">Email</string>
     <string name="parent_password">Password</string>
     <string name="parent_area_title">Parent dashboard</string>
@@ -39,7 +39,7 @@
     <string name="auth_forgot_password">Forgot password?</string>
     <string name="auth_reset_sent">Password reset email sent. You can request a new one no more than once every 30 minutes.</string>
     <string name="reset_confirm_title">Password reset</string>
-    <string name="reset_confirm_message">A password reset link will be sent to %1$s. Open the link in the FamiliBalance app and set a new password.</string>
+    <string name="reset_confirm_message">A password reset link will be sent to %1$s. Open the link in the Family Balance app and set a new password.</string>
     <string name="reset_confirm_send">Send</string>
     <string name="auth_reset_cooldown">Next request in %1$d:%2$02d</string>
     <string name="reset_password_title">New password</string>
@@ -94,7 +94,7 @@
 
     <!-- Exit app dialog -->
     <string name="exit_dialog_title">Exit application</string>
-    <string name="exit_dialog_message">Are you sure you want to close FamiliBalance?</string>
+    <string name="exit_dialog_message">Are you sure you want to close Family Balance?</string>
     <string name="exit_dialog_confirm">Exit</string>
 
     <!-- Auth exit dialog -->
@@ -117,7 +117,7 @@
 
     <!-- Child main screen -->
     <string name="child_balance">Balance</string>
-    <string name="child_bank_name">Cosmo-bank</string>
+    <string name="child_bank_name">Bank</string>
     <string name="child_cashout_btn">Withdraw cash</string>
     <string name="child_cashout_hint">*works when you\'re with your parent</string>
     <string name="child_no_cashout_requests">No active withdrawal requests</string>
@@ -125,6 +125,9 @@
     <string name="child_cashout_amount">Amount: %1$d ₽</string>
     <string name="child_cashout_comment">Comment: %1$s</string>
     <string name="child_cashout_waiting">⏳ Waiting for parent\'s approval</string>
+    <string name="child_cashout_rejected">❌ Request rejected</string>
+    <string name="child_cashout_why">(why?)</string>
+    <string name="child_cashout_reason_ok">Got it</string>
     <string name="child_dream_default_title">My goal</string>
     <string name="child_dream_reached">Goal reached! Tap to claim ✨</string>
     <string name="child_dream_choose_title">🎯 Dream goal</string>
@@ -142,9 +145,11 @@
     <string name="child_buy_time_btn">Buy time</string>
     <string name="child_daily_limit_note">Daily limit %1$d min • Resets tomorrow</string>
     <string name="child_streak_title">Days without penalties</string>
+    <string name="child_streak_compact">No-penalty streak: %1$d/7 d</string>
     <string name="child_streak_day_label">%1$d d</string>
     <string name="child_streak_checkin">🔥 Check in today</string>
     <string name="child_streak_checked_today">✓ Today is counted — your streak is safe</string>
+    <string name="child_streak_checked_short">✓ Today counted</string>
     <string name="child_streak_bonus">+50 ₽ bonus on day 7</string>
     <string name="child_honest_cooldown">🐱 Honest admission • Available in %1$d d.</string>
     <string name="child_honest_btn">🐱 Honest admission</string>
@@ -154,6 +159,8 @@
     <string name="child_honest_ready">✓ Honest admission approved by your parent (penalty halved)</string>
     <string name="child_rules_btn">📜 Rules scroll</string>
     <string name="child_economy_btn">💰 Economy</string>
+    <string name="info_sheet_tab_rules">Rules</string>
+    <string name="info_sheet_tab_economy">Rates and rewards</string>
     <string name="child_cashout_dialog_title">💵 Withdraw cash</string>
     <string name="child_cashout_amount_label">Amount (₽)</string>
     <string name="child_cashout_insufficient">Insufficient funds</string>
@@ -377,7 +384,6 @@
 
     <!-- Admin screen -->
     <string name="admin_cashout_title">💵 Cash payout</string>
-    <string name="admin_cashout_message">Give %1$s %2$d ₽ in cash and zero the Cosmo-bank balance?</string>
     <string name="admin_cashout_confirm">Pay out and zero</string>
     <string name="admin_panel_title">Parent\'s Panel</string>
     <string name="admin_role">Administrator</string>
@@ -420,9 +426,10 @@
     <string name="a11y_locked_achievement">Achievement locked</string>
     <string name="a11y_achievement_completed">Achievement completed</string>
     <string name="a11y_parent_panel">Parent panel</string>
-    <string name="a11y_back_to_admin">Back to parent panel</string>
     <string name="a11y_camera_hint">Take a photo of the quest result</string>
     <string name="a11y_gift_icon">Gift</string>
+    <string name="a11y_info_button">Info: rules and rates</string>
+    <string name="a11y_profile_menu">Profile: log out or switch user</string>
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Claim reward</string>
@@ -480,9 +487,7 @@
     <string name="admin_quick_actions">⚡ Parent\'s quick actions (%1$s)</string>
     <string name="admin_quick_actions_subtitle">Rewards, fines and manual amount entry for this profile.</string>
     <string name="admin_amount_hint">Amount ₽</string>
-    <string name="admin_add">+ Add</string>
     <string name="admin_desc_label">Description (for what)</string>
-    <string name="admin_withdraw">- Deduct</string>
     <string name="admin_mode_deposit">＋ Add</string>
     <string name="admin_mode_withdraw">− Deduct</string>
     <string name="admin_apply">Apply</string>
@@ -500,7 +505,7 @@
     <string name="admin_cashout_button">💵 Give cash (%1$d ₽)</string>
     <string name="admin_cashout_amount_label">Payout amount ₽</string>
     <string name="admin_cashout_max">Max</string>
-    <string name="admin_cashout_available">Available in Cosmo-bank: %1$d ₽. After payout %2$d ₽ will remain</string>
+    <string name="admin_cashout_available">Available in Bank: %1$d ₽. After payout %2$d ₽ will remain</string>
     <string name="admin_cashout_submit_partial">Pay out %1$d ₽</string>
 
     <!-- Admin settings screen -->
@@ -516,29 +521,44 @@
     <string name="admin_set_pin_management">🔐 PIN management</string>
     <string name="admin_set_resets_open">🗑 Cleanup &amp; resets ▲</string>
     <string name="admin_set_resets_closed">🗑 Cleanup &amp; resets ▼</string>
-    <string name="admin_set_section_progress">📈 Progress &amp; quests</string>
     <string name="admin_set_reset_quests_label">Reset progress of all quests</string>
     <string name="admin_set_reset_visibility_label">Restore hidden and deleted quests</string>
     <string name="admin_set_reset_achievements_label">Reset achievements and stats</string>
     <string name="admin_set_reset_counters_label">Zero grade and cleaning counters</string>
     <string name="admin_set_reset_honest_label">Reset honest admission</string>
     <string name="admin_set_reset_history_label">Clear operation history</string>
-    <string name="admin_set_section_balance">💰 Balance &amp; time</string>
     <string name="admin_set_reset_balance_label">Zero balance</string>
     <string name="admin_set_reset_streak_label">Reset streak and screen time</string>
     <string name="admin_set_reset_dream_label">Delete dream goal</string>
-    <string name="admin_set_section_theme">🎨 Appearance</string>
     <string name="admin_set_reset_theme_label">Reset theme</string>
     <string name="admin_set_reset_all">Reset everything</string>
     <string name="admin_set_reset_select">Select what to reset…</string>
     <string name="admin_set_reset_execute">Perform reset</string>
     <string name="admin_set_sync">🔄 Sync with server</string>
     <string name="admin_set_language">🌐 Interface language</string>
+    <string name="admin_set_currency">💱 Reward currency</string>
+    <string name="admin_set_currency_note">Only the symbol changes — balances and amounts are not converted.</string>
+    <string name="cur_rub">Russian ruble</string>
+    <string name="cur_usd">US dollar</string>
+    <string name="cur_eur">Euro</string>
+    <string name="cur_gbp">British pound</string>
+    <string name="cur_kzt">Kazakhstani tenge</string>
+    <string name="cur_byn">Belarusian ruble</string>
+    <string name="cur_coin">Universal coins</string>
     <string name="admin_set_logout">🚪 Log out</string>
     <string name="admin_set_logout_title">Log out</string>
     <string name="admin_set_logout_message">Are you sure you want to log out of the parent dashboard?</string>
     <string name="admin_set_logout_confirm">Log out</string>
     <string name="admin_set_delete_account">🗑 Delete account</string>
+    <string name="admin_set_delete_pick_title">Delete</string>
+    <string name="admin_set_delete_all">🗑 Delete my account and all children</string>
+    <string name="admin_set_delete_child_profile">👦 Delete child profile</string>
+    <string name="admin_set_delete_account_confirm_title">Delete parent account?</string>
+    <string name="admin_set_delete_account_confirm_msg">Are you sure? Your account and all attached child profiles, their balance, history and photos will be permanently deleted. This action cannot be undone.</string>
+    <string name="admin_set_delete_forever">Delete forever</string>
+    <string name="admin_set_delete_child_title">Delete profile %1$s?</string>
+    <string name="admin_set_delete_child_msg">Are you sure? Profile %1$s, its balance, achievements and transaction history will be permanently deleted. Your parent account will remain active.</string>
+    <string name="admin_set_delete_child_btn">Delete child</string>
     <string name="admin_set_my_pin">🛡️ My PIN (Parent)</string>
     <string name="admin_set_pin_updated">PIN code for %1$s updated</string>
     <string name="admin_set_bonus_title">🎁 New bonus quest for %1$s</string>
@@ -554,11 +574,6 @@
     <string name="admin_set_delete_message">Are you sure? All data, including child profiles and photos, will be permanently deleted. This action cannot be undone.</string>
     <string name="admin_set_delete_error">Failed to delete account. Check your connection and try again.</string>
     <string name="admin_set_delete">Delete</string>
-    <string name="admin_set_btn_reset">Reset</string>
-    <string name="admin_set_btn_restore">Restore</string>
-    <string name="admin_set_btn_zero">Zero</string>
-    <string name="admin_set_btn_clear">Clear</string>
-    <string name="admin_set_btn_delete">Delete</string>
 
     <!-- Achievements admin editor -->
     <string name="achadm_create_title">✨ Create new achievement</string>
@@ -588,8 +603,6 @@
     <string name="quested_freq_daily">Once a day</string>
     <string name="quested_freq_weekly">Once a week</string>
     <string name="quested_freq_once">One-time</string>
-    <string name="quested_freq_daily_adv">Daily</string>
-    <string name="quested_freq_weekly_adv">Weekly</string>
     <string name="quested_create">➕ Create new quest</string>
     <string name="quested_by_grades">by grades</string>
     <string name="quested_new_title">🎁 New quest</string>
@@ -612,7 +625,7 @@
     <string name="onboarding_start">Start</string>
 
     <!-- Onboarding: parent slides -->
-    <string name="onboarding_p_welcome_title">Welcome to QuestLab!</string>
+    <string name="onboarding_p_welcome_title">Welcome to Family Balance!</string>
     <string name="onboarding_p_welcome_desc">A tool for growing independence: clear tasks, motivation and progress tracking.</string>
     <string name="onboarding_p_quests_achievements_title">Quests and achievements</string>
     <string name="onboarding_p_quests_achievements_desc">Set tasks, review reports and grant rewards. Streaks of completed work are reinforced with achievements and progress.</string>
@@ -630,4 +643,93 @@
     <string name="onboarding_c_diary_time_desc">Mark your school wins: A grades give bonus coins. Earn extra game minutes on quests.</string>
     <string name="onboarding_c_rewards_title">Rewards and prizes</string>
     <string name="onboarding_c_rewards_desc">Save coins and trade them for real prizes and gifts — a parent approves.</string>
+
+    <!-- System content: built-in quests -->
+    <string name="sys_quest_wardrobe_title">Wardrobe photo</string>
+    <string name="sys_quest_wardrobe_desc">Bring the shelves to perfect order and send a photo of the result to your parent</string>
+    <string name="sys_quest_room_title">Room photo</string>
+    <string name="sys_quest_room_desc">Make the bed without wrinkles, pick up the toys and send a photo</string>
+    <string name="sys_quest_diary_title">📚 Diary</string>
+    <string name="sys_quest_diary_desc">The quest runs once a week. Your parent checks all grades in the diary for the past week.</string>
+    <string name="sys_quest_diary_week_title">📚 Week results (Diary)</string>
+
+    <!-- System content: achievements — Diary -->
+    <string name="sys_ach_diary_1_title">First Blood</string>
+    <string name="sys_ach_diary_1_desc">Landed the first hit on boring homework. More to come.</string>
+    <string name="sys_ach_diary_5_title">Random Crit</string>
+    <string name="sys_ach_diary_5_desc">Dealt a critical hit to the school curriculum.</string>
+    <string name="sys_ach_diary_10_title">Front-Row Boss</string>
+    <string name="sys_ach_diary_10_desc">Ten A\'s in the grade book — your knowledge level is going orbital!</string>
+    <string name="sys_ach_diary_20_title">Cheat Code for Knowledge</string>
+    <string name="sys_ach_diary_20_desc">Teachers suspect you downloaded a cracked version of the textbook.</string>
+    <string name="sys_ach_diary_30_title">Absolute Balance</string>
+    <string name="sys_ach_diary_30_desc">The school devs tried to nerf you, but you\'re still carrying the game.</string>
+    <string name="sys_ach_diary_40_title">Quarter Speedrunner</string>
+    <string name="sys_ach_diary_40_desc">You clear tough topics on Nightmare difficulty with your eyes closed.</string>
+    <string name="sys_ach_diary_50_title">Server Legend</string>
+    <string name="sys_ach_diary_50_desc">Time to carve your name in gold on the honor board. The class\'s top esports player.</string>
+
+    <!-- System content: achievements — Wardrobe -->
+    <string name="sys_ach_wardrobe_1_title">Shelf Pioneer</string>
+    <string name="sys_ach_wardrobe_1_desc">Found a long-lost sock and tidied up.</string>
+    <string name="sys_ach_wardrobe_5_title">Monster Slayer</string>
+    <string name="sys_ach_wardrobe_5_desc">Looked into the darkest corners of the wardrobe and wasn\'t scared.</string>
+    <string name="sys_ach_wardrobe_10_title">Tetris Master</string>
+    <string name="sys_ach_wardrobe_10_desc">You stack tees and jeans so tightly any mover would be jealous.</string>
+    <string name="sys_ach_wardrobe_20_title">Level 100 Inventory</string>
+    <string name="sys_ach_wardrobe_20_desc">Your clothing loot box now has perfect sorting by color and rarity.</string>
+    <string name="sys_ach_wardrobe_30_title">Portal to Narnia</string>
+    <string name="sys_ach_wardrobe_30_desc">You cleaned so well a passage to a magical land opened behind the hangers.</string>
+    <string name="sys_ach_wardrobe_40_title">Texture Keeper</string>
+    <string name="sys_ach_wardrobe_40_desc">Not a single item spawns on the floor. Everything is strictly on its shelf.</string>
+    <string name="sys_ach_wardrobe_50_title">God of the Wardrobe</string>
+    <string name="sys_ach_wardrobe_50_desc">Your closet looks like a luxury store window. Tees lie ruler-straight.</string>
+
+    <!-- System content: achievements — Room -->
+    <string name="sys_ach_room_1_title">Starting Location</string>
+    <string name="sys_ach_room_1_desc">Cleared the base of scattered toys and enemy candy wrappers.</string>
+    <string name="sys_ach_room_5_title">Dust Storm Bringer</string>
+    <string name="sys_ach_room_5_desc">Dealt a crushing blow to chaos. The bed is made without a single wrinkle.</string>
+    <string name="sys_ach_room_10_title">Cozy Architect</string>
+    <string name="sys_ach_room_10_desc">Your room passed the sanitary inspection and Dad\'s stern gaze.</string>
+    <string name="sys_ach_room_20_title">Anti-Chaos Shield</string>
+    <string name="sys_ach_room_20_desc">Activated the passive cleanliness skill: items are afraid to miss the basket.</string>
+    <string name="sys_ach_room_30_title">Stealth Master</string>
+    <string name="sys_ach_room_30_desc">You cleaned so fast and thoroughly it looks like nobody lives here.</string>
+    <string name="sys_ach_room_40_title">General of Cleanliness</string>
+    <string name="sys_ach_room_40_desc">Your room shines brighter than a paladin\'s armor. The enemy of mess is defeated.</string>
+    <string name="sys_ach_room_50_title">Ruler of Square Meters</string>
+    <string name="sys_ach_room_50_desc">Absolute territory control. Time to shoot this room for a magazine cover.</string>
+
+    <!-- Misc -->
+    <string name="cashout_default_comment">Cash withdrawal</string>
+    <string name="hist_honest_amount">50%% discount</string>
+    <string name="sys_reason_grade3_diary">Grade 3 (diary)</string>
+    <string name="sys_reason_grade2_diary">Grade 2 (diary)</string>
+    <string name="sys_reason_grade3">Grade 3</string>
+    <string name="sys_reason_grade2">Grade 2</string>
+
+    <!-- Push notifications (resolved on recipient device via PushTexts) -->
+    <string name="push_photo_report_title">New photo report to review</string>
+    <string name="push_photo_report_body">%1$s submitted quest "%2$s" (+%3$s %4$s).</string>
+    <string name="push_cashout_req_title">Withdrawal request</string>
+    <string name="push_cashout_req_body">%1$s wants to withdraw %2$s %3$s.</string>
+    <string name="push_honest_sub_title">Honest admission from your child</string>
+    <string name="push_honest_sub_body">%1$s sent a confession. Please check the message.</string>
+    <string name="push_dream_title">Dream goal reached!</string>
+    <string name="push_dream_body">%1$s saved up for "%2$s" (%3$s %4$s).</string>
+    <string name="push_quest_ok_title">Quest completed! +%1$s %2$s</string>
+    <string name="push_quest_ok_body">Your parent reviewed "%1$s". Claim your reward in Tasks!</string>
+    <string name="push_quest_rej_title">Quest needs rework</string>
+    <string name="push_quest_rej_body">Your parent left a comment on "%1$s": %2$s.</string>
+    <string name="push_cashout_ok_title">Withdrawal approved!</string>
+    <string name="push_cashout_ok_body">Your parent confirmed the %1$s %2$s withdrawal. You can collect it!</string>
+    <string name="push_cashout_rej_title">Withdrawal rejected</string>
+    <string name="push_cashout_rej_body">Your parent rejected the %1$s %2$s withdrawal.</string>
+    <string name="push_honest_rej_title">Honest admission rejected</string>
+    <string name="push_honest_rej_body">Your parent didn\'t accept the admission. You can send a new one in 7 days.</string>
+    <string name="push_bonus_quest_title">New quest in Family Balance!</string>
+    <string name="push_bonus_quest_body">A task "%1$s" for +%2$s %3$s has appeared.</string>
+    <string name="push_balance_title">Balance update: −%1$s %2$s</string>
+    <string name="push_balance_body">Fine charged: %1$s.</string>
 </resources>

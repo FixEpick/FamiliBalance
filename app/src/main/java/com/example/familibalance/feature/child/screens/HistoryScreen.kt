@@ -1,38 +1,5 @@
 package com.example.familibalance.feature.child.screens
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
-import android.content.pm.PackageManager
-import android.widget.Toast
-import android.media.AudioManager
-import android.media.ToneGenerator
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.zIndex
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
-import androidx.core.content.ContextCompat
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.platform.LocalHapticFeedback
-import coil3.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,25 +7,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -79,7 +39,6 @@ import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Date
-import java.util.Locale
 
 
 /** Спецификация локализованного заголовка: resId + аргументы для stringResource. resId == null → показываем title как есть. */
@@ -214,11 +173,18 @@ internal fun historyFilterIndex(item: HistoryData): Int = when (item.type) {
 @Composable
 private fun localizedHistoryTitle(item: HistoryData): String {
     val spec = historyTitleSpec(item)
-    return if (spec.resId != null) {
-        stringResource(spec.resId, *spec.args.toTypedArray())
-    } else {
-        item.title
+    if (spec.resId == null) return item.title
+    // Аргументы могут содержать системные строки (названия квестов/достижений,
+    // дефолтный комментарий вывода) — переводим их; пользовательский текст
+    // не совпадает с ключами и остаётся как есть.
+    val args = spec.args.map { arg ->
+        when {
+            arg !is String -> arg
+            arg == SystemContent.DEFAULT_CASHOUT_COMMENT -> stringResource(R.string.cashout_default_comment)
+            else -> systemTitle(arg)
+        }
     }
+    return stringResource(spec.resId, *args.toTypedArray())
 }
 
 /** Заголовок-разделитель дня: «Сегодня»/«Вчера»/«19 ноября» (или «19 November»). */
@@ -241,8 +207,10 @@ private fun HistoryDateHeader(date: String) {
         else -> {
             // getBestDateTimePattern подбирает падеж месяца под локаль
             // («22 ноября» в RU, «22 November» в EN).
-            val pattern = DateFormat.getBestDateTimePattern(Locale.getDefault(), "dMMMM")
-            SimpleDateFormat(pattern, Locale.getDefault()).format(
+            // LocalConfiguration — наблюдаемое состояние: дата перерисуется при смене языка.
+            val locale = LocalConfiguration.current.locales[0]
+            val pattern = DateFormat.getBestDateTimePattern(locale, "dMMMM")
+            SimpleDateFormat(pattern, locale).format(
                 Date.from(parsedDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
             )
         }
@@ -252,7 +220,7 @@ private fun HistoryDateHeader(date: String) {
         color = TextSecondary,
         fontSize = 13.sp,
         fontWeight = FontWeight.Bold,
-        modifier = Modifier.padding(top = 10.dp, bottom = 2.dp)
+        modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)
     )
 }
 
@@ -293,11 +261,13 @@ fun HistoryScreen(
         return
     }
     val rawHistoryItems = currentChild.historyItems
-    val historyItems = remember(rawHistoryItems.size) {
+    // Ключ по содержимому списка, а не по размеру: правка title/amount
+    // без изменения количества записей тоже должна пересчитать фильтр.
+    val historyItems = remember(rawHistoryItems) {
         rawHistoryItems.filterNot { it.title.startsWith("Квест на проверке:") || it.title.startsWith("Одобрен квест:") }
     }
 
-    val filteredItems = remember(selectedFilter, historyItems.size) {
+    val filteredItems = remember(selectedFilter, historyItems) {
         if (selectedFilter == HIST_FILTER_ALL) {
             historyItems
         } else {
@@ -326,6 +296,7 @@ fun HistoryScreen(
         QuestDeliveryScreen(
             questName = activeEdit.displayName,
             rewardText = activeEdit.rewardText,
+            photoRequired = activeEdit.requiresPhoto,
             onSendClick = { comment, photoUri ->
                 val photoUrlStr = photoUri?.toString()
                 when {
@@ -352,13 +323,9 @@ fun HistoryScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 24.dp),
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
         if (showVerificationCard) {
             item {
                 Card(
@@ -406,7 +373,7 @@ fun HistoryScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 
@@ -452,10 +419,6 @@ fun HistoryScreen(
             }
         }
 
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
         if (filteredItems.isEmpty()) {
             item {
                 Box(
@@ -482,7 +445,11 @@ fun HistoryScreen(
                     HistoryItem(
                         title = localizedHistoryTitle(item),
                         time = item.time,
-                        amount = item.amount,
+                        amount = if (item.type == HistoryType.HONEST_APPROVED) {
+                            stringResource(R.string.hist_honest_amount)
+                        } else {
+                            RewardCurrency.localize(item.amount, currentChild.rewardCurrency)
+                        },
                         isIncome = item.isIncome
                     )
                 }

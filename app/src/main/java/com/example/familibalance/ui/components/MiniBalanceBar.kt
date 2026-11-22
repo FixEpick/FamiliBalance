@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
+import com.example.familibalance.util.*
 import com.example.familibalance.ui.theme.*
 
 /**
@@ -49,7 +50,7 @@ fun MiniBalanceBar(
                 )
             }
             Text(
-                text = "$balance ₽",
+                text = "$balance ${rewardCurrencySymbol()}",
                 color = AccentColor,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold

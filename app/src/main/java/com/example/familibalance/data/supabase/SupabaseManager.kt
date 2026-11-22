@@ -7,6 +7,7 @@ import com.example.familibalance.BuildConfig
 import com.example.familibalance.SupabaseConfig
 import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.data.storage.AppSharedState
+import com.example.familibalance.data.storage.AppStateStorage
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.SettingsSessionManager
@@ -17,6 +18,7 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.functions.Functions
 import io.github.jan.supabase.functions.functions
 import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.rpc
 import io.github.jan.supabase.realtime.Realtime
@@ -220,4 +222,55 @@ object SupabaseManager {
     }
 
     suspend fun deleteQuestPhoto(photoUrl: String): Boolean = PhotoStorage.deleteQuestPhoto(photoUrl)
+
+    /**
+     * Удаление профиля ребёнка по инициативе родителя (Настройки).
+     * Порядок: 1) best-effort чистим Storage от фото профиля,
+     * 2) DELETE строки family_profiles (user_id = childId),
+     * 3) DELETE device_tokens ребёнка (best-effort),
+     * 4) локально убираем профиль из AppSharedState и сохраняем.
+     * Возвращает false, если облачное удаление не удалось (RLS/сеть) —
+     * тогда локальный профиль сохраняем, чтобы не было рассинхрона.
+     */
+    suspend fun deleteChildProfile(context: Context, childId: String): Boolean {
+        val supabase = client ?: return false
+        val profile = AppSharedState.children[childId] ?: return false
+
+        // 1. Storage: фото квестов/квестов-дневника этого профиля.
+        val photoUrls = buildList {
+            add(profile.closetPhotoUrl)
+            add(profile.roomPhotoUrl)
+            add(profile.diaryPhotoUrl)
+            profile.bonusQuests.forEach { add(it.photoUrl) }
+            profile.customQuests.forEach { add(it.photoUrl) }
+        }.filterNotNull().filter { it.startsWith("http://") || it.startsWith("https://") }
+        photoUrls.forEach { url -> runCatching { PhotoStorage.deleteQuestPhoto(url) } }
+
+        // 2. DELETE family_profiles — под RLS родителя (parent_user_id = auth.uid()).
+        try {
+            supabase.from("family_profiles").delete {
+                filter { eq("user_id", childId) }
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("SupabaseManager", "deleteChildProfile family_profiles failed: ${e.message}", e)
+            return false
+        }
+
+        // 3. device_tokens ребёнка — best-effort (политики могут не позволять).
+        runCatching {
+            supabase.from("device_tokens").delete {
+                filter { eq("user_id", childId) }
+            }
+        }
+
+        // 4. Локальное удаление.
+        AppSharedState.children.remove(childId)
+        if (AppSharedState.selectedChildId == childId) {
+            AppSharedState.selectedChildId = AppSharedState.children.keys.firstOrNull() ?: "user_1"
+        }
+        com.example.familibalance.data.repository.SyncStatus.markClean(childId)
+        AppStateStorage.saveLocalOnly(context)
+        return true
+    }
 }

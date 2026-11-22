@@ -1,58 +1,29 @@
 package com.example.familibalance.feature.child
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
-import android.content.pm.PackageManager
-import android.widget.Toast
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
-import androidx.core.content.ContextCompat
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalHapticFeedback
-import coil3.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -74,11 +45,8 @@ import java.time.temporal.ChronoUnit
 fun MainChildScreen(
     modifier: Modifier = Modifier,
     onNavigateToTasks: () -> Unit = {},
-    onLogout: () -> Unit = {},
-    showLogout: Boolean = true,
     viewModel: MainViewModel
 ) {
-    val context = LocalContext.current
     val dailyLimit = 90
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isProcessingAction by viewModel.isProcessingAction.collectAsStateWithLifecycle()
@@ -143,17 +111,10 @@ fun MainChildScreen(
         }
     }
 
-    var showRulesSheet by remember { mutableStateOf(false) }
-    var showEconomySheet by remember { mutableStateOf(false) }
     var showBuyTimeSheet by remember { mutableStateOf(false) }
-    var showLogoutDialog by remember { mutableStateOf(false) }
 
-    // Строки диалога выхода резолвим здесь, а не внутри AlertDialog:
-    // Dialog создаёт отдельное окно и может потерять локализованный LocalContext.
-    val logoutDialogTitle = stringResource(R.string.logout_title)
-    val logoutDialogMessage = stringResource(R.string.logout_message)
-    val logoutDialogConfirm = stringResource(R.string.logout_confirm)
-    val logoutDialogCancel = stringResource(R.string.action_cancel)
+    // Строки диалога выхода больше не нужны: выход переехал
+    // в шапку ChildSection (клик по профилю).
 
     if (showHonestCatScreen) {
         HonestCatSheet(
@@ -167,21 +128,6 @@ fun MainChildScreen(
             onDismiss = {
                 showHonestCatScreen = false
             }
-        )
-    }
-
-    if (showRulesSheet) {
-        RulesBottomSheet(
-            wardrobeReward = child.wardrobeReward,
-            roomReward = child.roomReward,
-            onDismissRequest = { showRulesSheet = false }
-        )
-    }
-
-    if (showEconomySheet) {
-        EconomyBottomSheet(
-            child = child,
-            onDismissRequest = { showEconomySheet = false }
         )
     }
 
@@ -273,7 +219,10 @@ fun MainChildScreen(
             item {
                 CashoutSection(
                     cashoutRequests = child.cashoutRequests,
-                    onCashOutClick = { showCashOutDialog = true }
+                    onCashOutClick = { showCashOutDialog = true },
+                    onDismissRejected = { requestId ->
+                        viewModel.dismissRejectedCashoutRequest(child.id, requestId)
+                    }
                 )
             }
 
@@ -281,7 +230,7 @@ fun MainChildScreen(
             if (child.streakBonusMessage.isNotEmpty()) {
                 item {
                     StreakBonusBanner(
-                        message = child.streakBonusMessage,
+                        message = RewardCurrency.localize(child.streakBonusMessage, child.rewardCurrency),
                         onDismiss = { viewModel.dismissStreakBonus(child.id) }
                     )
                 }
@@ -295,6 +244,7 @@ fun MainChildScreen(
                         dreamTarget = child.dreamTarget,
                         balance = balance,
                         isProcessingAction = isProcessingAction,
+                        cooldownDaysLeft = dreamCooldownDaysLeft,
                         onClaim = {
                             triggerCoinFlight(Offset.Zero) {
                                 viewModel.claimDreamGoal(child.id)
@@ -314,15 +264,6 @@ fun MainChildScreen(
                         ) {
                             Text(stringResource(R.string.child_dream_change_btn), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                         }
-                    } else {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.child_dream_cooldown, dreamCooldownDaysLeft),
-                            color = TextMuted,
-                            fontSize = 12.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
                     }
                 } else {
                     Card(
@@ -458,64 +399,17 @@ fun MainChildScreen(
                 )
             }
 
-            // ================= БЛОК 5: КНОПКИ ДЕЙСТВИЙ (ПРИЗНАНИЕ И ПРАВИЛА) =================
-            item {
-                HonestCatEntry(
-                    status = honestAdmissionStatus,
-                    cooldownDaysLeft = honestCooldownDaysLeft,
-                    onOpen = { showHonestCatScreen = true }
-                )
-            }
-
-            item {
-                OutlinedButton(
-                    onClick = {
-                        showRulesSheet = true
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
-                ) {
-                    Text(stringResource(R.string.child_rules_btn), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {
-                        showEconomySheet = true
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
-                ) {
-                    Text(stringResource(R.string.child_economy_btn), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                }
-            }
-
-            // ================= ВЫХОД / СМЕНА ПОЛЬЗОВАТЕЛЯ =================
-            if (showLogout) item {
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = { showLogoutDialog = true },
-                    border = BorderStroke(1.dp, PenaltyRed.copy(alpha = 0.6f)),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                ) {
-                    Text(
-                        text = "🚪 " + stringResource(R.string.logout_button),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
+            // ================= БЛОК 5: ЧЕСТНОЕ ПРИЗНАНИЕ (только когда активно) =================
+            // На кулдауне и после применения скидки кнопка не занимает место —
+            // показываем её только когда функция доступна или есть что забрать.
+            if (honestCooldownDaysLeft <= 0 || honestAdmissionStatus == QuestStatus.READY_TO_CLAIM) {
+                item {
+                    HonestCatEntry(
+                        status = honestAdmissionStatus,
+                        cooldownDaysLeft = honestCooldownDaysLeft,
+                        onOpen = { showHonestCatScreen = true }
                     )
                 }
-                Spacer(modifier = Modifier.height(24.dp))
             }
         }
 
@@ -535,58 +429,15 @@ fun MainChildScreen(
     if (showCashOutDialog) {
         CashOutDialog(
             balance = child.balance,
-            pendingTotal = child.cashoutRequests.sumOf { it.amount },
+            pendingTotal = child.cashoutRequests
+                .filter { it.status == CashoutStatus.PENDING }
+                .sumOf { it.amount },
             isProcessing = isProcessingAction,
             onSubmit = { amount, comment ->
                 viewModel.createCashoutRequest(amount, comment)
                 showCashOutDialog = false
             },
             onDismiss = { showCashOutDialog = false }
-        )
-    }
-
-    // Диалог выхода / смены пользователя
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            containerColor = SpaceBgStart,
-            title = {
-                Text(
-                    text = logoutDialogTitle,
-                    color = PenaltyRed,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    text = logoutDialogMessage,
-                    color = TextPrimary,
-                    fontSize = 14.sp
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showLogoutDialog = false
-                        onLogout()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = PenaltyRed,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(logoutDialogConfirm, fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showLogoutDialog = false },
-                    colors = ButtonDefaults.textButtonColors(contentColor = TextMuted)
-                ) {
-                    Text(logoutDialogCancel)
-                }
-            }
         )
     }
 }

@@ -2,8 +2,6 @@ package com.example.familibalance.ui.auth
 
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,9 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,8 +32,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,6 +43,7 @@ import com.example.familibalance.ui.components.GameButtonVariant
 import com.example.familibalance.ui.components.GameIcon
 import com.example.familibalance.ui.components.GameIconType
 import com.example.familibalance.ui.components.LanguageSelectorButton
+import com.example.familibalance.ui.components.rememberBoundTextFieldState
 import com.example.familibalance.viewmodel.AuthViewModel
 import io.github.jan.supabase.auth.status.SessionStatus
 
@@ -86,6 +84,12 @@ fun ResetPasswordScreen(
     var isLoading by remember { mutableStateOf(false) }
     @StringRes var errorRes by remember { mutableStateOf<Int?>(null) }
     var errorDetail by remember { mutableStateOf<String?>(null) }
+    val newPasswordFieldState = rememberBoundTextFieldState(newPassword) {
+        newPassword = it; errorRes = null
+    }
+    val confirmPasswordFieldState = rememberBoundTextFieldState(confirmPassword) {
+        confirmPassword = it; errorRes = null
+    }
 
     // Recovery-сессия импортируется из deeplink асинхронно (сетевой
     // запрос retrieveUser). Кнопку активируем только при Authenticated —
@@ -162,13 +166,11 @@ fun ResetPasswordScreen(
                 border = androidx.compose.foundation.BorderStroke(1.dp, ResetSlateBorder)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
-                    OutlinedTextField(
-                        value = newPassword,
-                        onValueChange = { newPassword = it; errorRes = null },
+                    OutlinedSecureTextField(
+                        state = newPasswordFieldState,
                         label = { Text(stringResource(R.string.reset_password_new)) },
-                        singleLine = true,
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        textObfuscationMode = if (passwordVisible) TextObfuscationMode.Visible else TextObfuscationMode.Hidden,
                         colors = ResetFieldColors,
                         trailingIcon = {
                             IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -184,13 +186,11 @@ fun ResetPasswordScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    OutlinedTextField(
-                        value = confirmPassword,
-                        onValueChange = { confirmPassword = it; errorRes = null },
+                    OutlinedSecureTextField(
+                        state = confirmPasswordFieldState,
                         label = { Text(stringResource(R.string.reset_password_confirm)) },
-                        singleLine = true,
-                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        textObfuscationMode = if (passwordVisible) TextObfuscationMode.Visible else TextObfuscationMode.Hidden,
                         colors = ResetFieldColors,
                         modifier = Modifier.fillMaxWidth()
                     )

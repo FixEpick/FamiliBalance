@@ -20,10 +20,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextObfuscationMode
+import androidx.compose.foundation.text.input.byValue
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -32,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,8 +48,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -62,6 +65,7 @@ import com.example.familibalance.ui.components.GameButtonVariant
 import com.example.familibalance.ui.components.GameIcon
 import com.example.familibalance.ui.components.GameIconType
 import com.example.familibalance.ui.components.LanguageSelectorButton
+import com.example.familibalance.ui.components.rememberBoundTextFieldState
 import kotlinx.coroutines.delay
 import com.example.familibalance.ui.components.childDisplayName
 import androidx.lifecycle.Lifecycle
@@ -97,7 +101,7 @@ private fun cyberFieldColors(hasError: Boolean = false) = OutlinedTextFieldDefau
 )
 
 /**
- * Экран регистрации/входа в стиле «КвестЛаб».
+ * Экран регистрации/входа в стиле Family Balance.
  * Табы: «Новый игрок» (форма героя) и «Родитель» (Supabase Auth).
  */
 @Composable
@@ -245,6 +249,7 @@ fun PlayerRegisterForm(
     onSubmit: () -> Unit
 ) {
     var pinVisible by remember { mutableStateOf(false) }
+    val pinFieldState = rememberBoundTextFieldState(state.pin, viewModel::onPinChange)
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = CyberPanelBg,
@@ -304,13 +309,14 @@ fun PlayerRegisterForm(
             colors = cyberFieldColors(),
             modifier = Modifier.weight(1f)
         )
-        OutlinedTextField(
-            value = state.pin,
-            onValueChange = viewModel::onPinChange,
+        OutlinedSecureTextField(
+            state = pinFieldState,
             label = { Text(stringResource(R.string.reg_pin)) },
-            singleLine = true,
-            visualTransformation = if (pinVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            inputTransformation = InputTransformation.byValue { _, proposed ->
+                proposed.filter { it.isDigit() }.take(4)
+            },
+            textObfuscationMode = if (pinVisible) TextObfuscationMode.Visible else TextObfuscationMode.Hidden,
             colors = cyberFieldColors(),
             trailingIcon = {
                 IconButton(onClick = { pinVisible = !pinVisible }) {
@@ -388,6 +394,7 @@ private fun ParentLoginForm(
     credentialsError: Boolean
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
+    val passwordFieldState = rememberBoundTextFieldState(state.password, viewModel::onPasswordChange)
     var consent by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
     Surface(
@@ -456,13 +463,11 @@ private fun ParentLoginForm(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = state.password,
-                onValueChange = viewModel::onPasswordChange,
+            OutlinedSecureTextField(
+                state = passwordFieldState,
                 label = { Text(stringResource(R.string.parent_password)) },
-                singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                textObfuscationMode = if (passwordVisible) TextObfuscationMode.Visible else TextObfuscationMode.Hidden,
                 colors = cyberFieldColors(credentialsError),
                 trailingIcon = {
                     IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -478,7 +483,7 @@ private fun ParentLoginForm(
 
             if (!state.isParentRegisterMode) {
                 val cooldownUntil = state.resetCooldownUntilMs
-                var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
+                var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
                 LaunchedEffect(cooldownUntil) {
                     while (cooldownUntil > System.currentTimeMillis()) {
                         nowMs = System.currentTimeMillis()

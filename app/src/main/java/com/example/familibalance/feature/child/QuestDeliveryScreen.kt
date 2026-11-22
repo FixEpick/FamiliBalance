@@ -1,18 +1,11 @@
 package com.example.familibalance.feature.child
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.core.net.toUri
 import android.widget.Toast
-import android.media.AudioManager
-import android.media.ToneGenerator
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.zIndex
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.LocalActivityResultRegistryOwner
@@ -21,19 +14,6 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.platform.LocalHapticFeedback
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.BorderStroke
@@ -41,19 +21,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -80,6 +54,7 @@ import com.example.familibalance.feature.child.components.CameraCaptureScreen
 fun QuestDeliveryScreen(
     questName: String,
     rewardText: String,
+    photoRequired: Boolean = true,
     onSendClick: (comment: String, photoUri: Uri?) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -94,6 +69,7 @@ fun QuestDeliveryScreen(
             QuestDeliveryScreenContent(
                 questName = questName,
                 rewardText = rewardText,
+                photoRequired = photoRequired,
                 onSendClick = onSendClick,
                 onBackClick = onBackClick,
                 modifier = modifier
@@ -103,6 +79,7 @@ fun QuestDeliveryScreen(
         QuestDeliveryScreenContent(
             questName = questName,
             rewardText = rewardText,
+            photoRequired = photoRequired,
             onSendClick = onSendClick,
             onBackClick = onBackClick,
             modifier = modifier
@@ -117,6 +94,7 @@ fun QuestDeliveryScreen(
 private fun QuestDeliveryScreenContent(
     questName: String,
     rewardText: String,
+    photoRequired: Boolean = true,
     onSendClick: (comment: String, photoUri: Uri?) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -228,7 +206,8 @@ private fun QuestDeliveryScreenContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Зона камеры / предпросмотра фото
+        // Зона камеры / предпросмотра фото — только если квест требует фотоотчёт
+        if (photoRequired) {
         val cameraDesc = stringResource(R.string.a11y_camera_hint)
         Card(
             modifier = Modifier
@@ -270,8 +249,9 @@ private fun QuestDeliveryScreenContent(
                 }
             }
         }
+        }
 
-        if (capturedImageUri != null) {
+        if (photoRequired && capturedImageUri != null) {
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
                 onClick = { checkAndLaunchCamera() },
@@ -319,7 +299,7 @@ private fun QuestDeliveryScreenContent(
                 onSendClick(commentText, capturedImageUri)
                 requestNotifPermission()
             },
-            enabled = capturedImageUri != null && !isSubmitting,
+            enabled = (!photoRequired || capturedImageUri != null) && !isSubmitting,
             colors = ButtonDefaults.buttonColors(
                 containerColor = AccentColor,
                 contentColor = SpaceBgStart,

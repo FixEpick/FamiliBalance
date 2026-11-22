@@ -93,7 +93,8 @@ fun CameraCaptureScreen(
     DisposableEffect(lensFacing) {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
-            val cameraProvider = cameraProviderFuture.get()
+            val cameraProvider = runCatching { cameraProviderFuture.get() }.getOrNull()
+                ?: return@addListener
             cameraProvider.unbindAll()
             val preview = Preview.Builder().build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)

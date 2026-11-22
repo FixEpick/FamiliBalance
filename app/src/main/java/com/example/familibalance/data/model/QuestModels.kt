@@ -93,6 +93,7 @@ object HistoryType {
     const val DREAM_SET = "DREAM_SET"
 }
 
+@Serializable
 enum class CashoutStatus {
     PENDING,
     PROCESSED,
@@ -104,7 +105,10 @@ data class CashoutRequest(
     val id: String = java.util.UUID.randomUUID().toString(),
     val amount: Int,
     val comment: String,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val status: CashoutStatus = CashoutStatus.PENDING,
+    /** Причина отклонения, указанная родителем (только для REJECTED). */
+    val rejectReason: String? = null
 )
 
 @Serializable

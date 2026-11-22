@@ -10,14 +10,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupProperties
 import com.example.familibalance.R
+import com.example.familibalance.util.*
 import com.example.familibalance.ui.components.EmojiIcon
 import com.example.familibalance.ui.theme.*
 
@@ -28,6 +36,7 @@ fun DreamGoalCard(
     dreamTarget: Int,
     balance: Int,
     isProcessingAction: Boolean,
+    cooldownDaysLeft: Int = 0,
     onClaim: () -> Unit
 ) {
     val title = if (dreamTitle.isBlank()) {
@@ -82,10 +91,10 @@ fun DreamGoalCard(
                     fontWeight = FontWeight.Bold,
                     maxLines = 1
                 )
-                EmojiIcon(emoji = "💫", size = 20.dp)
+                DreamCooldownStar(cooldownDaysLeft = cooldownDaysLeft)
             }
             Text(
-                text = "$balance / $dreamTarget ₽",
+                text = "$balance / $dreamTarget ${rewardCurrencySymbol()}",
                 color = TextPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.SemiBold
@@ -106,6 +115,42 @@ fun DreamGoalCard(
                     textAlign = TextAlign.Center,
                     maxLines = 2
                 )
+            }
+        }
+    }
+}
+
+/** Звёздочка с тултипом: показывает, через сколько дней можно сменить цель. */
+@Composable
+private fun DreamCooldownStar(cooldownDaysLeft: Int) {
+    var showHint by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    Box {
+        Box(
+            modifier = Modifier.clickable { showHint = !showHint }
+        ) {
+            EmojiIcon(emoji = "💫", size = 20.dp)
+        }
+        if (showHint && cooldownDaysLeft > 0) {
+            Popup(
+                alignment = Alignment.TopEnd,
+                offset = IntOffset(0, with(density) { 26.dp.roundToPx() }),
+                onDismissRequest = { showHint = false },
+                properties = PopupProperties(focusable = true)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = SpaceBgStart,
+                    border = BorderStroke(1.dp, GlassStroke),
+                    shadowElevation = 8.dp
+                ) {
+                    Text(
+                        text = stringResource(R.string.child_dream_cooldown, cooldownDaysLeft),
+                        color = TextPrimary,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                    )
+                }
             }
         }
     }

@@ -66,7 +66,7 @@ fun MainViewModel.submitQuestForReview(userId: String, questType: String, photoU
             "room", "комната" -> profile.roomTitle to profile.roomReward
             else -> profile.diaryTitle to profile.diaryApprovedReward
         }
-        PushNotifier.photoReportSubmitted(profile.parentUserId, profile.name, reportTitle, reportReward)
+        PushNotifier.photoReportSubmitted(profile.parentUserId, profile.name, reportTitle, reportReward, RewardCurrency.symbolOf(profile.rewardCurrency))
     }
 }
 
@@ -256,7 +256,7 @@ fun MainViewModel.addBonusQuest(userId: String, title: String, reward: Int, desc
         requiresPhoto = requiresPhoto
     )
     updateChildProfile(profile.copy(bonusQuests = profile.bonusQuests + newQuest))
-    PushNotifier.bonusQuestAdded(userId, title.trim(), reward)
+    PushNotifier.bonusQuestAdded(userId, title.trim(), reward, RewardCurrency.symbolOf(profile.rewardCurrency))
 }
 
 fun MainViewModel.submitBonusQuestByChild(userId: String, questId: String, photoUri: Uri?, comment: String) {
@@ -277,7 +277,8 @@ fun MainViewModel.submitBonusQuestByChild(userId: String, questId: String, photo
         val bq = profile.bonusQuests.firstOrNull { it.id == questId }
         PushNotifier.photoReportSubmitted(
             profile.parentUserId, profile.name,
-            bq?.title ?: "", bq?.reward ?: 0
+            bq?.title ?: "", bq?.reward ?: 0,
+            RewardCurrency.symbolOf(profile.rewardCurrency)
         )
     }
 }

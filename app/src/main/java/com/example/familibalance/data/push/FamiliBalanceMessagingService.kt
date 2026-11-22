@@ -28,8 +28,13 @@ class FamiliBalanceMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
         val data = message.data
-        val title = data["title"] ?: message.notification?.title ?: return
-        val body = data["body"] ?: message.notification?.body ?: ""
+        // Локализация на устройстве получателя: если отправитель передал
+        // title_key/body_key — резолвим string-ресурс в локали этого
+        // устройства; иначе fallback на текст title/body (старые клиенты).
+        val title = PushTexts.resolve(this, data["title_key"], data["title_args"])
+            ?: data["title"] ?: message.notification?.title ?: return
+        val body = PushTexts.resolve(this, data["body_key"], data["body_args"])
+            ?: data["body"] ?: message.notification?.body ?: ""
         val screen = data["screen"].orEmpty()
         val role = data["role"].orEmpty()
         val channelId = data["channel"]?.takeIf { it.isNotBlank() } ?: PushChannels.QUESTS

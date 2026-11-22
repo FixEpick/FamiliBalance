@@ -141,6 +141,21 @@ class MainViewModel(
         emitFamilyState()
     }
 
+    /**
+     * Валюта наград — семейная настройка: применяется ко ВСЕМ профилям,
+     * чтобы ребёнок видел тот же символ на своём устройстве после синхронизации.
+     * Только смена символа отображения, без конвертации курса.
+     */
+    fun setRewardCurrency(code: String) {
+        val now = System.currentTimeMillis()
+        AppSharedState.children.replaceAll { _, child ->
+            if (child.rewardCurrency == code) child
+            else child.copy(rewardCurrency = code, stateUpdatedAt = now)
+        }
+        familyRepository.saveAndSync()
+        emitFamilyState()
+    }
+
     init {
         // Парсинг JSON всех профилей и дневные сбросы — на IO, чтобы не фризить первый кадр
         viewModelScope.launch(Dispatchers.IO) {
@@ -373,6 +388,30 @@ class MainViewModel(
                 onResult(ok)
             } catch (e: Exception) {
                 android.util.Log.e("MainViewModel", "deleteAccount failed", e)
+                onResult(false)
+            } finally {
+                endProcessingAction()
+            }
+        }
+    }
+
+    /**
+     * Удаление профиля ребёнка по инициативе родителя.
+     * SupabaseManager.deleteChildProfile чистит Storage, удаляет строку
+     * family_profiles и локальный профиль. При успехе обновляем UI.
+     */
+    fun deleteChildProfile(childId: String, onResult: (Boolean) -> Unit) {
+        if (!tryStartProcessingAction()) {
+            onResult(false)
+            return
+        }
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val ok = SupabaseManager.deleteChildProfile(getApplication(), childId)
+                if (ok) emitFamilyState()
+                onResult(ok)
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "deleteChildProfile failed", e)
                 onResult(false)
             } finally {
                 endProcessingAction()

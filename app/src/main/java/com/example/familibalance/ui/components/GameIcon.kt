@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Единый набор векторных иконок «КвестЛаб».
+ * Единый набор векторных иконок Family Balance.
  * Заменяет системные эмодзи там, где нужен единый игровой стиль
  * на любых устройствах. Рисуются Material Symbols — единый контурный стиль.
  */

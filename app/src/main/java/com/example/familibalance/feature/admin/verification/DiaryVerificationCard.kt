@@ -1,50 +1,26 @@
 package com.example.familibalance.feature.admin.verification
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.ui.input.pointer.pointerInput
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 
-import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.*
-import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
-
-import com.example.familibalance.viewmodel.actions.*
 
 
 @Composable
@@ -169,10 +145,10 @@ fun DiaryVerificationCard(
             Spacer(modifier = Modifier.height(8.dp))
 
             val gradeConfigs = listOf(
-                Triple(5, "+50 ₽", StatusGreen),
-                Triple(4, "+30 ₽", AccentColor),
-                Triple(3, "-20 ₽", StatusYellow),
-                Triple(2, "-50 ₽", PenaltyRed)
+                Triple(5, "+50 ${rewardCurrencySymbol()}", StatusGreen),
+                Triple(4, "+30 ${rewardCurrencySymbol()}", AccentColor),
+                Triple(3, "-20 ${rewardCurrencySymbol()}", StatusYellow),
+                Triple(2, "-50 ${rewardCurrencySymbol()}", PenaltyRed)
             )
 
             gradeConfigs.forEach { (grade, rewardLabel, color) ->
@@ -239,7 +215,7 @@ fun DiaryVerificationCard(
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text(stringResource(R.string.admin_approve_with_reward, finalReward), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(currencyString(R.string.admin_approve_with_reward, finalReward), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 OutlinedButton(
@@ -287,7 +263,7 @@ fun DiaryVerificationCard(
                                 colors = CheckboxDefaults.colors(checkedColor = PenaltyRed)
                             )
                             Text(
-                                text = stringResource(R.string.admin_reject_fine_lie),
+                                text = currencyString(R.string.admin_reject_fine_lie),
                                 color = TextSecondary,
                                 fontSize = 13.sp
                             )

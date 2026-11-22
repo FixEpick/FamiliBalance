@@ -99,7 +99,8 @@ fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoU
         val cq = profile.customQuests.firstOrNull { it.id == questId }
         PushNotifier.photoReportSubmitted(
             profile.parentUserId, profile.name,
-            cq?.title ?: "", cq?.reward ?: 0
+            cq?.title ?: "", cq?.reward ?: 0,
+            RewardCurrency.symbolOf(profile.rewardCurrency)
         )
     }
 }

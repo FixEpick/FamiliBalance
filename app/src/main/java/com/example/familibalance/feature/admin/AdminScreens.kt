@@ -5,7 +5,6 @@ import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 
 import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 
 import androidx.compose.foundation.BorderStroke
@@ -148,10 +147,10 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         if (!child.isWardrobeDeleted) {
             item {
                 EditorItemRow(
-                    title = child.wardrobeTitle, subtitle = "${builtInFreqLabel(child.wardrobeFrequency)} • ${child.wardrobeReward} ₽",
+                    title = systemTitle(child.wardrobeTitle), subtitle = "${builtInFreqLabel(child.wardrobeFrequency)} • ${child.wardrobeReward} ${rewardCurrencySymbol()}",
                     checked = child.isWardrobeVisible, switchColors = switchColors,
                     onCheckedChange = { viewModel.toggleQuestVisibility(child.id, "closet", it) },
-                    onEdit = { editKind = "wardrobe"; editTitle = child.wardrobeTitle; editDesc = child.wardrobeDesc; editReward = child.wardrobeReward.toString(); editFreq = child.wardrobeFrequency },
+                    onEdit = { editKind = "wardrobe"; editTitle = child.wardrobeTitle; editDesc = child.wardrobeDesc; editReward = child.wardrobeReward.toString(); editFreq = child.wardrobeFrequency; editRequiresPhoto = child.wardrobeRequiresPhoto },
                     onDelete = { deleteConfirmName = child.wardrobeTitle; deleteConfirmAction = { viewModel.deleteBuiltInQuest(child.id, "wardrobe") } }
                 )
             }
@@ -159,10 +158,10 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         if (!child.isRoomDeleted) {
             item {
                 EditorItemRow(
-                    title = child.roomTitle, subtitle = "${builtInFreqLabel(child.roomFrequency)} • ${child.roomReward} ₽",
+                    title = systemTitle(child.roomTitle), subtitle = "${builtInFreqLabel(child.roomFrequency)} • ${child.roomReward} ${rewardCurrencySymbol()}",
                     checked = child.isRoomVisible, switchColors = switchColors,
                     onCheckedChange = { viewModel.toggleQuestVisibility(child.id, "room", it) },
-                    onEdit = { editKind = "room"; editTitle = child.roomTitle; editDesc = child.roomDesc; editReward = child.roomReward.toString(); editFreq = child.roomFrequency },
+                    onEdit = { editKind = "room"; editTitle = child.roomTitle; editDesc = child.roomDesc; editReward = child.roomReward.toString(); editFreq = child.roomFrequency; editRequiresPhoto = child.roomRequiresPhoto },
                     onDelete = { deleteConfirmName = child.roomTitle; deleteConfirmAction = { viewModel.deleteBuiltInQuest(child.id, "room") } }
                 )
             }
@@ -170,10 +169,10 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         if (!child.isDiaryDeleted) {
             item {
                 EditorItemRow(
-                    title = child.diaryTitle, subtitle = "${builtInFreqLabel(child.diaryFrequency)} • ${stringResource(R.string.quested_by_grades)}",
+                    title = systemTitle(child.diaryTitle), subtitle = "${builtInFreqLabel(child.diaryFrequency)} • ${stringResource(R.string.quested_by_grades)}",
                     checked = child.isDiaryVisible, switchColors = switchColors,
                     onCheckedChange = { viewModel.toggleQuestVisibility(child.id, "diary", it) },
-                    onEdit = { editKind = "diary"; editTitle = child.diaryTitle; editDesc = child.diaryDesc; editReward = ""; editFreq = child.diaryFrequency },
+                    onEdit = { editKind = "diary"; editTitle = child.diaryTitle; editDesc = child.diaryDesc; editReward = ""; editFreq = child.diaryFrequency; editRequiresPhoto = child.diaryRequiresPhoto },
                     onDelete = { deleteConfirmName = child.diaryTitle; deleteConfirmAction = { viewModel.deleteBuiltInQuest(child.id, "diary") } }
                 )
             }
@@ -185,7 +184,7 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 QuestFrequency.WEEKLY -> stringResource(R.string.quested_freq_weekly)
             }
             EditorItemRow(
-                title = q.title, subtitle = "$badge • ${q.reward} ₽",
+                title = q.title, subtitle = "$badge • ${q.reward} ${rewardCurrencySymbol()}",
                 checked = q.isVisible, switchColors = switchColors,
                 onCheckedChange = { viewModel.toggleQuestVisibility(child.id, q.id, it) },
                 onEdit = { editKind = "custom"; editQuestId = q.id; editTitle = q.title; editDesc = q.description; editReward = q.reward.toString(); editFreq = q.frequency; editRequiresPhoto = q.requiresPhoto },
@@ -207,7 +206,7 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 ) {
                     OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
                     OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
-                    OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text(currencyString(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { newFreq = QuestFrequency.ONCE }, border = BorderStroke(1.dp, if (newFreq == QuestFrequency.ONCE) AccentColor else GlassStroke), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
@@ -265,77 +264,52 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(value = editTitle, onValueChange = { editTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = editDesc, onValueChange = { editDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
+                    // Для системных (не изменённых родителем) названий/описаний
+                    // показываем перевод; state хранит исходный русский текст,
+                    // поэтому сохранение без правок не ломает data-контракт.
+                    OutlinedTextField(value = systemTitle(editTitle), onValueChange = { editTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    OutlinedTextField(value = systemDesc(editDesc), onValueChange = { editDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
                     if (editKind != "diary") {
-                        OutlinedTextField(value = editReward, onValueChange = { editReward = it }, label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                        OutlinedTextField(value = editReward, onValueChange = { editReward = it }, label = { Text(currencyString(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     }
-                    if (editKind != "custom") {
-                        Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(
-                                onClick = { editFreq = QuestFrequency.ONCE },
-                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.ONCE) AccentColor else GlassStroke),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(stringResource(R.string.quested_freq_once), color = if (editFreq == QuestFrequency.ONCE) AccentColor else Color.White, fontSize = 13.sp)
-                            }
-                            OutlinedButton(
-                                onClick = { editFreq = QuestFrequency.DAILY },
-                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.DAILY) AccentColor else GlassStroke),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(stringResource(R.string.quested_freq_daily_adv), color = if (editFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
-                            }
-                            OutlinedButton(
-                                onClick = { editFreq = QuestFrequency.WEEKLY },
-                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.WEEKLY) AccentColor else GlassStroke),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(stringResource(R.string.quested_freq_weekly_adv), color = if (editFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
-                            }
-                        }
-                    }
-                    if (editKind == "custom") {
-                        Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(
-                                onClick = { editFreq = QuestFrequency.ONCE },
-                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.ONCE) AccentColor else GlassStroke),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(stringResource(R.string.quested_freq_once), color = if (editFreq == QuestFrequency.ONCE) AccentColor else Color.White, fontSize = 13.sp)
-                            }
-                            OutlinedButton(
-                                onClick = { editFreq = QuestFrequency.DAILY },
-                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.DAILY) AccentColor else GlassStroke),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(stringResource(R.string.quested_freq_daily), color = if (editFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
-                            }
-                            OutlinedButton(
-                                onClick = { editFreq = QuestFrequency.WEEKLY },
-                                border = BorderStroke(1.dp, if (editFreq == QuestFrequency.WEEKLY) AccentColor else GlassStroke),
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                            ) {
-                                Text(stringResource(R.string.quested_freq_weekly), color = if (editFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
-                            }
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
+                    Text(stringResource(R.string.quested_frequency), color = TextPrimary, fontSize = 13.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { editFreq = QuestFrequency.ONCE },
+                            border = BorderStroke(1.dp, if (editFreq == QuestFrequency.ONCE) AccentColor else GlassStroke),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                         ) {
-                            Checkbox(
-                                checked = editRequiresPhoto,
-                                onCheckedChange = { editRequiresPhoto = it },
-                                colors = CheckboxDefaults.colors(checkedColor = AccentColor)
-                            )
-                            Text(
-                                text = stringResource(R.string.admin_set_bonus_photo),
-                                color = TextPrimary,
-                                fontSize = 14.sp
-                            )
+                            Text(stringResource(R.string.quested_freq_once), color = if (editFreq == QuestFrequency.ONCE) AccentColor else Color.White, fontSize = 13.sp)
                         }
+                        OutlinedButton(
+                            onClick = { editFreq = QuestFrequency.DAILY },
+                            border = BorderStroke(1.dp, if (editFreq == QuestFrequency.DAILY) AccentColor else GlassStroke),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(stringResource(R.string.quested_freq_daily), color = if (editFreq == QuestFrequency.DAILY) AccentColor else Color.White, fontSize = 13.sp)
+                        }
+                        OutlinedButton(
+                            onClick = { editFreq = QuestFrequency.WEEKLY },
+                            border = BorderStroke(1.dp, if (editFreq == QuestFrequency.WEEKLY) AccentColor else GlassStroke),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(stringResource(R.string.quested_freq_weekly), color = if (editFreq == QuestFrequency.WEEKLY) AccentColor else Color.White, fontSize = 13.sp)
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Checkbox(
+                            checked = editRequiresPhoto,
+                            onCheckedChange = { editRequiresPhoto = it },
+                            colors = CheckboxDefaults.colors(checkedColor = AccentColor)
+                        )
+                        Text(
+                            text = stringResource(R.string.admin_set_bonus_photo),
+                            color = TextPrimary,
+                            fontSize = 14.sp
+                        )
                     }
                 }
                 }
@@ -351,14 +325,17 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                             "wardrobe" -> {
                                 viewModel.updateBuiltInQuest(child.id, "wardrobe", editTitle.trim(), editDesc.trim(), r)
                                 viewModel.updateBuiltInQuestFrequency(child.id, "wardrobe", editFreq)
+                                viewModel.updateBuiltInQuestPhotoRequirement(child.id, "wardrobe", editRequiresPhoto)
                             }
                             "room" -> {
                                 viewModel.updateBuiltInQuest(child.id, "room", editTitle.trim(), editDesc.trim(), r)
                                 viewModel.updateBuiltInQuestFrequency(child.id, "room", editFreq)
+                                viewModel.updateBuiltInQuestPhotoRequirement(child.id, "room", editRequiresPhoto)
                             }
                             "diary" -> {
                                 viewModel.updateBuiltInQuest(child.id, "diary", editTitle.trim(), editDesc.trim(), r)
                                 viewModel.updateBuiltInQuestFrequency(child.id, "diary", editFreq)
+                                viewModel.updateBuiltInQuestPhotoRequirement(child.id, "diary", editRequiresPhoto)
                             }
                             "custom" -> viewModel.updateCustomQuest(child.id, editQuestId, editTitle.trim(), editDesc.trim(), r, editFreq, editRequiresPhoto)
                         }
@@ -374,7 +351,7 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         AlertDialog(
             onDismissRequest = { deleteConfirmAction = null },
             containerColor = SpaceBgStart,
-            title = { AppLocaleContent { Text(stringResource(R.string.quested_delete_title, deleteConfirmName), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
+            title = { AppLocaleContent { Text(stringResource(R.string.quested_delete_title, systemTitle(deleteConfirmName)), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
             confirmButton = {
                 AppLocaleContent {
                 Button(colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), onClick = { action(); deleteConfirmAction = null }) {

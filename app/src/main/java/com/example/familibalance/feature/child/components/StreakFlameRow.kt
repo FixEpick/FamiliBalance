@@ -10,17 +10,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
+import com.example.familibalance.util.*
 import com.example.familibalance.ui.components.EmojiIcon
 import com.example.familibalance.ui.theme.*
 
-/** Карточка стрика: 7 огоньков дней без штрафов + кнопка чек-ина. */
+/**
+ * Компактная карточка стрика: заголовок «Серия без штрафов: X/7 дн»,
+ * мини-шкала из 7 огоньков, бейдж бонуса и кнопка чек-ина —
+ * всё в 1–2 строки вместо полноразмерного календаря.
+ */
 @Composable
 fun StreakFlameCard(
     streakDays: Int,
@@ -28,6 +30,8 @@ fun StreakFlameCard(
     onCheckIn: () -> Unit
 ) {
     val activeFlames = if (streakDays == 0) 0 else ((streakDays - 1) % 7) + 1
+    val checkedToday = lastStreakDate.isNotBlank() &&
+        lastStreakDate == java.time.LocalDate.now().toString()
 
     Card(
         modifier = Modifier
@@ -36,85 +40,67 @@ fun StreakFlameCard(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = stringResource(R.string.child_streak_title),
-                color = TextPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                for (day in 1..7) {
-                    val isActive = day <= activeFlames
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.child_streak_compact, streakDays),
+                    color = TextPrimary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    for (day in 1..7) {
+                        val isActive = day <= activeFlames
                         EmojiIcon(
                             emoji = "🔥",
-                            size = 24.dp,
+                            size = 18.dp,
                             modifier = Modifier.alpha(if (isActive) 1f else 0.25f)
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.child_streak_day_label, day),
-                            fontSize = 11.sp,
-                            color = if (isActive) LocalAppPalette.current.primaryNeon else TextSecondary.copy(alpha = 0.4f),
-                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
-            if (lastStreakDate.isBlank() || lastStreakDate != java.time.LocalDate.now().toString()) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = onCheckIn,
-                    colors = ButtonDefaults.buttonColors(containerColor = LocalAppPalette.current.primaryNeon, contentColor = SpaceBgStart),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.child_streak_checkin), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = currencyString(R.string.child_streak_bonus),
+                    color = LocalAppPalette.current.primaryNeon,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                if (checkedToday) {
+                    Text(
+                        text = stringResource(R.string.child_streak_checked_short),
+                        color = StatusGreen,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                } else {
+                    Button(
+                        onClick = onCheckIn,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = LocalAppPalette.current.primaryNeon,
+                            contentColor = SpaceBgStart
+                        ),
+                        shape = RoundedCornerShape(10.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.child_streak_checkin),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = stringResource(R.string.child_streak_bonus),
-                    color = LocalAppPalette.current.primaryNeon,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.child_streak_checked_today),
-                    color = StatusGreen,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.child_streak_bonus),
-                    color = LocalAppPalette.current.primaryNeon,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         }
     }

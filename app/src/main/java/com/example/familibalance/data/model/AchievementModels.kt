@@ -38,7 +38,7 @@ fun defaultAchievements(): List<AchievementConfig> = listOf(
     ),
     AchievementConfig(
         title = "Босс Первой Парты",
-        description = "Твоя аура отличника отпугивает двойки. Списать у тебя — платный DLC.",
+        description = "Десять пятёрок в бортовом журнале — твой уровень знаний выходит на орбиту!",
         targetCount = 10,
         reward = 100,
         branch = AchievementBranch.DIARY
@@ -233,7 +233,7 @@ fun getAchievements(child: ChildProfileState): List<AchievementItemData> {
                 AchievementBranch.ROOM -> "Уборка в комнате ${ach.targetCount} раз"
             }
             val progress = "${currentCount.coerceAtMost(ach.targetCount)}/${ach.targetCount}"
-            val reward = "+${ach.reward} ₽"
+            val reward = "+${ach.reward} ${com.example.familibalance.util.RewardCurrency.symbolOf(child.rewardCurrency)}"
             result.add(
                 AchievementItemData(
                     title = ach.title,

@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
+import com.example.familibalance.util.*
 import com.example.familibalance.ui.theme.*
 
 /** Диалог вывода наличных: сумма + комментарий, валидация по доступному балансу. */
@@ -50,7 +51,7 @@ fun CashOutDialog(
                 OutlinedTextField(
                     value = amountText,
                     onValueChange = { amountText = it },
-                    label = { Text(stringResource(R.string.child_cashout_amount_label)) },
+                    label = { Text(currencyString(R.string.child_cashout_amount_label)) },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = Color.White,

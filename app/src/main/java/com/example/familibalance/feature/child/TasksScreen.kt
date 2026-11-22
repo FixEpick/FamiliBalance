@@ -1,55 +1,21 @@
 package com.example.familibalance.feature.child
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.net.Uri
-import android.content.pm.PackageManager
-import android.widget.Toast
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.FileProvider
-import androidx.core.content.ContextCompat
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.platform.LocalHapticFeedback
-import coil3.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -79,7 +45,6 @@ fun TasksScreen(
     onScrollToRules: () -> Unit = {},
     viewModel: MainViewModel
 ) {
-    val context = LocalContext.current
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isProcessingAction by viewModel.isProcessingAction.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
@@ -116,6 +81,7 @@ fun TasksScreen(
         QuestDeliveryScreen(
             questName = target.displayName,
             rewardText = target.rewardText,
+            photoRequired = target.requiresPhoto,
             onSendClick = { comment, photoUri ->
                 val photoUrlStr = photoUri?.toString()
                 when (target.key) {
@@ -209,7 +175,7 @@ fun TasksScreen(
                     TaskCard(
                         title = bQuest.title,
                         description = bQuest.description.ifBlank { stringResource(R.string.tasks_bonus_default_desc) },
-                        reward = "+${bQuest.reward} ₽",
+                        reward = "+${bQuest.reward} ${rewardCurrencySymbol()}",
                         status = bQuest.status,
                         rejectReason = bQuest.rejectReason,
                         borderColor = StatusYellow,
@@ -234,9 +200,9 @@ fun TasksScreen(
             if (isWardrobeVisible && !child.isWardrobeDeleted) {
                 item {
                     TaskCard(
-                        title = child.wardrobeTitle,
-                        description = child.wardrobeDesc,
-                        reward = "+${child.wardrobeReward} ₽",
+                        title = systemTitle(child.wardrobeTitle),
+                        description = systemDesc(child.wardrobeDesc),
+                        reward = "+${child.wardrobeReward} ${rewardCurrencySymbol()}",
                         frequencyBadge = builtInFreqBadge(child.wardrobeFrequency),
                         status = closetStatus,
                         rejectReason = child.closetRejectReason,
@@ -255,9 +221,9 @@ fun TasksScreen(
             if (isRoomVisible && !child.isRoomDeleted) {
                 item {
                     TaskCard(
-                        title = child.roomTitle,
-                        description = child.roomDesc,
-                        reward = "+${child.roomReward} ₽",
+                        title = systemTitle(child.roomTitle),
+                        description = systemDesc(child.roomDesc),
+                        reward = "+${child.roomReward} ${rewardCurrencySymbol()}",
                         frequencyBadge = builtInFreqBadge(child.roomFrequency),
                         status = roomStatus,
                         rejectReason = child.roomRejectReason,
@@ -281,11 +247,11 @@ fun TasksScreen(
                     val diaryFines = 20 * child.diaryCount3 + 50 * child.diaryCount2
                     val diaryNetReward = child.diaryApprovedReward - diaryFines
                     val diaryClaimText = if (diaryNetReward >= 0) {
-                        stringResource(R.string.tasks_claim_reward, diaryNetReward)
+                        currencyString(R.string.tasks_claim_reward, diaryNetReward)
                     } else {
-                        stringResource(R.string.tasks_claim_reward_neg, diaryNetReward)
+                        currencyString(R.string.tasks_claim_reward_neg, diaryNetReward)
                     }
-                    val diaryRewardText = stringResource(R.string.tasks_diary_reward)
+                    val diaryRewardText = currencyString(R.string.tasks_diary_reward)
                     // Отчёт по оценкам — виден, когда админ утвердил дневник
                     // (READY_TO_CLAIM) и сохранил разбивку в diaryCount*.
                     val diaryReportText = if (
@@ -296,30 +262,30 @@ fun TasksScreen(
                         buildString {
                             appendLine(stringResource(R.string.tasks_diary_report_header))
                             appendLine(
-                                if (child.diaryCount5 == 0) stringResource(R.string.tasks_diary_grade_zero, 5)
-                                else stringResource(R.string.tasks_diary_grade5, child.diaryCount5, 50 * child.diaryCount5)
+                                if (child.diaryCount5 == 0) currencyString(R.string.tasks_diary_grade_zero, 5)
+                                else currencyString(R.string.tasks_diary_grade5, child.diaryCount5, 50 * child.diaryCount5)
                             )
                             appendLine(
-                                if (child.diaryCount4 == 0) stringResource(R.string.tasks_diary_grade_zero, 4)
-                                else stringResource(R.string.tasks_diary_grade4, child.diaryCount4, 30 * child.diaryCount4)
+                                if (child.diaryCount4 == 0) currencyString(R.string.tasks_diary_grade_zero, 4)
+                                else currencyString(R.string.tasks_diary_grade4, child.diaryCount4, 30 * child.diaryCount4)
                             )
                             appendLine(
-                                if (child.diaryCount3 == 0) stringResource(R.string.tasks_diary_grade_zero, 3)
-                                else stringResource(R.string.tasks_diary_grade3, child.diaryCount3, 20 * child.diaryCount3)
+                                if (child.diaryCount3 == 0) currencyString(R.string.tasks_diary_grade_zero, 3)
+                                else currencyString(R.string.tasks_diary_grade3, child.diaryCount3, 20 * child.diaryCount3)
                             )
                             appendLine(
-                                if (child.diaryCount2 == 0) stringResource(R.string.tasks_diary_grade_zero, 2)
-                                else stringResource(R.string.tasks_diary_grade2, child.diaryCount2, 50 * child.diaryCount2)
+                                if (child.diaryCount2 == 0) currencyString(R.string.tasks_diary_grade_zero, 2)
+                                else currencyString(R.string.tasks_diary_grade2, child.diaryCount2, 50 * child.diaryCount2)
                             )
                             appendLine(
-                                if (diaryNetReward > 0) stringResource(R.string.tasks_diary_total, diaryNetReward)
-                                else stringResource(R.string.tasks_diary_total_plain, diaryNetReward)
+                                if (diaryNetReward > 0) currencyString(R.string.tasks_diary_total, diaryNetReward)
+                                else currencyString(R.string.tasks_diary_total_plain, diaryNetReward)
                             )
                         }.trimEnd()
                     } else null
                     TaskCard(
-                        title = child.diaryTitle,
-                        description = child.diaryDesc,
+                        title = systemTitle(child.diaryTitle),
+                        description = systemDesc(child.diaryDesc),
                         reward = diaryRewardText,
                         frequencyBadge = builtInFreqBadge(child.diaryFrequency),
                         status = diaryStatus,
@@ -358,14 +324,14 @@ fun TasksScreen(
                         QuestFrequency.WEEKLY -> stringResource(R.string.freq_weekly)
                     }
                     val claimText = if (quest.status == QuestStatus.READY_TO_CLAIM) {
-                        stringResource(R.string.tasks_claim_reward, quest.reward)
+                        currencyString(R.string.tasks_claim_reward, quest.reward)
                     } else {
                         stringResource(R.string.tasks_under_review)
                     }
                     TaskCard(
                         title = quest.title,
                         description = quest.description.ifBlank { stringResource(R.string.tasks_custom_default_desc) },
-                        reward = "+${quest.reward} ₽",
+                        reward = "+${quest.reward} ${rewardCurrencySymbol()}",
                         frequencyBadge = badgeText,
                         status = quest.status,
                         rejectReason = quest.rejectReason,
@@ -440,7 +406,9 @@ fun TasksScreen(
 internal data class QuestDeliveryTarget(
     val displayName: String,
     val rewardText: String,
-    val key: String
+    val key: String,
+    /** true — фото обязательно; false — квест отправляется на проверку без фото. */
+    val requiresPhoto: Boolean = true
 )
 
 /**
@@ -457,15 +425,15 @@ internal fun rememberQuestDeliveryTarget(
 ): QuestDeliveryTarget? {
     if (key == null) return null
     return when {
-        key == "closet" -> QuestDeliveryTarget(child.wardrobeTitle, "+${child.wardrobeReward} ₽", key)
-        key == "room" -> QuestDeliveryTarget(child.roomTitle, "+${child.roomReward} ₽", key)
-        key == "diary" -> QuestDeliveryTarget(child.diaryTitle, stringResource(R.string.tasks_diary_reward), key)
+        key == "closet" -> QuestDeliveryTarget(systemTitle(child.wardrobeTitle), "+${child.wardrobeReward} ${rewardCurrencySymbol()}", key, child.wardrobeRequiresPhoto)
+        key == "room" -> QuestDeliveryTarget(systemTitle(child.roomTitle), "+${child.roomReward} ${rewardCurrencySymbol()}", key, child.roomRequiresPhoto)
+        key == "diary" -> QuestDeliveryTarget(systemTitle(child.diaryTitle), currencyString(R.string.tasks_diary_reward), key, child.diaryRequiresPhoto)
         key.startsWith("bonus:") -> child.bonusQuests
             .firstOrNull { "bonus:${it.id}" == key }
-            ?.let { QuestDeliveryTarget(it.title, "+${it.reward} ₽", key) }
+            ?.let { QuestDeliveryTarget(it.title, "+${it.reward} ${rewardCurrencySymbol()}", key, it.requiresPhoto) }
         key.startsWith("custom:") -> child.customQuests
             .firstOrNull { "custom:${it.id}" == key }
-            ?.let { QuestDeliveryTarget(it.title, "+${it.reward} ₽", key) }
+            ?.let { QuestDeliveryTarget(it.title, "+${it.reward} ${rewardCurrencySymbol()}", key, it.requiresPhoto) }
         else -> null
     }
 }

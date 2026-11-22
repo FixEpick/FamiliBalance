@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
+import com.example.familibalance.util.*
 import com.example.familibalance.ui.theme.*
 
 /** Диалог выбора/смены цели-мечты: название + сумма, подсказка про кулдаун 7 дней. */
@@ -69,7 +70,7 @@ fun DreamGoalDialog(
                     OutlinedTextField(
                         value = amountText,
                         onValueChange = { amountText = it.filter { c -> c.isDigit() }.take(7) },
-                        label = { Text(stringResource(R.string.dream_amount_label)) },
+                        label = { Text(currencyString(R.string.dream_amount_label)) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = fieldColors,

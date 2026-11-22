@@ -1,11 +1,16 @@
 package com.example.familibalance.ui.components
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.ui.theme.*
 
@@ -41,17 +46,22 @@ fun ExitConfirmDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(
-                    confirmText,
-                    color = Color.Red,
-                    fontWeight = FontWeight.Bold
-                )
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed, contentColor = Color.White),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(confirmText, fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(cancelText, color = TextSecondary)
+            OutlinedButton(
+                onClick = onDismiss,
+                border = BorderStroke(1.dp, GlassStroke),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(cancelText, fontWeight = FontWeight.Bold)
             }
         }
     )

@@ -1,6 +1,5 @@
 package com.example.familibalance.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,20 +11,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
-import com.example.familibalance.*
 import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 
 @Composable
@@ -53,7 +44,7 @@ fun AchievementCard(
         null -> condition
     }
     val displayDescription = if (isLocked) stringResource(R.string.ach_locked_desc) else description
-    val displayReward = if (isLocked) "??? ₽" else reward
+    val displayReward = if (isLocked) "??? ${rewardCurrencySymbol()}" else reward
     val lockedDesc = stringResource(R.string.a11y_locked_achievement)
     val completedDesc = stringResource(R.string.a11y_achievement_completed)
 

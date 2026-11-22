@@ -17,3 +17,6 @@ key.properties
 /captures
 .externalNativeBuild
 .cxx
+/supabase.exe
+
+supabase/.temp/

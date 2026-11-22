@@ -1,15 +1,11 @@
 package com.example.familibalance.feature.admin
 
-import androidx.compose.foundation.BorderStroke
 import com.example.familibalance.feature.child.screens.*
 import com.example.familibalance.feature.admin.verification.VerificationAdminContent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -29,47 +25,23 @@ import com.example.familibalance.navigation.AdminSettingsRoute
 import com.example.familibalance.navigation.AdminVerificationRoute
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import coil3.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-import android.graphics.drawable.BitmapDrawable
-import coil3.ImageLoader
-import coil3.request.ImageRequest
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 
-
-import androidx.annotation.StringRes
-import androidx.compose.ui.res.stringResource
 import com.example.familibalance.R
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.ui.theme.*
-import com.example.familibalance.ui.components.LanguageSelectorButton
-import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.push.PushNavBus
 import com.example.familibalance.data.push.PushChannels
 import com.example.familibalance.data.push.rememberPushPermissionRequester
@@ -202,7 +174,7 @@ fun AdminScreen(
             || diaryStatus == QuestStatus.PENDING
             || bonusQuests.any { it.status == QuestStatus.PENDING }
             || customQuests.any { it.status == QuestStatus.PENDING }
-            || cashoutRequests.isNotEmpty()
+            || cashoutRequests.any { it.status == CashoutStatus.PENDING }
             || honestAdmissionStatus == QuestStatus.PENDING
 
     val hasPending = visibleChildren.any { it.hasPendingItems() }
@@ -232,7 +204,7 @@ fun AdminScreen(
                 AppLocaleContent {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            stringResource(
+                            currencyString(
                                 R.string.admin_cashout_available,
                                 child.balance,
                                 cashoutRemaining
@@ -248,7 +220,7 @@ fun AdminScreen(
                             OutlinedTextField(
                                 value = cashoutAmountText,
                                 onValueChange = { cashoutAmountText = it.filter(Char::isDigit) },
-                                label = { Text(stringResource(R.string.admin_cashout_amount_label), color = TextPrimary) },
+                                label = { Text(currencyString(R.string.admin_cashout_amount_label), color = TextPrimary) },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier.weight(1f),
@@ -300,7 +272,7 @@ fun AdminScreen(
                             if (cashoutAmount == child.balance) {
                                 stringResource(R.string.admin_cashout_confirm)
                             } else {
-                                stringResource(R.string.admin_cashout_submit_partial, cashoutAmount ?: 0)
+                                currencyString(R.string.admin_cashout_submit_partial, cashoutAmount ?: 0)
                             },
                             fontWeight = FontWeight.Bold
                         )
@@ -322,7 +294,11 @@ fun AdminScreen(
 
     // Панель родителя не зависит от темы ребёнка: фиксируем
     // стабильную сине-голубую палитру (COSMIC_BLUE) для всего кабинета.
-    CompositionLocalProvider(LocalAppPalette provides AppThemes.first()) {
+    // Валюта — от выбранного ребёнка (семейная настройка, синхронизируется).
+    CompositionLocalProvider(
+        LocalAppPalette provides AppThemes.first(),
+        LocalRewardCurrency provides child.rewardCurrency
+    ) {
     Box(
         modifier = modifier.fillMaxSize()
     ) {

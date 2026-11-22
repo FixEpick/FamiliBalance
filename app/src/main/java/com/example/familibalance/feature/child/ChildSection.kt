@@ -1,25 +1,13 @@
 package com.example.familibalance.feature.child
 
 import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
-import com.example.familibalance.data.supabase.SupabaseManager
+import com.example.familibalance.data.push.PushNavBus
 import com.example.familibalance.util.*
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import android.os.Bundle
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.BorderStroke
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -30,7 +18,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.annotation.StringRes
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -38,10 +25,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -49,24 +32,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.familibalance.R
 import com.example.familibalance.MainViewModel
-import com.example.familibalance.data.SecurePrefs
-import com.example.familibalance.data.push.PushNavBus
-import com.example.familibalance.navigation.AdminRoute
 import com.example.familibalance.navigation.ChildAchievementsRoute
 import com.example.familibalance.navigation.ChildHistoryRoute
 import com.example.familibalance.navigation.ChildMainRoute
-import com.example.familibalance.navigation.ChildRoute
 import com.example.familibalance.navigation.ChildTasksRoute
-import com.example.familibalance.navigation.PlayerLoginRoute
-import com.example.familibalance.navigation.RegisterParentRoute
-import com.example.familibalance.feature.admin.AdminScreen
-import com.example.familibalance.feature.child.MainChildScreen
-import com.example.familibalance.feature.child.TasksScreen
-import com.example.familibalance.ui.auth.PlayerLoginScreen
-import com.example.familibalance.ui.auth.RegisterParentScreen
-import com.example.familibalance.viewmodel.AuthViewModel
-import com.example.familibalance.viewmodel.actions.*
 import com.example.familibalance.feature.child.components.CameraCaptureVisibility
+import com.example.familibalance.feature.child.components.InfoBottomSheet
 import com.example.familibalance.feature.child.screens.*
 import com.example.familibalance.ui.components.EmojiIcon
 import com.example.familibalance.ui.components.LanguageSelectorButton
@@ -74,10 +45,7 @@ import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
 import com.example.familibalance.ui.theme.*
-import io.github.jan.supabase.auth.auth
-import io.github.jan.supabase.auth.status.SessionStatus
-import com.example.familibalance.ui.update.UpdateDialog
-import com.example.familibalance.viewmodel.UpdateViewModel
+import com.example.familibalance.viewmodel.actions.*
 
 
 private data class ChildTab(
@@ -98,6 +66,8 @@ fun ChildSection(
 ) {
     val childNavController = rememberNavController()
     var showThemeSheet by remember { mutableStateOf(false) }
+    var showInfoSheet by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isSynced by viewModel.isSynced.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
@@ -137,6 +107,12 @@ fun ChildSection(
 
     val offlineDesc = stringResource(R.string.a11y_offline_status)
     val themeDesc = stringResource(R.string.a11y_theme_button)
+    val infoDesc = stringResource(R.string.a11y_info_button)
+    val profileMenuDesc = stringResource(R.string.a11y_profile_menu)
+    val logoutDialogTitle = stringResource(R.string.logout_title)
+    val logoutDialogMessage = stringResource(R.string.logout_message)
+    val logoutDialogConfirm = stringResource(R.string.logout_confirm)
+    val logoutDialogCancel = stringResource(R.string.action_cancel)
 
     // Красная точка на «Достижениях», если есть награда, которую можно забрать
     val hasClaimableAchievements = remember(child.achievements, child.fivesCount, child.wardrobeCount, child.roomCount, child.balance, child.streakDays) {
@@ -177,6 +153,9 @@ fun ChildSection(
         )
     }
 
+    // Валюта наград ребёнка — для всех экранов раздела (баланс, квесты,
+    // история, достижения). Символ подменяется на рендере, без конвертации.
+    CompositionLocalProvider(LocalRewardCurrency provides child.rewardCurrency) {
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
             painter = painterResource(id = R.drawable.space_bg),
@@ -202,7 +181,12 @@ fun ChildSection(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = if (isParentPreview) Modifier else Modifier
+                            .clickable { showLogoutDialog = true }
+                            .semantics { contentDescription = profileMenuDesc }
+                    ) {
                         Text(child.avatar, fontSize = 20.sp)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -221,6 +205,13 @@ fun ChildSection(
                                 contentDescription = offlineDesc
                             )
                             Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        IconButton(onClick = { showInfoSheet = true }) {
+                            EmojiIcon(
+                                emoji = "❓",
+                                size = 18.dp,
+                                contentDescription = infoDesc
+                            )
                         }
                         LanguageSelectorButton()
                         IconButton(onClick = { showThemeSheet = true }) {
@@ -307,8 +298,6 @@ fun ChildSection(
                         composable<ChildMainRoute> {
                             MainChildScreen(
                                 onNavigateToTasks = { navigateToTab(ChildTasksRoute) },
-                                onLogout = onLogout,
-                                showLogout = !isParentPreview,
                                 viewModel = viewModel
                             )
                         }
@@ -325,6 +314,56 @@ fun ChildSection(
                     onDismissRequest = { showThemeSheet = false }
                 )
             }
+            if (showInfoSheet) {
+                InfoBottomSheet(
+                    child = child,
+                    onDismissRequest = { showInfoSheet = false }
+                )
+            }
+            if (showLogoutDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLogoutDialog = false },
+                    containerColor = SpaceBgStart,
+                    title = {
+                        Text(
+                            text = logoutDialogTitle,
+                            color = PenaltyRed,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        Text(
+                            text = logoutDialogMessage,
+                            color = TextPrimary,
+                            fontSize = 14.sp
+                        )
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                showLogoutDialog = false
+                                onLogout()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = PenaltyRed,
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(logoutDialogConfirm, fontWeight = FontWeight.Bold)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = { showLogoutDialog = false },
+                            colors = ButtonDefaults.textButtonColors(contentColor = TextMuted)
+                        ) {
+                            Text(logoutDialogCancel)
+                        }
+                    }
+                )
+            }
         }
+    }
     }
 }

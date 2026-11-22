@@ -1,7 +1,5 @@
 package com.example.familibalance
 
-import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.util.*
 
@@ -14,26 +12,10 @@ import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.SystemBarStyle
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.annotation.StringRes
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModelProvider
@@ -48,30 +30,20 @@ import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.data.push.PushTokenRegistrar
 import com.example.familibalance.data.push.handlePushIntent
 import com.example.familibalance.navigation.AdminRoute
-import com.example.familibalance.navigation.ChildAchievementsRoute
-import com.example.familibalance.navigation.ChildHistoryRoute
-import com.example.familibalance.navigation.ChildMainRoute
 import com.example.familibalance.navigation.ChildRoute
-import com.example.familibalance.navigation.ChildTasksRoute
 import com.example.familibalance.navigation.OnboardingRoute
 import com.example.familibalance.navigation.PlayerLoginRoute
 import com.example.familibalance.navigation.RegisterParentRoute
 import com.example.familibalance.feature.admin.AdminScreen
 import com.example.familibalance.feature.child.ChildSection
-import com.example.familibalance.feature.child.MainChildScreen
-import com.example.familibalance.feature.child.TasksScreen
 import com.example.familibalance.ui.auth.PlayerLoginScreen
 import com.example.familibalance.ui.auth.RegisterParentScreen
 import com.example.familibalance.ui.auth.ResetPasswordScreen
 import com.example.familibalance.ui.onboarding.OnboardingScreen
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
-import com.example.familibalance.feature.child.screens.*
 import com.example.familibalance.ui.components.AppSplashScreen
 import com.example.familibalance.ui.components.ExitConfirmDialog
-import com.example.familibalance.ui.components.LanguageSelectorButton
-import com.example.familibalance.ui.components.PulseBadge
-import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
 import com.example.familibalance.ui.theme.*
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
@@ -447,11 +419,7 @@ class MainActivity : FragmentActivity() {
                         cancelText = exitDialogCancel,
                         onConfirm = {
                             showExitDialog = false
-                            // finishAffinity завершает все Activity задачи —
-                            // killProcess не нужен: он убивает процесс сигналом
-                            // SIGKILL, система считает это аварийной гибелью
-                            // (WIN DEATH, потеря состояния, блокировка рестарта).
-                            activity?.finishAffinity()
+                            activity?.finishApp()
                         },
                         onDismiss = { showExitDialog = false }
                     )

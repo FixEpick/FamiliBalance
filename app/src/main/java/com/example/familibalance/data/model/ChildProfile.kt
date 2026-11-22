@@ -66,11 +66,15 @@ data class ChildProfileState(
     val wardrobeTitle: String = "Фото шкафа",
     val wardrobeDesc: String = "Наведи идеальный порядок на полках и сфотографируй результат для родителя",
     val wardrobeReward: Int = 50,
+    /** true — для квеста обязателен фотоотчёт; false — достаточно отправить на проверку. */
+    val wardrobeRequiresPhoto: Boolean = true,
     val roomTitle: String = "Фото комнаты",
     val roomDesc: String = "Заправь кровать без складок, собери игрушки и пришли фото",
     val roomReward: Int = 50,
+    val roomRequiresPhoto: Boolean = true,
     val diaryTitle: String = "📚 Дневник",
     val diaryDesc: String = "Квест выполняется раз в неделю. Родитель проверяет все оценки в дневнике за прошедшую неделю.",
+    val diaryRequiresPhoto: Boolean = true,
     val parentUserId: String = "",
     val authUserId: String = "",
     /** Хэш PIN (salt:hex). Пустая строка — PIN ещё не установлен. */
@@ -81,7 +85,9 @@ data class ChildProfileState(
     /** ANDROID_ID устройства, с которого ребёнок последний раз входил (для будущих пушей). */
     val deviceId: String = "",
     /** Epoch ms последнего локального изменения состояния (last-writer-wins при синхронизации). */
-    val stateUpdatedAt: Long = 0
+    val stateUpdatedAt: Long = 0,
+    /** Код валюты наград (RUB/USD/EUR/GBP/KZT/BYN/COIN) — только символ отображения, без конвертации. */
+    val rewardCurrency: String = "RUB"
 ) {
     constructor(
         id: String,
@@ -157,18 +163,22 @@ data class ChildProfileState(
             wardrobeTitle = dto.wardrobeTitle,
             wardrobeDesc = dto.wardrobeDesc,
             wardrobeReward = dto.wardrobeReward,
+            wardrobeRequiresPhoto = dto.wardrobeRequiresPhoto,
             roomTitle = dto.roomTitle,
             roomDesc = dto.roomDesc,
             roomReward = dto.roomReward,
+            roomRequiresPhoto = dto.roomRequiresPhoto,
             diaryTitle = dto.diaryTitle,
             diaryDesc = dto.diaryDesc,
+            diaryRequiresPhoto = dto.diaryRequiresPhoto,
             parentUserId = dto.parentUserId,
             authUserId = dto.authUserId,
             pinCode = dto.pinCode,
             parentEmail = dto.parentEmail,
             status = dto.status,
             deviceId = dto.deviceId,
-            stateUpdatedAt = dto.stateUpdatedAt
+            stateUpdatedAt = dto.stateUpdatedAt,
+            rewardCurrency = dto.rewardCurrency
         )
     }
 }
@@ -235,18 +245,22 @@ data class ChildProfileDto(
     val wardrobeTitle: String = "Фото шкафа",
     val wardrobeDesc: String = "Наведи идеальный порядок на полках и сфотографируй результат для родителя",
     val wardrobeReward: Int = 50,
+    val wardrobeRequiresPhoto: Boolean = true,
     val roomTitle: String = "Фото комнаты",
     val roomDesc: String = "Заправь кровать без складок, собери игрушки и пришли фото",
     val roomReward: Int = 50,
+    val roomRequiresPhoto: Boolean = true,
     val diaryTitle: String = "📚 Дневник",
     val diaryDesc: String = "Квест выполняется раз в неделю. Родитель проверяет все оценки в дневнике за прошедшую неделю.",
+    val diaryRequiresPhoto: Boolean = true,
     val parentUserId: String = "",
     val authUserId: String = "",
     val pinCode: String = "",
     val parentEmail: String = "",
     val status: String = "active",
     val deviceId: String = "",
-    val stateUpdatedAt: Long = 0
+    val stateUpdatedAt: Long = 0,
+    val rewardCurrency: String = "RUB"
 )
 
 fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
@@ -308,16 +322,20 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     wardrobeTitle = wardrobeTitle,
     wardrobeDesc = wardrobeDesc,
     wardrobeReward = wardrobeReward,
+    wardrobeRequiresPhoto = wardrobeRequiresPhoto,
     roomTitle = roomTitle,
     roomDesc = roomDesc,
     roomReward = roomReward,
+    roomRequiresPhoto = roomRequiresPhoto,
     diaryTitle = diaryTitle,
     diaryDesc = diaryDesc,
+    diaryRequiresPhoto = diaryRequiresPhoto,
     parentUserId = parentUserId,
     authUserId = authUserId,
     pinCode = pinCode,
     parentEmail = parentEmail,
     status = status,
     deviceId = deviceId,
-    stateUpdatedAt = stateUpdatedAt
+    stateUpdatedAt = stateUpdatedAt,
+    rewardCurrency = rewardCurrency
 )

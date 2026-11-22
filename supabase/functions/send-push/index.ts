@@ -12,7 +12,14 @@
 //   screen:         string,   // deep-link: main|tasks|history|verification|progress
 //   channel:        string,   // quests_and_rewards|parent_moderation|balance_updates
 //   priority:       "high" | "normal"
+//   title_key/body_key: string,   // имена string-ресурсов для локализации на клиенте
+//   title_args/body_args: string, // JSON-массив строк-аргументов шаблона
 // }
+//
+// Если переданы title_key/body_key — сообщение уходит data-only (без
+// android.notification): локализация происходит на устройстве получателя
+// в FamiliBalanceMessagingService. Без ключей — старое поведение с
+// notification-блоком (fallback-текст на языке отправителя).
 //
 // Secrets (supabase secrets set):
 //   FCM_SERVICE_ACCOUNT — JSON service account Firebase (одной строкой)
@@ -33,6 +40,10 @@ interface PushRequest {
   screen?: string;
   channel?: string;
   priority?: string;
+  title_key?: string;
+  body_key?: string;
+  title_args?: string;
+  body_args?: string;
 }
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -82,7 +93,8 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "invalid_json" }, 400);
   }
 
-  const { target_user_id, target_role, title, body, screen, channel, priority } = payload;
+  const { target_user_id, target_role, title, body, screen, channel, priority,
+          title_key, body_key, title_args, body_args } = payload;
   if (!target_user_id || !target_role || !title) {
     return jsonResponse({ error: "missing_fields" }, 400);
   }
@@ -124,6 +136,10 @@ Deno.serve(async (req) => {
   const fcmUrl =
     `https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`;
   const highPriority = priority === "high";
+  // Ключи локализации → data-only: текст собирается на устройстве
+  // получателя в его локали (включая фон — onMessageReceived вызывается
+  // и для свёрнутого приложения при high priority).
+  const localized = Boolean(title_key || body_key);
 
   let sent = 0;
   const staleTokens: string[] = [];
@@ -139,19 +155,24 @@ Deno.serve(async (req) => {
           role: target_role,
           channel: channel ?? "",
           priority: highPriority ? "high" : "normal",
+          ...(title_key ? { title_key } : {}),
+          ...(body_key ? { body_key } : {}),
+          ...(title_args ? { title_args } : {}),
+          ...(body_args ? { body_args } : {}),
         },
         android: {
           priority: highPriority ? "HIGH" : "NORMAL",
-          notification: {
-            // title/body обязательны: когда приложение свёрнуто, FCM SDK
-            // показывает уведомление сам по этому блоку — без них получается
-            // пустое «Expand to view». В foreground onMessageReceived
-            // получает data и строит своё уведомление.
-            title,
-            body: body ?? "",
-            channel_id: channel ?? "quests_and_rewards",
-            sound: "default",
-          },
+          // notification-блок только для legacy-отправителей без ключей:
+          // при data-only FCM доставляет сообщение в onMessageReceived,
+          // где текст локализуется на устройстве получателя.
+          ...(localized ? {} : {
+            notification: {
+              title,
+              body: body ?? "",
+              channel_id: channel ?? "quests_and_rewards",
+              sound: "default",
+            },
+          }),
         },
       },
     };

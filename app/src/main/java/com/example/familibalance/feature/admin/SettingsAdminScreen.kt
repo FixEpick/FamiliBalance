@@ -6,10 +6,10 @@ import com.example.familibalance.R
 import com.example.familibalance.BuildConfig
 
 import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -59,7 +59,9 @@ fun AdminSettingsScreen(
         ?: ChildProfileState(id = "user_1", name = stringResource(R.string.child_player_role), avatar = "🧒")
     var showAddBonusDialog by rememberSaveable { mutableStateOf(false) }
     var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
-    var showDeleteAccountDialog by rememberSaveable { mutableStateOf(false) }
+    var showDeletePicker by rememberSaveable { mutableStateOf(false) }
+    // Цель удаления: "account" — весь аккаунт, childId — профиль ребёнка.
+    var deleteTarget by rememberSaveable { mutableStateOf<String?>(null) }
     var isDeletingAccount by rememberSaveable { mutableStateOf(false) }
     var showResets by rememberSaveable { mutableStateOf(false) }
     var showPinPicker by rememberSaveable { mutableStateOf(false) }
@@ -130,7 +132,7 @@ fun AdminSettingsScreen(
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
-        contentPadding = PaddingValues(bottom = 100.dp, top = 16.dp)
+        contentPadding = PaddingValues(bottom = 24.dp, top = 16.dp)
     ) {
         item {
             OutlinedButton(
@@ -285,7 +287,10 @@ item {
                         }
                         DropdownMenu(
                             expanded = resetMenuExpanded,
-                            onDismissRequest = { resetMenuExpanded = false }
+                            onDismissRequest = { resetMenuExpanded = false },
+                            containerColor = SpaceBgStart,
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, GlassStroke)
                         ) {
                             resetOptions.forEachIndexed { index, (label, _) ->
                                 DropdownMenuItem(
@@ -366,6 +371,86 @@ item {
             }
         }
         item {
+            var showCurrency by rememberSaveable { mutableStateOf(false) }
+            val currentCurrency = child.rewardCurrency
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = GlassBackground,
+                border = BorderStroke(1.dp, GlassStroke),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showCurrency = !showCurrency }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.admin_set_currency),
+                            color = TextPrimary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = RewardCurrency.symbolOf(currentCurrency),
+                            color = AccentColor,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (showCurrency) "▲" else "▼",
+                            color = TextSecondary,
+                            fontSize = 12.sp
+                        )
+                    }
+                    if (showCurrency) {
+                        RewardCurrency.all.forEach { cur ->
+                            val isSelected = cur.code == currentCurrency
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        viewModel.setRewardCurrency(cur.code)
+                                        showCurrency = false
+                                    }
+                                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(cur.symbol, fontSize = 18.sp)
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = cur.code,
+                                    color = TextPrimary,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = currencyName(cur.code),
+                                    color = TextSecondary,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (isSelected) {
+                                    Text("✓", color = AccentColor, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                        Text(
+                            text = stringResource(R.string.admin_set_currency_note),
+                            color = TextSecondary,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+                        )
+                    }
+                }
+            }
+        }
+        item {
             OutlinedButton(
                 onClick = { showLogoutDialog = true },
                 border = BorderStroke(1.dp, PenaltyRed),
@@ -377,7 +462,7 @@ item {
             }
             Spacer(modifier = Modifier.height(10.dp))
             TextButton(
-                onClick = { showDeleteAccountDialog = true },
+                onClick = { showDeletePicker = true },
                 enabled = !isDeletingAccount,
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -491,7 +576,7 @@ if (showAddBonusDialog) {
             ) {
                 OutlinedTextField(value = bonusTitle, onValueChange = { bonusTitle = it }, label = { Text(stringResource(R.string.admin_set_bonus_name), color = TextPrimary) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
                 OutlinedTextField(value = bonusDesc, onValueChange = { bonusDesc = it }, label = { Text(stringResource(R.string.admin_set_bonus_desc), color = TextPrimary) }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
-                OutlinedTextField(value = bonusReward, onValueChange = { bonusReward = it }, label = { Text(stringResource(R.string.admin_set_bonus_reward), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
+                OutlinedTextField(value = bonusReward, onValueChange = { bonusReward = it }, label = { Text(currencyString(R.string.admin_set_bonus_reward), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(10.dp), colors = editorFieldColors())
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -580,16 +665,134 @@ if (showLogoutDialog) {
         }
     )
 }
-// Удаление аккаунта (Google Play): необратимо, с подтверждением и спиннером
-if (showDeleteAccountDialog) {
+// Меню удаления: аккаунт целиком или профиль конкретного ребёнка
+if (showDeletePicker) {
+    val childrenList = familyState.children.values.sortedBy { it.name }
     AlertDialog(
-        onDismissRequest = { if (!isDeletingAccount) showDeleteAccountDialog = false },
+        onDismissRequest = { showDeletePicker = false },
         containerColor = SpaceBgStart,
-        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_delete_title), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
+        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_delete_pick_title), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
+        text = {
+            AppLocaleContent {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = {
+                        showDeletePicker = false
+                        deleteTarget = "account"
+                    },
+                    border = BorderStroke(1.dp, PenaltyRed),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.admin_set_delete_all), fontWeight = FontWeight.Bold)
+                }
+                if (childrenList.isNotEmpty()) {
+                    OutlinedButton(
+                        onClick = {
+                            showDeletePicker = false
+                            // Один ребёнок — сразу к подтверждению, несколько — список профилей.
+                            deleteTarget = if (childrenList.size == 1) {
+                                childrenList.first().id
+                            } else {
+                                "child_picker"
+                            }
+                        },
+                        border = BorderStroke(1.dp, GlassStroke),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.admin_set_delete_child_profile), fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            AppLocaleContent {
+            OutlinedButton(
+                onClick = { showDeletePicker = false },
+                border = BorderStroke(1.dp, GlassStroke),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
+            }
+            }
+        }
+    )
+}
+
+// Выбор профиля ребёнка для удаления (несколько детей)
+if (deleteTarget == "child_picker") {
+    val childrenList = familyState.children.values.sortedBy { it.name }
+    AlertDialog(
+        onDismissRequest = { deleteTarget = null },
+        containerColor = SpaceBgStart,
+        title = { AppLocaleContent { Text(stringResource(R.string.admin_set_delete_pick_title), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
+        text = {
+            AppLocaleContent {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                childrenList.forEach { childProfile ->
+                    OutlinedButton(
+                        onClick = { deleteTarget = childProfile.id },
+                        border = BorderStroke(1.dp, GlassStroke),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("👦 ${childDisplayName(childProfile)}", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            AppLocaleContent {
+            OutlinedButton(
+                onClick = { deleteTarget = null },
+                border = BorderStroke(1.dp, GlassStroke),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSecondary),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text(stringResource(R.string.action_cancel), fontWeight = FontWeight.Bold)
+            }
+            }
+        }
+    )
+}
+
+// Подтверждение удаления: аккаунт родителя или профиль ребёнка
+deleteTarget?.let { target ->
+    if (target == "child_picker") return@let
+    val targetChild = if (target == "account") null else familyState.children[target]
+    if (target != "account" && targetChild == null) {
+        deleteTarget = null
+        return@let
+    }
+    val isAccountDelete = target == "account"
+    val targetName = targetChild?.let { childDisplayName(it) }.orEmpty()
+    AlertDialog(
+        onDismissRequest = { if (!isDeletingAccount) deleteTarget = null },
+        containerColor = SpaceBgStart,
+        title = {
+            AppLocaleContent {
+                Text(
+                    if (isAccountDelete) stringResource(R.string.admin_set_delete_account_confirm_title)
+                    else stringResource(R.string.admin_set_delete_child_title, targetName),
+                    color = PenaltyRed,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        },
         text = {
             AppLocaleContent {
             Text(
-                stringResource(R.string.admin_set_delete_message),
+                if (isAccountDelete) stringResource(R.string.admin_set_delete_account_confirm_msg)
+                else stringResource(R.string.admin_set_delete_child_msg, targetName),
                 color = TextPrimary
             )
             }
@@ -599,17 +802,32 @@ if (showDeleteAccountDialog) {
             Button(
                 onClick = {
                     isDeletingAccount = true
-                    viewModel.deleteAccount { success ->
-                        isDeletingAccount = false
-                        showDeleteAccountDialog = false
-                        if (success) {
-                            onLogout()
-                        } else {
-                            android.widget.Toast.makeText(
-                                context,
-                                deleteErrorText,
-                                android.widget.Toast.LENGTH_LONG
-                            ).show()
+                    if (isAccountDelete) {
+                        viewModel.deleteAccount { success ->
+                            isDeletingAccount = false
+                            deleteTarget = null
+                            if (success) {
+                                onLogout()
+                            } else {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    deleteErrorText,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    } else {
+                        viewModel.deleteChildProfile(target) { success ->
+                            isDeletingAccount = false
+                            if (success) {
+                                deleteTarget = null
+                            } else {
+                                android.widget.Toast.makeText(
+                                    context,
+                                    deleteErrorText,
+                                    android.widget.Toast.LENGTH_LONG
+                                ).show()
+                            }
                         }
                     }
                 },
@@ -625,14 +843,18 @@ if (showDeleteAccountDialog) {
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(stringResource(R.string.admin_set_delete), fontWeight = FontWeight.Bold)
+                Text(
+                    if (isAccountDelete) stringResource(R.string.admin_set_delete_forever)
+                    else stringResource(R.string.admin_set_delete_child_btn),
+                    fontWeight = FontWeight.Bold
+                )
             }
             }
         },
         dismissButton = {
             AppLocaleContent {
             TextButton(
-                onClick = { showDeleteAccountDialog = false },
+                onClick = { deleteTarget = null },
                 enabled = !isDeletingAccount
             ) {
                 Text(stringResource(R.string.action_cancel), color = TextSecondary)

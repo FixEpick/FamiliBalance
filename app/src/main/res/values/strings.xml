@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FamiliBalance</string>
+    <string name="app_name">Семейный Баланс</string>
 
     <!-- Welcome -->
 
@@ -27,7 +27,7 @@
     <string name="reg_pin">PIN-код</string>
     <string name="reg_pin_hint">4 цифры — ребёнок будет входить по ним</string>
     <string name="reg_parent_email">Email родителя</string>
-    <string name="reg_submit">Создать героя и в бой!</string>
+    <string name="reg_submit">Создать героя и начать!</string>
     <string name="parent_email">Email</string>
     <string name="parent_password">Пароль</string>
     <string name="parent_area_title">Кабинет родителя</string>
@@ -39,7 +39,7 @@
     <string name="auth_forgot_password">Забыли пароль?</string>
     <string name="auth_reset_sent">Письмо для сброса пароля отправлено. Повторный запрос — не чаще, чем раз в 30 минут.</string>
     <string name="reset_confirm_title">Сброс пароля</string>
-    <string name="reset_confirm_message">На адрес %1$s будет отправлено письмо со ссылкой для сброса пароля. Откройте ссылку в приложении FamiliBalance и задайте новый пароль.</string>
+    <string name="reset_confirm_message">На адрес %1$s будет отправлено письмо со ссылкой для сброса пароля. Откройте ссылку в приложении Семейный Баланс и задайте новый пароль.</string>
     <string name="reset_confirm_send">Отправить</string>
     <string name="auth_reset_cooldown">Следующий запрос — через %1$d:%2$02d</string>
     <string name="reset_password_title">Новый пароль</string>
@@ -94,7 +94,7 @@
 
     <!-- Exit app dialog -->
     <string name="exit_dialog_title">Выход из приложения</string>
-    <string name="exit_dialog_message">Вы уверены, что хотите закрыть FamiliBalance?</string>
+    <string name="exit_dialog_message">Вы уверены, что хотите закрыть Семейный Баланс?</string>
     <string name="exit_dialog_confirm">Выйти</string>
 
     <!-- Auth exit dialog -->
@@ -117,7 +117,7 @@
 
     <!-- Child main screen -->
     <string name="child_balance">Баланс</string>
-    <string name="child_bank_name">Космо-банк</string>
+    <string name="child_bank_name">Банк</string>
     <string name="child_cashout_btn">Вывести наличные</string>
     <string name="child_cashout_hint">*работает, когда вы с родителем</string>
     <string name="child_no_cashout_requests">Нет активных заявок на вывод</string>
@@ -125,6 +125,9 @@
     <string name="child_cashout_amount">Сумма: %1$d ₽</string>
     <string name="child_cashout_comment">Комментарий: %1$s</string>
     <string name="child_cashout_waiting">⏳ Ждёт подтверждения родителя</string>
+    <string name="child_cashout_rejected">❌ Заявка отклонена</string>
+    <string name="child_cashout_why">(почему?)</string>
+    <string name="child_cashout_reason_ok">Понятно</string>
     <string name="child_dream_default_title">Моя цель</string>
     <string name="child_dream_reached">Цель достигнута! Нажми, чтобы забрать ✨</string>
     <string name="child_dream_choose_title">🎯 Цель-мечта</string>
@@ -142,9 +145,11 @@
     <string name="child_buy_time_btn">Купить время</string>
     <string name="child_daily_limit_note">Дневной лимит %1$d мин • Обновится завтра</string>
     <string name="child_streak_title">Дни без штрафов</string>
+    <string name="child_streak_compact">Серия без штрафов: %1$d/7</string>
     <string name="child_streak_day_label">%1$d дн</string>
     <string name="child_streak_checkin">🔥 Отметиться сегодня</string>
     <string name="child_streak_checked_today">✓ Сегодняшний день засчитан — стрик в безопасности</string>
+    <string name="child_streak_checked_short">✓ Сегодня засчитан</string>
     <string name="child_streak_bonus">Бонус +50 ₽ на 7-й день</string>
     <string name="child_honest_cooldown">🐱 Честное признание • Доступно через %1$d дн.</string>
     <string name="child_honest_btn">🐱 Честное признание</string>
@@ -154,6 +159,8 @@
     <string name="child_honest_ready">✓ Честное признание одобрено родителем (Штраф уменьшен в половину)</string>
     <string name="child_rules_btn">📜 Свиток правил</string>
     <string name="child_economy_btn">💰 Экономика</string>
+    <string name="info_sheet_tab_rules">Правила</string>
+    <string name="info_sheet_tab_economy">Тарифы и награды</string>
     <string name="child_cashout_dialog_title">💵 Вывести наличные</string>
     <string name="child_cashout_amount_label">Сумма (₽)</string>
     <string name="child_cashout_insufficient">Недостаточно средств на балансе</string>
@@ -389,7 +396,6 @@
 
     <!-- Admin screen -->
     <string name="admin_cashout_title">💵 Выдача наличных</string>
-    <string name="admin_cashout_message">Выдать %1$s %2$d ₽ наличными и обнулить баланс в Космо-банке?</string>
     <string name="admin_cashout_confirm">Выдать и обнулить</string>
     <string name="admin_panel_title">Панель Родителя</string>
     <string name="admin_role">Администратор</string>
@@ -432,9 +438,10 @@
     <string name="a11y_locked_achievement">Достижение заблокировано</string>
     <string name="a11y_achievement_completed">Достижение выполнено</string>
     <string name="a11y_parent_panel">Панель родителя</string>
-    <string name="a11y_back_to_admin">Вернуться в панель родителя</string>
     <string name="a11y_camera_hint">Сделать фото результата задания</string>
     <string name="a11y_gift_icon">Подарок</string>
+    <string name="a11y_info_button">Информация: правила и тарифы</string>
+    <string name="a11y_profile_menu">Профиль: выход или смена пользователя</string>
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Получить награду</string>
@@ -492,9 +499,7 @@
     <string name="admin_quick_actions">⚡ Быстрые действия родителя (%1$s)</string>
     <string name="admin_quick_actions_subtitle">Начисление, штрафы и ручной ввод суммы для этого профиля.</string>
     <string name="admin_amount_hint">Сумма ₽</string>
-    <string name="admin_add">+ Добавить</string>
     <string name="admin_desc_label">Описание (за что)</string>
-    <string name="admin_withdraw">- Списать</string>
     <string name="admin_mode_deposit">＋ Начислить</string>
     <string name="admin_mode_withdraw">− Списать</string>
     <string name="admin_apply">Применить</string>
@@ -528,29 +533,44 @@
     <string name="admin_set_pin_management">🔐 Управление ПИН-кодами</string>
     <string name="admin_set_resets_open">🗑 Очистка и сбросы ▲</string>
     <string name="admin_set_resets_closed">🗑 Очистка и сбросы ▼</string>
-    <string name="admin_set_section_progress">📈 Прогресс и задания</string>
     <string name="admin_set_reset_quests_label">Сбросить прогресс всех заданий</string>
     <string name="admin_set_reset_visibility_label">Вернуть скрытые и удалённые задания</string>
     <string name="admin_set_reset_achievements_label">Сбросить достижения и статистику</string>
     <string name="admin_set_reset_counters_label">Обнулить счётчики оценок и уборок</string>
     <string name="admin_set_reset_honest_label">Сбросить честное признание</string>
     <string name="admin_set_reset_history_label">Очистить историю операций</string>
-    <string name="admin_set_section_balance">💰 Баланс и время</string>
     <string name="admin_set_reset_balance_label">Обнулить баланс</string>
     <string name="admin_set_reset_streak_label">Сбросить стрик и экранное время</string>
     <string name="admin_set_reset_dream_label">Удалить цель-мечту</string>
-    <string name="admin_set_section_theme">🎨 Оформление</string>
     <string name="admin_set_reset_theme_label">Сбросить тему оформления</string>
     <string name="admin_set_reset_all">Обнулить всё</string>
     <string name="admin_set_reset_select">Выберите, что сбросить…</string>
     <string name="admin_set_reset_execute">Выполнить сброс</string>
     <string name="admin_set_sync">🔄 Синхронизировать с сервером</string>
     <string name="admin_set_language">🌐 Язык интерфейса</string>
+    <string name="admin_set_currency">💱 Валюта наград</string>
+    <string name="admin_set_currency_note">Меняется только значок — баланс и суммы не пересчитываются.</string>
+    <string name="cur_rub">Российский рубль</string>
+    <string name="cur_usd">Доллар США</string>
+    <string name="cur_eur">Евро</string>
+    <string name="cur_gbp">Фунт стерлингов</string>
+    <string name="cur_kzt">Казахстанский тенге</string>
+    <string name="cur_byn">Белорусский рубль</string>
+    <string name="cur_coin">Универсальные монеты</string>
     <string name="admin_set_logout">🚪 Выйти из аккаунта</string>
     <string name="admin_set_logout_title">Выход из аккаунта</string>
     <string name="admin_set_logout_message">Вы уверены, что хотите выйти из кабинета родителя?</string>
     <string name="admin_set_logout_confirm">Выйти</string>
     <string name="admin_set_delete_account">🗑 Удалить аккаунт</string>
+    <string name="admin_set_delete_pick_title">Удаление</string>
+    <string name="admin_set_delete_all">🗑 Удалить мой аккаунт и всех детей</string>
+    <string name="admin_set_delete_child_profile">👦 Удалить профиль ребёнка</string>
+    <string name="admin_set_delete_account_confirm_title">Удалить аккаунт родителя?</string>
+    <string name="admin_set_delete_account_confirm_msg">Вы уверены? Ваш аккаунт и все прикреплённые профили детей, их баланс, история и фото будут удалены безвозвратно. Это действие нельзя отменить.</string>
+    <string name="admin_set_delete_forever">Удалить навсегда</string>
+    <string name="admin_set_delete_child_title">Удалить профиль %1$s?</string>
+    <string name="admin_set_delete_child_msg">Вы уверены? Профиль %1$s, его баланс, достижения и история операций будут удалены безвозвратно. Ваш аккаунт родителя останется активным.</string>
+    <string name="admin_set_delete_child_btn">Удалить ребёнка</string>
     <string name="admin_set_my_pin">🛡️ Мой ПИН (Родитель)</string>
     <string name="admin_set_pin_updated">ПИН-код для %1$s обновлён</string>
     <string name="admin_set_bonus_title">🎁 Новый бонус-квест для %1$s</string>
@@ -566,11 +586,6 @@
     <string name="admin_set_delete_message">Вы уверены? Все данные, включая профили детей и фото, будут удалены навсегда. Это действие нельзя отменить.</string>
     <string name="admin_set_delete_error">Не удалось удалить аккаунт. Проверьте подключение и попробуйте ещё раз.</string>
     <string name="admin_set_delete">Удалить</string>
-    <string name="admin_set_btn_reset">Сбросить</string>
-    <string name="admin_set_btn_restore">Вернуть</string>
-    <string name="admin_set_btn_zero">Обнулить</string>
-    <string name="admin_set_btn_clear">Очистить</string>
-    <string name="admin_set_btn_delete">Удалить</string>
 
     <!-- Achievements admin editor -->
     <string name="achadm_create_title">✨ Создание нового достижения</string>
@@ -600,8 +615,6 @@
     <string name="quested_freq_daily">Раз в день</string>
     <string name="quested_freq_weekly">Раз в неделю</string>
     <string name="quested_freq_once">Разовое</string>
-    <string name="quested_freq_daily_adv">Ежедневно</string>
-    <string name="quested_freq_weekly_adv">Еженедельно</string>
     <string name="quested_create">➕ Создать новое задание</string>
     <string name="quested_by_grades">по оценкам</string>
     <string name="quested_new_title">🎁 Новое задание</string>
@@ -624,7 +637,7 @@
     <string name="onboarding_start">Начать</string>
 
     <!-- Onboarding: parent slides -->
-    <string name="onboarding_p_welcome_title">Добро пожаловать в КвестЛаб!</string>
+    <string name="onboarding_p_welcome_title">Добро пожаловать в Семейный Баланс!</string>
     <string name="onboarding_p_welcome_desc">Инструмент для развития самостоятельности: понятные задачи, мотивация и контроль прогресса.</string>
     <string name="onboarding_p_quests_achievements_title">Квесты и достижения</string>
     <string name="onboarding_p_quests_achievements_desc">Задавайте задачи, проверяйте отчёты и начисляйте награды. Серии выполненных дел закрепляются достижениями и прогрессом.</string>
@@ -642,4 +655,93 @@
     <string name="onboarding_c_diary_time_desc">Отмечай успехи в школе: за пятёрки — бонусные монеты. А на квестах зарабатывай минуты для игр.</string>
     <string name="onboarding_c_rewards_title">Награды и призы</string>
     <string name="onboarding_c_rewards_desc">Копи монеты и обменивай их на настоящие призы и подарки — проверку делает родитель.</string>
+
+    <!-- Системный контент: встроенные квесты -->
+    <string name="sys_quest_wardrobe_title">Фото шкафа</string>
+    <string name="sys_quest_wardrobe_desc">Наведи идеальный порядок на полках и сфотографируй результат для родителя</string>
+    <string name="sys_quest_room_title">Фото комнаты</string>
+    <string name="sys_quest_room_desc">Заправь кровать без складок, собери игрушки и пришли фото</string>
+    <string name="sys_quest_diary_title">📚 Дневник</string>
+    <string name="sys_quest_diary_desc">Квест выполняется раз в неделю. Родитель проверяет все оценки в дневнике за прошедшую неделю.</string>
+    <string name="sys_quest_diary_week_title">📚 Итоги недели (Дневник)</string>
+
+    <!-- Системный контент: достижения — Дневник -->
+    <string name="sys_ach_diary_1_title">Первая кровь</string>
+    <string name="sys_ach_diary_1_desc">Нанес первый удар по скучной учебе. Дальше — больше.</string>
+    <string name="sys_ach_diary_5_title">Случайный Крит</string>
+    <string name="sys_ach_diary_5_desc">Выбил критический урон по школьной программе.</string>
+    <string name="sys_ach_diary_10_title">Босс Первой Парты</string>
+    <string name="sys_ach_diary_10_desc">Десять пятёрок в бортовом журнале — твой уровень знаний выходит на орбиту!</string>
+    <string name="sys_ach_diary_20_title">Чит-код на знания</string>
+    <string name="sys_ach_diary_20_desc">Учителя подозревают, что ты скачал взломанную версию учебника.</string>
+    <string name="sys_ach_diary_30_title">Абсолютный Баланс</string>
+    <string name="sys_ach_diary_30_desc">Разработчики школы пытались тебя понерфить, но ты всё равно тащишь катку.</string>
+    <string name="sys_ach_diary_40_title">Спидраннер четверти</string>
+    <string name="sys_ach_diary_40_desc">Проходишь сложные темы на уровне «Кошмар» с закрытыми глазами.</string>
+    <string name="sys_ach_diary_50_title">Легенда Сервера</string>
+    <string name="sys_ach_diary_50_desc">Твоё имя пора выбить золотыми буквами на доске почета. Главный киберспортсмен класса.</string>
+
+    <!-- Системный контент: достижения — Шкаф -->
+    <string name="sys_ach_wardrobe_1_title">Первооткрыватель полок</string>
+    <string name="sys_ach_wardrobe_1_desc">Нашел давно потерянный носок и навел порядок.</string>
+    <string name="sys_ach_wardrobe_5_title">Победитель Монстров</string>
+    <string name="sys_ach_wardrobe_5_desc">Заглянул в самые темные углы шкафа и не испугался.</string>
+    <string name="sys_ach_wardrobe_10_title">Тетрис-Мастер</string>
+    <string name="sys_ach_wardrobe_10_desc">Укладываешь футболки и джинсы так плотно, что позавидует любой грузчик.</string>
+    <string name="sys_ach_wardrobe_20_title">Инвентарь 100 уровня</string>
+    <string name="sys_ach_wardrobe_20_desc">В твоем лутбоксе с одеждой теперь идеальная сортировка по цвету и редкости.</string>
+    <string name="sys_ach_wardrobe_30_title">Портал в Нарнию</string>
+    <string name="sys_ach_wardrobe_30_desc">Навел такую чистоту, что за вешалками открылся проход в волшебную страну.</string>
+    <string name="sys_ach_wardrobe_40_title">Хранитель Текстур</string>
+    <string name="sys_ach_wardrobe_40_desc">Ни одна вещь не прогружается на полу. Всё строго на своих полках.</string>
+    <string name="sys_ach_wardrobe_50_title">Бог Гардероба</string>
+    <string name="sys_ach_wardrobe_50_desc">Твой шкаф выглядит как витрина дорогого магазина. Футболки лежат под линейку.</string>
+
+    <!-- Системный контент: достижения — Комната -->
+    <string name="sys_ach_room_1_title">Стартовая Локация</string>
+    <string name="sys_ach_room_1_desc">Зачистил базу от разбросанных игрушек и вражеских фантиков.</string>
+    <string name="sys_ach_room_5_title">Гроза Пылевых Бурь</string>
+    <string name="sys_ach_room_5_desc">Нанес сокрушительный удар по хаосу. Кровать заправлена без единой складки.</string>
+    <string name="sys_ach_room_10_title">Архитектор Уюта</string>
+    <string name="sys_ach_room_10_desc">Твоя комната прошла проверку санэпидемстанции и папиного строгого взгляда.</string>
+    <string name="sys_ach_room_20_title">Анти-Хаос Щит</string>
+    <string name="sys_ach_room_20_desc">Включил пассивный навык чистоты: вещи сами боятся падать мимо корзины.</string>
+    <string name="sys_ach_room_30_title">Мастер Скрытности</string>
+    <string name="sys_ach_room_30_desc">Убрал всё так быстро и чисто, будто здесь вообще никто не живет.</string>
+    <string name="sys_ach_room_40_title">Генерал Чистоты</string>
+    <string name="sys_ach_room_40_desc">Твоя комната сияет ярче, чем броня паладина. Враг в лице беспорядка разбит.</string>
+    <string name="sys_ach_room_50_title">Властелин Квадратных Метров</string>
+    <string name="sys_ach_room_50_desc">Абсолютный контроль территории. Эту комнату пора снимать для обложки журнала.</string>
+
+    <!-- Прочее -->
+    <string name="cashout_default_comment">Вывод наличных</string>
+    <string name="hist_honest_amount">Скидка 50%</string>
+    <string name="sys_reason_grade3_diary">Оценка 3 (дневник)</string>
+    <string name="sys_reason_grade2_diary">Оценка 2 (дневник)</string>
+    <string name="sys_reason_grade3">Оценка 3</string>
+    <string name="sys_reason_grade2">Оценка 2</string>
+
+    <!-- Пуш-уведомления (резолвятся на устройстве получателя через PushTexts) -->
+    <string name="push_photo_report_title">Новый фотоотчёт на проверку</string>
+    <string name="push_photo_report_body">%1$s сдал(а) квест «%2$s» (+%3$s %4$s).</string>
+    <string name="push_cashout_req_title">Запрос на вывод средств</string>
+    <string name="push_cashout_req_body">%1$s хочет вывести %2$s %3$s.</string>
+    <string name="push_honest_sub_title">Честное признание от ребёнка</string>
+    <string name="push_honest_sub_body">%1$s отправил(а) признание. Проверьте сообщение.</string>
+    <string name="push_dream_title">Цель-мечта накоплена!</string>
+    <string name="push_dream_body">%1$s накопил(а) на «%2$s» (%3$s %4$s).</string>
+    <string name="push_quest_ok_title">Квест выполнен! +%1$s %2$s</string>
+    <string name="push_quest_ok_body">Родитель проверил «%1$s». Забери награду в заданиях!</string>
+    <string name="push_quest_rej_title">Квест нужно переделать</string>
+    <string name="push_quest_rej_body">Родитель оставил комментарий к «%1$s»: %2$s.</string>
+    <string name="push_cashout_ok_title">Заявка на вывод одобрена!</string>
+    <string name="push_cashout_ok_body">Родитель подтвердил вывод %1$s %2$s. Можно забирать!</string>
+    <string name="push_cashout_rej_title">Заявка на вывод отклонена</string>
+    <string name="push_cashout_rej_body">Родитель отклонил вывод %1$s %2$s.</string>
+    <string name="push_honest_rej_title">Честное признание отклонено</string>
+    <string name="push_honest_rej_body">Родитель не принял признание. Можно отправить новое через 7 дней.</string>
+    <string name="push_bonus_quest_title">Новый квест в Семейном Балансе!</string>
+    <string name="push_bonus_quest_body">Появилось задание «%1$s» на +%2$s %3$s.</string>
+    <string name="push_balance_title">Обновление баланса: −%1$s %2$s</string>
+    <string name="push_balance_body">Списан штраф: %1$s.</string>
 </resources>

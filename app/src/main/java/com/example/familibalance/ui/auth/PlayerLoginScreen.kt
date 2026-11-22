@@ -18,8 +18,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextObfuscationMode
+import androidx.compose.foundation.text.input.byValue
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
@@ -37,8 +41,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +55,7 @@ import com.example.familibalance.ui.components.GameButtonVariant
 import com.example.familibalance.ui.components.GameIcon
 import com.example.familibalance.ui.components.GameIconType
 import com.example.familibalance.ui.components.LanguageSelectorButton
+import com.example.familibalance.ui.components.rememberBoundTextFieldState
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.createChildProfile
 import com.example.familibalance.viewmodel.actions.loginChild
@@ -100,6 +103,10 @@ fun PlayerLoginScreen(
     var pinVisible by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var loginError by remember { mutableStateOf<LoginResult?>(null) }
+    val pinFieldState = rememberBoundTextFieldState(
+        value = pin,
+        onValueChange = { pin = it; loginError = null }
+    )
     var showExitDialog by remember { mutableStateOf(false) }
     BackHandler { showExitDialog = true }
 
@@ -269,13 +276,14 @@ fun PlayerLoginScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        OutlinedTextField(
-                            value = pin,
-                            onValueChange = { pin = it.filter { c -> c.isDigit() }.take(4); loginError = null },
+                        OutlinedSecureTextField(
+                            state = pinFieldState,
                             label = { Text(stringResource(R.string.login_field_pin)) },
-                            singleLine = true,
-                            visualTransformation = if (pinVisible) VisualTransformation.None else PasswordVisualTransformation(),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                            inputTransformation = InputTransformation.byValue { _, proposed ->
+                                proposed.filter { it.isDigit() }.take(4)
+                            },
+                            textObfuscationMode = if (pinVisible) TextObfuscationMode.Visible else TextObfuscationMode.Hidden,
                             colors = CyberFieldColors,
                             trailingIcon = {
                                 IconButton(onClick = { pinVisible = !pinVisible }) {

@@ -1,7 +1,6 @@
 package com.example.familibalance.feature.child.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,11 +15,13 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.data.model.CashoutRequest
+import com.example.familibalance.data.model.CashoutStatus
+import com.example.familibalance.util.*
 import com.example.familibalance.ui.theme.*
 
 /** Карточка баланса: аватар, сумма, бейдж банка. onBadgePositioned — для CoinFlightOverlay. */
@@ -50,7 +51,7 @@ fun BalanceCard(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f, fill = false)
+                modifier = Modifier.weight(1f)
             ) {
                 Surface(
                     shape = CircleShape,
@@ -66,10 +67,12 @@ fun BalanceCard(
                 Column {
                     Text(stringResource(R.string.child_balance), color = TextSecondary, fontSize = 12.sp)
                     Text(
-                        text = "$animatedBalance ₽",
+                        text = "$animatedBalance ${rewardCurrencySymbol()}",
                         color = TextPrimary,
                         fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
             }
@@ -105,17 +108,28 @@ fun BalanceCard(
 @Composable
 fun CashoutSection(
     cashoutRequests: List<CashoutRequest>,
-    onCashOutClick: () -> Unit
+    onCashOutClick: () -> Unit,
+    onDismissRejected: (String) -> Unit = {}
 ) {
+    var reasonDialogRequest by remember { mutableStateOf<CashoutRequest?>(null) }
+
+    // Активная заявка (ждёт подтверждения или отклонена, но «Понятно» не нажато)
+    // блокирует кнопку — ребёнок не должен создавать дубликаты.
+    val hasActiveRequest = cashoutRequests.any {
+        it.status == CashoutStatus.PENDING || it.status == CashoutStatus.REJECTED
+    }
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         OutlinedButton(
             onClick = onCashOutClick,
+            enabled = !hasActiveRequest,
             border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
             colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = LocalAppPalette.current.primaryNeon
+                contentColor = LocalAppPalette.current.primaryNeon,
+                disabledContentColor = TextSecondary
             ),
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier
@@ -128,15 +142,6 @@ fun CashoutSection(
                 fontSize = 15.sp
             )
         }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = stringResource(R.string.child_cashout_hint),
-            color = TextMuted,
-            fontSize = 12.sp,
-            textAlign = TextAlign.Center
-        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -161,11 +166,18 @@ fun CashoutSection(
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
                 cashoutRequests.forEach { request ->
+                    val isRejected = request.status == CashoutStatus.REJECTED
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = CardBgDark.copy(alpha = 0.6f)),
-                        border = BorderStroke(1.dp, GlassStroke)
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isRejected) PenaltyRed.copy(alpha = 0.12f)
+                            else CardBgDark.copy(alpha = 0.6f)
+                        ),
+                        border = BorderStroke(
+                            1.dp,
+                            if (isRejected) PenaltyRed.copy(alpha = 0.5f) else GlassStroke
+                        )
                     ) {
                         Row(
                             modifier = Modifier
@@ -176,25 +188,42 @@ fun CashoutSection(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = stringResource(R.string.child_cashout_amount, request.amount),
+                                    text = currencyString(R.string.child_cashout_amount, request.amount),
                                     color = TextPrimary,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = stringResource(R.string.child_cashout_comment, request.comment),
+                                    text = stringResource(R.string.child_cashout_comment, cashoutCommentDisplay(request.comment)),
                                     color = TextSecondary,
                                     fontSize = 12.sp
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = stringResource(R.string.child_cashout_waiting),
-                                    color = StatusYellow,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                if (isRejected) {
+                                    Text(
+                                        text = stringResource(R.string.child_cashout_rejected),
+                                        color = PenaltyRed,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(
+                                        text = stringResource(R.string.child_cashout_why),
+                                        color = AccentColor,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.clickable { reasonDialogRequest = request }
+                                    )
+                                } else {
+                                    Text(
+                                        text = stringResource(R.string.child_cashout_waiting),
+                                        color = StatusYellow,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
                             }
                         }
                     }
@@ -202,5 +231,44 @@ fun CashoutSection(
                 }
             }
         }
+    }
+
+    // Окно с причиной отклонения: «Понятно» убирает плашку с главного экрана.
+    reasonDialogRequest?.let { request ->
+        AlertDialog(
+            onDismissRequest = { reasonDialogRequest = null },
+            containerColor = SpaceBgStart,
+            title = {
+                AppLocaleContent {
+                    Text(
+                        stringResource(R.string.child_cashout_rejected),
+                        color = PenaltyRed
+                    )
+                }
+            },
+            text = {
+                AppLocaleContent {
+                    Text(
+                        text = request.rejectReason.orEmpty().ifBlank {
+                            stringResource(R.string.admin_reject_default_reason)
+                        },
+                        color = TextPrimary,
+                        fontSize = 15.sp
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDismissRejected(request.id)
+                        reasonDialogRequest = null
+                    }
+                ) {
+                    AppLocaleContent {
+                        Text(stringResource(R.string.child_cashout_reason_ok))
+                    }
+                }
+            }
+        )
     }
 }

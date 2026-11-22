@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 
 val SpaceBgStart = Color(0xFF0F122B)
 val SpaceBgEnd = Color(0xFF070919)
-val GlassBackground = Color(0xFF0D132B).copy(alpha = 0.82f)
+val GlassBackground = Color(0xFF0D132B).copy(alpha = 0.90f)
 val GlassStroke = Color(0x4D4D90FF)
 val NeonCyan = Color(0xFF5CE1E6)
 

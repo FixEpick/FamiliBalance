@@ -65,6 +65,7 @@ import com.example.familibalance.ui.theme.AccentColor
 import com.example.familibalance.ui.theme.GlassStroke
 import com.example.familibalance.ui.theme.TextPrimary
 import com.example.familibalance.ui.theme.TextSecondary
+import com.example.familibalance.util.finishApp
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 
@@ -137,9 +138,7 @@ fun OnboardingScreen(
                 cancelText = stringResource(R.string.action_cancel),
                 onConfirm = {
                     showExitDialog = false
-                    // Без killProcess: finishAffinity корректно закрывает задачу,
-                    // а SIGKILL система воспринимает как аварийную гибель процесса.
-                    activity?.finishAffinity()
+                    activity?.finishApp()
                 },
                 onDismiss = { showExitDialog = false }
             )
@@ -367,9 +366,7 @@ private fun SlidePager(
                 cancelText = stringResource(R.string.action_cancel),
                 onConfirm = {
                     showExitDialog = false
-                    // Без killProcess: finishAffinity корректно закрывает задачу,
-                    // а SIGKILL система воспринимает как аварийную гибель процесса.
-                    activity?.finishAffinity()
+                    activity?.finishApp()
                 },
                 onDismiss = { showExitDialog = false }
             )
@@ -469,7 +466,10 @@ private fun SlidePage(modifier: Modifier = Modifier, slide: OnboardingSlide) {
             color = slide.accent,
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
         )
         Spacer(modifier = Modifier.height(14.dp))
         Text(
@@ -478,7 +478,9 @@ private fun SlidePage(modifier: Modifier = Modifier, slide: OnboardingSlide) {
             fontSize = 15.sp,
             textAlign = TextAlign.Center,
             lineHeight = 22.sp,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
         )
     }
 }

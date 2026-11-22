@@ -57,7 +57,7 @@ fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
     }
     updateChildProfile(updated)
     if (approvedTitle != null) {
-        PushNotifier.questApproved(userId, approvedTitle, approvedReward)
+        PushNotifier.questApproved(userId, approvedTitle, approvedReward, RewardCurrency.symbolOf(profile.rewardCurrency))
     }
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
@@ -150,7 +150,7 @@ fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, co
             diaryCount2 = c2
         )
     )
-    PushNotifier.questApproved(childId, profile.diaryTitle, netReward)
+    PushNotifier.questApproved(childId, profile.diaryTitle, netReward, RewardCurrency.symbolOf(profile.rewardCurrency))
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
@@ -171,7 +171,7 @@ fun MainViewModel.adminApproveBonusQuest(userId: String, questId: String) {
         if (q.id == questId) q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, photoUrl = null) else q
     }
     updateChildProfile(profile.copy(bonusQuests = updatedQuests))
-    PushNotifier.questApproved(userId, target.title, target.reward)
+    PushNotifier.questApproved(userId, target.title, target.reward, RewardCurrency.symbolOf(profile.rewardCurrency))
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
@@ -208,7 +208,7 @@ fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
         if (q.id == questId) q.copy(status = QuestStatus.READY_TO_CLAIM, rejectReason = null, photoUrl = null) else q
     }
     updateChildProfile(profile.copy(customQuests = updatedQuests))
-    PushNotifier.questApproved(userId, target.title, target.reward)
+    PushNotifier.questApproved(userId, target.title, target.reward, RewardCurrency.symbolOf(profile.rewardCurrency))
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch {
@@ -316,6 +316,18 @@ fun MainViewModel.updateBuiltInQuestFrequency(userId: String, kind: String, freq
         "wardrobe", "closet", "шкаф" -> profile.copy(wardrobeFrequency = frequency)
         "room", "комната" -> profile.copy(roomFrequency = frequency)
         "diary", "дневник" -> profile.copy(diaryFrequency = frequency)
+        else -> profile
+    }
+    updateChildProfile(updated)
+}
+
+/** Админ включает/выключает обязательный фотоотчёт для встроенного квеста. */
+fun MainViewModel.updateBuiltInQuestPhotoRequirement(userId: String, kind: String, requiresPhoto: Boolean) {
+    val profile = familyRepository.getChild(userId) ?: return
+    val updated = when (kind) {
+        "wardrobe", "closet", "шкаф" -> profile.copy(wardrobeRequiresPhoto = requiresPhoto)
+        "room", "комната" -> profile.copy(roomRequiresPhoto = requiresPhoto)
+        "diary", "дневник" -> profile.copy(diaryRequiresPhoto = requiresPhoto)
         else -> profile
     }
     updateChildProfile(updated)

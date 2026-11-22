@@ -85,7 +85,11 @@ fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
     try {
     val profile = familyRepository.getChild(familyRepository.selectedChildId) ?: return
 
-    val pendingTotal = profile.cashoutRequests.sumOf { it.amount }
+    // Считаем только ожидающие заявки: отклонённые висят у ребёнка
+    // до нажатия «Понятно» и не должны блокировать новые заявки.
+    val pendingTotal = profile.cashoutRequests
+        .filter { it.status == CashoutStatus.PENDING }
+        .sumOf { it.amount }
     val availableBalance = profile.balance - pendingTotal
     if (amount <= 0 || amount > availableBalance) {
         return
@@ -93,12 +97,12 @@ fun MainViewModel.createCashoutRequest(amount: Int, comment: String) {
 
     val request = CashoutRequest(
         amount = amount,
-        comment = comment.ifBlank { "Вывод наличных" },
+        comment = comment.ifBlank { SystemContent.DEFAULT_CASHOUT_COMMENT },
         timestamp = System.currentTimeMillis()
     )
 
     updateChildProfile(profile.copy(cashoutRequests = profile.cashoutRequests + request))
-    PushNotifier.cashoutRequested(profile.parentUserId, profile.name, amount)
+    PushNotifier.cashoutRequested(profile.parentUserId, profile.name, amount, RewardCurrency.symbolOf(profile.rewardCurrency))
     } finally {
         endProcessingAction()
     }
@@ -113,6 +117,7 @@ fun MainViewModel.approveCashoutRequest(childId: String, requestId: String) {
 
     val request = profile.cashoutRequests.firstOrNull { it.id == requestId } ?: return
 
+    if (request.status != CashoutStatus.PENDING) return
     if (request.amount <= 0 || request.amount > profile.balance) {
         return
     }
@@ -135,22 +140,52 @@ fun MainViewModel.approveCashoutRequest(childId: String, requestId: String) {
         cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId }
     )
     updateChildProfile(updated)
-    PushNotifier.cashoutApproved(childId, request.amount)
+    PushNotifier.cashoutApproved(childId, request.amount, RewardCurrency.symbolOf(profile.rewardCurrency))
     } finally {
         endProcessingAction()
     }
 }
 
-fun MainViewModel.rejectCashoutRequest(childId: String, requestId: String) {
+fun MainViewModel.rejectCashoutRequest(childId: String, requestId: String, reason: String) {
     if (!tryStartProcessingAction()) return
     try {
     val profile = familyRepository.getChild(childId) ?: return
     val request = profile.cashoutRequests.firstOrNull { it.id == requestId } ?: return
 
+    if (request.status != CashoutStatus.PENDING) return
+
+    // Заявка остаётся в списке со статусом REJECTED: ребёнок видит
+    // «❌ Заявка отклонена» + причину, пока не нажмёт «Понятно».
     updateChildProfile(
-        profile.copy(cashoutRequests = profile.cashoutRequests.filterNot { it.id == requestId })
+        profile.copy(
+            cashoutRequests = profile.cashoutRequests.map {
+                if (it.id == requestId) {
+                    it.copy(
+                        status = CashoutStatus.REJECTED,
+                        rejectReason = reason.ifBlank { "Требуется доработка" }
+                    )
+                } else it
+            }
+        )
     )
-    PushNotifier.cashoutRejected(childId, request.amount)
+    PushNotifier.cashoutRejected(childId, request.amount, RewardCurrency.symbolOf(profile.rewardCurrency))
+    } finally {
+        endProcessingAction()
+    }
+}
+
+/** Ребёнок закрыл окно с причиной отклонения — убираем заявку с главного экрана. */
+fun MainViewModel.dismissRejectedCashoutRequest(childId: String, requestId: String) {
+    if (!tryStartProcessingAction()) return
+    try {
+    val profile = familyRepository.getChild(childId) ?: return
+    updateChildProfile(
+        profile.copy(
+            cashoutRequests = profile.cashoutRequests.filterNot {
+                it.id == requestId && it.status == CashoutStatus.REJECTED
+            }
+        )
+    )
     } finally {
         endProcessingAction()
     }

@@ -1,56 +1,29 @@
 package com.example.familibalance.feature.admin
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import coil3.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import android.graphics.drawable.BitmapDrawable
-import coil3.ImageLoader
-import coil3.request.ImageRequest
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
-
 
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.*
 import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 import com.example.familibalance.R
 import com.example.familibalance.ui.components.*
@@ -77,7 +50,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
     var showAchievementsDialog by remember { mutableStateOf(false) }
     var showDreamGoalDialog by remember { mutableStateOf(false) }
     var dreamTitle by remember { mutableStateOf(child.dreamTitle) }
-    var dreamTargetVal by remember { mutableStateOf(child.dreamTarget) }
+    var dreamTargetVal by remember { mutableIntStateOf(child.dreamTarget) }
 
     // Тяжёлые вычисления — только при смене child, не на каждую рекомпозицию.
     val validHistory = remember(child) {
@@ -130,12 +103,12 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(stringResource(R.string.admin_stat_earned), color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text("+$totalEarned ₽", color = StatusGreen, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                            Text("+$totalEarned ${rewardCurrencySymbol()}", color = StatusGreen, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         }
                         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(stringResource(R.string.admin_stat_balance), color = TextSecondary, fontSize = 12.sp, textAlign = TextAlign.Center)
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text("${child.balance} ₽", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                            Text("${child.balance} ${rewardCurrencySymbol()}", color = TextPrimary, fontSize = 22.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                         }
                     }
                 }
@@ -163,7 +136,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                     if (child.dreamTarget > 0) {
                         Text(stringResource(R.string.admin_dream_title, child.dreamTitle), color = AccentColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(stringResource(R.string.admin_dream_progress, child.balance, child.dreamTarget), color = TextPrimary, fontSize = 14.sp)
+                        Text(currencyString(R.string.admin_dream_progress, child.balance, child.dreamTarget), color = TextPrimary, fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(10.dp))
                         val dreamFraction = (child.balance.toFloat() / child.dreamTarget).coerceIn(0f, 1f)
                         LinearProgressIndicator(
@@ -191,7 +164,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                 AppLocaleContent {
                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(value = dreamTitle, onValueChange = { dreamTitle = it }, label = { Text(stringResource(R.string.admin_goal_name_label), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = if (dreamTargetVal > 0) dreamTargetVal.toString() else "", onValueChange = { dreamTargetVal = it.toIntOrNull() ?: 0 }, label = { Text(stringResource(R.string.child_cashout_amount_label), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = editorFieldColors())
+                    OutlinedTextField(value = if (dreamTargetVal > 0) dreamTargetVal.toString() else "", onValueChange = { dreamTargetVal = it.toIntOrNull() ?: 0 }, label = { Text(currencyString(R.string.child_cashout_amount_label), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = editorFieldColors())
                 }
                 }
             },
@@ -220,7 +193,7 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     allAchievements.forEach { ach ->
-                        AchievementCard(title = ach.title, condition = ach.condition, description = ach.description, reward = ach.reward, progress = ach.progress, isLocked = ach.isLocked, isCompleted = ach.isCompleted, conditionKind = ach.conditionKind, conditionCount = ach.conditionCount, progressCurrent = ach.progressCurrent, progressTarget = ach.conditionCount)
+                        AchievementCard(title = systemTitle(ach.title), condition = ach.condition, description = systemDesc(ach.description), reward = ach.reward, progress = ach.progress, isLocked = ach.isLocked, isCompleted = ach.isCompleted, conditionKind = ach.conditionKind, conditionCount = ach.conditionCount, progressCurrent = ach.progressCurrent, progressTarget = ach.conditionCount)
                     }
                 }
                 }

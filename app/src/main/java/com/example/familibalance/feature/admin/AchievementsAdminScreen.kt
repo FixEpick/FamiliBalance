@@ -5,7 +5,6 @@ import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 
 import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 
 import androidx.compose.foundation.BorderStroke
@@ -32,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.viewmodel.actions.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminAchievementsScreen(
     viewModel: MainViewModel,
@@ -152,7 +150,7 @@ fun AdminAchievementsScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = achievement.title,
+                        text = systemTitle(achievement.title),
                         color = TextPrimary,
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
@@ -164,7 +162,7 @@ fun AdminAchievementsScreen(
                         AchievementBranch.ROOM -> stringResource(R.string.achadm_branch_room)
                     }
                     Text(
-                        text = stringResource(R.string.achadm_meta, branchLabel, achievement.targetCount, achievement.reward),
+                        text = currencyString(R.string.achadm_meta, branchLabel, achievement.targetCount, achievement.reward),
                         color = TextSecondary,
                         fontSize = 13.sp
                     )
@@ -229,7 +227,7 @@ fun AdminAchievementsScreen(
                 AppLocaleContent {
                 Column(modifier = Modifier.imePadding()) {
                     OutlinedTextField(
-                        value = editTitle,
+                        value = systemTitle(editTitle),
                         onValueChange = { editTitle = it },
                         label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) },
                         modifier = Modifier.fillMaxWidth(),
@@ -245,7 +243,7 @@ fun AdminAchievementsScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = editDescription,
+                        value = systemDesc(editDescription),
                         onValueChange = { editDescription = it },
                         label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) },
                         modifier = Modifier.fillMaxWidth(),
@@ -280,7 +278,7 @@ fun AdminAchievementsScreen(
                     OutlinedTextField(
                         value = editReward,
                         onValueChange = { editReward = it },
-                        label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) },
+                        label = { Text(currencyString(R.string.achadm_field_reward), color = TextPrimary) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
@@ -444,7 +442,7 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 AchievementBranch.ROOM -> stringResource(R.string.achadm_branch_room)
             }
             EditorItemRow(
-                title = ach.title, subtitle = stringResource(R.string.achadm_meta, branchLabel, ach.targetCount, ach.reward),
+                title = systemTitle(ach.title), subtitle = currencyString(R.string.achadm_meta, branchLabel, ach.targetCount, ach.reward),
                 checked = ach.isVisible, switchColors = switchColors,
                 onCheckedChange = { viewModel.toggleAchievementVisibility(child.id, ach.id, it) },
                 onEdit = { editingAch = ach; editTitle = ach.title; editDesc = ach.description; editTarget = ach.targetCount.toString(); editReward = ach.reward.toString(); editBranch = ach.branch },
@@ -467,7 +465,7 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     OutlinedTextField(value = newTitle, onValueChange = { newTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
                     OutlinedTextField(value = newDesc, onValueChange = { newDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
                     OutlinedTextField(value = newTarget, onValueChange = { newTarget = it }, label = { Text(stringResource(R.string.achadm_field_target_short), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
-                    OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    OutlinedTextField(value = newReward, onValueChange = { newReward = it }, label = { Text(currencyString(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         AchievementBranch.entries.forEach { b ->
                             val label = when (b) { AchievementBranch.DIARY -> stringResource(R.string.achadm_b_diary); AchievementBranch.WARDROBE -> stringResource(R.string.achadm_b_wardrobe); AchievementBranch.ROOM -> stringResource(R.string.achadm_b_room) }
@@ -506,10 +504,10 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     modifier = Modifier.imePadding(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedTextField(value = editTitle, onValueChange = { editTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
-                    OutlinedTextField(value = editDesc, onValueChange = { editDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
+                    OutlinedTextField(value = systemTitle(editTitle), onValueChange = { editTitle = it }, label = { Text(stringResource(R.string.achadm_field_name), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
+                    OutlinedTextField(value = systemDesc(editDesc), onValueChange = { editDesc = it }, label = { Text(stringResource(R.string.achadm_field_desc), color = TextPrimary) }, colors = editorFieldColors())
                     OutlinedTextField(value = editTarget, onValueChange = { editTarget = it }, label = { Text(stringResource(R.string.achadm_field_target_short), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
-                    OutlinedTextField(value = editReward, onValueChange = { editReward = it }, label = { Text(stringResource(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
+                    OutlinedTextField(value = editReward, onValueChange = { editReward = it }, label = { Text(currencyString(R.string.achadm_field_reward), color = TextPrimary) }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), colors = editorFieldColors())
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         AchievementBranch.entries.forEach { b ->
                             val label = when (b) { AchievementBranch.DIARY -> stringResource(R.string.achadm_b_diary); AchievementBranch.WARDROBE -> stringResource(R.string.achadm_b_wardrobe); AchievementBranch.ROOM -> stringResource(R.string.achadm_b_room) }
@@ -540,7 +538,7 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         AlertDialog(
             onDismissRequest = { deletingAch = null },
             containerColor = SpaceBgStart,
-            title = { AppLocaleContent { Text(stringResource(R.string.achadm_delete_confirm, ach.title), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
+            title = { AppLocaleContent { Text(stringResource(R.string.achadm_delete_confirm, systemTitle(ach.title)), color = PenaltyRed, fontWeight = FontWeight.Bold) } },
             confirmButton = {
                 AppLocaleContent {
                 Button(colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed), onClick = { viewModel.deleteAchievement(child.id, ach.id); deletingAch = null }) {

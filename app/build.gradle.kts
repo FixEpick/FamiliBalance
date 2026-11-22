@@ -29,7 +29,11 @@ val githubRepo = githubRepoProps.getProperty("GITHUB_REPO")
 
 android {
     namespace = "com.example.familibalance"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 2
+        }
+    }
 
     // РљР»СЋС‡Рё Supabase Р±РµСЂСѓС‚СЃСЏ РёР· local.properties / gradle.properties,
     // С‡С‚РѕР±С‹ РЅРµ С…СЂР°РЅРёС‚СЊ РёС… РІ РёСЃС…РѕРґРЅРѕРј РєРѕРґРµ. Fallback вЂ” РїСѓСЃС‚С‹Рµ СЃС‚СЂРѕРєРё.
@@ -62,8 +66,8 @@ android {
         applicationId = "com.example.familibalance"
         minSdk = 24
         targetSdk = 37
-        versionCode = 25
-        versionName = "2.1.1"
+        versionCode = 26
+        versionName = "2.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

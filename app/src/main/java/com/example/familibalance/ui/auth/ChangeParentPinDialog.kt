@@ -2,8 +2,6 @@ package com.example.familibalance.ui.auth
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,10 +37,8 @@ import com.example.familibalance.R
 import com.example.familibalance.data.ParentPinManager
 import kotlinx.coroutines.launch
 
-private val CyberTextPrimary = Color(0xFFE2E8F0)
 private val CyberTextSecondary = Color(0xFF94A3B8)
 private val CyberPanelBg = Color(0xFF0F172A).copy(alpha = 0.95f)
-private val CyberSlate = Color(0xFF1E293B)
 private val CyberLime = Color(0xFFA3E635)
 private val CyberRed = Color(0xFFEF4444)
 
@@ -60,7 +57,7 @@ fun ChangeParentPinDialog(
     val wrongCurrentPinMsg = stringResource(R.string.pin_wrong_current)
     // PIN ещё не задан — пропускаем шаг проверки текущего и сразу создаём новый.
     val pinExists = remember { ParentPinManager.getPin(context) != null }
-    var step by remember { mutableStateOf(if (pinExists) 1 else 2) } // 1 — текущий, 2 — новый
+    var step by remember { mutableIntStateOf(if (pinExists) 1 else 2) } // 1 — текущий, 2 — новый
     var pin by remember { mutableStateOf("") }
     var hasError by remember { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf<String?>(null) }

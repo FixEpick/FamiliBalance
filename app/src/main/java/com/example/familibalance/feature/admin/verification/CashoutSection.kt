@@ -4,14 +4,18 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
 import com.example.familibalance.data.model.CashoutRequest
+import com.example.familibalance.data.model.CashoutStatus
+import com.example.familibalance.util.*
 import com.example.familibalance.ui.theme.*
 
 /** Секция заявок на вывод наличных: approve/reject по каждой заявке. */
@@ -20,8 +24,16 @@ fun CashoutSection(
     requests: List<CashoutRequest>,
     actionEnabled: Boolean,
     onApprove: (String) -> Unit,
-    onReject: (String) -> Unit
+    onReject: (String, String) -> Unit
 ) {
+    // Показываем только ожидающие заявки: отклонённые остаются
+    // у ребёнка до нажатия «Понятно» и родителю не нужны.
+    val pendingRequests = requests.filter { it.status == CashoutStatus.PENDING }
+    if (pendingRequests.isEmpty()) return
+
+    var rejectTarget by remember { mutableStateOf<CashoutRequest?>(null) }
+    var rejectReasonText by remember { mutableStateOf("") }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -36,7 +48,7 @@ fun CashoutSection(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(12.dp))
-            requests.forEach { request ->
+            pendingRequests.forEach { request ->
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -44,14 +56,14 @@ fun CashoutSection(
                 ) {
                     // Текст заявки сверху
                     Text(
-                        text = stringResource(R.string.admin_cashout_amount, request.amount),
+                        text = currencyString(R.string.admin_cashout_amount, request.amount),
                         color = TextPrimary,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = stringResource(R.string.admin_cashout_comment, request.comment),
+                        text = stringResource(R.string.admin_cashout_comment, cashoutCommentDisplay(request.comment)),
                         color = TextSecondary,
                         fontSize = 12.sp
                     )
@@ -73,7 +85,10 @@ fun CashoutSection(
                             Text(stringResource(R.string.admin_cashout_approved), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                         Button(
-                            onClick = { onReject(request.id) },
+                            onClick = {
+                                rejectReasonText = ""
+                                rejectTarget = request
+                            },
                             enabled = actionEnabled,
                             colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),
                             shape = RoundedCornerShape(12.dp),
@@ -87,5 +102,58 @@ fun CashoutSection(
                 }
             }
         }
+    }
+
+    // Диалог причины отклонения — по аналогии с отклонением фотоотчёта.
+    rejectTarget?.let { target ->
+        val defaultRejectReason = stringResource(R.string.admin_reject_default_reason)
+        AlertDialog(
+            onDismissRequest = { rejectTarget = null },
+            containerColor = SpaceBgStart,
+            title = {
+                AppLocaleContent {
+                    Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary)
+                }
+            },
+            text = {
+                AppLocaleContent {
+                    OutlinedTextField(
+                        value = rejectReasonText,
+                        onValueChange = { rejectReasonText = it },
+                        label = {
+                            Text(
+                                stringResource(R.string.admin_reject_reason_hint),
+                                color = TextSecondary
+                            )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedContainerColor = GlassBackground,
+                            unfocusedContainerColor = GlassBackground,
+                            focusedBorderColor = AccentColor,
+                            unfocusedBorderColor = GlassStroke
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val reason = if (rejectReasonText.isNotBlank()) rejectReasonText else defaultRejectReason
+                        onReject(target.id, reason)
+                        rejectTarget = null
+                    },
+                    enabled = actionEnabled
+                ) {
+                    AppLocaleContent { Text(stringResource(R.string.admin_reject)) }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { rejectTarget = null }) {
+                    AppLocaleContent { Text(stringResource(R.string.action_cancel)) }
+                }
+            }
+        )
     }
 }

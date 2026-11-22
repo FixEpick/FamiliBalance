@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,35 +16,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.ui.input.pointer.pointerInput
-import coil3.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.foundation.Image
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
-import com.example.familibalance.*
 import com.example.familibalance.data.model.*
-import com.example.familibalance.data.storage.*
 import com.example.familibalance.util.*
 import com.example.familibalance.ui.components.childDisplayName
-
 import com.example.familibalance.viewmodel.actions.*
 
 
@@ -80,7 +62,7 @@ fun VerificationAdminContent(
         child.diaryStatus == QuestStatus.PENDING ||
         child.bonusQuests.any { it.status == QuestStatus.PENDING } ||
         child.customQuests.any { it.status == QuestStatus.PENDING } ||
-        child.cashoutRequests.isNotEmpty() ||
+        child.cashoutRequests.any { it.status == CashoutStatus.PENDING } ||
         child.honestAdmissionStatus == QuestStatus.PENDING
 
     LazyColumn(
@@ -128,7 +110,7 @@ fun VerificationAdminContent(
             item {
                 QuestVerificationCard(
                     title = stringResource(R.string.admin_quest_closet),
-                    reward = "+50 ₽",
+                    reward = "+${child.wardrobeReward} ${rewardCurrencySymbol()}",
                     description = child.closetComment.ifBlank { stringResource(R.string.admin_no_comment) },
                     photoUrl = child.closetPhotoUrl,
                     actionEnabled = !isProcessingAction,
@@ -146,14 +128,16 @@ fun VerificationAdminContent(
             }
         }
 
-        // Блок заявок на вывод
-        if (child.cashoutRequests.isNotEmpty()) {
+        // Блок заявок на вывод (только ожидающие — отклонённые висят у ребёнка)
+        if (child.cashoutRequests.any { it.status == CashoutStatus.PENDING }) {
             item {
                 CashoutSection(
                     requests = child.cashoutRequests,
                     actionEnabled = !isProcessingAction,
                     onApprove = { viewModel.approveCashoutRequest(child.id, it) },
-                    onReject = { viewModel.rejectCashoutRequest(child.id, it) }
+                    onReject = { requestId, reason ->
+                        viewModel.rejectCashoutRequest(child.id, requestId, reason)
+                    }
                 )
             }
         }
@@ -162,7 +146,7 @@ fun VerificationAdminContent(
             item {
                 QuestVerificationCard(
                     title = stringResource(R.string.admin_quest_room),
-                    reward = "+50 ₽",
+                    reward = "+${child.roomReward} ${rewardCurrencySymbol()}",
                     description = child.roomComment.ifBlank { stringResource(R.string.admin_no_comment) },
                     photoUrl = child.roomPhotoUrl,
                     actionEnabled = !isProcessingAction,
@@ -210,7 +194,7 @@ fun VerificationAdminContent(
         items(child.bonusQuests.filter { it.status == QuestStatus.PENDING }) { bQuest ->
             QuestVerificationCard(
                 title = stringResource(R.string.admin_bonus_prefix, bQuest.title),
-                reward = "+${bQuest.reward} ₽",
+                reward = "+${bQuest.reward} ${rewardCurrencySymbol()}",
                 description = bQuest.comment.ifBlank { stringResource(R.string.admin_no_comment) },
                 photoUrl = bQuest.photoUrl,
                 actionEnabled = !isProcessingAction,
@@ -230,7 +214,7 @@ fun VerificationAdminContent(
         items(child.customQuests.filter { it.status == QuestStatus.PENDING }, key = { it.id }, contentType = { "custom_quest" }) { cQuest ->
             QuestVerificationCard(
                 title = stringResource(R.string.admin_quest_prefix, cQuest.title),
-                reward = "+${cQuest.reward} ₽",
+                reward = "+${cQuest.reward} ${rewardCurrencySymbol()}",
                 description = cQuest.comment.ifBlank { stringResource(R.string.admin_no_comment) },
                 photoUrl = cQuest.photoUrl,
                 actionEnabled = !isProcessingAction,
@@ -253,7 +237,7 @@ fun VerificationAdminContent(
             child.bonusQuests.none { it.status == QuestStatus.PENDING } &&
             child.customQuests.none { it.status == QuestStatus.PENDING } &&
             child.honestAdmissionStatus != QuestStatus.PENDING &&
-            child.cashoutRequests.isEmpty()) {
+            child.cashoutRequests.none { it.status == CashoutStatus.PENDING }) {
             item {
                 Text(
                     text = stringResource(R.string.admin_no_pending, childDisplayName(child)),
@@ -397,7 +381,7 @@ fun VerificationAdminContent(
                         OutlinedTextField(
                             value = amountInput,
                             onValueChange = { amountInput = it },
-                            placeholder = { Text(stringResource(R.string.admin_amount_hint), color = TextSecondary.copy(alpha = 0.6f)) },
+                            placeholder = { Text(currencyString(R.string.admin_amount_hint), color = TextSecondary.copy(alpha = 0.6f)) },
                             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                                 keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
                             ),
@@ -513,7 +497,7 @@ fun VerificationAdminContent(
                                         amountInput = amount.toString()
                                         descInput = reason
                                     },
-                                    label = { Text(stringResource(labelRes), fontSize = 12.sp) },
+                                    label = { Text(currencyString(labelRes), fontSize = 12.sp) },
                                     colors = FilterChipDefaults.filterChipColors(
                                         containerColor = PenaltyRed.copy(alpha = 0.12f),
                                         labelColor = PenaltyRed
@@ -547,7 +531,7 @@ fun VerificationAdminContent(
                 border = BorderStroke(1.dp, StatusGreen),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusGreen)
             ) {
-                Text(stringResource(R.string.admin_cashout_button, child.balance), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(currencyString(R.string.admin_cashout_button, child.balance), fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

@@ -61,7 +61,7 @@ internal fun MainViewModel.applyFineInternal(childId: String, amount: Int, reaso
             ) + profile.historyItems
         )
     )
-    PushNotifier.balanceUpdated(childId, finalAmount, reason.trim().ifBlank { "Штраф" })
+    PushNotifier.balanceUpdated(childId, finalAmount, reason.trim().ifBlank { "Штраф" }, RewardCurrency.symbolOf(profile.rewardCurrency))
 }
 
 /** Админ списывает сумму с баланса (не ниже 0). Обычное списание — стрик не трогает. */
