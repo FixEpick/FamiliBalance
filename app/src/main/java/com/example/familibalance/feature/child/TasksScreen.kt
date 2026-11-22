@@ -124,7 +124,7 @@ fun TasksScreen(
     val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
         confettiTrigger++
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        RewardSoundPlayer.playCoin()
+        CoinSoundPlayer.playCoin()
 
         lateinit var flight: CoinFlightData
         flight = CoinFlightData(

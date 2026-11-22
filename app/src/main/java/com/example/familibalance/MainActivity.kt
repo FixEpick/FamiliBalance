@@ -26,7 +26,6 @@ import com.example.familibalance.ui.components.AppSplashScreen
 import com.example.familibalance.ui.components.ExitConfirmDialog
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.ui.update.UpdateDialog
-import com.example.familibalance.util.RewardSoundPlayer
 import com.example.familibalance.util.finishApp
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.UpdateViewModel
@@ -72,7 +71,6 @@ class MainActivity : FragmentActivity() {
         updateViewModel = ViewModelProvider(this)[UpdateViewModel::class.java]
         authViewModel = ViewModelProvider(this)[AuthViewModel::class.java]
         AppLocaleState.init(this)
-        RewardSoundPlayer.init(this)
         intents.handle(intent)
 
         // Debug-сборка: одноразовый Toast при каждом запуске,

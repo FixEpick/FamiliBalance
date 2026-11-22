@@ -187,7 +187,7 @@ fun MainChildScreen(
     val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
         confettiTrigger++
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        RewardSoundPlayer.playCoin()
+        CoinSoundPlayer.playCoin()
 
         lateinit var flight: CoinFlightData
         flight = CoinFlightData(
@@ -395,7 +395,7 @@ fun MainChildScreen(
                     streakDays = child.streakDays,
                     lastStreakDate = child.lastStreakDate,
                     onCheckIn = {
-                        RewardSoundPlayer.playCoin()
+                        CoinSoundPlayer.playCoin()
                         viewModel.checkInStreak(child.id)
                     }
                 )
