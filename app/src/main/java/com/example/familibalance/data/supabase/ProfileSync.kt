@@ -63,6 +63,9 @@ internal object ProfileSync {
     /** Загружает строки family_profiles и применяет видимые текущему пользователю. */
     suspend fun loadProfilesFromCloud(context: Context) {
         val supabase = SupabaseManager.client ?: return
+        // Ждём готовности сессии (в т.ч. авто-refresh протухшего токена
+        // после долгого простоя) — иначе SELECT уходит с expired JWT.
+        SupabaseManager.ensureSession()
         try {
             val rows = supabase.from("family_profiles")
                 .select(columns = Columns.list("user_id", "state_json", "parent_user_id", "parent_email", "auth_user_id", "status", "updated_at"))
@@ -133,6 +136,10 @@ internal object ProfileSync {
         }
 
         SupabaseManager.scope.launch(SupabaseManager.exceptionHandler) {
+            // Ждём готовности сессии перед любой сетевой работой (upload фото,
+            // select/upsert): при долгом простое access token протухает, и без
+            // этого первый запрос уходил бы с expired JWT до авто-refresh.
+            SupabaseManager.ensureSession()
             try {
                 var hasUploadedNewPhoto = false
                 // true, если хотя бы одно локальное фото не удалось загрузить

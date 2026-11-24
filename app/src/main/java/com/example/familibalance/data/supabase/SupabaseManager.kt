@@ -99,6 +99,17 @@ object SupabaseManager {
         if (!hasUser) {
             runCatching { supabase.auth.signInAnonymously() }
                 .onFailure { Log.w("SupabaseManager", "signInAnonymously failed: ${it.message}") }
+            return
+        }
+        // После долгого простоя access token протухает: первый запрос уходит
+        // с expired token, и SDK тратит round-trip на авто-refresh. Обновляем
+        // заранее, если токен истёк или истекает в ближайшие 2 минуты.
+        val expiresAtSec = runCatching { supabase.auth.currentSessionOrNull()?.expiresAt }
+            .getOrNull()
+        val nowSec = System.currentTimeMillis() / 1000
+        if (expiresAtSec != null && expiresAtSec - nowSec < 120L) {
+            runCatching { supabase.auth.refreshCurrentSession() }
+                .onFailure { Log.w("SupabaseManager", "refreshCurrentSession failed: ${it.message}") }
         }
     }
 

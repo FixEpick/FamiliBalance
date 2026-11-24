@@ -7,6 +7,9 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -71,6 +74,15 @@ class MainViewModelTest {
         val app = RuntimeEnvironment.getApplication()
         repository = FakeFamilyRepository()
         viewModel = MainViewModel(app, repository)
+        // init() запускает checkResets()/resetDailyQuestsIfNeeded() на
+        // Dispatchers.IO — без ожидания они могут выполниться уже ПОСЛЕ
+        // заполнения repository.children в тесте и сбросить фикстуру
+        // (флаки: diary READY_TO_CLAIM + пустая diaryResetDate → AVAILABLE).
+        runBlocking {
+            withTimeoutOrNull(5_000) {
+                viewModel.isInitializing.first { !it }
+            }
+        }
     }
 
     @Test

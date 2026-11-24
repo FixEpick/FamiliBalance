@@ -95,20 +95,26 @@ fun CameraCaptureScreen(
     // lensFacing эффект пересоздаётся (unbindAll → bind), при уходе
     // с экрана onDispose отвязывает камеру — PreviewView не утекает.
     DisposableEffect(lensFacing) {
+        var preview: Preview? = null
         val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
         cameraProviderFuture.addListener({
             val cameraProvider = runCatching { cameraProviderFuture.get() }.getOrNull()
                 ?: return@addListener
             cameraProvider.unbindAll()
-            val preview = Preview.Builder().build().also {
+            val newPreview = Preview.Builder().build().also {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
+            preview = newPreview
             val selector = CameraSelector.Builder()
                 .requireLensFacing(lensFacing)
                 .build()
-            cameraProvider.bindToLifecycle(lifecycleOwner, selector, preview, imageCapture)
+            cameraProvider.bindToLifecycle(lifecycleOwner, selector, newPreview, imageCapture)
         }, mainExecutor)
         onDispose {
+            // Отвязываем surface ДО unbindAll: иначе CameraX продолжает
+            // слать кадры в уже уничтоженный SurfaceView — спам
+            // 'BufferQueue has been abandoned' в системном логе.
+            preview?.setSurfaceProvider(null)
             cameraProviderFuture.addListener({
                 runCatching { cameraProviderFuture.get().unbindAll() }
             }, mainExecutor)
