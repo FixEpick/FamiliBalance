@@ -36,6 +36,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.buildJsonObject
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
 object SupabaseManager {
     internal val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
@@ -104,10 +106,9 @@ object SupabaseManager {
         // После долгого простоя access token протухает: первый запрос уходит
         // с expired token, и SDK тратит round-trip на авто-refresh. Обновляем
         // заранее, если токен истёк или истекает в ближайшие 2 минуты.
-        val expiresAtSec = runCatching { supabase.auth.currentSessionOrNull()?.expiresAt }
+        val expiresAt = runCatching { supabase.auth.currentSessionOrNull()?.expiresAt }
             .getOrNull()
-        val nowSec = System.currentTimeMillis() / 1000
-        if (expiresAtSec != null && expiresAtSec - nowSec < 120L) {
+        if (expiresAt != null && expiresAt - Clock.System.now() < 120.seconds) {
             runCatching { supabase.auth.refreshCurrentSession() }
                 .onFailure { Log.w("SupabaseManager", "refreshCurrentSession failed: ${it.message}") }
         }
