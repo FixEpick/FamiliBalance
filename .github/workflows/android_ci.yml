@@ -11,14 +11,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
@@ -38,28 +40,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
     - name: assembleRelease must fail without key.properties
       id: release_guard
-      continue-on-error: true
       run: |
-        set -o pipefail
-        ./gradlew assembleRelease 2>&1 | tee release_build.log
+        set +e
+        ./gradlew assembleRelease > release_build.log 2>&1
+        code=$?
+        set -e
+        echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+        cat release_build.log
 
     - name: Verify guard failed with expected error
       run: |
-        if [ "${{ steps.release_guard.outcome }}" != "failure" ]; then
+        if [ "${{ steps.release_guard.outputs.exit_code }}" = "0" ]; then
           echo "FAIL: assembleRelease прошёл успешно — guard key.properties сломан!"
           exit 1
         fi
