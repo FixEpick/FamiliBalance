@@ -7,6 +7,7 @@ import com.example.familibalance.util.*
 import android.content.Context
 import android.content.res.Configuration
 import androidx.core.content.edit
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -65,10 +66,18 @@ fun LocalizedAppContent(content: @Composable () -> Unit) {
     // ActivityResultRegistryOwner и падал с IllegalStateException.
     // Пробрасываем owner явно, чтобы launchers камеры/галереи работали.
     val activityResultRegistryOwner = LocalActivityResultRegistryOwner.current
+    // LocalActivity вычисляется из LocalContext (findOwner разворачивает
+    // ContextWrapper.baseContext вниз). localizedContext построен поверх
+    // ContextImpl — Activity выше по цепочке и недостижима, поэтому
+    // LocalActivity.current внутри контента стал null (activity?.finishApp()
+    // молча не срабатывал). Захватываем Activity до подмены LocalContext
+    // и пробрасываем явно.
+    val activity = LocalActivity.current
     CompositionLocalProvider(
         LocalContext provides localizedContext,
         LocalConfiguration provides localizedContext.resources.configuration,
         LocalAppLocalizedContext provides localizedContext,
+        LocalActivity provides activity,
         content = {
             if (activityResultRegistryOwner != null) {
                 CompositionLocalProvider(

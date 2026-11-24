@@ -15,6 +15,7 @@ import androidx.navigation.toRoute
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.data.push.PushTokenRegistrar
+import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.feature.admin.AdminScreen
 import com.example.familibalance.feature.child.ChildSection
 import com.example.familibalance.ui.auth.PlayerLoginScreen
@@ -186,6 +187,10 @@ fun AppNavGraph(
                 },
                 onLogout = {
                     PushTokenRegistrar.unregister(context)
+                    // Останавливаем Realtime до signOut/clearState: иначе
+                    // фоновая подписка продолжит применять remote update
+                    // и «воскресит» очищенные профили в AppSharedState.
+                    SupabaseManager.stopRealtimeSync()
                     authViewModel.signOut()
                     viewModel.clearState()
                     SecurePrefs.get(context, "app_prefs")
