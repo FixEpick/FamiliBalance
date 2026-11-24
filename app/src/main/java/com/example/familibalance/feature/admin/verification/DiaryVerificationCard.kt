@@ -1,6 +1,13 @@
 package com.example.familibalance.feature.admin.verification
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,6 +16,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -72,10 +80,11 @@ fun DiaryVerificationCard(
     val finalReward = maxOf(0, total)
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassBackground),
-        border = BorderStroke(1.dp, GlassStroke)
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassCard(),
+        shape = GlassCardShape,
+        colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Column(
             modifier = Modifier
@@ -129,12 +138,42 @@ fun DiaryVerificationCard(
                         contentScale = ContentScale.Crop
                     )
                     if (isScanning) {
+                        // Лазерный сканер: полупрозрачная вуаль + светящаяся
+                        // горизонтальная линия, бегущая сверху вниз.
+                        val infiniteTransition = rememberInfiniteTransition(label = "diaryScan")
+                        val scanProgress by infiniteTransition.animateFloat(
+                            initialValue = 0f,
+                            targetValue = 1f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(durationMillis = 1800, easing = LinearEasing),
+                                repeatMode = RepeatMode.Reverse
+                            ),
+                            label = "scanLine"
+                        )
                         Surface(
-                            color = Color.Black.copy(alpha = 0.6f),
+                            color = Color.Black.copy(alpha = 0.35f),
                             modifier = Modifier.fillMaxSize()
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Text(scanStatusText, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                                // Сканирующая линия
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp)
+                                        .align(Alignment.TopStart)
+                                        .offset(y = (180.dp - 24.dp) * scanProgress)
+                                        .height(3.dp)
+                                        .background(
+                                            brush = Brush.verticalGradient(
+                                                colors = listOf(
+                                                    Color.Transparent,
+                                                    AccentColor.copy(alpha = 0.9f),
+                                                    Color.Transparent
+                                                )
+                                            )
+                                        )
+                                )
                             }
                         }
                     }
@@ -214,7 +253,8 @@ fun DiaryVerificationCard(
                     },
                     enabled = actionEnabled,
                     colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(currencyString(R.string.admin_approve_with_reward, finalReward), fontSize = 12.sp, fontWeight = FontWeight.Bold)
@@ -225,7 +265,8 @@ fun DiaryVerificationCard(
                     enabled = actionEnabled,
                     border = BorderStroke(1.dp, PenaltyRed),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(stringResource(R.string.admin_reject), fontSize = 12.sp)
@@ -241,6 +282,8 @@ fun DiaryVerificationCard(
             title = { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) },
             text = {
                 Column {
+                    RejectReasonTemplateChips(onSelect = { rejectReasonText = it })
+                    Spacer(modifier = Modifier.height(8.dp))
                     AppOutlinedField(
                         value = rejectReasonText,
                         onValueChange = { rejectReasonText = it },

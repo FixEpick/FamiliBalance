@@ -5,7 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.DialogProperties
 import com.example.familibalance.AppLocaleContent
-import com.example.familibalance.ui.theme.SpaceBgStart
+import com.example.familibalance.ui.theme.GlassBackground
+import com.example.familibalance.ui.theme.GlassCardShape
+import com.example.familibalance.ui.theme.glassCard
+import androidx.compose.ui.Modifier
 
 /**
  * Единый стиль диалогов приложения: тёмный космический фон
@@ -25,12 +28,14 @@ fun AppDialog(
     text: (@Composable () -> Unit)? = null,
     confirmButton: @Composable () -> Unit = {},
     dismissButton: (@Composable () -> Unit)? = null,
-    containerColor: Color = SpaceBgStart,
+    containerColor: Color = GlassBackground,
     properties: DialogProperties = DialogProperties(usePlatformDefaultWidth = false)
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
         properties = properties,
+        modifier = Modifier.glassCard(),
+        shape = GlassCardShape,
         containerColor = containerColor,
         title = title?.let { slot -> { AppLocaleContent { slot() } } },
         text = text?.let { slot -> { AppLocaleContent { slot() } } },

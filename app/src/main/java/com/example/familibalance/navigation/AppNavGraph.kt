@@ -1,6 +1,7 @@
 package com.example.familibalance.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +22,8 @@ import com.example.familibalance.feature.child.ChildSection
 import com.example.familibalance.ui.auth.PlayerLoginScreen
 import com.example.familibalance.ui.auth.RegisterParentScreen
 import com.example.familibalance.ui.onboarding.OnboardingScreen
+import com.example.familibalance.ui.theme.LocalAppTheme
+import com.example.familibalance.ui.theme.getThemeById
 import com.example.familibalance.util.BenchmarkSession
 import com.example.familibalance.viewmodel.AuthViewModel
 import com.example.familibalance.viewmodel.actions.*
@@ -115,6 +118,11 @@ fun AppNavGraph(
         }
     }
 
+    // Родительские/входные экраны всегда в тёмной COSMIC_BLUE: у них
+    // собственный space_bg-фон и белый текст, светлая тема ребёнка
+    // сломала бы контраст. Детский раздел берёт тему из профиля.
+    val parentTheme = getThemeById("COSMIC_BLUE")
+
     NavHost(
         navController = navController,
         // Стартовый destination выбирается после разрешения сессии:
@@ -132,6 +140,7 @@ fun AppNavGraph(
         }
     ) {
         composable<OnboardingRoute> {
+            CompositionLocalProvider(LocalAppTheme provides parentTheme) {
             OnboardingScreen(
                 onParentClick = {
                     completeOnboarding {
@@ -144,8 +153,10 @@ fun AppNavGraph(
                     }
                 }
             )
+            }
         }
         composable<PlayerLoginRoute> {
+            CompositionLocalProvider(LocalAppTheme provides parentTheme) {
             PlayerLoginScreen(
                 viewModel = viewModel,
                 authViewModel = authViewModel,
@@ -154,9 +165,11 @@ fun AppNavGraph(
                     navigateToRoot(ChildRoute())
                 }
             )
+            }
         }
         composable<RegisterParentRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<RegisterParentRoute>()
+            CompositionLocalProvider(LocalAppTheme provides parentTheme) {
             RegisterParentScreen(
                 viewModel = authViewModel,
                 mainViewModel = viewModel,
@@ -177,8 +190,10 @@ fun AppNavGraph(
                 },
                 onBack = { navController.popBackStack() }
             )
+            }
         }
         composable<AdminRoute> {
+            CompositionLocalProvider(LocalAppTheme provides parentTheme) {
             AdminScreen(
                 viewModel = viewModel,
                 onEnterChildMode = { childId ->
@@ -202,6 +217,7 @@ fun AppNavGraph(
                     navigateToRoot(OnboardingRoute)
                 }
             )
+            }
         }
         composable<ChildRoute> { backStackEntry ->
             val childRoute = backStackEntry.toRoute<ChildRoute>()

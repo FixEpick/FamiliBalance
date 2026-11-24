@@ -2,6 +2,7 @@ package com.example.familibalance
 
 import com.example.familibalance.data.model.*
 import com.example.familibalance.data.repository.FamilyRepository
+import com.example.familibalance.data.storage.AppSharedState
 import com.example.familibalance.viewmodel.actions.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,6 +13,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -279,12 +282,17 @@ class MainViewModelTest {
         assertEquals(QuestStatus.CLAIMED, updated.diaryStatus)
         assertEquals(0, updated.diaryCount5)
         assertEquals(0, updated.diaryCount4)
-        // Только записи по оценкам — без сводной «Награда получена: Итоги недели»
+        // Записи по оценкам + сводная расшифровка формулы — без дубля «Награда получена»
         assertTrue(updated.historyItems.none { it.title.contains("Итоги недели") })
         assertTrue(updated.historyItems.none { it.title.startsWith("Награда получена") })
-        assertEquals(2, updated.historyItems.count { it.category == "Дневник" })
+        assertEquals(3, updated.historyItems.count { it.category == "Дневник" })
         assertTrue(updated.historyItems.any { it.title == "Оценка 5" && it.amount == "+50 ₽" })
         assertTrue(updated.historyItems.any { it.title == "Оценка 4" && it.amount == "+30 ₽" })
+        // Сводная запись хранит формулу расчёта и не влияет на сумму истории
+        val summary = updated.historyItems.firstOrNull { it.type == HistoryType.DIARY_SUMMARY }
+        assertNotNull(summary)
+        assertEquals("5×1 (+50), 4×1 (+30)", summary!!.arg)
+        assertNull(summary.amountValue)
     }
 
     @Test
@@ -378,5 +386,113 @@ class MainViewModelTest {
         assertEquals(QuestStatus.PENDING, updated.honestAdmissionStatus)
         assertEquals(today.toString(), updated.lastHonestAdmissionDate)
         assertEquals("Я разбил вазу", updated.honestAdmissionText)
+    }
+
+    // ---------- Аватары: покупка и авто-открытие ----------
+
+    @Test
+    fun `purchaseAvatar deducts price unlocks and selects avatar`() {
+        repository.children["user_1"] = createChild().copy(balance = 100)
+
+        val ok = viewModel.purchaseAvatar("user_1", "ROBOT")
+
+        assertTrue(ok)
+        val updated = repository.children["user_1"]!!
+        assertEquals(0, updated.balance)
+        assertTrue("ROBOT" in updated.unlockedAvatars)
+        assertEquals("ROBOT", updated.avatar)
+        val entry = updated.historyItems.first()
+        assertEquals(HistoryType.AVATAR_PURCHASE, entry.type)
+        assertEquals(-100, entry.amountValue)
+        assertEquals("ROBOT", entry.arg)
+    }
+
+    @Test
+    fun `purchaseAvatar fails without enough balance`() {
+        repository.children["user_1"] = createChild().copy(balance = 50)
+
+        val ok = viewModel.purchaseAvatar("user_1", "ROBOT")
+
+        assertFalse(ok)
+        val updated = repository.children["user_1"]!!
+        assertEquals(50, updated.balance)
+        assertFalse("ROBOT" in updated.unlockedAvatars)
+        assertTrue(updated.historyItems.isEmpty())
+    }
+
+    @Test
+    fun `purchaseAvatar on already unlocked avatar only selects it`() {
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            unlockedAvatars = listOf("ROBOT")
+        )
+
+        val ok = viewModel.purchaseAvatar("user_1", "ROBOT")
+
+        assertTrue(ok)
+        val updated = repository.children["user_1"]!!
+        assertEquals(100, updated.balance) // баланс не тронут
+        assertEquals("ROBOT", updated.avatar)
+        assertTrue(updated.historyItems.isEmpty())
+    }
+
+    @Test
+    fun `purchaseAvatar rejects free and unknown avatars`() {
+        repository.children["user_1"] = createChild().copy(balance = 100)
+
+        assertFalse(viewModel.purchaseAvatar("user_1", "CAT")) // Free — не покупается
+        assertFalse(viewModel.purchaseAvatar("user_1", "NOPE")) // неизвестный id
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(100, updated.balance)
+        assertTrue(updated.historyItems.isEmpty())
+    }
+
+    @Test
+    fun `updateAvatar sets avatar string without touching balance`() {
+        repository.children["user_1"] = createChild().copy(balance = 100)
+
+        viewModel.updateAvatar("user_1", "PANDA")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals("PANDA", updated.avatar)
+        assertEquals(100, updated.balance)
+    }
+
+    @Test
+    fun `syncAchievementThemesOnLoad unlocks achievement-bound avatars`() {
+        val claimed = AchievementConfig(
+            title = "Победитель Монстров",
+            description = "",
+            targetCount = 5,
+            reward = 30,
+            branch = AchievementBranch.WARDROBE,
+            isClaimed = true
+        )
+        // syncAchievementThemesOnLoad мутирует AppSharedState.children,
+        // а не repository — заполняем оба, чтобы не зависеть от порядка тестов.
+        val child = createChild().copy(achievements = listOf(claimed))
+        repository.children["user_1"] = child
+        AppSharedState.children["user_1"] = child
+        try {
+            viewModel.syncAchievementThemesOnLoad()
+
+            val updated = AppSharedState.children["user_1"]!!
+            assertTrue("ASTRONAUT" in updated.unlockedAvatars)
+            // Бесплатные аватары не должны пропасть
+            assertTrue("CAT" in updated.unlockedAvatars)
+            assertTrue("PANDA" in updated.unlockedAvatars)
+        } finally {
+            AppSharedState.children.remove("user_1")
+        }
+    }
+
+    @Test
+    fun `new child profile has four free avatars unlocked by default`() {
+        val child = createChild()
+        assertEquals(
+            setOf("CAT", "PANDA", "ALIEN", "UNICORN"),
+            child.unlockedAvatars.toSet()
+        )
     }
 }

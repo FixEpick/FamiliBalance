@@ -18,6 +18,7 @@ import com.example.familibalance.data.repository.FamilyRepository
 import com.example.familibalance.data.repository.FamilyRepositoryImpl
 import com.example.familibalance.util.ScanDiaryUseCase
 import com.example.familibalance.viewmodel.actions.resetDailyQuestsIfNeeded
+import com.example.familibalance.viewmodel.actions.syncAchievementThemesOnLoad
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -184,6 +185,8 @@ class MainViewModel(
                 AppStateStorage.saveLocalOnly(getApplication())
             }
             checkResets()
+            // Достижения, заявленные ранее, дооткрывают привязанные темы.
+            syncAchievementThemesOnLoad()
             emitFamilyState()
 
             // Автовход ребёнка: локальные флаги в app_prefs + профиль должен

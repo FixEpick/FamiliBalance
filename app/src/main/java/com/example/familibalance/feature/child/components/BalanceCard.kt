@@ -1,7 +1,7 @@
 package com.example.familibalance.feature.child.components
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,9 +10,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -24,129 +30,186 @@ import com.example.familibalance.util.*
 import com.example.familibalance.ui.components.AppDialog
 import com.example.familibalance.ui.theme.*
 
-/** Карточка баланса: аватар, сумма, бейдж банка. onBadgePositioned — для CoinFlightOverlay.
- *  onAvatarClick != null — аватар кликабелен (выход из аккаунта ребёнка). */
+/**
+ * Геройская карточка баланса: насыщенный тематический градиент,
+ * крупный полупрозрачный арт-символ темы справа и контрастная
+ * кнопка «Вывести наличные». onBadgePositioned — для CoinFlightOverlay.
+ * onAvatarClick != null — аватар кликабелен (выход из аккаунта ребёнка).
+ */
 @Composable
 fun BalanceCard(
     avatar: String,
     animatedBalance: Int,
     onBadgePositioned: (Offset) -> Unit,
-    onAvatarClick: (() -> Unit)? = null
+    onAvatarClick: (() -> Unit)? = null,
+    onCashOutClick: (() -> Unit)? = null,
+    cashoutEnabled: Boolean = true
 ) {
+    val theme = LocalAppTheme.current
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val contentColor = heroContentColor()
+    val heroShape = RoundedCornerShape(24.dp)
+    val heroBrush = Brush.linearGradient(
+        colors = listOf(theme.accent, theme.backgroundGradientEnd),
+        start = Offset.Zero,
+        end = Offset.Infinite
+    )
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, GlassStroke, RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassBackground)
+        modifier = Modifier.fillMaxWidth(),
+        shape = heroShape,
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
-                .onGloballyPositioned { coordinates ->
-                    val pos = coordinates.positionInRoot()
-                    onBadgePositioned(Offset(pos.x + coordinates.size.width - 80f, pos.y + coordinates.size.height / 2f))
-                },
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .clip(heroShape)
+                .background(heroBrush)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                Surface(
-                    shape = CircleShape,
-                    color = LocalAppPalette.current.primaryNeon.copy(alpha = 0.2f),
-                    border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clickable(enabled = onAvatarClick != null) { onAvatarClick?.invoke() }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(avatar, fontSize = 24.sp)
-                    }
-                }
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
-                    Text(stringResource(R.string.child_balance), color = TextSecondary, fontSize = 12.sp)
-                    Text(
-                        text = "$animatedBalance ${rewardCurrencySymbol()}",
-                        color = TextPrimary,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        softWrap = false
+            // Крупный тематический арт-символ справа, уходит за край карточки.
+            ThemeArtIcon(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .size(170.dp)
+                    .offset(x = 46.dp),
+                alpha = 0.5f
+            )
+            // Мягкий световой блик сверху-слева.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(Color.White.copy(alpha = 0.22f), Color.Transparent),
+                            center = Offset(0f, 0f),
+                            radius = 500f
+                        )
                     )
-                }
-            }
+            )
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Surface(
-                color = GlassBackground,
-                border = BorderStroke(1.dp, GlassStroke),
-                shape = RoundedCornerShape(12.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+                    .onGloballyPositioned { coordinates ->
+                        val pos = coordinates.positionInRoot()
+                        onBadgePositioned(Offset(pos.x + coordinates.size.width - 80f, pos.y + coordinates.size.height / 2f))
+                    }
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("🪙", fontSize = 16.sp)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = stringResource(R.string.child_bank_name),
-                        color = LocalAppPalette.current.primaryNeon,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        softWrap = false
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = contentColor.copy(alpha = 0.22f),
+                            border = BorderStroke(1.dp, contentColor.copy(alpha = 0.65f)),
+                            modifier = Modifier
+                                .size(52.dp)
+                                .clickable(enabled = onAvatarClick != null) { onAvatarClick?.invoke() }
+                        ) {
+                            CloudAvatar(avatarId = avatar, size = 44.dp)
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                stringResource(R.string.child_balance),
+                                color = contentColor.copy(alpha = 0.8f),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            AnimatedAmountText(
+                                text = "$animatedBalance ${rewardCurrencySymbol()}",
+                                color = contentColor,
+                                fontSize = 34.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Surface(
+                        color = contentColor.copy(alpha = 0.18f),
+                        border = BorderStroke(1.dp, contentColor.copy(alpha = 0.45f)),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CloudStyleIcon(type = CloudIconType.BANK, size = 18.dp)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = stringResource(R.string.child_bank_name),
+                                color = contentColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
+                    }
+                }
+
+                if (onCashOutClick != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            FeedbackManager.playClick(context, haptic)
+                            onCashOutClick()
+                        },
+                        enabled = cashoutEnabled,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .shadow(
+                                elevation = 8.dp,
+                                shape = RoundedCornerShape(18.dp),
+                                spotColor = theme.accent.copy(alpha = 0.5f)
+                            ),
+                        shape = RoundedCornerShape(18.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = if (theme.isDark) theme.background else theme.primaryText,
+                            disabledContainerColor = Color.White.copy(alpha = 0.6f),
+                            disabledContentColor = (if (theme.isDark) theme.background else theme.primaryText).copy(alpha = 0.6f)
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(R.string.child_cashout_btn),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    }
                 }
             }
         }
     }
 }
 
-/** Кнопка «Вывести» + список активных заявок на вывод под балансом. */
+/** Список активных заявок на вывод под балансом. */
 @Composable
 fun CashoutSection(
     cashoutRequests: List<CashoutRequest>,
-    onCashOutClick: () -> Unit,
     onDismissRejected: (String) -> Unit = {}
 ) {
     var reasonDialogRequest by remember { mutableStateOf<CashoutRequest?>(null) }
-
-    // Активная заявка (ждёт подтверждения или отклонена, но «Понятно» не нажато)
-    // блокирует кнопку — ребёнок не должен создавать дубликаты.
-    val hasActiveRequest = cashoutRequests.any {
-        it.status == CashoutStatus.PENDING || it.status == CashoutStatus.REJECTED
-    }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        OutlinedButton(
-            onClick = onCashOutClick,
-            enabled = !hasActiveRequest,
-            border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = LocalAppPalette.current.primaryNeon,
-                disabledContentColor = TextSecondary
-            ),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Text(
-                text = stringResource(R.string.child_cashout_btn),
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
-        }
-
         Spacer(modifier = Modifier.height(8.dp))
 
         if (cashoutRequests.isEmpty()) {

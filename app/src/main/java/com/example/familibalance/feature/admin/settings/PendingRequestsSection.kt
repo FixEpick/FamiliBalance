@@ -25,11 +25,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
+import com.example.familibalance.ui.theme.AccentButtonShape
 import com.example.familibalance.ui.theme.AccentColor
 import com.example.familibalance.ui.theme.GlassBackground
+import com.example.familibalance.ui.theme.IconBadge
 import com.example.familibalance.ui.theme.StatusYellow
 import com.example.familibalance.ui.theme.TextPrimary
 import com.example.familibalance.ui.theme.TextSecondary
+import com.example.familibalance.ui.theme.bounceClick
 import com.example.familibalance.viewmodel.PendingRequestUi
 
 /** Секция «Запросы на добавление»: заголовок, пустое состояние и список pending-запросов. */
@@ -39,12 +42,16 @@ fun LazyListScope.pendingRequestsSection(
 ) {
     item {
         Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = stringResource(R.string.admin_set_requests_title),
-            color = TextPrimary,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconBadge(emoji = "📩", size = 30.dp, emojiSize = 15.dp)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.admin_set_requests_title),
+                color = TextPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
     }
     if (requests.isEmpty()) {
         item {
@@ -98,7 +105,8 @@ private fun PendingRequestRow(
             Button(
                 onClick = { onApprove(row.id) },
                 colors = ButtonDefaults.buttonColors(containerColor = AccentColor),
-                shape = RoundedCornerShape(10.dp)
+                shape = AccentButtonShape,
+                modifier = Modifier.bounceClick()
             ) {
                 Text(stringResource(R.string.admin_set_approve), color = Color.Black, fontWeight = FontWeight.Bold)
             }

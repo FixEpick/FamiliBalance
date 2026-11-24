@@ -1,12 +1,15 @@
 package com.example.familibalance.feature.admin.verification
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,6 +30,45 @@ import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import com.example.familibalance.AppLocaleContent
 import com.example.familibalance.R
+import com.example.familibalance.ui.theme.AccentColor
+import com.example.familibalance.ui.theme.TextSecondary
+import com.example.familibalance.ui.theme.bounceClick
+
+/**
+ * Ряд кликабельных чипов-шаблонов причин отклонения.
+ * Нажатие подставляет фразу в поле причины (onSelect).
+ */
+@Composable
+fun RejectReasonTemplateChips(onSelect: (String) -> Unit) {
+    val templates = listOf(
+        stringResource(R.string.admin_reject_tpl_retake),
+        stringResource(R.string.admin_reject_tpl_finish),
+        stringResource(R.string.admin_reject_tpl_partial)
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        templates.forEach { template ->
+            Surface(
+                color = AccentColor.copy(alpha = 0.12f),
+                border = BorderStroke(1.dp, AccentColor.copy(alpha = 0.5f)),
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .bounceClick()
+                    .clickable { onSelect(template) }
+            ) {
+                Text(
+                    text = template,
+                    color = TextSecondary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                )
+            }
+        }
+    }
+}
 
 /** Полноэкранный просмотр фото с pinch-zoom и двойным тапом для сброса. */
 @Composable

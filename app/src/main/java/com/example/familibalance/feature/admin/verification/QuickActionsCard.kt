@@ -35,8 +35,8 @@ fun QuickActionsCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, GlassStroke, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
+            .glassCard(),
+        shape = GlassCardShape,
         colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -156,7 +156,9 @@ fun QuickActionsCard(
                         disabledContentColor = TextSecondary
                     ),
                     shape = RoundedCornerShape(50),
-                    modifier = Modifier.height(56.dp)
+                    modifier = Modifier
+                        .height(56.dp)
+                        .bounceClick()
                 ) {
                     Text(
                         stringResource(R.string.admin_apply),

@@ -9,6 +9,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -21,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -36,6 +38,8 @@ import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.feature.child.components.*
 import com.example.familibalance.ui.components.ConfettiOverlay
+import com.example.familibalance.ui.components.GameIcon
+import com.example.familibalance.ui.components.GameIconType
 import com.example.familibalance.viewmodel.actions.*
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -173,6 +177,7 @@ fun MainChildScreen(
     )
 
     val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
     var balanceBadgePosition by remember { mutableStateOf(Offset.Zero) }
     var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
     var confettiTrigger by remember { mutableIntStateOf(0) }
@@ -186,8 +191,7 @@ fun MainChildScreen(
 
     val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
         confettiTrigger++
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        CoinSoundPlayer.playCoin()
+        FeedbackManager.playLevelUp(context, haptic)
 
         lateinit var flight: CoinFlightData
         flight = CoinFlightData(
@@ -213,7 +217,11 @@ fun MainChildScreen(
                     avatar = child.avatar,
                     animatedBalance = animatedBalance,
                     onBadgePositioned = { balanceBadgePosition = it },
-                    onAvatarClick = onAvatarClick
+                    onAvatarClick = onAvatarClick,
+                    onCashOutClick = { showCashOutDialog = true },
+                    cashoutEnabled = !child.cashoutRequests.any {
+                        it.status == CashoutStatus.PENDING || it.status == CashoutStatus.REJECTED
+                    }
                 )
             }
 
@@ -221,7 +229,6 @@ fun MainChildScreen(
             item {
                 CashoutSection(
                     cashoutRequests = child.cashoutRequests,
-                    onCashOutClick = { showCashOutDialog = true },
                     onDismissRejected = { requestId ->
                         viewModel.dismissRejectedCashoutRequest(child.id, requestId)
                     }
@@ -271,16 +278,30 @@ fun MainChildScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .border(1.dp, GlassStroke, RoundedCornerShape(20.dp)),
-                        shape = RoundedCornerShape(20.dp),
+                            .glassCard(),
+                        shape = GlassCardShape,
                         colors = CardDefaults.cardColors(containerColor = GlassBackground)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            // Полупрозрачный силуэт ракеты справа на заднем плане —
+                            // пустая карточка выглядит объёмнее и мотивирует.
+                            GameIcon(
+                                icon = GameIconType.Rocket,
+                                tint = AccentColor,
+                                size = 120.dp,
+                                modifier = Modifier
+                                    .align(Alignment.CenterEnd)
+                                    .offset(x = 30.dp)
+                                    .alpha(0.16f)
+                            )
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                            CloudBadge(type = CloudIconType.GOAL, size = 44.dp)
+                            Spacer(modifier = Modifier.height(10.dp))
                             Text(
                                 text = stringResource(R.string.child_dream_choose_title),
                                 color = LocalAppPalette.current.primaryNeon,
@@ -295,16 +316,24 @@ fun MainChildScreen(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(12.dp))
-                            OutlinedButton(
-                                onClick = { showDreamDialog = true },
-                                border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = LocalAppPalette.current.primaryNeon
-                                ),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.fillMaxWidth()
+                            Button(
+                                onClick = {
+                                    FeedbackManager.playClick(context, haptic)
+                                    showDreamDialog = true
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(46.dp)
+                                    .accentButtonChrome()
+                                    .bounceClick(),
+                                shape = AccentButtonShape,
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Transparent,
+                                    contentColor = AccentOnColor
+                                )
                             ) {
                                 Text(stringResource(R.string.child_dream_choose_btn), fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            }
                             }
                         }
                     }
@@ -316,8 +345,8 @@ fun MainChildScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, GlassStroke, RoundedCornerShape(20.dp)),
-                    shape = RoundedCornerShape(20.dp),
+                        .glassCard(),
+                    shape = GlassCardShape,
                     colors = CardDefaults.cardColors(containerColor = GlassBackground)
                 ) {
                     Column(
@@ -325,12 +354,18 @@ fun MainChildScreen(
                             .fillMaxWidth()
                             .padding(20.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.child_screen_time_title),
-                            color = TextPrimary,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            CloudBadge(type = CloudIconType.SCREEN_TIME, size = 40.dp)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = stringResource(R.string.child_screen_time_title),
+                                color = TextPrimary,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(8.dp))
 
@@ -364,16 +399,24 @@ fun MainChildScreen(
 
                         val canBuyTime = (balance > 0) && (boughtMinutesToday < dailyLimit)
 
-                        OutlinedButton(
-                            onClick = { showBuyTimeSheet = true },
+                        Button(
+                            onClick = {
+                                FeedbackManager.playClick(context, haptic)
+                                showBuyTimeSheet = true
+                            },
                             enabled = canBuyTime,
-                            border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = LocalAppPalette.current.primaryNeon,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp)
+                                .accentButtonChrome()
+                                .bounceClick(),
+                            shape = AccentButtonShape,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.Transparent,
+                                contentColor = AccentOnColor,
+                                disabledContainerColor = Color.Transparent,
                                 disabledContentColor = TextSecondary
-                            ),
-                            shape = RoundedCornerShape(12.dp),
-                            modifier = Modifier.fillMaxWidth()
+                            )
                         ) {
                             Text(stringResource(R.string.child_buy_time_btn), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                         }
@@ -395,7 +438,8 @@ fun MainChildScreen(
                     streakDays = child.streakDays,
                     lastStreakDate = child.lastStreakDate,
                     onCheckIn = {
-                        CoinSoundPlayer.playCoin()
+                        FeedbackManager.playCoin(context, haptic)
+                        confettiTrigger++
                         viewModel.checkInStreak(child.id)
                     }
                 )

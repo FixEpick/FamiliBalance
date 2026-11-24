@@ -32,7 +32,7 @@ data class AuthUiState(
     // Регистрация нового игрока
     val nickname: String = "",
     val pin: String = "",
-    val avatar: String = "🦊",
+    val avatar: String = "CAT",
     val selectedInterests: Set<String> = emptySet(),
     val parentEmail: String = "",
     /** Вкладка «Родитель»: false — вход, true — регистрация. */

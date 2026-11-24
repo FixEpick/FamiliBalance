@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,6 +44,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -68,6 +69,8 @@ import com.example.familibalance.ui.components.LanguageSelectorButton
 import com.example.familibalance.ui.components.rememberBoundTextFieldState
 import kotlinx.coroutines.delay
 import com.example.familibalance.ui.components.childDisplayName
+import com.example.familibalance.ui.theme.*
+import com.example.familibalance.util.FeedbackManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.currentStateAsState
 import com.example.familibalance.viewmodel.AuthEvent
@@ -84,10 +87,8 @@ private val CyberSlateBorder = Color(0xFF334155)
 private val CyberLime = Color(0xFFA3E635)
 private val CyberRed = Color(0xFFEF4444)
 
-private val playerAvatars = listOf(
-    "🤖", "🚀", "👾", "👽", "🦊", "🐉",
-    "🦸‍♂️", "🐱", "🐼", "🐺"
-)
+private val freeCloudAvatars = CloudAvatarType.entries
+    .filter { it.unlockRule is ThemeUnlockRule.Free }
 
 @Composable
 private fun cyberFieldColors(hasError: Boolean = false) = OutlinedTextFieldDefaults.colors(
@@ -256,45 +257,53 @@ fun PlayerRegisterForm(
         border = androidx.compose.foundation.BorderStroke(1.dp, CyberSlateBorder)
     ) {
     Column(modifier = Modifier.padding(20.dp)) {
-    // Аватар — сетка 6 колонок
+    // Стартовый аватар — 4 бесплатных Cloud-персонажа в один ряд
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     Text(
-        text = stringResource(R.string.reg_avatar),
+        text = stringResource(R.string.avatar_choose_title),
         color = CyberTextSecondary,
         fontSize = 11.sp,
         fontWeight = FontWeight.Bold,
         letterSpacing = 2.sp
     )
     Spacer(modifier = Modifier.height(10.dp))
-    playerAvatars.chunked(6).forEach { rowAvatars ->
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            rowAvatars.forEach { avatar ->
-                val selected = state.avatar == avatar
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .aspectRatio(1f)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (selected) CyberLime.copy(alpha = 0.15f) else CyberPanelBg)
-                        .border(
-                            1.dp,
-                            if (selected) CyberLime else CyberSlateBorder,
-                            RoundedCornerShape(12.dp)
-                        )
-                        .clickable { viewModel.onAvatarSelected(avatar) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(avatar, fontSize = 22.sp)
-                }
-            }
-            // Пустые ячейки в последнем ряду, чтобы сетка не «плыла»
-            repeat(6 - rowAvatars.size) {
-                Spacer(modifier = Modifier.weight(1f).aspectRatio(1f))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        freeCloudAvatars.forEach { type ->
+            val selected = cloudAvatarTypeOf(state.avatar) == type
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (selected) AccentColor.copy(alpha = 0.15f) else CyberPanelBg)
+                    .border(
+                        width = if (selected) 2.dp else 1.dp,
+                        color = if (selected) AccentColor else CyberSlateBorder,
+                        shape = RoundedCornerShape(14.dp)
+                    )
+                    .glassCard()
+                    .bounceClick()
+                    .clickable {
+                        FeedbackManager.playLaser(context, haptic)
+                        viewModel.onAvatarSelected(type.name)
+                    }
+                    .padding(vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CloudAvatar(avatarId = type.name, size = 44.dp)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(type.titleRes),
+                    color = if (selected) AccentColor else CyberTextSecondary,
+                    fontSize = 10.sp,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                    maxLines = 1
+                )
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
     }
 
     Spacer(modifier = Modifier.height(16.dp))

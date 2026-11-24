@@ -31,6 +31,12 @@ fun MainViewModel.selectChild(childId: String, pushRemote: Boolean = false) {
     emitFamilyState()
 }
 
+/** Смена аватара ребёнка из детского раздела: copy() + updateChildProfile (push в Supabase). */
+fun MainViewModel.updateAvatar(userId: String, avatar: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    updateChildProfile(profile.copy(avatar = avatar))
+}
+
 /** Смена ПИН-кода ребёнка из админки: copy() + updateChildProfile (push в Supabase). */
 fun MainViewModel.updateChildPin(childId: String, newPin: String) {
     val child = familyRepository.getChild(childId) ?: return

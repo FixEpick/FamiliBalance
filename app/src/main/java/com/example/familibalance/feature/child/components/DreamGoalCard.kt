@@ -63,15 +63,10 @@ fun DreamGoalCard(
             .clickable(
                 enabled = isGoalReached && !isProcessingAction,
                 onClick = onClaim
-            ),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = LocalAppPalette.current.primaryNeon.copy(alpha = 0.10f)
-        ),
-        border = BorderStroke(
-            width = if (isGoalReached) 3.dp else 1.5.dp,
-            color = if (isGoalReached) StatusYellow else LocalAppPalette.current.primaryNeon.copy(alpha = 0.6f)
-        )
+            )
+            .glassCard(),
+        shape = GlassCardShape,
+        colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Column(
             modifier = Modifier
@@ -84,13 +79,17 @@ fun DreamGoalCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = title,
-                    color = if (isGoalReached) StatusYellow else LocalAppPalette.current.primaryNeon,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CloudBadge(type = CloudIconType.GOAL, size = 36.dp)
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = title,
+                        color = if (isGoalReached) StatusYellow else LocalAppPalette.current.primaryNeon,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+                }
                 DreamCooldownStar(cooldownDaysLeft = cooldownDaysLeft)
             }
             Text(

@@ -6,6 +6,13 @@ import com.example.familibalance.*
 import com.example.familibalance.data.model.*
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
+import com.example.familibalance.ui.theme.AllAppThemes
+import com.example.familibalance.ui.theme.DefaultUnlockedThemeIds
+import com.example.familibalance.ui.theme.ThemeUnlockRule
+import com.example.familibalance.ui.theme.CloudAvatarType
+import com.example.familibalance.ui.theme.achievementAvatarIds
+import com.example.familibalance.ui.theme.achievementThemeIds
+import com.example.familibalance.ui.theme.cloudAvatarTypeOf
 import com.example.familibalance.util.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -121,6 +128,120 @@ fun MainViewModel.toggleAchievementVisibility(userId: String, achievementId: Str
     }
 }
 
+/**
+ * Возвращает профиль с темами, открытыми заявленными достижениями:
+ * для каждого ThemeUnlockRule.Achievement, чьё достижение isClaimed,
+ * id темы добавляется в unlockedThemes (идемпотентно).
+ */
+internal fun ChildProfileState.withAchievementThemesUnlocked(): ChildProfileState {
+    val claimedTitles = achievements
+        .filter { it.isClaimed }
+        .map { it.title }
+        .toSet()
+    val earned = achievementThemeIds(claimedTitles)
+    val earnedAvatars = achievementAvatarIds(claimedTitles)
+    if (earned.isEmpty() && earnedAvatars.isEmpty()) return this
+    val missing = earned.filterNot { it in unlockedThemes }
+    val missingAvatars = earnedAvatars.filterNot { it in unlockedAvatars }
+    if (missing.isEmpty() && missingAvatars.isEmpty()) return this
+    return copy(
+        unlockedThemes = if (missing.isEmpty()) unlockedThemes else unlockedThemes + missing,
+        unlockedAvatars = if (missingAvatars.isEmpty()) unlockedAvatars else unlockedAvatars + missingAvatars
+    )
+}
+
+/**
+ * Разовая сверка при загрузке/синхронизации: если достижение было
+ * заявлено раньше, связанная тема дооткрывается в unlockedThemes.
+ */
+fun MainViewModel.syncAchievementThemesOnLoad() {
+    var changed = false
+    AppSharedState.children.replaceAll { _, child ->
+        val synced = child.withAchievementThemesUnlocked()
+        if (synced != child) { changed = true; synced } else child
+    }
+    if (changed) {
+        familyRepository.saveAndSync()
+        emitFamilyState()
+    }
+}
+
+/**
+ * Покупка темы за монеты: проверяет баланс, списывает цену,
+ * добавляет themeId в unlockedThemes и сразу выбирает её.
+ * Запись в историю — тип THEME_PURCHASE, arg = themeId.
+ * @return true при успешной покупке/выборе уже купленной темы.
+ */
+fun MainViewModel.purchaseTheme(userId: String, themeId: String): Boolean {
+    val profile = familyRepository.getChild(userId) ?: return false
+    val theme = AllAppThemes.firstOrNull { it.id == themeId } ?: return false
+    val rule = theme.unlockRule as? ThemeUnlockRule.Paid ?: return false
+    if (themeId in profile.unlockedThemes) {
+        // Уже куплена — просто применяем.
+        updateChildProfile(profile.copy(selectedThemeId = themeId))
+        return true
+    }
+    if (profile.balance < rule.price) return false
+    val updated = profile.copy(
+        balance = profile.balance - rule.price,
+        unlockedThemes = profile.unlockedThemes + themeId,
+        selectedThemeId = themeId,
+        historyItems = listOf(
+            HistoryData(
+                title = "Покупка темы: ${theme.title}",
+                time = getCurrentTimeString(),
+                date = getCurrentDateString(),
+                amount = "-${rule.price} ₽",
+                isIncome = false,
+                category = "Темы",
+                type = HistoryType.THEME_PURCHASE,
+                amountValue = -rule.price,
+                arg = themeId
+            )
+        ) + profile.historyItems
+    )
+    updateChildProfile(updated)
+    return true
+}
+
+/**
+ * Покупка аватара за монеты: проверяет баланс, списывает цену,
+ * добавляет avatarId в unlockedAvatars и сразу выбирает его.
+ * Запись в историю — тип AVATAR_PURCHASE, arg = avatarId.
+ * @return true при успешной покупке/выборе уже открытого аватара.
+ */
+fun MainViewModel.purchaseAvatar(userId: String, avatarId: String): Boolean {
+    val profile = familyRepository.getChild(userId) ?: return false
+    val type = CloudAvatarType.entries.firstOrNull { it.name == avatarId } ?: return false
+    val rule = type.unlockRule as? ThemeUnlockRule.Paid ?: return false
+    if (avatarId in profile.unlockedAvatars) {
+        // Уже открыт — просто применяем.
+        updateChildProfile(profile.copy(avatar = avatarId))
+        return true
+    }
+    if (profile.balance < rule.price) return false
+    val updated = profile.copy(
+        balance = profile.balance - rule.price,
+        unlockedAvatars = profile.unlockedAvatars + avatarId,
+        avatar = avatarId,
+        historyItems = listOf(
+            HistoryData(
+                title = "Покупка аватара: ${cloudAvatarTypeOf(avatarId).name}",
+                time = getCurrentTimeString(),
+                date = getCurrentDateString(),
+                amount = "-${rule.price} ₽",
+                isIncome = false,
+                category = "Аватары",
+                type = HistoryType.AVATAR_PURCHASE,
+                amountValue = -rule.price,
+                arg = avatarId
+            )
+        ) + profile.historyItems
+    )
+    updateChildProfile(updated)
+    return true
+}
+
 fun MainViewModel.claimAchievementReward(userId: String, achievementId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.achievements.firstOrNull { it.id == achievementId } ?: return
@@ -152,7 +273,8 @@ fun MainViewModel.claimAchievementReward(userId: String, achievementId: String) 
                 )
             ) + profile.historyItems
         )
-        updateChildProfile(updated)
+        // Заявка достижения может открыть привязанную тему магазина.
+        updateChildProfile(updated.withAchievementThemesUnlocked())
     }
 }
 
@@ -167,12 +289,16 @@ fun MainViewModel.resetActiveQuests(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     // Полный сброс в изначальное состояние: ВСЕ квесты → AVAILABLE,
     // включая ONCE, бонусные и «в полёте» (PENDING/READY_TO_CLAIM).
+    // Даты сброса ставим на СЕГОДНЯ (а не ""): иначе DAILY/WEEKLY-квесты
+    // с пустой датой при следующем checkResets снова «протухали» бы и
+    // статус выполнения за текущий день/неделю не считался сброшенным.
+    val today = LocalDate.now().toString()
     val updatedQuests = profile.customQuests.map { quest ->
         quest.copy(
             status = QuestStatus.AVAILABLE,
             photoUrl = null,
             rejectReason = null,
-            lastResetDate = ""
+            lastResetDate = today
         )
     }
     val updatedBonusQuests = profile.bonusQuests.map { bq ->
@@ -194,17 +320,17 @@ fun MainViewModel.resetActiveQuests(userId: String) {
             closetRejectReason = null,
             closetPhotoUrl = null,
             closetComment = "",
-            closetResetDate = "",
+            closetResetDate = today,
             roomStatus = QuestStatus.AVAILABLE,
             roomRejectReason = null,
             roomPhotoUrl = null,
             roomComment = "",
-            roomResetDate = "",
+            roomResetDate = today,
             diaryStatus = QuestStatus.AVAILABLE,
             diaryRejectReason = null,
             diaryPhotoUrl = null,
             diaryComment = "",
-            diaryResetDate = "",
+            diaryResetDate = today,
             diaryCount5 = 0,
             diaryCount4 = 0,
             diaryCount3 = 0,
@@ -244,7 +370,7 @@ fun MainViewModel.resetTheme(userId: String) {
     updateChildProfile(
         profile.copy(
             selectedThemeId = "COSMIC_BLUE",
-            unlockedThemes = listOf("COSMIC_BLUE")
+            unlockedThemes = DefaultUnlockedThemeIds
         )
     )
 }

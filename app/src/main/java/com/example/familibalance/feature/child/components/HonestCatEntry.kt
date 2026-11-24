@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,11 +39,15 @@ fun HonestCatEntry(
                         disabledContainerColor = GlassBackground
                     )
                 ) {
-                    Text(
-                        stringResource(R.string.child_honest_cooldown, cooldownDaysLeft),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CloudStyleIcon(type = CloudIconType.HONEST_CAT, size = 20.dp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            stringResource(R.string.child_honest_cooldown, cooldownDaysLeft),
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             } else {
                 OutlinedButton(
@@ -54,7 +59,15 @@ fun HonestCatEntry(
                     border = BorderStroke(1.dp, LocalAppPalette.current.primaryNeon),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = LocalAppPalette.current.primaryNeon)
                 ) {
-                    Text(stringResource(R.string.child_honest_btn), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CloudStyleIcon(type = CloudIconType.HONEST_CAT, size = 20.dp)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            stringResource(R.string.child_honest_btn),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
             if (status == QuestStatus.APPROVED) {

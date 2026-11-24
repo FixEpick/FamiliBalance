@@ -74,6 +74,12 @@
     <string name="language_ru">Русский</string>
     <string name="language_en">English</string>
 
+    <!-- Child settings sheet -->
+    <string name="settings_sound_section">Sound &amp; feedback</string>
+    <string name="settings_sound_effects">Sound effects</string>
+    <string name="settings_vibration">Vibration</string>
+    <string name="settings_language">App language</string>
+
     <!-- App title / PIN dialogs -->
     <string name="pin_parent_check_title">PARENT CHECK</string>
     <string name="pin_parent_check_subtitle">Enter parent PIN</string>
@@ -118,7 +124,7 @@
     <!-- Child main screen -->
     <string name="child_balance">Balance</string>
     <string name="child_bank_name">Bank</string>
-    <string name="child_cashout_btn">Withdraw cash</string>
+    <string name="child_cashout_btn">Cash Out</string>
     <string name="child_cashout_hint">*works when you\'re with your parent</string>
     <string name="child_no_cashout_requests">No active withdrawal requests</string>
     <string name="child_cashout_requests_title">💵 Active withdrawal requests:</string>
@@ -130,29 +136,29 @@
     <string name="child_cashout_reason_ok">Got it</string>
     <string name="child_dream_default_title">My goal</string>
     <string name="child_dream_reached">Goal reached! Tap to claim ✨</string>
-    <string name="child_dream_choose_title">🎯 Dream goal</string>
+    <string name="child_dream_choose_title">Dream goal</string>
     <string name="child_dream_choose_subtitle">Set a goal and save up for your dream!</string>
     <string name="child_dream_choose_btn">Choose goal</string>
     <string name="child_dream_change_btn">Change goal</string>
     <string name="child_dream_cooldown">You can pick a new goal in %1$d d.</string>
-    <string name="dream_dialog_title">🎯 New goal</string>
+    <string name="dream_dialog_title">New goal</string>
     <string name="dream_name_label">Goal name</string>
     <string name="dream_amount_label">Amount (₽)</string>
     <string name="dream_change_hint">You can change the goal after 7 days or after completing this dream.</string>
     <string name="dream_deduct_hint">When you save up the amount, it will be deducted from your balance — and the goal will be reached.</string>
-    <string name="child_screen_time_title">⏳ Screen time today</string>
+    <string name="child_screen_time_title">Screen time today</string>
     <string name="child_bought_minutes">Bought today: %1$d / %2$d min</string>
     <string name="child_buy_time_btn">Buy time</string>
     <string name="child_daily_limit_note">Daily limit %1$d min • Resets tomorrow</string>
     <string name="child_streak_title">Days without penalties</string>
     <string name="child_streak_compact">No-penalty streak: %1$d/7 d</string>
     <string name="child_streak_day_label">%1$d d</string>
-    <string name="child_streak_checkin">🔥 Check in today</string>
+    <string name="child_streak_checkin">Check in today</string>
     <string name="child_streak_checked_today">✓ Today is counted — your streak is safe</string>
     <string name="child_streak_checked_short">✓ Today counted</string>
     <string name="child_streak_bonus">+50 ₽ bonus on day 7</string>
-    <string name="child_honest_cooldown">🐱 Honest admission • Available in %1$d d.</string>
-    <string name="child_honest_btn">🐱 Honest admission</string>
+    <string name="child_honest_cooldown">Honest admission • Available in %1$d d.</string>
+    <string name="child_honest_btn">Honest admission</string>
     <string name="child_honest_approved_note">✓ Penalty will be halved on next violation</string>
     <string name="child_honest_pending">• Admission is being reviewed by your parent</string>
     <string name="child_honest_claimed">✓ 50%% discount already applied</string>
@@ -161,14 +167,14 @@
     <string name="child_economy_btn">💰 Economy</string>
     <string name="info_sheet_tab_rules">Rules</string>
     <string name="info_sheet_tab_economy">Rates and rewards</string>
-    <string name="child_cashout_dialog_title">💵 Withdraw cash</string>
+    <string name="child_cashout_dialog_title">Withdraw cash</string>
     <string name="child_cashout_amount_label">Amount (₽)</string>
     <string name="child_cashout_insufficient">Insufficient funds</string>
     <string name="child_cashout_comment_label">Comment</string>
     <string name="child_cashout_submit">Submit request</string>
 
     <!-- Buy time sheet -->
-    <string name="child_buytime_title">⏳ Exchange rubles for time</string>
+    <string name="child_buytime_title">Buy Game Time</string>
     <string name="child_buytime_limit">Minutes per day: %1$d • available today: %2$d</string>
     <plurals name="child_tariff_minutes">
         <item quantity="one">⏳ %1$d minute</item>
@@ -202,6 +208,7 @@
     <string name="economy_spend_section">💸 What to spend on</string>
     <string name="economy_fines_section">🔴 What gets deducted (penalties)</string>
     <string name="economy_achievements_section">🏆 Achievements</string>
+    <string name="economy_themes_section">🎨 Appearance themes</string>
     <string name="eco_wardrobe_photo">📸 Wardrobe photo</string>
     <string name="eco_room_photo">🛏️ Room photo</string>
     <string name="eco_diary_grade5">📓 Diary: grade 5</string>
@@ -284,7 +291,7 @@
     <string name="ach_claim_reward">🎁 Claim reward %1$s</string>
 
     <!-- Theme selection sheet -->
-    <string name="theme_shop_title">🎨 Theme shop</string>
+    <string name="theme_shop_title">Theme shop</string>
     <string name="theme_shop_subtitle">Pick the palette you like the most</string>
     <string name="theme_selected">✓ Selected</string>
     <string name="theme_done">Done</string>
@@ -296,6 +303,56 @@
     <string name="theme_name_galaxy_purple">Galaxy purple</string>
     <string name="theme_name_arctic_ice">Arctic ice</string>
     <string name="theme_name_sunset_orange">Sunset orange</string>
+    <string name="theme_name_cyber_neon">Cyber neon</string>
+    <string name="theme_name_cloud_light">Cloudy day</string>
+    <string name="theme_name_pixel_craft">Pixel craft</string>
+    <string name="theme_name_bubble_gum">Bubble gum</string>
+    <string name="theme_name_golden_dragon">Golden Dragon</string>
+    <string name="theme_name_sunny_citrus">Sunny Citrus</string>
+    <string name="theme_name_galaxy_sunset">Galaxy Sunset</string>
+    <string name="theme_kind_dark">Dark</string>
+    <string name="theme_kind_light">Light</string>
+    <string name="theme_locked">🔒 Soon</string>
+    <string name="theme_section_dark">🌙 Dark themes</string>
+    <string name="theme_section_light">☀️ Light themes</string>
+    <string name="theme_price">%1$d ₽</string>
+    <string name="theme_ach_prefix">Achievement: %1$s</string>
+    <string name="theme_free_label">Free</string>
+    <string name="theme_unlocked_label">✓ Unlocked</string>
+    <string name="theme_locked_achievement_toast">Unlocks with the "%1$s" achievement</string>
+    <string name="theme_buy_title">Buy theme?</string>
+    <string name="theme_buy_message">Buy "%1$s" for %2$s?</string>
+    <string name="theme_buy_confirm">Buy</string>
+    <string name="theme_buy_no_funds">Not enough coins</string>
+    <string name="theme_preview_badge">👁 Preview</string>
+    <string name="theme_preview_title">Preview: %1$s</string>
+    <string name="theme_preview_title_timer">Preview: %1$s · %2$ds</string>
+    <string name="theme_buy_for">Buy for %1$s</string>
+    <string name="theme_return_mine">Back to my theme</string>
+    <string name="theme_inspect">Inspect screen</string>
+    <string name="theme_unlocks_for">Unlocks with: %1$s</string>
+
+    <!-- Avatar selection sheet -->
+    <string name="avatar_sheet_title">Choose avatar</string>
+    <string name="avatar_choose_title">Choose an avatar</string>
+    <string name="avatar_unlocked_label">Unlocked</string>
+    <string name="avatar_locked_hint">This avatar unlocks with an achievement</string>
+    <string name="avatar_locked_hint_ach">Unlocks with the “%1$s” achievement</string>
+    <string name="avatar_ach_short">🏆 Achievement</string>
+    <string name="avatar_buy_title">Buy avatar?</string>
+    <string name="avatar_buy_message">“%1$s” costs %2$d ₽. Deduct from balance?</string>
+    <string name="style_shop_title">Style shop</string>
+    <string name="style_tab_themes">🎨 Themes</string>
+    <string name="style_tab_avatars">🦸 Avatars</string>
+    <string name="economy_avatars_section">🦸 Avatars</string>
+    <string name="avatar_cat">Kitty</string>
+    <string name="avatar_panda">Panda</string>
+    <string name="avatar_alien">Alien</string>
+    <string name="avatar_unicorn">Unicorn</string>
+    <string name="avatar_astronaut">Astronaut</string>
+    <string name="avatar_robot">Robot</string>
+    <string name="avatar_dragon">Dragon</string>
+    <string name="avatar_ninja">Ninja</string>
 
     <!-- History screen -->
     <string name="history_filter_all">All</string>
@@ -336,10 +393,13 @@
     <string name="hist_quest_approved">Quest approved: %1$s</string>
     <string name="hist_honest_approved">Honest admission approved</string>
     <string name="hist_diary_grade5">Grade 5</string>
+    <string name="hist_diary_summary">Diary summary: %1$s</string>
     <string name="hist_diary_grade4">Grade 4</string>
     <string name="hist_quest_reward">Reward earned: %1$s</string>
     <string name="hist_bonus_quest_done">Bonus quest completed: %1$s</string>
     <string name="hist_dream_set">Goal set: %1$s</string>
+    <string name="hist_theme_purchase">Theme purchased: %1$s</string>
+    <string name="hist_avatar_purchase">Avatar purchased: %1$s</string>
 
     <!-- Auth / admin ViewModel messages (UiText) -->
     <string name="auth_err_nickname">Enter nickname</string>
@@ -434,6 +494,12 @@
     <string name="task_claim_reward">🎉 Claim reward</string>
     <string name="task_rejected_by_dad">❌ Rejected by parent: %1$s</string>
     <string name="task_execute">📷 Do it</string>
+    <string name="task_fix_resubmit">🔧 Fix &amp; Resubmit</string>
+    <string name="task_rejected_badge">Rejected</string>
+    <string name="task_why_btn">❓ Why?</string>
+    <string name="task_why_title">Why was the task rejected?</string>
+    <string name="task_why_default">The parent asked you to redo the task and send a new photo</string>
+    <string name="task_got_it">Got it!</string>
     <string name="task_pending_review">• Under parent\'s review</string>
     <string name="task_done">✅ Done</string>
     <string name="task_view_report">📊 Grade report — tap to view</string>
@@ -453,6 +519,9 @@
     <string name="admin_reject">❌ Reject</string>
     <string name="admin_reject_reason_title">Rejection reason</string>
     <string name="admin_reject_reason_hint">What needs to be fixed?</string>
+    <string name="admin_reject_tpl_retake">Retake the photo</string>
+    <string name="admin_reject_tpl_finish">Finish it completely</string>
+    <string name="admin_reject_tpl_partial">It\'s not fully done</string>
     <string name="admin_reject_default_reason">Needs rework</string>
     <string name="admin_diary_scanning">Scanning grades…</string>
     <string name="admin_diary_scan_success">Grades recognized!</string>
@@ -480,7 +549,7 @@
     <string name="admin_bonus_prefix">Bonus: %1$s</string>
     <string name="admin_quest_prefix">Quest: %1$s</string>
     <string name="admin_no_pending">✨ No tasks awaiting review for %1$s</string>
-    <string name="admin_honest_title">🐱 Honest admission from %1$s</string>
+    <string name="admin_honest_title">Honest admission from %1$s</string>
     <string name="admin_honest_quote">“%1$s”</string>
     <string name="admin_approve_honest">✅ Approve (Penalty -50%)</string>
     <string name="admin_quick_actions">⚡ Parent\'s quick actions (%1$s)</string>

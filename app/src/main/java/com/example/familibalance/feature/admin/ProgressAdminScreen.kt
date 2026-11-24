@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.text.KeyboardOptions
@@ -76,8 +77,8 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
                     dreamTargetVal = child.dreamTarget
                     showDreamGoalDialog = true
                 },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth().height(48.dp).bounceClick(),
+                shape = AccentButtonShape,
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor)
             ) {
@@ -86,10 +87,11 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
         }
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = GlassBackground),
-                border = BorderStroke(1.dp, GlassStroke)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .glassCard(),
+                shape = GlassCardShape,
+                colors = CardDefaults.cardColors(containerColor = GlassBackground)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(stringResource(R.string.admin_stats_title), color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
@@ -117,8 +119,8 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
         item {
             OutlinedButton(
                 onClick = { showAchievementsDialog = true },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(52.dp).bounceClick(),
+                shape = AccentButtonShape,
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = GlassBackground, contentColor = AccentColor)
             ) {
@@ -127,10 +129,11 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
         }
         item {
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = GlassBackground),
-                border = BorderStroke(1.dp, GlassStroke)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .glassCard(),
+                shape = GlassCardShape,
+                colors = CardDefaults.cardColors(containerColor = GlassBackground)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     if (child.dreamTarget > 0) {
@@ -168,7 +171,18 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
             confirmButton = {
                 Button(
                     enabled = dreamTitle.isNotBlank() && dreamTargetVal > 0,
-                    colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = GlassStroke, disabledContentColor = TextSecondary),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .accentButtonChrome()
+                        .bounceClick(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = AccentOnColor,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = TextSecondary
+                    ),
+                    shape = AccentButtonShape,
                     onClick = { viewModel.setDreamGoal(child.id, dreamTitle.trim(), dreamTargetVal); showDreamGoalDialog = false }
                 ) { Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold) }
             },
@@ -195,6 +209,8 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
             confirmButton = {
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     onClick = { showAchievementsDialog = false }
                 ) { Text(stringResource(R.string.update_btn_close), fontWeight = FontWeight.Bold) }
             }

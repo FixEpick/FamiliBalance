@@ -28,10 +28,10 @@ fun MiniBalanceBar(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassBackground),
-        border = BorderStroke(1.dp, GlassStroke)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .glassCard(),
+        shape = GlassCardShape,
+        colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Row(
             modifier = Modifier
@@ -49,7 +49,7 @@ fun MiniBalanceBar(
                     fontSize = 13.sp
                 )
             }
-            Text(
+            AnimatedAmountText(
                 text = "$balance ${rewardCurrencySymbol()}",
                 color = AccentColor,
                 fontSize = 16.sp,

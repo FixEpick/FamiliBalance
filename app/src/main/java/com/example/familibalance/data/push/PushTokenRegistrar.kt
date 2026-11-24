@@ -41,6 +41,10 @@ object PushTokenRegistrar {
         upsert(context, userId, role, token)
     }
 
+    /** Роль, под которой это устройство сейчас зарегистрировано ("child"|"parent"), или null. */
+    fun currentRole(context: Context): String? =
+        SecurePrefs.get(context, PREFS).getString(KEY_ROLE, null)
+
     /** Регистрирует устройство как «ребёнок» (user_id = id профиля ребёнка). */
     fun registerChild(context: Context, childId: String) {
         register(context, childId, "child")

@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import com.example.familibalance.feature.admin.settings.*
 import com.example.familibalance.ui.auth.ChangeParentPinDialog
+import com.example.familibalance.ui.auth.ParentGateDialog
 import com.example.familibalance.ui.auth.SetChildPinDialog
 import com.example.familibalance.ui.components.LanguageSelectorRow
 import com.example.familibalance.ui.components.childDisplayName
@@ -63,6 +64,8 @@ fun AdminSettingsScreen(
     var showLogoutDialog by rememberSaveable { mutableStateOf(false) }
     var pinTarget by rememberSaveable { mutableStateOf<String?>(null) } // "parent" или childId
     var pendingReset by rememberSaveable { mutableStateOf<ResetKind?>(null) }
+    // Полный сброс («Обнулить всё») — только после ввода родительского PIN.
+    var showResetPinGate by rememberSaveable { mutableStateOf(false) }
 
     // --- Ручная синхронизация: индикатор + Toast по завершении ---
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
@@ -131,8 +134,8 @@ fun AdminSettingsScreen(
         item {
             OutlinedButton(
                 onClick = onOpenQuestsEditor,
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(54.dp).bounceClick(),
+                shape = AccentButtonShape,
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = GlassBackground, contentColor = AccentColor)
             ) {
@@ -142,8 +145,8 @@ fun AdminSettingsScreen(
         item {
             OutlinedButton(
                 onClick = onOpenAchievementsEditor,
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(54.dp).bounceClick(),
+                shape = AccentButtonShape,
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = GlassBackground, contentColor = AccentColor)
             ) {
@@ -153,8 +156,8 @@ fun AdminSettingsScreen(
         item {
             OutlinedButton(
                 onClick = { showAddBonusDialog = true },
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(54.dp).bounceClick(),
+                shape = AccentButtonShape,
                 border = BorderStroke(1.dp, StatusYellow),
                 colors = ButtonDefaults.outlinedButtonColors(containerColor = GlassBackground, contentColor = StatusYellow)
             ) {
@@ -168,15 +171,19 @@ fun AdminSettingsScreen(
         )
 item {
     Spacer(modifier = Modifier.height(6.dp))
-    Text(text = stringResource(R.string.admin_set_security), color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        IconBadge(emoji = "🔐", size = 30.dp, emojiSize = 15.dp)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = stringResource(R.string.admin_set_security), color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+    }
 }
 item {
     OutlinedButton(
         onClick = { showPinPicker = true },
         border = BorderStroke(1.dp, AccentColor),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor),
-        shape = RoundedCornerShape(10.dp),
-        modifier = Modifier.fillMaxWidth().height(50.dp)
+        shape = AccentButtonShape,
+        modifier = Modifier.fillMaxWidth().height(50.dp).bounceClick()
     ) {
         Text(stringResource(R.string.admin_set_pin_management), fontWeight = FontWeight.Bold)
     }
@@ -196,8 +203,8 @@ item {
                 enabled = !isSyncing && !syncRequested,
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.fillMaxWidth().height(46.dp)
+                shape = AccentButtonShape,
+                modifier = Modifier.fillMaxWidth().height(46.dp).bounceClick()
             ) {
                 if (isSyncing || syncRequested) {
                     CircularProgressIndicator(
@@ -212,10 +219,12 @@ item {
         }
         item {
             Surface(
-                shape = RoundedCornerShape(16.dp),
+                shape = GlassCardShape,
                 color = GlassBackground,
                 border = BorderStroke(1.dp, GlassStroke),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .glassCard()
             ) {
                 LanguageSelectorRow(
                     label = stringResource(R.string.admin_set_language),
@@ -313,6 +322,19 @@ if (showAddBonusDialog) {
             showAddBonusDialog = false
         },
         onDismiss = { showAddBonusDialog = false }
+    )
+}
+// PIN-гейт перед полным сбросом: верный PIN → обычный диалог подтверждения.
+if (showResetPinGate) {
+    ParentGateDialog(
+        onSuccess = {
+            showResetPinGate = false
+            showConfirmDialog = true
+        },
+        onDismiss = {
+            showResetPinGate = false
+            pendingReset = null
+        }
     )
 }
 if (showConfirmDialog && pendingReset != null) {

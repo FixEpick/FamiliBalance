@@ -30,10 +30,19 @@ import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.ui.components.AppDialog
 import com.example.familibalance.ui.components.AppOutlinedField
 import com.example.familibalance.ui.components.childDisplayName
+import com.example.familibalance.ui.theme.AccentButtonShape
 import com.example.familibalance.ui.theme.AccentColor
+import com.example.familibalance.ui.theme.AccentOnColor
 import com.example.familibalance.ui.theme.SpaceBgStart
 import com.example.familibalance.ui.theme.TextPrimary
 import com.example.familibalance.ui.theme.TextSecondary
+import com.example.familibalance.ui.theme.IconBadge
+import com.example.familibalance.ui.theme.accentButtonChrome
+import com.example.familibalance.ui.theme.bounceClick
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.graphics.Color
 import com.example.familibalance.util.currencyString
 
 /** Диалог создания бонус-квеста для выбранного ребёнка. */
@@ -51,11 +60,15 @@ fun AddBonusQuestDialog(
     AppDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                stringResource(R.string.admin_set_bonus_title, childDisplayName(child)),
-                color = AccentColor,
-                fontWeight = FontWeight.Bold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconBadge(emoji = "🎁", size = 32.dp, emojiSize = 16.dp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.admin_set_bonus_title, childDisplayName(child)),
+                    color = AccentColor,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         },
         text = {
             Column(
@@ -106,8 +119,16 @@ fun AddBonusQuestDialog(
                         onConfirm(bonusTitle.trim(), bonusDesc.trim(), rewardInt, bonusRequiresPhoto)
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart),
-                shape = RoundedCornerShape(10.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .accentButtonChrome()
+                    .bounceClick(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = AccentOnColor
+                ),
+                shape = AccentButtonShape
             ) {
                 Text(stringResource(R.string.admin_set_create), fontWeight = FontWeight.Bold)
             }

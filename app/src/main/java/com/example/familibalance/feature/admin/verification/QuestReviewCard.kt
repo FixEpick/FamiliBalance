@@ -51,10 +51,11 @@ fun QuestVerificationCard(
     var showFullScreenImage by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassBackground),
-        border = BorderStroke(1.dp, GlassStroke)
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassCard(),
+        shape = GlassCardShape,
+        colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Column(
             modifier = Modifier
@@ -100,7 +101,8 @@ fun QuestVerificationCard(
                     onClick = onApprove,
                     enabled = actionEnabled,
                     colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(stringResource(R.string.admin_approve), fontSize = 12.sp)
@@ -111,7 +113,8 @@ fun QuestVerificationCard(
                     enabled = actionEnabled,
                     border = BorderStroke(1.dp, PenaltyRed),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(stringResource(R.string.admin_reject), fontSize = 12.sp)
@@ -127,6 +130,8 @@ fun QuestVerificationCard(
             title = { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) },
             text = {
                 Column {
+                    RejectReasonTemplateChips(onSelect = { rejectReasonText = it })
+                    Spacer(modifier = Modifier.height(8.dp))
                     AppOutlinedField(
                         value = rejectReasonText,
                         onValueChange = { rejectReasonText = it },

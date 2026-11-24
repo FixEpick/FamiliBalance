@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,8 +55,8 @@ fun AchievementCard(
         modifier = modifier
             .fillMaxWidth()
             .then(if (isLocked) Modifier.alpha(0.4f) else Modifier)
-            .border(1.dp, borderColor, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
+            .glassCard(),
+        shape = GlassCardShape,
         colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Row(
@@ -142,12 +143,15 @@ fun AchievementCard(
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = { onClaimClick() },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .accentButtonChrome()
+                    .bounceClick(),
+                shape = AccentButtonShape,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentColor,
-                    contentColor = SpaceBgStart
-                ),
-                shape = RoundedCornerShape(12.dp)
+                    containerColor = Color.Transparent,
+                    contentColor = AccentOnColor
+                )
             ) {
                 Text(
                     text = stringResource(R.string.ach_claim_reward, reward),

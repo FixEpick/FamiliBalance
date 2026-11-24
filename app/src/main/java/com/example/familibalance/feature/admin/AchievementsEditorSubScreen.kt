@@ -83,8 +83,8 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         item {
             OutlinedButton(
                 onClick = { showCreateDialog = true },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp).bounceClick(),
+                shape = AccentButtonShape,
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor)
             ) { Text(stringResource(R.string.achadm_create_btn), fontWeight = FontWeight.Bold, fontSize = 15.sp) }
@@ -131,6 +131,8 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Button(
                     enabled = newTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     onClick = {
                         viewModel.addAchievement(child.id, newTitle.trim(), newDesc.trim(), newTarget.trim().toIntOrNull() ?: 1, newReward.trim().toIntOrNull() ?: 20, newBranch)
                         newTitle = ""; newDesc = ""; newTarget = "5"; newReward = "50"; showCreateDialog = false
@@ -167,6 +169,8 @@ fun AchievementsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Button(
                     enabled = editTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     onClick = {
                         viewModel.updateAchievement(child.id, ach.id, editTitle.trim(), editDesc.trim(), editTarget.trim().toIntOrNull() ?: ach.targetCount, editReward.trim().toIntOrNull() ?: ach.reward, editBranch)
                         editingAch = null

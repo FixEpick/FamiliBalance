@@ -79,8 +79,8 @@ fun VerificationAdminContent(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, GlassStroke, RoundedCornerShape(16.dp)),
-                    shape = RoundedCornerShape(16.dp),
+                        .glassCard(),
+                    shape = GlassCardShape,
                     colors = CardDefaults.cardColors(containerColor = GlassBackground)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -274,8 +274,9 @@ fun VerificationAdminContent(
                 enabled = !isProcessingAction,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(16.dp),
+                    .height(50.dp)
+                    .bounceClick(),
+                shape = AccentButtonShape,
                 border = BorderStroke(1.dp, StatusGreen),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = StatusGreen)
             ) {

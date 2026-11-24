@@ -38,12 +38,16 @@ fun DreamGoalDialog(
     AppDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = stringResource(R.string.dream_dialog_title),
-                color = AccentColor,
-                fontWeight = FontWeight.Bold,
-                fontSize = 20.sp
-            )
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                CloudBadge(type = CloudIconType.GOAL, size = 32.dp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.dream_dialog_title),
+                    color = AccentColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+            }
         },
         text = {
             Column {
@@ -89,13 +93,18 @@ fun DreamGoalDialog(
             Button(
                 onClick = { onConfirm(title.trim(), target) },
                 enabled = canConfirm,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .accentButtonChrome()
+                    .bounceClick(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentColor,
-                    contentColor = SpaceBgStart,
-                    disabledContainerColor = GlassBackground,
+                    containerColor = Color.Transparent,
+                    contentColor = AccentOnColor,
+                    disabledContainerColor = Color.Transparent,
                     disabledContentColor = TextSecondary
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = AccentButtonShape
             ) {
                 Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
             }

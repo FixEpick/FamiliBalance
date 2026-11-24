@@ -1,0 +1,259 @@
+﻿ï»¿2026-11-24T20:29:47.1083150Z Current runner version: '2.338.2'
+2026-11-24T20:29:47.1106409Z ##[group]Runner Image Provisioner
+2026-11-24T20:29:47.1107087Z Hosted Compute Agent
+2026-11-24T20:29:47.1107564Z Version: 20261111.635
+2026-11-24T20:29:47.1108157Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-24T20:29:47.1108790Z Build Date: 2026-11-11T01:49:01Z
+2026-11-24T20:29:47.1109374Z Worker ID: {d891f901-a746-4ff6-8182-cfa5e73e7282}
+2026-11-24T20:29:47.1109961Z Region: westus3
+2026-11-24T20:29:47.1110416Z Cloud: Azure
+2026-11-24T20:29:47.1110893Z ##[endgroup]
+2026-11-24T20:29:47.1112047Z ##[group]Operating System
+2026-11-24T20:29:47.1112591Z Ubuntu
+2026-11-24T20:29:47.1113034Z 26.04.1
+2026-11-24T20:29:47.1113462Z LTS
+2026-11-24T20:29:47.1113926Z ##[endgroup]
+2026-11-24T20:29:47.1114540Z ##[group]Runner Image
+2026-11-24T20:29:47.1115015Z Image: ubuntu-26.04
+2026-11-24T20:29:47.1115540Z Version: 20261116.202.1
+2026-11-24T20:29:47.1116573Z Included Software: https://github.com/actions/runner-images/blob/ubuntu26/20261116.202/images/ubuntu/Ubuntu2604-Readme.md
+2026-11-24T20:29:47.1117890Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu26%2F20261116.202
+2026-11-24T20:29:47.1118666Z ##[endgroup]
+2026-11-24T20:29:47.1119718Z ##[group]GITHUB_TOKEN Permissions
+2026-11-24T20:29:47.1121463Z Contents: read
+2026-11-24T20:29:47.1122067Z Metadata: read
+2026-11-24T20:29:47.1122537Z Packages: read
+2026-11-24T20:29:47.1123073Z ##[endgroup]
+2026-11-24T20:29:47.1124996Z Secret source: Actions
+2026-11-24T20:29:47.1125793Z Cache mode: write
+2026-11-24T20:29:47.1126643Z Prepare workflow directory
+2026-11-24T20:29:47.1385235Z Prepare all required actions
+2026-11-24T20:29:47.1425120Z Getting action download info
+2026-11-24T20:29:47.4488823Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-24T20:29:47.7131923Z Download action repository 'actions/setup-java@v4' (SHA:cf277c60eb25467037889841efdb72551f06f6c3)
+2026-11-24T20:29:48.6378463Z Complete job name: build
+2026-11-24T20:29:48.7215464Z ##[group]Run actions/checkout@v4
+2026-11-24T20:29:48.7216795Z with:
+2026-11-24T20:29:48.7217486Z   repository: FixEpick/FamiliBalance
+2026-11-24T20:29:48.7225609Z   token: ***
+2026-11-24T20:29:48.7226281Z   ssh-strict: true
+2026-11-24T20:29:48.7226968Z   ssh-user: git
+2026-11-24T20:29:48.7227663Z   persist-credentials: true
+2026-11-24T20:29:48.7228439Z   clean: true
+2026-11-24T20:29:48.7229134Z   sparse-checkout-cone-mode: true
+2026-11-24T20:29:48.7229976Z   fetch-depth: 1
+2026-11-24T20:29:48.7230646Z   fetch-tags: false
+2026-11-24T20:29:48.7231348Z   show-progress: true
+2026-11-24T20:29:48.7232058Z   lfs: false
+2026-11-24T20:29:48.7232706Z   submodules: false
+2026-11-24T20:29:48.7233418Z   set-safe-directory: true
+2026-11-24T20:29:48.7234321Z   allow-unsafe-pr-checkout: false
+2026-11-24T20:29:48.7235365Z ##[endgroup]
+2026-11-24T20:29:48.9717972Z Syncing repository: FixEpick/FamiliBalance
+2026-11-24T20:29:48.9721305Z ##[group]Getting Git version info
+2026-11-24T20:29:48.9722908Z Working directory is '/home/runner/work/FamiliBalance/FamiliBalance'
+2026-11-24T20:29:48.9725480Z [command]/usr/bin/git version
+2026-11-24T20:29:48.9726649Z git version 2.56.1
+2026-11-24T20:29:48.9735705Z ##[endgroup]
+2026-11-24T20:29:48.9748888Z Temporarily overriding HOME='/home/runner/work/_temp/82aad5e3-f245-487c-acf5-439f546f6359' before making global git config changes
+2026-11-24T20:29:48.9752323Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-24T20:29:48.9755738Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/FamiliBalance/FamiliBalance
+2026-11-24T20:29:48.9814277Z Deleting the contents of '/home/runner/work/FamiliBalance/FamiliBalance'
+2026-11-24T20:29:48.9817361Z ##[group]Initializing the repository
+2026-11-24T20:29:48.9820899Z [command]/usr/bin/git init /home/runner/work/FamiliBalance/FamiliBalance
+2026-11-24T20:29:48.9896178Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-24T20:29:48.9898903Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-24T20:29:48.9901612Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-24T20:29:48.9903726Z hint: call:
+2026-11-24T20:29:48.9905054Z hint:
+2026-11-24T20:29:48.9906273Z hint: 	git config --global init.defaultBranch <name>
+2026-11-24T20:29:48.9907676Z hint:
+2026-11-24T20:29:48.9908980Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-24T20:29:48.9911119Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-24T20:29:48.9912888Z hint:
+2026-11-24T20:29:48.9913800Z hint: 	git branch -m <name>
+2026-11-24T20:29:48.9915022Z hint:
+2026-11-24T20:29:48.9916501Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-24T20:29:48.9918970Z Initialized empty Git repository in /home/runner/work/FamiliBalance/FamiliBalance/.git/
+2026-11-24T20:29:48.9923049Z [command]/usr/bin/git remote add origin https://github.com/FixEpick/FamiliBalance
+2026-11-24T20:29:48.9968190Z ##[endgroup]
+2026-11-24T20:29:48.9969922Z ##[group]Disabling automatic garbage collection
+2026-11-24T20:29:48.9972725Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-24T20:29:49.0008107Z ##[endgroup]
+2026-11-24T20:29:49.0009950Z ##[group]Setting up auth
+2026-11-24T20:29:49.0014629Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-24T20:29:49.0047021Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-24T20:29:49.0540730Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-24T20:29:49.0573862Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-24T20:29:49.0829097Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-24T20:29:49.0860526Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-24T20:29:49.1107481Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-24T20:29:49.1143394Z ##[endgroup]
+2026-11-24T20:29:49.1145071Z ##[group]Fetching the repository
+2026-11-24T20:29:49.1151561Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +7c9577b5198a37d56b0df644832e1928dd7120ce:refs/remotes/origin/master
+2026-11-24T20:30:00.2883060Z From https://github.com/FixEpick/FamiliBalance
+2026-11-24T20:30:00.2883758Z  * [new ref]         7c9577b5198a37d56b0df644832e1928dd7120ce -> origin/master
+2026-11-24T20:30:00.2893776Z ##[endgroup]
+2026-11-24T20:30:00.2894399Z ##[group]Determining the checkout info
+2026-11-24T20:30:00.2895010Z ##[endgroup]
+2026-11-24T20:30:00.2895428Z [command]/usr/bin/git sparse-checkout disable
+2026-11-24T20:30:00.2943158Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-24T20:30:00.2969414Z ##[group]Checking out the ref
+2026-11-24T20:30:00.2974317Z [command]/usr/bin/git checkout --progress --force -B master refs/remotes/origin/master
+2026-11-24T20:30:00.6449421Z Reset branch 'master'
+2026-11-24T20:30:00.6453111Z branch 'master' set up to track 'origin/master'.
+2026-11-24T20:30:00.6507022Z ##[endgroup]
+2026-11-24T20:30:00.6549958Z [command]/usr/bin/git log -1 --format=%H
+2026-11-24T20:30:00.6571250Z 7c9577b5198a37d56b0df644832e1928dd7120ce
+2026-11-24T20:30:00.6839356Z ##[group]Run actions/setup-java@v4
+2026-11-24T20:30:00.6839653Z with:
+2026-11-24T20:30:00.6839833Z   java-version: 17
+2026-11-24T20:30:00.6840018Z   distribution: temurin
+2026-11-24T20:30:00.6840209Z   cache: gradle
+2026-11-24T20:30:00.6840386Z   java-package: jdk
+2026-11-24T20:30:00.6840569Z   check-latest: false
+2026-11-24T20:30:00.6840920Z   server-id: github
+2026-11-24T20:30:00.6841100Z   server-username: GITHUB_ACTOR
+2026-11-24T20:30:00.6841312Z   server-password: GITHUB_TOKEN
+2026-11-24T20:30:00.6841516Z   overwrite-settings: true
+2026-11-24T20:30:00.6841712Z   job-status: success
+2026-11-24T20:30:00.6843769Z   token: ***
+2026-11-24T20:30:00.6843958Z ##[endgroup]
+2026-11-24T20:30:00.8360152Z ##[warning]setup-java v4 is deprecated and will no longer receive updates. Please migrate to actions/setup-java@v5.
+2026-11-24T20:30:00.8366954Z ##[group]Installed distributions
+2026-11-24T20:30:00.8394405Z Resolved Java 17.0.21+9 from tool-cache
+2026-11-24T20:30:00.8394855Z Setting Java 17.0.21+9 as the default
+2026-11-24T20:30:00.8402631Z (node:2204) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-24T20:30:00.8403455Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-24T20:30:00.8406182Z Creating toolchains.xml for JDK version 17 from temurin
+2026-11-24T20:30:00.8463201Z Writing to /home/runner/.m2/toolchains.xml
+2026-11-24T20:30:00.8463513Z 
+2026-11-24T20:30:00.8463649Z Java configuration:
+2026-11-24T20:30:00.8463952Z   Distribution: temurin
+2026-11-24T20:30:00.8464391Z   Version: 17.0.21+9
+2026-11-24T20:30:00.8464787Z   Path: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-9/x64
+2026-11-24T20:30:00.8466543Z 
+2026-11-24T20:30:00.8467505Z ##[endgroup]
+2026-11-24T20:30:00.8481902Z Creating settings.xml with server-id: github
+2026-11-24T20:30:00.8503605Z Writing to /home/runner/.m2/settings.xml
+2026-11-24T20:30:01.1389747Z Cache hit for: setup-java-Linux-x64-gradle-9a53675bbeae7368a27b09aad0c7bbb3f42a501ffd938cff02616ea1a7d418f7
+2026-11-24T20:30:01.1482157Z (node:2204) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-24T20:30:02.3654765Z Received 41943040 of 764260572 (5.5%), 40.0 MBs/sec
+2026-11-24T20:30:03.3649854Z Received 230686720 of 764260572 (30.2%), 110.0 MBs/sec
+2026-11-24T20:30:04.3663546Z Received 427819008 of 764260572 (56.0%), 135.9 MBs/sec
+2026-11-24T20:30:05.3663493Z Received 637534208 of 764260572 (83.4%), 151.9 MBs/sec
+2026-11-24T20:30:06.0371424Z Received 764260572 of 764260572 (100.0%), 156.0 MBs/sec
+2026-11-24T20:30:06.0377088Z Cache Size: ~729 MB (764260572 B)
+2026-11-24T20:30:06.0403278Z [command]/usr/bin/tar -xf /home/runner/work/_temp/87e10e6b-cc85-4feb-a69a-ae34c30c4c15/cache.tzst -P -C /home/runner/work/FamiliBalance/FamiliBalance --use-compress-program unzstd
+2026-11-24T20:30:08.5072340Z Cache restored successfully
+2026-11-24T20:30:08.5370293Z Cache restored from key: setup-java-Linux-x64-gradle-9a53675bbeae7368a27b09aad0c7bbb3f42a501ffd938cff02616ea1a7d418f7
+2026-11-24T20:30:08.6253210Z ##[group]Run chmod +x gradlew
+2026-11-24T20:30:08.6253515Z [36;1mchmod +x gradlew[0m
+2026-11-24T20:30:08.6287696Z shell: /usr/bin/bash -e {0}
+2026-11-24T20:30:08.6287942Z env:
+2026-11-24T20:30:08.6288207Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-9/x64
+2026-11-24T20:30:08.6288622Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-9/x64
+2026-11-24T20:30:08.6288942Z ##[endgroup]
+2026-11-24T20:30:08.8042147Z ##[group]Run ./gradlew lint
+2026-11-24T20:30:08.8042412Z [36;1m./gradlew lint[0m
+2026-11-24T20:30:08.8072520Z shell: /usr/bin/bash -e {0}
+2026-11-24T20:30:08.8072730Z env:
+2026-11-24T20:30:08.8072990Z   JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-9/x64
+2026-11-24T20:30:08.8073379Z   JAVA_HOME_17_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-9/x64
+2026-11-24T20:30:08.8073690Z ##[endgroup]
+2026-11-24T20:30:09.6288620Z 
+2026-11-24T20:30:09.6289617Z Welcome to Gradle 9.6.0!
+2026-11-24T20:30:09.6289913Z 
+2026-11-24T20:30:09.6293171Z Here are the highlights of this release:
+2026-11-24T20:30:09.6293611Z  - Improved Configuration Cache hit rates
+2026-11-24T20:30:09.6294580Z  - Additional CLI rendering options
+2026-11-24T20:30:09.6294956Z  - Important project hierarchy lookup deprecations
+2026-11-24T20:30:09.6295286Z 
+2026-11-24T20:30:09.6300398Z For more details see https://docs.gradle.org/9.6.0/release-notes.html
+2026-11-24T20:30:09.6300902Z 
+2026-11-24T20:30:09.7278388Z Starting a Gradle Daemon (subsequent builds will be faster)
+2026-11-24T20:30:16.2279500Z Calculating task graph as no cached configuration is available for tasks: lint
+2026-11-24T20:30:50.4335472Z > Task :app:preBuild UP-TO-DATE
+2026-11-24T20:30:50.4335920Z > Task :app:preDebugBuild UP-TO-DATE
+2026-11-24T20:30:50.5295284Z > Task :app:generateDebugResources
+2026-11-24T20:30:50.5333159Z > Task :app:generateDebugBuildConfig
+2026-11-24T20:30:50.5385152Z > Task :app:processDebugGoogleServices
+2026-11-24T20:30:50.5405093Z > Task :app:javaPreCompileDebug
+2026-11-24T20:30:50.6285156Z > Task :app:mapDebugSourceSetPaths
+2026-11-24T20:30:50.8285308Z > Task :app:packageDebugResources
+2026-11-24T20:30:50.8335126Z > Task :app:createDebugCompatibleScreenManifests
+2026-11-24T20:30:50.8343169Z > Task :app:extractDeepLinksDebug
+2026-11-24T20:30:51.6315544Z > Task :app:processDebugNavigationResources
+2026-11-24T20:30:51.7341439Z > Task :app:checkDebugAarMetadata
+2026-11-24T20:30:51.9281734Z > Task :app:compileDebugNavigationResources
+2026-11-24T20:30:51.9291621Z > Task :app:preDebugAndroidTestBuild SKIPPED
+2026-11-24T20:30:51.9325088Z > Task :app:extractProguardFiles
+2026-11-24T20:30:51.9347488Z > Task :app:preDebugUnitTestBuild UP-TO-DATE
+2026-11-24T20:30:53.2285407Z > Task :app:processDebugMainManifest
+2026-11-24T20:30:53.3325386Z > Task :app:processDebugManifest
+2026-11-24T20:30:53.7277849Z > Task :app:processDebugManifestForPackage
+2026-11-24T20:30:53.8285290Z > Task :app:parseDebugLocalResources
+2026-11-24T20:30:53.8325129Z > Task :app:generateDebugRFile
+2026-11-24T20:30:53.9285835Z > Task :app:mergeDebugResources
+2026-11-24T20:30:55.7278000Z > Task :app:processDebugResources
+2026-11-24T20:31:16.4282310Z 
+2026-11-24T20:31:16.4283282Z > Task :app:compileDebugKotlin FAILED
+2026-11-24T20:31:16.4309416Z e: file:///home/runner/work/FamiliBalance/FamiliBalance/app/src/main/java/com/example/familibalance/data/supabase/SupabaseManager.kt:110:50 None of the following candidates is applicable:
+2026-11-24T20:31:16.4315015Z 
+2026-11-24T20:31:16.4317024Z fun minus(duration: Duration): Instant:
+2026-11-24T20:31:16.4318037Z   Argument type mismatch: actual type is 'Long', but 'Duration' was expected.
+2026-11-24T20:31:16.4318571Z 
+2026-11-24T20:31:16.4318789Z fun minus(other: Instant): Duration:
+2026-11-24T20:31:16.4319369Z   Argument type mismatch: actual type is 'Long', but 'Instant' was expected.
+2026-11-24T20:31:16.4320892Z e: file:///home/runner/work/FamiliBalance/FamiliBalance/app/src/main/java/com/example/familibalance/data/supabase/SupabaseManager.kt:110:59 'operator' modifier is required on 'fun <T> Comparable<T>.compareTo(other: T): Int'.
+2026-11-24T20:31:16.5284782Z 
+2026-11-24T20:31:16.5284807Z 
+2026-11-24T20:31:16.5295359Z [Incubating] Problems report is available at: file:///home/runner/work/FamiliBalance/FamiliBalance/build/reports/problems/problems-report.html
+2026-11-24T20:31:16.5318856Z FAILURE: Build failed with an exception.
+2026-11-24T20:31:16.5319437Z 20 actionable tasks: 20 executed
+2026-11-24T20:31:16.5365475Z 
+2026-11-24T20:31:16.5365879Z Configuration cache entry stored.
+2026-11-24T20:31:16.5394525Z * What went wrong:
+2026-11-24T20:31:16.5424926Z Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'com.android.internal.application').
+2026-11-24T20:31:16.5454924Z > A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+2026-11-24T20:31:16.5574931Z    > Kotlin compiler: NONE_APPLICABLE
+2026-11-24T20:31:16.5604565Z        Kotlin compiler error
+2026-11-24T20:31:16.5664639Z          None of the following candidates is applicable:
+2026-11-24T20:31:16.5665085Z      
+2026-11-24T20:31:16.5665430Z          fun minus(duration: Duration): Instant:
+2026-11-24T20:31:16.5694637Z            Argument type mismatch: actual type is 'Long', but 'Duration' was expected.
+2026-11-24T20:31:16.5724543Z      
+2026-11-24T20:31:16.5724891Z          fun minus(other: Instant): Duration:
+2026-11-24T20:31:16.5725446Z            Argument type mismatch: actual type is 'Long', but 'Instant' was expected.
+2026-11-24T20:31:16.5726507Z          Location: /home/runner/work/FamiliBalance/FamiliBalance/app/src/main/java/com/example/familibalance/data/supabase/SupabaseManager.kt line 110
+2026-11-24T20:31:16.5727219Z 
+2026-11-24T20:31:16.5727332Z * Try:
+2026-11-24T20:31:16.5727651Z > Run with --stacktrace option to get the stack trace.
+2026-11-24T20:31:16.5728129Z > Run with --info or --debug option to get more log output.
+2026-11-24T20:31:16.5728705Z > Run with --scan to get full insights from a Build Scan (powered by Develocity).
+2026-11-24T20:31:16.5729262Z > Get more help at https://help.gradle.org.
+2026-11-24T20:31:16.5729508Z 
+2026-11-24T20:31:16.5729624Z BUILD FAILED in 1m 7s
+2026-11-24T20:31:16.9187568Z ##[error]Process completed with exit code 1.
+2026-11-24T20:31:16.9298375Z Post job cleanup.
+2026-11-24T20:31:17.0389685Z (node:2562) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-24T20:31:17.0390277Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-24T20:31:17.0536855Z Post job cleanup.
+2026-11-24T20:31:17.1281409Z [command]/usr/bin/git version
+2026-11-24T20:31:17.1326250Z git version 2.56.1
+2026-11-24T20:31:17.1377067Z Temporarily overriding HOME='/home/runner/work/_temp/420e78d4-69d0-479a-aafa-5265212c4db8' before making global git config changes
+2026-11-24T20:31:17.1378574Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-24T20:31:17.1379634Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/FamiliBalance/FamiliBalance
+2026-11-24T20:31:17.1420360Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-24T20:31:17.1464697Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-24T20:31:17.1809766Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-24T20:31:17.1841038Z http.https://github.com/.extraheader
+2026-11-24T20:31:17.1851125Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-24T20:31:17.1900202Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-24T20:31:17.2177077Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-24T20:31:17.2209008Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-24T20:31:17.2590287Z Cleaning up orphan processes
+2026-11-24T20:31:17.2996654Z Terminate orphan process: pid (2337) (java)
+2026-11-24T20:31:17.3026405Z Terminate orphan process: pid (2516) (java)
+2026-11-24T20:31:17.3075401Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-java@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+

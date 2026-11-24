@@ -102,8 +102,7 @@ fun AchievementsScreen(
 
     val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
         confettiTrigger++
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        CoinSoundPlayer.playCoin()
+        FeedbackManager.playLevelUp(context, haptic)
 
         lateinit var flight: CoinFlightData
         flight = CoinFlightData(
@@ -221,10 +220,21 @@ fun AchievementsScreen(
                     FilterChip(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
-                        label = { Text(tabName, fontSize = 14.sp) },
+                        label = {
+                            Text(
+                                tabName,
+                                fontSize = 14.sp,
+                                // Принудительный контрастный цвет на акцентной
+                                // кнопке — в светлой теме onAccentText белый,
+                                // иначе текст сливается с синим фоном.
+                                color = if (selectedTab == index) {
+                                    LocalAppTheme.current.onAccentText
+                                } else TextSecondary
+                            )
+                        },
                         colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = FilterSelectedBg.copy(alpha = 0.92f),
-                            selectedLabelColor = AccentColor,
+                            selectedContainerColor = AccentColor,
+                            selectedLabelColor = AccentOnColor,
                             containerColor = FilterBg.copy(alpha = 0.85f),
                             labelColor = TextSecondary
                         ),

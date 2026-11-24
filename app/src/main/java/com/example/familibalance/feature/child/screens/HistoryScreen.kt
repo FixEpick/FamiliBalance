@@ -120,12 +120,15 @@ internal fun historyTitleSpec(item: HistoryData): HistoryTitleSpec {
         HistoryType.HONEST_APPROVED -> HistoryTitleSpec(R.string.hist_honest_approved)
         HistoryType.DIARY_GRADE_5 -> HistoryTitleSpec(R.string.hist_diary_grade5)
         HistoryType.DIARY_GRADE_4 -> HistoryTitleSpec(R.string.hist_diary_grade4)
+        HistoryType.DIARY_SUMMARY ->
+            HistoryTitleSpec(R.string.hist_diary_summary, listOf(arg ?: ""))
         HistoryType.QUEST_REWARD ->
             HistoryTitleSpec(R.string.hist_quest_reward, listOf(arg ?: title.removePrefix("Награда получена: ")))
         HistoryType.BONUS_QUEST_DONE ->
             HistoryTitleSpec(R.string.hist_bonus_quest_done, listOf(arg ?: title.removePrefix("Бонус-квест выполнен: ")))
         HistoryType.DREAM_SET ->
             HistoryTitleSpec(R.string.hist_dream_set, listOf(arg ?: title.removePrefix("Заложена цель: ")))
+        HistoryType.THEME_PURCHASE -> HistoryTitleSpec(R.string.hist_theme_purchase)
         else -> HistoryTitleSpec(null)
     }
 }
@@ -159,7 +162,7 @@ internal fun historyFilterIndex(item: HistoryData): Int = when (item.type) {
     // показываем только в «Все» и отдельном фильтре «Ручные операции».
     HistoryType.ADMIN_REWARD, HistoryType.ADMIN_WITHDRAW -> HIST_FILTER_MANUAL
     HistoryType.CASHOUT_GIVEN, HistoryType.CASHOUT_REQUEST,
-    HistoryType.DREAM_SET -> HIST_FILTER_OTHER
+    HistoryType.DREAM_SET, HistoryType.AVATAR_PURCHASE -> HIST_FILTER_OTHER
     else -> when (item.category) {
         "Квесты", "Дневник", "Бонус-квесты", "Кастомные квесты" -> HIST_FILTER_QUESTS
         "Достижения", "Бонусы" -> HIST_FILTER_ACHIEVEMENTS
@@ -172,6 +175,23 @@ internal fun historyFilterIndex(item: HistoryData): Int = when (item.type) {
 /** Локализованный заголовок записи истории; fallback — сохранённый title. */
 @Composable
 private fun localizedHistoryTitle(item: HistoryData): String {
+    // Покупка темы: arg хранит themeId — название резолвим через тему,
+    // чтобы оно локализовалось вместе с интерфейсом.
+    if (item.type == HistoryType.THEME_PURCHASE) {
+        val themeTitle = item.arg?.let { id ->
+            getThemeById(id).let { t ->
+                if (t.titleRes != 0) stringResource(t.titleRes) else t.title
+            }
+        } ?: item.title.removePrefix("Покупка темы: ")
+        return stringResource(R.string.hist_theme_purchase, themeTitle)
+    }
+    // Покупка аватара: arg хранит avatarId — название резолвим через тип.
+    if (item.type == HistoryType.AVATAR_PURCHASE) {
+        val avatarTitle = item.arg?.let { id ->
+            stringResource(cloudAvatarTypeOf(id).titleRes)
+        } ?: item.title.removePrefix("Покупка аватара: ")
+        return stringResource(R.string.hist_avatar_purchase, avatarTitle)
+    }
     val spec = historyTitleSpec(item)
     if (spec.resId == null) return item.title
     // Аргументы могут содержать системные строки (названия квестов/достижений,
@@ -332,8 +352,8 @@ fun HistoryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { showPendingSheet = true }
-                        .border(1.dp, GlassStroke, RoundedCornerShape(16.dp)),
-                    shape = RoundedCornerShape(16.dp),
+                        .glassCard(),
+                    shape = GlassCardShape,
                     colors = CardDefaults.cardColors(containerColor = GlassBackground)
                 ) {
                     Row(
@@ -390,8 +410,8 @@ fun HistoryScreen(
                             onClick = { selectedFilter = index },
                             label = { Text(filterLabels[index], fontSize = 14.sp) },
                             colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = AccentColor.copy(alpha = 0.2f),
-                                selectedLabelColor = AccentColor,
+                                selectedContainerColor = AccentColor,
+                                selectedLabelColor = AccentOnColor,
                                 containerColor = GlassBackground,
                                 labelColor = TextSecondary
                             ),

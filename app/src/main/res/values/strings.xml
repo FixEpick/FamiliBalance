@@ -75,6 +75,12 @@
     <string name="language_ru">Русский</string>
     <string name="language_en">English</string>
 
+    <!-- Child settings sheet -->
+    <string name="settings_sound_section">Звук и отклик</string>
+    <string name="settings_sound_effects">Звуковые эффекты</string>
+    <string name="settings_vibration">Виброотклик</string>
+    <string name="settings_language">Язык приложения</string>
+
     <!-- App title / PIN dialogs -->
     <string name="pin_parent_check_title">ПРОВЕРКА РОДИТЕЛЯ</string>
     <string name="pin_parent_check_subtitle">Введи родительский ПИН-код</string>
@@ -119,7 +125,7 @@
     <!-- Child main screen -->
     <string name="child_balance">Баланс</string>
     <string name="child_bank_name">Банк</string>
-    <string name="child_cashout_btn">Вывести наличные</string>
+    <string name="child_cashout_btn">Забрать наличными</string>
     <string name="child_cashout_hint">*работает, когда вы с родителем</string>
     <string name="child_no_cashout_requests">Нет активных заявок на вывод</string>
     <string name="child_cashout_requests_title">💵 Активные заявки на вывод:</string>
@@ -131,29 +137,29 @@
     <string name="child_cashout_reason_ok">Понятно</string>
     <string name="child_dream_default_title">Моя цель</string>
     <string name="child_dream_reached">Цель достигнута! Нажми, чтобы забрать ✨</string>
-    <string name="child_dream_choose_title">🎯 Цель-мечта</string>
+    <string name="child_dream_choose_title">Цель-мечта</string>
     <string name="child_dream_choose_subtitle">Поставь цель и копи на мечту!</string>
     <string name="child_dream_choose_btn">Выбрать цель</string>
     <string name="child_dream_change_btn">Изменить цель</string>
     <string name="child_dream_cooldown">Новую цель можно будет выбрать через %1$d дн.</string>
-    <string name="dream_dialog_title">🎯 Новая цель</string>
+    <string name="dream_dialog_title">Новая цель</string>
     <string name="dream_name_label">Название цели</string>
     <string name="dream_amount_label">Сумма (₽)</string>
     <string name="dream_change_hint">Цель можно изменить через 7 дней или после выполнения этой мечты.</string>
     <string name="dream_deduct_hint">Когда накопишь нужную сумму, она спишется с баланса — и цель будет достигнута.</string>
-    <string name="child_screen_time_title">⏳ Экранное время на сегодня</string>
+    <string name="child_screen_time_title">Экранное время на сегодня</string>
     <string name="child_bought_minutes">Куплено сегодня: %1$d / %2$d мин</string>
     <string name="child_buy_time_btn">Купить время</string>
     <string name="child_daily_limit_note">Дневной лимит %1$d мин • Обновится завтра</string>
     <string name="child_streak_title">Дни без штрафов</string>
     <string name="child_streak_compact">Серия без штрафов: %1$d/7</string>
     <string name="child_streak_day_label">%1$d дн</string>
-    <string name="child_streak_checkin">🔥 Отметиться сегодня</string>
+    <string name="child_streak_checkin">Отметиться сегодня</string>
     <string name="child_streak_checked_today">✓ Сегодняшний день засчитан — стрик в безопасности</string>
     <string name="child_streak_checked_short">✓ Сегодня засчитан</string>
     <string name="child_streak_bonus">Бонус +50 ₽ на 7-й день</string>
-    <string name="child_honest_cooldown">🐱 Честное признание • Доступно через %1$d дн.</string>
-    <string name="child_honest_btn">🐱 Честное признание</string>
+    <string name="child_honest_cooldown">Честное признание • Доступно через %1$d дн.</string>
+    <string name="child_honest_btn">Честное признание</string>
     <string name="child_honest_approved_note">✓ Штраф уменьшится вдвое при следующем нарушении</string>
     <string name="child_honest_pending">• Признание на проверке у родителя</string>
     <string name="child_honest_claimed">✓ Скидка 50% уже применена</string>
@@ -162,14 +168,14 @@
     <string name="child_economy_btn">💰 Экономика</string>
     <string name="info_sheet_tab_rules">Правила</string>
     <string name="info_sheet_tab_economy">Тарифы и награды</string>
-    <string name="child_cashout_dialog_title">💵 Вывести наличные</string>
+    <string name="child_cashout_dialog_title">Вывести наличные</string>
     <string name="child_cashout_amount_label">Сумма (₽)</string>
     <string name="child_cashout_insufficient">Недостаточно средств на балансе</string>
     <string name="child_cashout_comment_label">Комментарий</string>
     <string name="child_cashout_submit">Отправить заявку</string>
 
     <!-- Buy time sheet -->
-    <string name="child_buytime_title">⏳ Обмен рублей на время</string>
+    <string name="child_buytime_title">Купить время игры</string>
     <string name="child_buytime_limit">Минут в день: %1$d • доступно сегодня: %2$d</string>
     <plurals name="child_tariff_minutes">
         <item quantity="one">⏳ %1$d минута</item>
@@ -205,6 +211,7 @@
     <string name="economy_spend_section">💸 На что потратить</string>
     <string name="economy_fines_section">🔴 За что списывают (штрафы)</string>
     <string name="economy_achievements_section">🏆 Достижения</string>
+    <string name="economy_themes_section">🎨 Темы оформления</string>
     <string name="eco_wardrobe_photo">📸 Фото шкафа</string>
     <string name="eco_room_photo">🛏️ Фото комнаты</string>
     <string name="eco_diary_grade5">📓 Дневник: оценка 5</string>
@@ -295,7 +302,7 @@
     <string name="ach_claim_reward">🎁 Забрать награду %1$s</string>
 
     <!-- Theme selection sheet -->
-    <string name="theme_shop_title">🎨 Магазин тем</string>
+    <string name="theme_shop_title">Магазин тем</string>
     <string name="theme_shop_subtitle">Выбери палитру, которая нравится больше всего</string>
     <string name="theme_selected">✓ Выбрана</string>
     <string name="theme_done">Готово</string>
@@ -307,6 +314,56 @@
     <string name="theme_name_galaxy_purple">Галактический фиолетовый</string>
     <string name="theme_name_arctic_ice">Арктический лёд</string>
     <string name="theme_name_sunset_orange">Закатный оранжевый</string>
+    <string name="theme_name_cyber_neon">Кибер-неон</string>
+    <string name="theme_name_cloud_light">Облачный день</string>
+    <string name="theme_name_pixel_craft">Пиксель-крафт</string>
+    <string name="theme_name_bubble_gum">Бабл-гам</string>
+    <string name="theme_name_golden_dragon">Золотой дракон</string>
+    <string name="theme_name_sunny_citrus">Солнечный цитрус</string>
+    <string name="theme_name_galaxy_sunset">Галактический закат</string>
+    <string name="theme_kind_dark">Тёмная</string>
+    <string name="theme_kind_light">Светлая</string>
+    <string name="theme_locked">🔒 Скоро</string>
+    <string name="theme_section_dark">🌙 Тёмные темы</string>
+    <string name="theme_section_light">☀️ Светлые темы</string>
+    <string name="theme_price">%1$d ₽</string>
+    <string name="theme_ach_prefix">За достижение: %1$s</string>
+    <string name="theme_free_label">Бесплатно</string>
+    <string name="theme_unlocked_label">✓ Открыта</string>
+    <string name="theme_locked_achievement_toast">Тема откроется за достижение «%1$s»</string>
+    <string name="theme_buy_title">Купить тему?</string>
+    <string name="theme_buy_message">Купить тему «%1$s» за %2$s?</string>
+    <string name="theme_buy_confirm">Купить</string>
+    <string name="theme_buy_no_funds">Недостаточно средств</string>
+    <string name="theme_preview_badge">👁 Предпросмотр</string>
+    <string name="theme_preview_title">Предпросмотр: %1$s</string>
+    <string name="theme_preview_title_timer">Предпросмотр: %1$s · %2$dс</string>
+    <string name="theme_buy_for">Купить за %1$s</string>
+    <string name="theme_return_mine">Вернуть мою тему</string>
+    <string name="theme_inspect">Осмотреть экран</string>
+    <string name="theme_unlocks_for">Откроется за: %1$s</string>
+
+    <!-- Avatar selection sheet -->
+    <string name="avatar_sheet_title">Выбор аватара</string>
+    <string name="avatar_choose_title">Выберите аватар</string>
+    <string name="avatar_unlocked_label">Открыт</string>
+    <string name="avatar_locked_hint">Этот аватар откроется за достижение</string>
+    <string name="avatar_locked_hint_ach">Откроется за достижение «%1$s»</string>
+    <string name="avatar_ach_short">🏆 Достижение</string>
+    <string name="avatar_buy_title">Купить аватара?</string>
+    <string name="avatar_buy_message">«%1$s» обойдётся в %2$d ₽. Списать с баланса?</string>
+    <string name="style_shop_title">Магазин стиля</string>
+    <string name="style_tab_themes">🎨 Темы</string>
+    <string name="style_tab_avatars">🦸 Аватары</string>
+    <string name="economy_avatars_section">🦸 Аватары</string>
+    <string name="avatar_cat">Котик</string>
+    <string name="avatar_panda">Панда</string>
+    <string name="avatar_alien">Пришелец</string>
+    <string name="avatar_unicorn">Единорог</string>
+    <string name="avatar_astronaut">Космонавт</string>
+    <string name="avatar_robot">Робот</string>
+    <string name="avatar_dragon">Дракончик</string>
+    <string name="avatar_ninja">Ниндзя</string>
 
     <!-- History screen -->
     <string name="history_filter_all">Все</string>
@@ -349,10 +406,13 @@
     <string name="hist_quest_approved">Одобрен квест: %1$s</string>
     <string name="hist_honest_approved">Честное признание одобрено</string>
     <string name="hist_diary_grade5">Оценка 5</string>
+    <string name="hist_diary_summary">Итоги дневника: %1$s</string>
     <string name="hist_diary_grade4">Оценка 4</string>
     <string name="hist_quest_reward">Награда получена: %1$s</string>
     <string name="hist_bonus_quest_done">Бонус-квест выполнен: %1$s</string>
     <string name="hist_dream_set">Заложена цель: %1$s</string>
+    <string name="hist_theme_purchase">Покупка темы: %1$s</string>
+    <string name="hist_avatar_purchase">Покупка аватара: %1$s</string>
 
     <!-- Auth / admin ViewModel messages (UiText) -->
     <string name="auth_err_nickname">Введите никнейм</string>
@@ -447,6 +507,12 @@
     <string name="task_claim_reward">🎉 Получить награду</string>
     <string name="task_rejected_by_dad">❌ Отклонено родителем: %1$s</string>
     <string name="task_execute">📷 Выполнить</string>
+    <string name="task_fix_resubmit">🔧 Исправить и отправить</string>
+    <string name="task_rejected_badge">Отклонено</string>
+    <string name="task_why_btn">❓ Почему?</string>
+    <string name="task_why_title">Почему задание отклонено?</string>
+    <string name="task_why_default">Родитель попросил переделать задание и отправить фото ещё раз</string>
+    <string name="task_got_it">Понятно!</string>
     <string name="task_pending_review">• На проверке у родителя</string>
     <string name="task_done">✅ Выполнено</string>
     <string name="task_view_report">📊 Отчёт по оценкам — нажмите, чтобы посмотреть</string>
@@ -466,6 +532,9 @@
     <string name="admin_reject">❌ Отклонить</string>
     <string name="admin_reject_reason_title">Причина отклонения</string>
     <string name="admin_reject_reason_hint">Что нужно доделать?</string>
+    <string name="admin_reject_tpl_retake">Переснять фото</string>
+    <string name="admin_reject_tpl_finish">Убрать до конца</string>
+    <string name="admin_reject_tpl_partial">Сделано не полностью</string>
     <string name="admin_reject_default_reason">Требуется доработка</string>
     <string name="admin_diary_scanning">Сканирование оценок…</string>
     <string name="admin_diary_scan_success">Оценки распознаны!</string>
@@ -493,7 +562,7 @@
     <string name="admin_bonus_prefix">Бонус: %1$s</string>
     <string name="admin_quest_prefix">Квест: %1$s</string>
     <string name="admin_no_pending">✨ Нет заданий на проверке у %1$s</string>
-    <string name="admin_honest_title">🐱 Честное признание от %1$s</string>
+    <string name="admin_honest_title">Честное признание от %1$s</string>
     <string name="admin_honest_quote">«%1$s»</string>
     <string name="admin_approve_honest">✅ Одобрить (Штраф -50%)</string>
     <string name="admin_quick_actions">⚡ Быстрые действия родителя (%1$s)</string>

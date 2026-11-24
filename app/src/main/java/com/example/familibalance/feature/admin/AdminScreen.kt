@@ -259,13 +259,18 @@ fun AdminScreen(
                         showCashOutDialog = false
                     },
                     enabled = cashoutValid && !isProcessingAction,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .accentButtonChrome()
+                        .bounceClick(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = AccentColor,
-                        contentColor = SpaceBgStart,
-                        disabledContainerColor = GlassBackground,
+                        containerColor = Color.Transparent,
+                        contentColor = AccentOnColor,
+                        disabledContainerColor = Color.Transparent,
                         disabledContentColor = TextSecondary
                     ),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = AccentButtonShape
                 ) {
                     AppLocaleContent {
                         Text(
@@ -296,23 +301,17 @@ fun AdminScreen(
     // стабильную сине-голубую палитру (COSMIC_BLUE) для всего кабинета.
     // Валюта — от выбранного ребёнка (семейная настройка, синхронизируется).
     CompositionLocalProvider(
-        LocalAppPalette provides AppThemes.first(),
+        LocalAppPalette provides AppThemePalette(
+            id = "COSMIC_BLUE",
+            primaryNeon = Color(0xFF38BDF8),
+            secondaryNeon = Color(0xFF38BDF8).copy(alpha = 0.6f)
+        ),
         LocalRewardCurrency provides child.rewardCurrency
     ) {
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.space_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(AdminOverlayBg.copy(alpha = 0.82f))
-        )
+        ThemedBackground {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
@@ -393,6 +392,7 @@ fun AdminScreen(
                     }
                 }
             }
+        }
         }
     }
     }

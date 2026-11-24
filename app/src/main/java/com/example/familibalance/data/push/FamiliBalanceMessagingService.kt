@@ -37,6 +37,12 @@ class FamiliBalanceMessagingService : FirebaseMessagingService() {
             ?: data["body"] ?: message.notification?.body ?: ""
         val screen = data["screen"].orEmpty()
         val role = data["role"].orEmpty()
+        // Устройство в детском режиме не должно показывать родительские
+        // пуши (например, «Новый фотоотчёт на проверке», который ребёнок
+        // сам только что отправил). Роль устройства — из push_prefs;
+        // на общем устройстве родителя role="parent" и фильтр не срабатывает.
+        val deviceRole = PushTokenRegistrar.currentRole(this)
+        if (deviceRole == "child" && role == "parent") return
         val channelId = data["channel"]?.takeIf { it.isNotBlank() } ?: PushChannels.QUESTS
         val highPriority = data["priority"] == "high"
 

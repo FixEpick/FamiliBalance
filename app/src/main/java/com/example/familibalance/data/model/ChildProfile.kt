@@ -1,5 +1,7 @@
 package com.example.familibalance.data.model
 
+import com.example.familibalance.ui.theme.DefaultUnlockedAvatarIds
+import com.example.familibalance.ui.theme.DefaultUnlockedThemeIds
 import kotlinx.serialization.Serializable
 
 private const val MAX_HISTORY_ITEMS = 200
@@ -56,7 +58,8 @@ data class ChildProfileState(
     val customQuests: List<CustomQuest> = emptyList(),
     val historyItems: List<HistoryData> = emptyList(),
     val selectedThemeId: String = "COSMIC_BLUE",
-    val unlockedThemes: List<String> = listOf("COSMIC_BLUE"),
+    val unlockedThemes: List<String> = DefaultUnlockedThemeIds,
+    val unlockedAvatars: List<String> = DefaultUnlockedAvatarIds,
     val isWardrobeVisible: Boolean = true,
     val isRoomVisible: Boolean = true,
     val isDiaryVisible: Boolean = true,
@@ -153,6 +156,7 @@ data class ChildProfileState(
             historyItems = dto.historyItems.takeLast(MAX_HISTORY_ITEMS),
             selectedThemeId = dto.selectedThemeId,
             unlockedThemes = dto.unlockedThemes,
+            unlockedAvatars = dto.unlockedAvatars,
             customQuests = dto.customQuests,
             isWardrobeVisible = dto.isWardrobeVisible,
             isRoomVisible = dto.isRoomVisible,
@@ -234,7 +238,8 @@ data class ChildProfileDto(
     val bonusQuests: List<BonusQuest> = emptyList(),
     val historyItems: List<HistoryData> = emptyList(),
     val selectedThemeId: String = "COSMIC_BLUE",
-    val unlockedThemes: List<String> = listOf("COSMIC_BLUE"),
+    val unlockedThemes: List<String> = DefaultUnlockedThemeIds,
+    val unlockedAvatars: List<String> = DefaultUnlockedAvatarIds,
     val customQuests: List<CustomQuest> = emptyList(),
     val isWardrobeVisible: Boolean = true,
     val isRoomVisible: Boolean = true,
@@ -312,6 +317,7 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     historyItems = historyItems.takeLast(MAX_HISTORY_ITEMS),
     selectedThemeId = selectedThemeId,
     unlockedThemes = unlockedThemes,
+    unlockedAvatars = unlockedAvatars,
     customQuests = customQuests.toList(),
     isWardrobeVisible = isWardrobeVisible,
     isRoomVisible = isRoomVisible,

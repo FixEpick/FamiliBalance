@@ -120,8 +120,8 @@ fun HonestCatSheet(
                         .height(140.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary,
                         cursorColor = LocalAppPalette.current.primaryNeon,
                         focusedBorderColor = LocalAppPalette.current.primaryNeon,
                         unfocusedBorderColor = GlassStroke,
@@ -137,7 +137,7 @@ fun HonestCatSheet(
                     onClick = onSendClick,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = AccentColor,
-                        contentColor = SpaceBgStart
+                        contentColor = AccentOnColor
                     ),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier

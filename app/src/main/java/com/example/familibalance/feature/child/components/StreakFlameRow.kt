@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,8 +37,8 @@ fun StreakFlameCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .border(1.dp, GlassStroke, RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
+            .glassCard(),
+        shape = GlassCardShape,
         colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Row(
@@ -46,6 +47,8 @@ fun StreakFlameCard(
                 .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            CloudBadge(type = CloudIconType.STREAK, size = 36.dp)
+            Spacer(modifier = Modifier.width(10.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.child_streak_compact, streakDays),
@@ -57,8 +60,8 @@ fun StreakFlameCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     for (day in 1..7) {
                         val isActive = day <= activeFlames
-                        EmojiIcon(
-                            emoji = "🔥",
+                        CloudStyleIcon(
+                            type = CloudIconType.STREAK,
                             size = 18.dp,
                             modifier = Modifier.alpha(if (isActive) 1f else 0.25f)
                         )
@@ -86,19 +89,26 @@ fun StreakFlameCard(
                 } else {
                     Button(
                         onClick = onCheckIn,
+                        modifier = Modifier
+                            .height(32.dp)
+                            .accentButtonChrome()
+                            .bounceClick(),
+                        shape = AccentButtonShape,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = LocalAppPalette.current.primaryNeon,
-                            contentColor = SpaceBgStart
+                            containerColor = Color.Transparent,
+                            contentColor = AccentOnColor
                         ),
-                        shape = RoundedCornerShape(10.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                        modifier = Modifier.height(32.dp)
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Text(
-                            text = stringResource(R.string.child_streak_checkin),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CloudStyleIcon(type = CloudIconType.STREAK, size = 16.dp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(R.string.child_streak_checkin),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
                     }
                 }
             }

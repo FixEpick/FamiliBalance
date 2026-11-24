@@ -88,20 +88,27 @@ fun AdminTopBar(
                 val isSelected = selectedChildId == profile.id
                 Surface(
                     onClick = { onSelectChild(profile.id) },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = GlassCardShape,
                     color = if (isSelected) AccentColor.copy(alpha = 0.25f) else GlassBackground,
                     border = BorderStroke(1.dp, if (isSelected) AccentColor else GlassStroke),
                     modifier = Modifier
                         .weight(1f)
                         .height(42.dp)
+                        .glassCard()
+                        .bounceClick()
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "${profile.avatar} ${childDisplayName(profile)}",
-                            color = if (isSelected) AccentColor else TextSecondary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CloudAvatar(avatarId = profile.avatar, size = 22.dp)
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = childDisplayName(profile),
+                                color = if (isSelected) AccentColor else TextSecondary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
@@ -114,12 +121,13 @@ fun AdminTopBar(
                 onClick = onEnterChildMode,
                 border = BorderStroke(1.dp, AccentColor.copy(alpha = 0.6f)),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor),
-                shape = RoundedCornerShape(10.dp),
+                shape = AccentButtonShape,
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 6.dp)
+                    .bounceClick()
             ) {
                 Text(
                     text = "🕹️ " + stringResource(R.string.admin_enter_child_mode),

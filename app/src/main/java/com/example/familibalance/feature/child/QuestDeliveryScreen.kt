@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -100,6 +101,7 @@ private fun QuestDeliveryScreenContent(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
     var commentText by rememberSaveable { mutableStateOf("") }
     // URI храним строкой: rememberSaveable + String гарантированно
     // переживают process death (камера — отдельная Activity).
@@ -296,13 +298,14 @@ private fun QuestDeliveryScreenContent(
         Button(
             onClick = {
                 isSubmitting = true
+                FeedbackManager.playCoin(context, haptic)
                 onSendClick(commentText, capturedImageUri)
                 requestNotifPermission()
             },
             enabled = (!photoRequired || capturedImageUri != null) && !isSubmitting,
             colors = ButtonDefaults.buttonColors(
                 containerColor = AccentColor,
-                contentColor = SpaceBgStart,
+                contentColor = AccentOnColor,
                 disabledContainerColor = GlassBackground,
                 disabledContentColor = TextSecondary
             ),

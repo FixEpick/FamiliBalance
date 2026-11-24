@@ -13,6 +13,7 @@ import com.example.familibalance.ui.theme.AccentColor
 import com.example.familibalance.ui.theme.CardBgDark
 import com.example.familibalance.ui.theme.GlassBackground
 import com.example.familibalance.ui.theme.GlassStroke
+import com.example.familibalance.ui.theme.TextPrimary
 
 /**
  * Цвета поля ввода в стиле админ-редакторов: стеклянный фон,
@@ -20,8 +21,8 @@ import com.example.familibalance.ui.theme.GlassStroke
  */
 @Composable
 fun appOutlinedFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color.White,
-    unfocusedTextColor = Color.White,
+    focusedTextColor = TextPrimary,
+    unfocusedTextColor = TextPrimary,
     focusedContainerColor = GlassBackground,
     unfocusedContainerColor = GlassBackground,
     focusedBorderColor = AccentColor,
@@ -34,8 +35,8 @@ fun appOutlinedFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors
  */
 @Composable
 fun appOutlinedFieldColorsNeon(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = Color.White,
-    unfocusedTextColor = Color.White,
+    focusedTextColor = TextPrimary,
+    unfocusedTextColor = TextPrimary,
     cursorColor = com.example.familibalance.ui.theme.LocalAppPalette.current.primaryNeon,
     focusedBorderColor = com.example.familibalance.ui.theme.LocalAppPalette.current.primaryNeon,
     unfocusedBorderColor = GlassStroke,

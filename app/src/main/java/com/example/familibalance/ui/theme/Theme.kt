@@ -1,13 +1,17 @@
 package com.example.familibalance.ui.theme
 
+import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
 data class AppThemePalette(
     val id: String,
@@ -15,47 +19,66 @@ data class AppThemePalette(
     val secondaryNeon: Color
 )
 
-val AppThemes = listOf(
-    AppThemePalette("COSMIC_BLUE", Color(0xFF5CE1E6), Color(0xFF7B61FF)),
-    AppThemePalette("CYBER_PINK", Color(0xFFFF4D94), Color(0xFFFF8AB0)),
-    AppThemePalette("TOXIC_GREEN", Color(0xFF39FF14), Color(0xFF00FF41)),
-    AppThemePalette("SOLAR_GOLD", Color(0xFFFFD700), Color(0xFFFFA500)),
-    AppThemePalette("INFERNO_RED", Color(0xFFFF6B6B), Color(0xFFFF8A80)),
-    AppThemePalette("GALAXY_PURPLE", Color(0xFFCC77FF), Color(0xFFAA66FF)),
-    AppThemePalette("ARCTIC_ICE", Color(0xFF00FFFF), Color(0xFF87CEEB)),
-    AppThemePalette("SUNSET_ORANGE", Color(0xFFFF8C00), Color(0xFFFF4500))
+private fun paletteForTheme(config: AppThemeConfig) = AppThemePalette(
+    id = config.id,
+    primaryNeon = config.accent,
+    secondaryNeon = config.accent.copy(alpha = 0.6f)
 )
 
-val LocalAppPalette = compositionLocalOf { AppThemes.first() }
+/**
+ * Легаси-палитра неоновых акцентов для компонентов, которые ещё
+ * используют LocalAppPalette. Строится из AppThemeConfig: primary —
+ * акцент темы, secondary — его приглушённая версия.
+ */
+val LocalAppPalette = compositionLocalOf { paletteForTheme(AllAppThemes.first()) }
 
 @Composable
 fun FamiliBalanceTheme(
     themeId: String = "COSMIC_BLUE",
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false, // Отключаем динамические цвета, чтобы не ломать наш космос
+    dynamicColor: Boolean = false, // Отключаем динамические цвета, чтобы не ломать нашу тему
     content: @Composable () -> Unit
 ) {
-    val currentPalette = AppThemes.firstOrNull { it.id == themeId } ?: AppThemes.first()
+    val config = getThemeById(themeId)
+    // Фактическая тёмность определяется темой, а не системной настройкой.
+    val useDark = config.isDark
 
-    val colorScheme = if (darkTheme) {
+    val colorScheme = if (useDark) {
         darkColorScheme(
-            primary = currentPalette.primaryNeon,
-            secondary = currentPalette.secondaryNeon,
-            tertiary = SpaceBgStart,
-            background = SpaceBgEnd,
-            surface = GlassBackground
+            primary = config.accent,
+            onPrimary = config.onAccentText,
+            secondary = config.accent,
+            tertiary = config.backgroundGradientEnd,
+            background = config.background,
+            surface = config.cardBackground
         )
     } else {
         lightColorScheme(
-            primary = currentPalette.primaryNeon,
-            secondary = currentPalette.secondaryNeon,
-            tertiary = SpaceBgStart,
-            background = SpaceBgEnd,
-            surface = GlassBackground
+            primary = config.accent,
+            onPrimary = config.onAccentText,
+            secondary = config.accent,
+            tertiary = config.backgroundGradientEnd,
+            background = config.background,
+            surface = config.cardBackground
         )
     }
 
-    CompositionLocalProvider(LocalAppPalette provides currentPalette) {
+    // Иконки статус-бара должны контрастировать с фоном: в светлых темах — тёмные.
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !config.isDark
+                isAppearanceLightNavigationBars = !config.isDark
+            }
+        }
+    }
+
+    CompositionLocalProvider(
+        LocalAppTheme provides config,
+        LocalAppPalette provides paletteForTheme(config)
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = Typography,

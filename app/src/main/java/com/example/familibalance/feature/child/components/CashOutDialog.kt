@@ -37,11 +37,15 @@ fun CashOutDialog(
     AppDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = stringResource(R.string.child_cashout_dialog_title),
-                color = LocalAppPalette.current.primaryNeon,
-                fontWeight = FontWeight.Bold
-            )
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                CloudBadge(type = CloudIconType.BANK, size = 32.dp)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.child_cashout_dialog_title),
+                    color = LocalAppPalette.current.primaryNeon,
+                    fontWeight = FontWeight.Bold
+                )
+            }
         },
         text = {
             Column {
@@ -81,13 +85,18 @@ fun CashOutDialog(
                     }
                 },
                 enabled = canSubmit && !isProcessing,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+                    .accentButtonChrome()
+                    .bounceClick(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentColor,
-                    contentColor = SpaceBgStart,
-                    disabledContainerColor = GlassBackground,
+                    containerColor = Color.Transparent,
+                    contentColor = AccentOnColor,
+                    disabledContainerColor = Color.Transparent,
                     disabledContentColor = TextSecondary
                 ),
-                shape = RoundedCornerShape(12.dp)
+                shape = AccentButtonShape
             ) {
                 Text(stringResource(R.string.child_cashout_submit), fontWeight = FontWeight.Bold)
             }

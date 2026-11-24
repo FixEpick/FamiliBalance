@@ -9,7 +9,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.data.model.*
@@ -27,6 +30,9 @@ internal fun EconomySheetContent(
     child: ChildProfileState
 ) {
     val achievements = remember(child) { getAchievements(child) }
+    val claimedTitles = remember(child) {
+        child.achievements.filter { it.isClaimed }.map { it.title }.toSet()
+    }
     val curSym = RewardCurrency.symbolOf(child.rewardCurrency)
     val branchTitles = mapOf(
         AchievementBranch.DIARY to stringResource(R.string.eco_branch_diary),
@@ -133,6 +139,30 @@ internal fun EconomySheetContent(
                 }
             }
 
+            // ===== Секция 5: Темы оформления =====
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                EconomySectionTitle(stringResource(R.string.economy_themes_section))
+            }
+            AllAppThemes.forEach { theme ->
+                val unlocked = theme.isThemeUnlocked(child.unlockedThemes, claimedTitles)
+                item(key = "theme_${theme.id}") {
+                    ThemeEconomyRow(theme = theme, unlocked = unlocked)
+                }
+            }
+
+            // ===== Секция 6: Аватары =====
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                EconomySectionTitle(stringResource(R.string.economy_avatars_section))
+            }
+            CloudAvatarType.entries.forEach { type ->
+                val unlocked = type.isAvatarUnlocked(child.unlockedAvatars, claimedTitles)
+                item(key = "avatar_${type.name}") {
+                    AvatarEconomyRow(type = type, unlocked = unlocked)
+                }
+            }
+
             item {
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -167,6 +197,80 @@ private fun EconomyRow(
         Text(
             text = value,
             color = valueColor,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun ThemeEconomyRow(
+    theme: AppThemeConfig,
+    unlocked: Boolean
+) {
+    val title = if (theme.titleRes != 0) stringResource(theme.titleRes) else theme.title
+    val condition = when (val rule = theme.unlockRule) {
+        is ThemeUnlockRule.Free -> stringResource(R.string.theme_free_label)
+        is ThemeUnlockRule.Paid -> currencyString(R.string.theme_price, rule.price)
+        is ThemeUnlockRule.Achievement ->
+            stringResource(R.string.theme_ach_prefix, stringResource(rule.titleRes))
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = title, color = TextMuted, fontSize = 14.sp)
+        Text(
+            text = buildAnnotatedString {
+                append(condition)
+                if (unlocked) {
+                    append("  ")
+                    withStyle(SpanStyle(color = StatusGreen)) {
+                        append(stringResource(R.string.theme_unlocked_label))
+                    }
+                }
+            },
+            color = TextPrimary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun AvatarEconomyRow(
+    type: CloudAvatarType,
+    unlocked: Boolean
+) {
+    val title = stringResource(type.titleRes)
+    val condition = when (val rule = type.unlockRule) {
+        is ThemeUnlockRule.Free -> stringResource(R.string.theme_free_label)
+        is ThemeUnlockRule.Paid -> currencyString(R.string.theme_price, rule.price)
+        is ThemeUnlockRule.Achievement ->
+            stringResource(R.string.theme_ach_prefix, stringResource(rule.titleRes))
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = title, color = TextMuted, fontSize = 14.sp)
+        Text(
+            text = buildAnnotatedString {
+                append(condition)
+                if (unlocked) {
+                    append("  ")
+                    withStyle(SpanStyle(color = StatusGreen)) {
+                        append(stringResource(R.string.theme_unlocked_label))
+                    }
+                }
+            },
+            color = TextPrimary,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold
         )

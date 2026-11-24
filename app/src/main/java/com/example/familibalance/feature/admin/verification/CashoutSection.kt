@@ -36,10 +36,11 @@ fun CashoutSection(
     var rejectReasonText by remember { mutableStateOf("") }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassBackground),
-        border = BorderStroke(1.dp, GlassStroke)
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassCard(),
+        shape = GlassCardShape,
+        colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
             Text(
@@ -78,10 +79,11 @@ fun CashoutSection(
                             onClick = { onApprove(request.id) },
                             enabled = actionEnabled,
                             colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = AccentButtonShape,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(40.dp)
+                                .bounceClick()
                         ) {
                             Text(stringResource(R.string.admin_cashout_approved), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
@@ -92,10 +94,11 @@ fun CashoutSection(
                             },
                             enabled = actionEnabled,
                             colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = AccentButtonShape,
                             modifier = Modifier
                                 .weight(1f)
                                 .height(40.dp)
+                                .bounceClick()
                         ) {
                             Text(stringResource(R.string.admin_cashout_reject), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
@@ -114,16 +117,20 @@ fun CashoutSection(
                 Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary)
             },
             text = {
-                AppOutlinedField(
-                    value = rejectReasonText,
-                    onValueChange = { rejectReasonText = it },
-                    label = {
-                        Text(
-                            stringResource(R.string.admin_reject_reason_hint),
-                            color = TextSecondary
-                        )
-                    }
-                )
+                Column {
+                    RejectReasonTemplateChips(onSelect = { rejectReasonText = it })
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AppOutlinedField(
+                        value = rejectReasonText,
+                        onValueChange = { rejectReasonText = it },
+                        label = {
+                            Text(
+                                stringResource(R.string.admin_reject_reason_hint),
+                                color = TextSecondary
+                            )
+                        }
+                    )
+                }
             },
             confirmButton = {
                 Button(

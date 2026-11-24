@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +70,35 @@ fun TasksScreen(
     val isRoomVisible = child.isRoomVisible
     val isDiaryVisible = child.isDiaryVisible
 
+    val haptic = LocalHapticFeedback.current
+    val context = LocalContext.current
+    var balanceBadgePosition by remember { mutableStateOf(Offset.Zero) }
+    var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
+    var confettiTrigger by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(confettiTrigger) {
+        if (confettiTrigger > 0) {
+            delay(2500)
+            confettiTrigger = 0
+        }
+    }
+
+    val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
+        confettiTrigger++
+        FeedbackManager.playCoin(context, haptic)
+
+        lateinit var flight: CoinFlightData
+        flight = CoinFlightData(
+            startX = if (buttonOffset != Offset.Zero) buttonOffset.x else 200f,
+            startY = if (buttonOffset != Offset.Zero) buttonOffset.y else 500f,
+            onFinished = {
+                onComplete()
+                activeCoinFlights = activeCoinFlights.filter { it != flight }
+            }
+        )
+        activeCoinFlights = activeCoinFlights + flight
+    }
+
     // rememberSaveable хранит только String-ключ: Bundle с Serializable-
     // объектом мог не восстановиться после process death (камера —
     // отдельная Activity). Цель резолвится из актуального child по ключу —
@@ -99,6 +129,9 @@ fun TasksScreen(
                         }
                     }
                 }
+                // Конфетти при отправке квеста на проверку — сработает
+                // после возврата на список заданий (оверлеи живут там).
+                confettiTrigger++
                 activeDeliveryKey = null
             },
             onBackClick = {
@@ -107,35 +140,6 @@ fun TasksScreen(
             modifier = modifier
         )
         return
-    }
-
-    val haptic = LocalHapticFeedback.current
-    var balanceBadgePosition by remember { mutableStateOf(Offset.Zero) }
-    var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
-    var confettiTrigger by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(confettiTrigger) {
-        if (confettiTrigger > 0) {
-            delay(2500)
-            confettiTrigger = 0
-        }
-    }
-
-    val triggerCoinFlight: (Offset, () -> Unit) -> Unit = { buttonOffset, onComplete ->
-        confettiTrigger++
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-        CoinSoundPlayer.playCoin()
-
-        lateinit var flight: CoinFlightData
-        flight = CoinFlightData(
-            startX = if (buttonOffset != Offset.Zero) buttonOffset.x else 200f,
-            startY = if (buttonOffset != Offset.Zero) buttonOffset.y else 500f,
-            onFinished = {
-                onComplete()
-                activeCoinFlights = activeCoinFlights.filter { it != flight }
-            }
-        )
-        activeCoinFlights = activeCoinFlights + flight
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -184,7 +188,9 @@ fun TasksScreen(
                             if (bQuest.requiresPhoto) {
                                 activeDeliveryKey = "bonus:${bQuest.id}"
                             } else {
-                                viewModel.submitBonusQuestByChild(child.id, bQuest.id, null, "")
+                                triggerCoinFlight(Offset.Zero) {
+                                    viewModel.submitBonusQuestByChild(child.id, bQuest.id, null, "")
+                                }
                             }
                         },
                         onClaim = { buttonOffset ->
@@ -341,7 +347,9 @@ fun TasksScreen(
                             if (quest.requiresPhoto) {
                                 activeDeliveryKey = "custom:${quest.id}"
                             } else {
-                                viewModel.submitCustomQuestPhoto(child.id, quest.id, "", "")
+                                triggerCoinFlight(Offset.Zero) {
+                                    viewModel.submitCustomQuestPhoto(child.id, quest.id, "", "")
+                                }
                             }
                         },
                         onClaim = { buttonOffset ->
@@ -358,10 +366,9 @@ fun TasksScreen(
             if (!hasAnyVisibleQuest) {
                 item {
                     Card(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = GlassBackground),
-                        border = BorderStroke(1.dp, GlassStroke)
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).glassCard(),
+                        shape = GlassCardShape,
+                        colors = CardDefaults.cardColors(containerColor = GlassBackground)
                     ) {
                         Column(
                             modifier = Modifier.fillMaxWidth().padding(32.dp),

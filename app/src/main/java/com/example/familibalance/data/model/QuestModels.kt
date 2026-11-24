@@ -88,9 +88,12 @@ object HistoryType {
     const val HONEST_APPROVED = "HONEST_APPROVED"
     const val DIARY_GRADE_5 = "DIARY_GRADE_5"
     const val DIARY_GRADE_4 = "DIARY_GRADE_4"
+    const val DIARY_SUMMARY = "DIARY_SUMMARY"
     const val QUEST_REWARD = "QUEST_REWARD"
     const val BONUS_QUEST_DONE = "BONUS_QUEST_DONE"
     const val DREAM_SET = "DREAM_SET"
+    const val THEME_PURCHASE = "THEME_PURCHASE"
+    const val AVATAR_PURCHASE = "AVATAR_PURCHASE"
 }
 
 @Serializable

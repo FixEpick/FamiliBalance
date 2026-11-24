@@ -62,7 +62,7 @@ internal fun EditorItemRow(
     onDelete: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().background(GlassBackground, RoundedCornerShape(16.dp)).border(1.dp, GlassStroke, RoundedCornerShape(16.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier = Modifier.fillMaxWidth().glassCard().padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val editDesc = stringResource(R.string.a11y_edit_button)
@@ -138,8 +138,8 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         item {
             OutlinedButton(
                 onClick = { showCreateDialog = true },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().height(50.dp).bounceClick(),
+                shape = AccentButtonShape,
                 border = BorderStroke(1.dp, AccentColor),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor)
             ) { Text(stringResource(R.string.quested_create), fontWeight = FontWeight.Bold, fontSize = 15.sp) }
@@ -237,6 +237,8 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Button(
                     enabled = newTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     onClick = {
                         viewModel.addCustomQuest(child.id, newTitle.trim(), newReward.trim().toIntOrNull() ?: 50, newFreq, newDesc.trim(), newRequiresPhoto)
                         newTitle = ""; newDesc = ""; newReward = "50"; newRequiresPhoto = true; showCreateDialog = false
@@ -308,6 +310,8 @@ fun QuestsEditorSubScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 Button(
                     enabled = editTitle.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentColor, contentColor = SpaceBgStart, disabledContainerColor = AccentColor.copy(alpha = 0.25f), disabledContentColor = Color.White.copy(alpha = 0.5f)),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     onClick = {
                         val r = editReward.trim().toIntOrNull() ?: 50
                         when (editKind) {

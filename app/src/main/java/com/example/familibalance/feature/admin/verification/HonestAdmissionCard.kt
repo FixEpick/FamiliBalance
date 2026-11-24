@@ -25,12 +25,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
+import com.example.familibalance.ui.theme.AccentButtonShape
+import com.example.familibalance.ui.theme.CloudIconType
+import com.example.familibalance.ui.theme.CloudStyleIcon
 import com.example.familibalance.ui.theme.GlassBackground
+import com.example.familibalance.ui.theme.GlassCardShape
 import com.example.familibalance.ui.theme.PenaltyRed
 import com.example.familibalance.ui.theme.StatusGreen
 import com.example.familibalance.ui.theme.StatusYellow
 import com.example.familibalance.ui.theme.TextPrimary
 import com.example.familibalance.ui.theme.TextSecondary
+import com.example.familibalance.ui.theme.bounceClick
+import com.example.familibalance.ui.theme.glassCard
 
 /** Карточка «Честное признание» на проверке у родителя. */
 @Composable
@@ -42,18 +48,26 @@ fun HonestAdmissionCard(
     onReject: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = GlassBackground),
-        border = BorderStroke(1.dp, StatusYellow)
+        modifier = Modifier
+            .fillMaxWidth()
+            .glassCard(),
+        shape = GlassCardShape,
+        colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                stringResource(R.string.admin_honest_title, childName),
-                color = TextPrimary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            )
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                CloudStyleIcon(
+                    type = CloudIconType.HONEST_CAT,
+                    size = 28.dp
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    stringResource(R.string.admin_honest_title, childName),
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(
@@ -73,7 +87,8 @@ fun HonestAdmissionCard(
                     onClick = onApprove,
                     enabled = actionEnabled,
                     colors = ButtonDefaults.buttonColors(containerColor = StatusGreen),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(stringResource(R.string.admin_approve_honest), fontSize = 12.sp)
@@ -83,7 +98,8 @@ fun HonestAdmissionCard(
                     onClick = onReject,
                     border = BorderStroke(1.dp, PenaltyRed),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = PenaltyRed),
-                    shape = RoundedCornerShape(8.dp),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.bounceClick(),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Text(stringResource(R.string.admin_reject), fontSize = 12.sp)

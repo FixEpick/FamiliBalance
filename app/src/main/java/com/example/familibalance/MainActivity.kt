@@ -99,7 +99,10 @@ class MainActivity : FragmentActivity() {
             val isInitializing by viewModel.isInitializing.collectAsStateWithLifecycle()
             val themeChild = familyState.children[familyState.selectedChildId]
                 ?: familyState.children.values.firstOrNull()
-            val currentThemeId = themeChild?.selectedThemeId ?: "COSMIC_BLUE"
+            // Live-preview закрытой темы из «Магазина тем» перекрывает
+            // сохранённую тему ребёнка до покупки/сброса.
+            val currentThemeId = ThemePreviewState.previewThemeId
+                ?: themeChild?.selectedThemeId ?: "COSMIC_BLUE"
             LocalizedAppContent {
             FamiliBalanceTheme(themeId = currentThemeId) {
                 // Пока грузится локальный стейт и Supabase восстанавливает сессию —

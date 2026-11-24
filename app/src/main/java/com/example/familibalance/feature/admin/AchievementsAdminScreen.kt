@@ -80,10 +80,11 @@ fun AdminAchievementsScreen(
 
         items(child.achievements) { achievement ->
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = GlassBackground),
-            border = BorderStroke(1.dp, GlassStroke)
+            modifier = Modifier
+                .fillMaxWidth()
+                .glassCard(),
+            shape = GlassCardShape,
+            colors = CardDefaults.cardColors(containerColor = GlassBackground)
         ) {
             Row(
                 modifier = Modifier

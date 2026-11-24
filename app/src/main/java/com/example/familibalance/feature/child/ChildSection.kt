@@ -5,42 +5,54 @@ import com.example.familibalance.data.push.PushNavBus
 import com.example.familibalance.util.*
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.Image
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.edit
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.familibalance.AppLocaleState
 import com.example.familibalance.R
 import com.example.familibalance.MainViewModel
+import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.navigation.ChildAchievementsRoute
 import com.example.familibalance.navigation.ChildHistoryRoute
 import com.example.familibalance.navigation.ChildMainRoute
 import com.example.familibalance.navigation.ChildTasksRoute
 import com.example.familibalance.feature.child.components.CameraCaptureVisibility
+import com.example.familibalance.feature.child.components.ChildSettingsBottomSheet
 import com.example.familibalance.feature.child.components.InfoBottomSheet
 import com.example.familibalance.feature.child.screens.*
 import com.example.familibalance.ui.components.AppDialog
 import com.example.familibalance.ui.components.EmojiIcon
-import com.example.familibalance.ui.components.LanguageSelectorButton
+import com.example.familibalance.ui.components.StyleShopTab
 import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.ui.components.PulseBadge
 import com.example.familibalance.ui.components.ThemeSelectionBottomSheet
@@ -52,7 +64,7 @@ private data class ChildTab(
     val route: Any,
     @StringRes val titleRes: Int,
     @StringRes val a11yRes: Int,
-    val icon: String
+    val icon: CloudIconType
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,12 +79,51 @@ fun ChildSection(
     val childNavController = rememberNavController()
     var showThemeSheet by remember { mutableStateOf(false) }
     var showInfoSheet by remember { mutableStateOf(false) }
+    var showSettingsSheet by remember { mutableStateOf(false) }
+    var styleSheetTab by remember { mutableStateOf(StyleShopTab.THEMES) }
     var showLogoutDialog by remember { mutableStateOf(false) }
     val familyState by viewModel.familyState.collectAsStateWithLifecycle()
     val isSynced by viewModel.isSynced.collectAsStateWithLifecycle()
     val child = familyState.children[familyState.selectedChildId]
         ?: familyState.children.values.firstOrNull()
         ?: ChildProfileState(id = "user_1", name = stringResource(R.string.child_player_role), avatar = "🧒")
+
+    // Live-preview темы живёт только внутри детского раздела:
+    // при выходе из раздела или смене ребёнка сбрасываем его,
+    // чтобы вернуться к сохранённой теме профиля.
+    DisposableEffect(child.id) {
+        onDispose { ThemePreviewState.previewThemeId = null }
+    }
+
+    // Сброс live-preview при сворачивании приложения / блокировке
+    // экрана (ON_STOP), чтобы временная тема не «зависала».
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) {
+                ThemePreviewState.previewThemeId = null
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Автосброс preview через 30 с «осмотра экрана»: работает только
+    // когда шторка тем закрыта. Открытие шторки или смена темы
+    // перезапускают эффект (новый ключ previewThemeId).
+    var previewSecondsLeft by remember { mutableIntStateOf(0) }
+    LaunchedEffect(ThemePreviewState.previewThemeId, showThemeSheet) {
+        if (ThemePreviewState.previewThemeId != null && !showThemeSheet) {
+            for (remaining in 30 downTo 1) {
+                previewSecondsLeft = remaining
+                kotlinx.coroutines.delay(1000L)
+            }
+            ThemePreviewState.previewThemeId = null
+            previewSecondsLeft = 0
+        } else {
+            previewSecondsLeft = 0
+        }
+    }
 
     var isRefreshing by remember { mutableStateOf(false) }
     LaunchedEffect(isSynced) {
@@ -99,10 +150,10 @@ fun ChildSection(
     }
 
     val tabs = listOf(
-        ChildTab(ChildMainRoute, R.string.nav_home, R.string.a11y_nav_home, "🏠"),
-        ChildTab(ChildTasksRoute, R.string.nav_quests, R.string.a11y_nav_quests, "✨"),
-        ChildTab(ChildAchievementsRoute, R.string.nav_achievements, R.string.a11y_nav_achievements, "🏆"),
-        ChildTab(ChildHistoryRoute, R.string.nav_history, R.string.a11y_nav_history, "📜")
+        ChildTab(ChildMainRoute, R.string.nav_home, R.string.a11y_nav_home, CloudIconType.HOME),
+        ChildTab(ChildTasksRoute, R.string.nav_quests, R.string.a11y_nav_quests, CloudIconType.TASKS),
+        ChildTab(ChildAchievementsRoute, R.string.nav_achievements, R.string.a11y_nav_achievements, CloudIconType.ACHIEVEMENTS),
+        ChildTab(ChildHistoryRoute, R.string.nav_history, R.string.a11y_nav_history, CloudIconType.HISTORY)
     )
 
     val offlineDesc = stringResource(R.string.a11y_offline_status)
@@ -112,6 +163,7 @@ fun ChildSection(
     val logoutDialogMessage = stringResource(R.string.logout_message)
     val logoutDialogConfirm = stringResource(R.string.logout_confirm)
     val logoutDialogCancel = stringResource(R.string.action_cancel)
+    val settingsDesc = stringResource(R.string.a11y_nav_settings)
 
     // Красная точка на «Достижениях», если есть награда, которую можно забрать
     val hasClaimableAchievements = remember(child.achievements, child.fivesCount, child.wardrobeCount, child.roomCount, child.balance, child.streakDays) {
@@ -127,7 +179,17 @@ fun ChildSection(
             child.customQuests.any { it.status == QuestStatus.READY_TO_CLAIM }
     }
 
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+
+    // Флаги звука/вибрации — в SecurePrefs (app_prefs), дефолт true.
+    // FeedbackManager читает их при каждом вызове.
+    val appPrefs = remember { SecurePrefs.get(context, "app_prefs") }
+    var soundEnabled by remember { mutableStateOf(appPrefs.getBoolean("sound_enabled", true)) }
+    var vibrationEnabled by remember { mutableStateOf(appPrefs.getBoolean("vibration_enabled", true)) }
+
     fun navigateToTab(route: Any) {
+        FeedbackManager.playClick(context, haptic)
         childNavController.navigate(route) {
             popUpTo<ChildMainRoute> { saveState = true }
             launchSingleTop = true
@@ -155,18 +217,7 @@ fun ChildSection(
     // Валюта наград ребёнка — для всех экранов раздела (баланс, квесты,
     // история, достижения). Символ подменяется на рендере, без конвертации.
     CompositionLocalProvider(LocalRewardCurrency provides child.rewardCurrency) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Image(
-            painter = painterResource(id = R.drawable.space_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(SpaceBgOverlay.copy(alpha = 0.55f))
-        )
+    ThemedBackground(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             containerColor = Color.Transparent,
@@ -197,17 +248,36 @@ fun ChildSection(
                                 contentDescription = infoDesc
                             )
                         }
-                        LanguageSelectorButton()
-                        IconButton(onClick = { showThemeSheet = true }) {
-                            EmojiIcon(
-                                emoji = "🎨",
-                                size = 18.dp,
+                        IconButton(onClick = { showSettingsSheet = true }) {
+                            CloudStyleIcon(
+                                type = CloudIconType.SETTINGS,
+                                size = 26.dp,
+                                contentDescription = settingsDesc
+                            )
+                        }
+                        IconButton(onClick = {
+                            styleSheetTab = StyleShopTab.THEMES
+                            showThemeSheet = true
+                        }) {
+                            CloudStyleIcon(
+                                type = CloudIconType.SHOP_THEMES,
+                                size = 26.dp,
                                 contentDescription = themeDesc
                             )
                         }
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(child.avatar, fontSize = 20.sp)
+                        CloudAvatar(
+                            avatarId = child.avatar,
+                            size = 34.dp,
+                            modifier = Modifier
+                                .bounceClick()
+                                .clickable {
+                                    FeedbackManager.playClick(context, haptic)
+                                    styleSheetTab = StyleShopTab.AVATARS
+                                    showThemeSheet = true
+                                }
+                        )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "${childDisplayName(child)} (${stringResource(R.string.child_player_role)})",
@@ -219,6 +289,26 @@ fun ChildSection(
                 }
             },
             bottomBar = {
+                Column {
+                // Плавающая плашка предпросмотра: шторка закрыта,
+                // но ребёнок смотрит тему на всём экране.
+                val previewTheme = AllAppThemes.firstOrNull {
+                    it.id == ThemePreviewState.previewThemeId
+                }
+                if (previewTheme != null && !showThemeSheet) {
+                    ThemePreviewBar(
+                        theme = previewTheme,
+                        balance = child.balance,
+                        secondsLeft = previewSecondsLeft,
+                        onBuy = {
+                            if (viewModel.purchaseTheme(child.id, previewTheme.id)) {
+                                FeedbackManager.playCoin(context, haptic)
+                                ThemePreviewState.previewThemeId = null
+                            }
+                        },
+                        onClose = { ThemePreviewState.previewThemeId = null }
+                    )
+                }
                 if (!CameraCaptureVisibility.isCameraOpen) {
                 NavigationBar(
                     containerColor = TopBarBg.copy(alpha = 0.92f),
@@ -238,21 +328,17 @@ fun ChildSection(
                                 }
                                 if (showBadge) {
                                     BadgedBox(badge = { PulseBadge() }) {
-                                        Text(
-                                            tab.icon,
-                                            fontSize = 20.sp,
-                                            modifier = Modifier.semantics {
-                                                contentDescription = tabA11y
-                                            }
+                                        CloudStyleIcon(
+                                            type = tab.icon,
+                                            size = 28.dp,
+                                            contentDescription = tabA11y
                                         )
                                     }
                                 } else {
-                                    Text(
-                                        tab.icon,
-                                        fontSize = 20.sp,
-                                        modifier = Modifier.semantics {
-                                            contentDescription = tabA11y
-                                        }
+                                    CloudStyleIcon(
+                                        type = tab.icon,
+                                        size = 28.dp,
+                                        contentDescription = tabA11y
                                     )
                                 }
                             },
@@ -267,6 +353,7 @@ fun ChildSection(
                             )
                         )
                     }
+                }
                 }
                 }
             }
@@ -288,25 +375,91 @@ fun ChildSection(
                     },
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    NavHost(navController = childNavController, startDestination = ChildMainRoute) {
-                        composable<ChildMainRoute> {
+                    // Быстрый fade 120 мс между вкладками: дефолтный
+                // slide+fade даёт заметное наложение текстов при
+                // быстром переключении нижней навигации.
+                val tabFadeIn: androidx.compose.animation.AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition =
+                    { fadeIn(tween(120)) }
+                val tabFadeOut: androidx.compose.animation.AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition =
+                    { fadeOut(tween(120)) }
+                NavHost(navController = childNavController, startDestination = ChildMainRoute) {
+                        composable<ChildMainRoute>(
+                            enterTransition = tabFadeIn,
+                            exitTransition = tabFadeOut,
+                            popEnterTransition = tabFadeIn,
+                            popExitTransition = tabFadeOut
+                        ) {
                             MainChildScreen(
                                 onNavigateToTasks = { navigateToTab(ChildTasksRoute) },
-                                onAvatarClick = if (isParentPreview) null else ({ showLogoutDialog = true }),
+                                onAvatarClick = null,
                                 viewModel = viewModel
                             )
                         }
-                        composable<ChildTasksRoute> { TasksScreen(viewModel = viewModel) }
-                        composable<ChildAchievementsRoute> { AchievementsScreen(viewModel = viewModel) }
-                        composable<ChildHistoryRoute> { HistoryScreen(viewModel = viewModel) }
+                        composable<ChildTasksRoute>(
+                            enterTransition = tabFadeIn,
+                            exitTransition = tabFadeOut,
+                            popEnterTransition = tabFadeIn,
+                            popExitTransition = tabFadeOut
+                        ) { TasksScreen(viewModel = viewModel) }
+                        composable<ChildAchievementsRoute>(
+                            enterTransition = tabFadeIn,
+                            exitTransition = tabFadeOut,
+                            popEnterTransition = tabFadeIn,
+                            popExitTransition = tabFadeOut
+                        ) { AchievementsScreen(viewModel = viewModel) }
+                        composable<ChildHistoryRoute>(
+                            enterTransition = tabFadeIn,
+                            exitTransition = tabFadeOut,
+                            popEnterTransition = tabFadeIn,
+                            popExitTransition = tabFadeOut
+                        ) { HistoryScreen(viewModel = viewModel) }
                     }
                 }
             }
             if (showThemeSheet) {
                 ThemeSelectionBottomSheet(
                     currentThemeId = child.selectedThemeId,
+                    unlockedThemes = child.unlockedThemes,
+                    claimedAchievementTitles = child.achievements
+                        .filter { it.isClaimed }
+                        .map { it.title }
+                        .toSet(),
+                    balance = child.balance,
+                    previewThemeId = ThemePreviewState.previewThemeId,
+                    onPreviewTheme = { ThemePreviewState.previewThemeId = it },
                     onThemeSelected = { viewModel.updateTheme(child.id, it) },
+                    onPurchaseTheme = { viewModel.purchaseTheme(child.id, it) },
+                    currentAvatar = child.avatar,
+                    unlockedAvatars = child.unlockedAvatars,
+                    initialTab = styleSheetTab,
+                    onAvatarSelected = {
+                        FeedbackManager.playLaser(context, haptic)
+                        viewModel.updateAvatar(child.id, it)
+                    },
+                    onPurchaseAvatar = { viewModel.purchaseAvatar(child.id, it) },
                     onDismissRequest = { showThemeSheet = false }
+                )
+            }
+            if (showSettingsSheet) {
+                ChildSettingsBottomSheet(
+                    soundEnabled = soundEnabled,
+                    vibrationEnabled = vibrationEnabled,
+                    onSoundToggle = { enabled ->
+                        soundEnabled = enabled
+                        appPrefs.edit { putBoolean("sound_enabled", enabled) }
+                        if (enabled) FeedbackManager.playCoin(context, haptic)
+                    },
+                    onVibrationToggle = { enabled ->
+                        vibrationEnabled = enabled
+                        appPrefs.edit { putBoolean("vibration_enabled", enabled) }
+                        if (enabled) FeedbackManager.playClick(context, haptic)
+                    },
+                    onLanguageSelect = { tag -> AppLocaleState.set(context, tag) },
+                    onLogoutClick = {
+                        showSettingsSheet = false
+                        showLogoutDialog = true
+                    },
+                    onDismissRequest = { showSettingsSheet = false }
                 )
             }
             if (showInfoSheet) {
@@ -359,5 +512,76 @@ fun ChildSection(
             }
         }
     }
+    }
+}
+
+/**
+ * Компактная стеклянная плашка live-preview над нижней навигацией:
+ * показывается, когда шторка тем закрыта, а previewThemeId активен.
+ * Для платной темы с достаточным балансом — кнопка покупки,
+ * иначе иконка замка/кубка. ✕ возвращает сохранённую тему.
+ */
+@Composable
+private fun ThemePreviewBar(
+    theme: AppThemeConfig,
+    balance: Int,
+    secondsLeft: Int = 0,
+    onBuy: () -> Unit,
+    onClose: () -> Unit
+) {
+    val title = if (theme.titleRes != 0) stringResource(theme.titleRes) else theme.title
+    val previewTitle = if (secondsLeft > 0) {
+        stringResource(R.string.theme_preview_title_timer, title, secondsLeft)
+    } else {
+        stringResource(R.string.theme_preview_title, title)
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .glassCard()
+            .background(GlassBackground.copy(alpha = 0.85f))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("👁", fontSize = 16.sp)
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = previewTitle,
+            color = TextPrimary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            modifier = Modifier.weight(1f)
+        )
+        when (val rule = theme.unlockRule) {
+            is ThemeUnlockRule.Paid -> {
+                if (balance >= rule.price) {
+                    val priceLabel = currencyString(R.string.theme_price, rule.price)
+                    TextButton(
+                        onClick = onBuy,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.theme_buy_for, priceLabel),
+                            color = AccentColor,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else {
+                    Text("🔒", fontSize = 14.sp)
+                }
+            }
+            is ThemeUnlockRule.Achievement -> Text("🏆", fontSize = 14.sp)
+            ThemeUnlockRule.Free -> Unit
+        }
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier.size(28.dp)
+        ) {
+            Text("✕", color = TextSecondary, fontSize = 14.sp)
+        }
     }
 }

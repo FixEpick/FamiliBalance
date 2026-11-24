@@ -38,6 +38,7 @@ import com.example.familibalance.ui.theme.PenaltyRed
 import com.example.familibalance.ui.theme.SpaceBgStart
 import com.example.familibalance.ui.theme.TextPrimary
 import com.example.familibalance.ui.theme.TextSecondary
+import com.example.familibalance.ui.theme.bounceClick
 
 /** Сворачиваемый блок «Сбросы»: выбор операции из списка и кнопка полного сброса. */
 fun LazyListScope.resetsSection(
@@ -137,8 +138,8 @@ private fun ResetsContent(
                 containerColor = PenaltyRed,
                 disabledContainerColor = GlassStroke
             ),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.fillMaxWidth().height(50.dp)
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier.fillMaxWidth().height(50.dp).bounceClick()
         ) {
             Text(
                 stringResource(R.string.admin_set_reset_execute),
@@ -151,8 +152,8 @@ private fun ResetsContent(
         Button(
             onClick = { onRequestReset(ResetKind.ALL) },
             colors = ButtonDefaults.buttonColors(containerColor = PenaltyRed),
-            shape = RoundedCornerShape(10.dp),
-            modifier = Modifier.fillMaxWidth().height(50.dp)
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier.fillMaxWidth().height(50.dp).bounceClick()
         ) {
             Text(
                 stringResource(R.string.admin_set_reset_all),

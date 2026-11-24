@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
 import com.example.familibalance.util.RewardCurrency
 import com.example.familibalance.ui.theme.AccentColor
-import com.example.familibalance.ui.theme.GlassBackground
-import com.example.familibalance.ui.theme.GlassStroke
+import com.example.familibalance.ui.theme.GlassCardShape
 import com.example.familibalance.ui.theme.TextPrimary
 import com.example.familibalance.ui.theme.TextSecondary
+import com.example.familibalance.ui.theme.glassCard
 import com.example.familibalance.util.currencyName
 
 /** Карточка выбора валюты наград: сворачиваемый список всех поддерживаемых валют. */
@@ -40,10 +40,11 @@ fun CurrencyCard(
 ) {
     var showCurrency by rememberSaveable { mutableStateOf(false) }
     Surface(
-        shape = RoundedCornerShape(16.dp),
-        color = GlassBackground,
-        border = BorderStroke(1.dp, GlassStroke),
-        modifier = modifier.fillMaxWidth()
+        shape = GlassCardShape,
+        color = androidx.compose.ui.graphics.Color.Transparent,
+        modifier = modifier
+            .fillMaxWidth()
+            .glassCard()
     ) {
         Column {
             Row(

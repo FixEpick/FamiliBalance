@@ -195,6 +195,23 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
                 val time = getCurrentTimeString()
                 val date = getCurrentDateString()
                 val gradeEntries = mutableListOf<HistoryData>()
+                // Прозрачная расшифровка расчёта: «5×1 (+50), 4×1 (+30), 3×1 (-20)».
+                // Ребёнок видит в истории, из чего сложилась награда за дневник.
+                val formula = buildList {
+                    if (c5 > 0) add("5×$c5 (+50)")
+                    if (c4 > 0) add("4×$c4 (+30)")
+                    if (profile.diaryCount3 > 0) add("3×${profile.diaryCount3} (-20)")
+                    if (profile.diaryCount2 > 0) add("2×${profile.diaryCount2} (-50)")
+                }.joinToString(", ")
+                if (formula.isNotEmpty()) {
+                    // Сводная запись — только расшифровка формулы, без суммы:
+                    // amountValue = null, иначе сумма historyItems разойдётся
+                    // с дельтой баланса (инвариант сверки в тестах/БД).
+                    gradeEntries += HistoryData(
+                        "Итоги дневника", time, date, "", true, "Дневник",
+                        type = HistoryType.DIARY_SUMMARY, arg = formula
+                    )
+                }
                 repeat(c5) {
                     gradeEntries += HistoryData("Оценка 5", time, date, "+50 ₽", true, "Дневник", type = HistoryType.DIARY_GRADE_5, amountValue = 50)
                 }

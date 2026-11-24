@@ -50,13 +50,19 @@ fun BuyTimeBottomSheet(
                 .padding(horizontal = 20.dp)
                 .padding(bottom = 32.dp)
         ) {
-            Text(
-                text = stringResource(R.string.child_buytime_title),
-                color = AccentColor,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+            ) {
+                CloudBadge(type = CloudIconType.SCREEN_TIME, size = 36.dp)
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = stringResource(R.string.child_buytime_title),
+                    color = AccentColor,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -88,12 +94,9 @@ fun BuyTimeBottomSheet(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
-                        .border(
-                            width = 1.dp,
-                            color = if (isAffordable) GlassStroke else GlassStroke.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(16.dp)
-                        ),
-                    shape = RoundedCornerShape(16.dp),
+                        .glassCard()
+                        .bounceClick(),
+                    shape = GlassCardShape,
                     colors = CardDefaults.cardColors(
                         containerColor = if (isAffordable) GlassBackground else GlassBackground.copy(alpha = 0.15f),
                         disabledContainerColor = GlassBackground.copy(alpha = 0.15f)

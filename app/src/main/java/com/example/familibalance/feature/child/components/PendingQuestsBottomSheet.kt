@@ -193,7 +193,7 @@ internal fun PendingQuestsBottomSheet(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AccentColor,
-                    contentColor = SpaceBgStart
+                    contentColor = AccentOnColor
                 ),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
