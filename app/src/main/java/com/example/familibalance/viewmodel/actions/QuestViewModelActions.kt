@@ -160,6 +160,8 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
     // (gradeEntries) — сводная запись «Награда получена» не нужна,
     // иначе в истории появляется лишний дубль суммы.
     var addRewardHistoryEntry = true
+    // Геймификация: тип квеста для базового XP (Шкаф/Комната/Дневник).
+    var rewardKind: GamificationEngine.QuestKind? = null
     // Штрафные оценки дневника (3 и 2) — применяются после updateChildProfile,
     // когда статус уже CLAIMED (applyFineInternal читает свежий профиль).
     var diaryFine3 = 0
@@ -173,6 +175,7 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
                 )
                 questTitle = "Фото шкафа"
                 rewardAmount = profile.wardrobeReward
+                rewardKind = GamificationEngine.QuestKind.CLOSET
             }
         }
         "room", "комната" -> {
@@ -183,6 +186,7 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
                 )
                 questTitle = "Фото комнаты"
                 rewardAmount = profile.roomReward
+                rewardKind = GamificationEngine.QuestKind.ROOM
             }
         }
         "diary", "дневник", "итоги" -> {
@@ -198,7 +202,7 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
                 // Прозрачная расшифровка расчёта: «5×1 (+50), 4×1 (+30), 3×1 (-20)».
                 // Ребёнок видит в истории, из чего сложилась награда за дневник.
                 val formula = buildList {
-                    if (c5 > 0) add("5×$c5 (+50)")
+                    if (c5 > 0) add("5×$c5 (+${profile.baseDiaryFiveReward})")
                     if (c4 > 0) add("4×$c4 (+30)")
                     if (profile.diaryCount3 > 0) add("3×${profile.diaryCount3} (-20)")
                     if (profile.diaryCount2 > 0) add("2×${profile.diaryCount2} (-50)")
@@ -213,7 +217,7 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
                     )
                 }
                 repeat(c5) {
-                    gradeEntries += HistoryData("Оценка 5", time, date, "+50 ₽", true, "Дневник", type = HistoryType.DIARY_GRADE_5, amountValue = 50)
+                    gradeEntries += HistoryData("Оценка 5", time, date, "+${profile.baseDiaryFiveReward} ₽", true, "Дневник", type = HistoryType.DIARY_GRADE_5, amountValue = profile.baseDiaryFiveReward)
                 }
                 repeat(c4) {
                     gradeEntries += HistoryData("Оценка 4", time, date, "+30 ₽", true, "Дневник", type = HistoryType.DIARY_GRADE_4, amountValue = 30)
@@ -229,30 +233,93 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
                 )
                 questTitle = "📚 Итоги недели (Дневник)"
                 rewardAmount = profile.diaryApprovedReward
+                rewardKind = GamificationEngine.QuestKind.DIARY
                 addRewardHistoryEntry = false
             }
         }
     }
-    if (questTitle.isNotEmpty()) {
-        updated = updated.copy(balance = updated.balance + rewardAmount)
+    if (questTitle.isNotEmpty() && rewardKind != null) {
+        // Геймификация: множитель от уровня/серии, XP, возможный level-up.
+        // Инвариант: balance += coins + coinBonus; история получает
+        // QUEST_REWARD/DONE (coins) + REWARD_MULTIPLIER (дельта/инфо)
+        // + LEVEL_UP (coinBonus) — сумма записей равна дельте баланса.
+        val outcome = computeQuestReward(profile, rewardAmount, rewardKind)
+        // Недельный лимит заработка: монеты ограничиваются остатком лимита,
+        // XP и level-up начисляются как обычно. Инвариант сохраняется —
+        // в историю идёт фактически начисленная сумма (grantedCoins).
+        val weeklyCap = applyWeeklyEarnLimit(profile, outcome.coins)
+        val grantedCoins = weeklyCap.coins
+        val time = getCurrentTimeString()
+        val date = getCurrentDateString()
+        // Для дневника оценки в истории записаны по базовым суммам —
+        // дельту (множитель и/или недельный лимит) несёт REWARD_MULTIPLIER.
+        // Для одиночных квестов сумма уже в основной записи → дельта 0.
+        val coinDelta = if (rewardKind == GamificationEngine.QuestKind.DIARY) {
+            grantedCoins - rewardAmount
+        } else 0
+        val gamificationEntries = gamificationHistoryEntries(outcome, time, date, coinDelta)
+        // Понятная пометка в истории, если лимит обрезал награду.
+        val limitEntries = if (weeklyCap.capped) {
+            listOf(
+                HistoryData(
+                    title = "Недельный лимит заработка",
+                    time = time,
+                    date = date,
+                    amount = "",
+                    isIncome = false,
+                    category = "Бонусы",
+                    type = HistoryType.WEEKLY_LIMIT,
+                    arg = profile.weeklyEarnLimit.toString()
+                )
+            )
+        } else emptyList()
+        updated = updated.withGamification(outcome)
+        updated = updated.copy(
+            balance = updated.balance + grantedCoins + outcome.levelUp.coinBonus
+        )
         if (addRewardHistoryEntry) {
             updated = updated.copy(
-                historyItems = listOf(
+                historyItems = limitEntries + listOf(
                     HistoryData(
                         title = "Награда получена: $questTitle",
-                        time = getCurrentTimeString(),
-                        date = getCurrentDateString(),
-                        amount = "+$rewardAmount ₽",
+                        time = time,
+                        date = date,
+                        amount = "+$grantedCoins ₽",
                         isIncome = true,
                         category = "Квесты",
                         type = HistoryType.QUEST_REWARD,
-                        amountValue = rewardAmount,
+                        amountValue = grantedCoins,
                         arg = questTitle
                     )
-                ) + updated.historyItems
+                ) + gamificationEntries + updated.historyItems
+            )
+        } else {
+            updated = updated.copy(
+                historyItems = limitEntries + gamificationEntries + updated.historyItems
+            )
+        }
+        // Бонусный сундук: шанс из настроек экономики (0% — не выпадает).
+        // Монеты — отдельной записью BONUS_CHEST, XP — через applyXp
+        // (с возможным level-up и его coinBonus) — инвариант
+        // «дельта баланса = сумма истории» сохраняется.
+        val chest = rollChest(profile)?.let { applyBonusChest(updated, it, time, date) }
+        if (chest != null) {
+            updated = updated.copy(
+                balance = updated.balance + chest.balanceDelta,
+                xp = chest.xp,
+                level = chest.level,
+                historyItems = chest.historyEntries + updated.historyItems
             )
         }
         updateChildProfile(updated)
+        notifyLevelUp(outcome)
+        if (chest != null) notifyBonusChest(chest)
+        // Идеальный день: оба ежедневных квеста (шкаф + комната) заклеймлены сегодня.
+        if (rewardKind == GamificationEngine.QuestKind.CLOSET ||
+            rewardKind == GamificationEngine.QuestKind.ROOM
+        ) {
+            maybeAwardPerfectDay(userId)
+        }
         // Штрафные оценки дневника — после фиксации CLAIMED.
         repeat(diaryFine3) { applyFineInternal(userId, 20, "Оценка 3 (дневник)") }
         repeat(diaryFine2) { applyFineInternal(userId, 50, "Оценка 2 (дневник)") }
@@ -341,27 +408,62 @@ fun MainViewModel.claimBonusQuestReward(userId: String, questId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.bonusQuests.firstOrNull { it.id == questId } ?: return
     if (target.status == QuestStatus.READY_TO_CLAIM) {
+        val outcome = computeQuestReward(profile, target.reward, GamificationEngine.QuestKind.BONUS_OR_CUSTOM)
+        // Недельный лимит заработка: монеты ограничиваются остатком лимита,
+        // XP и level-up начисляются как обычно.
+        val weeklyCap = applyWeeklyEarnLimit(profile, outcome.coins)
+        val grantedCoins = weeklyCap.coins
+        val time = getCurrentTimeString()
+        val date = getCurrentDateString()
         val updatedQuests = profile.bonusQuests.map { q ->
             if (q.id == questId) q.copy(status = QuestStatus.CLAIMED) else q
         }
-        val updated = profile.copy(
+        val limitEntries = if (weeklyCap.capped) {
+            listOf(
+                HistoryData(
+                    title = "Недельный лимит заработка",
+                    time = time,
+                    date = date,
+                    amount = "",
+                    isIncome = false,
+                    category = "Бонусы",
+                    type = HistoryType.WEEKLY_LIMIT,
+                    arg = profile.weeklyEarnLimit.toString()
+                )
+            )
+        } else emptyList()
+        var updated = profile.copy(
             bonusQuests = updatedQuests,
-            balance = profile.balance + target.reward,
-            historyItems = listOf(
+            balance = profile.balance + grantedCoins + outcome.levelUp.coinBonus,
+            xp = outcome.levelUp.newXp,
+            level = outcome.levelUp.newLevel,
+            historyItems = limitEntries + listOf(
                 HistoryData(
                     title = "Бонус-квест выполнен: ${target.title}",
-                    time = getCurrentTimeString(),
-                    date = getCurrentDateString(),
-                    amount = "+${target.reward} ₽",
+                    time = time,
+                    date = date,
+                    amount = "+$grantedCoins ₽",
                     isIncome = true,
                     category = "Бонус-квесты",
                     type = HistoryType.BONUS_QUEST_DONE,
-                    amountValue = target.reward,
+                    amountValue = grantedCoins,
                     arg = target.title
                 )
-            ) + profile.historyItems
+            ) + gamificationHistoryEntries(outcome, time, date, 0) + profile.historyItems
         )
+        // Бонусный сундук: шанс из настроек экономики (0% — не выпадает).
+        val chest = rollChest(profile)?.let { applyBonusChest(updated, it, time, date) }
+        if (chest != null) {
+            updated = updated.copy(
+                balance = updated.balance + chest.balanceDelta,
+                xp = chest.xp,
+                level = chest.level,
+                historyItems = chest.historyEntries + updated.historyItems
+            )
+        }
         updateChildProfile(updated)
+        notifyLevelUp(outcome)
+        if (chest != null) notifyBonusChest(chest)
     }
     } finally {
         endProcessingAction()

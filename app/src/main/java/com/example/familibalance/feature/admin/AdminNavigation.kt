@@ -99,7 +99,11 @@ fun AdminTopBar(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            CloudAvatar(avatarId = profile.avatar, size = 22.dp)
+                            CloudAvatar(
+                                avatarId = profile.avatar,
+                                size = 22.dp,
+                                frameId = profile.selectedFrameId
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = childDisplayName(profile),

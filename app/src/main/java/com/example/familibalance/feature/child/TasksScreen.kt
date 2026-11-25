@@ -76,6 +76,28 @@ fun TasksScreen(
     var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
     var confettiTrigger by remember { mutableIntStateOf(0) }
 
+    // Level-up из ViewModel (клейм наград происходит на этом экране):
+    // конфетти + фанфара level_up.
+    val levelUpEvent by viewModel.levelUpEvent.collectAsStateWithLifecycle()
+    LaunchedEffect(levelUpEvent) {
+        if (levelUpEvent != null) {
+            confettiTrigger++
+            FeedbackManager.playLevelUp(context, haptic)
+            viewModel.consumeLevelUpEvent()
+        }
+    }
+
+    // Бонусный сундук: диалог с наградой + конфетти + звук монетки.
+    val bonusChestEvent by viewModel.bonusChestEvent.collectAsStateWithLifecycle()
+    var bonusChestReward by remember { mutableStateOf<GamificationEngine.BonusChestReward?>(null) }
+    LaunchedEffect(bonusChestEvent) {
+        val reward = bonusChestEvent ?: return@LaunchedEffect
+        bonusChestReward = reward
+        confettiTrigger++
+        FeedbackManager.playCoin(context, haptic)
+        viewModel.consumeBonusChestEvent()
+    }
+
     LaunchedEffect(confettiTrigger) {
         if (confettiTrigger > 0) {
             delay(2500)
@@ -269,7 +291,7 @@ fun TasksScreen(
                             appendLine(stringResource(R.string.tasks_diary_report_header))
                             appendLine(
                                 if (child.diaryCount5 == 0) currencyString(R.string.tasks_diary_grade_zero, 5)
-                                else currencyString(R.string.tasks_diary_grade5, child.diaryCount5, 50 * child.diaryCount5)
+                                else currencyString(R.string.tasks_diary_grade5, child.diaryCount5, child.baseDiaryFiveReward * child.diaryCount5)
                             )
                             appendLine(
                                 if (child.diaryCount4 == 0) currencyString(R.string.tasks_diary_grade_zero, 4)
@@ -406,6 +428,14 @@ fun TasksScreen(
             ConfettiOverlay(trigger = confettiTrigger, modifier = Modifier.fillMaxSize())
         }
         }
+    }
+
+    // Диалог бонусного сундука — поверх всего экрана заданий.
+    bonusChestReward?.let { reward ->
+        BonusChestDialog(
+            reward = reward,
+            onDismiss = { bonusChestReward = null }
+        )
     }
 }
 

@@ -78,35 +78,38 @@ fun CashOutDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = {
-                    if (canSubmit) {
-                        onSubmit(amountInt, commentText)
-                    }
-                },
-                enabled = canSubmit && !isProcessing,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .accentButtonChrome()
-                    .bounceClick(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = AccentOnColor,
-                    disabledContainerColor = Color.Transparent,
-                    disabledContentColor = TextSecondary
-                ),
-                shape = AccentButtonShape
-            ) {
-                Text(stringResource(R.string.child_cashout_submit), fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(contentColor = TextMuted)
-            ) {
-                Text(stringResource(R.string.action_cancel))
+            // Кнопки стопкой на всю ширину: «Отправить» сверху,
+            // «Отмена» по центру снизу — симметрично и без прилипания к краю.
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = {
+                        if (canSubmit) {
+                            onSubmit(amountInt, commentText)
+                        }
+                    },
+                    enabled = canSubmit && !isProcessing,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .accentButtonChrome()
+                        .bounceClick(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = AccentOnColor,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = TextSecondary
+                    ),
+                    shape = AccentButtonShape
+                ) {
+                    Text(stringResource(R.string.child_cashout_submit), fontWeight = FontWeight.Bold)
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(androidx.compose.ui.Alignment.CenterHorizontally),
+                    colors = ButtonDefaults.textButtonColors(contentColor = TextMuted)
+                ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             }
         }
     )

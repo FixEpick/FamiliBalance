@@ -270,6 +270,7 @@ fun ChildSection(
                         CloudAvatar(
                             avatarId = child.avatar,
                             size = 34.dp,
+                            frameId = child.selectedFrameId,
                             modifier = Modifier
                                 .bounceClick()
                                 .clickable {
@@ -279,12 +280,69 @@ fun ChildSection(
                                 }
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "${childDisplayName(child)} (${stringResource(R.string.child_player_role)})",
-                            color = TextPrimary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        // Геймификация в шапке: уровень, ранг, множитель
+                        // и тонкая полоска XP-прогресса.
+                        val headerRank = GamificationEngine.rankForLevel(child.level)
+                        val headerXpForNext = GamificationEngine.xpToNextLevel(child.level)
+                        val headerMult = GamificationEngine.rewardMultiplier(child.level, child.streakDays)
+                        val headerXpFraction = if (headerXpForNext > 0) {
+                            (child.xp.toFloat() / headerXpForNext).coerceIn(0f, 1f)
+                        } else 0f
+                        Column {
+                            Text(
+                                text = "${childDisplayName(child)} (${stringResource(R.string.child_player_role)})",
+                                color = TextPrimary,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(top = 2.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.child_level_badge, child.level) +
+                                        " • " + stringResource(GamificationEngine.rankTitleRes(headerRank)),
+                                    color = TextSecondary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1
+                                )
+                                // На «Главной» — только «Ур. N • Ранг»:
+                                // множитель и XP уже в BalanceCard.
+                                if (headerMult > 1.0 && selectedTabRoute != ChildMainRoute) {
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = stringResource(R.string.child_reward_mult, headerMult),
+                                        color = StatusYellow,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                            // XP-полоска в шапке — только на вкладках
+                            // Задания/Достижения/История: на «Главной»
+                            // она дублирует прогресс в BalanceCard.
+                            if (selectedTabRoute != ChildMainRoute) {
+                                Box(
+                                    modifier = Modifier
+                                        .padding(top = 3.dp)
+                                        .width(110.dp)
+                                        .height(3.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(TextMuted.copy(alpha = 0.25f))
+                                ) {
+                                    if (headerXpFraction > 0.001f) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth(headerXpFraction)
+                                                .fillMaxHeight()
+                                                .clip(RoundedCornerShape(2.dp))
+                                                .background(LocalAppPalette.current.primaryNeon)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -575,7 +633,7 @@ private fun ThemePreviewBar(
                 }
             }
             is ThemeUnlockRule.Achievement -> Text("🏆", fontSize = 14.sp)
-            ThemeUnlockRule.Free -> Unit
+            ThemeUnlockRule.Free, is ThemeUnlockRule.Level -> Unit
         }
         IconButton(
             onClick = onClose,

@@ -86,6 +86,27 @@ internal fun RulesSheetContent(
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
+                title = stringResource(R.string.rules_gamification_title),
+                text = stringResource(R.string.rules_gamification_text)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RuleBlock(
+                title = stringResource(R.string.rules_bonus_chest_title),
+                text = stringResource(R.string.rules_bonus_chest_text)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RuleBlock(
+                title = stringResource(R.string.rules_perfect_day_title),
+                text = stringResource(R.string.rules_perfect_day_text)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RuleBlock(
                 title = stringResource(R.string.rules_screentime_title),
                 text = currencyString(R.string.rules_screentime_text)
             )
@@ -95,6 +116,20 @@ internal fun RulesSheetContent(
             RuleBlock(
                 title = stringResource(R.string.rules_honest_title),
                 text = stringResource(R.string.rules_honest_text)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RuleBlock(
+                title = stringResource(R.string.rules_honesty_tokens_title),
+                text = stringResource(R.string.rules_honesty_tokens_text)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RuleBlock(
+                title = stringResource(R.string.rules_parent_gifts_title),
+                text = stringResource(R.string.rules_parent_gifts_text)
             )
 
             Spacer(modifier = Modifier.height(12.dp))

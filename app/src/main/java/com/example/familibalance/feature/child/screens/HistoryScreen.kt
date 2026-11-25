@@ -129,6 +129,16 @@ internal fun historyTitleSpec(item: HistoryData): HistoryTitleSpec {
         HistoryType.DREAM_SET ->
             HistoryTitleSpec(R.string.hist_dream_set, listOf(arg ?: title.removePrefix("Заложена цель: ")))
         HistoryType.THEME_PURCHASE -> HistoryTitleSpec(R.string.hist_theme_purchase)
+        HistoryType.REWARD_MULTIPLIER ->
+            HistoryTitleSpec(R.string.hist_reward_multiplier, listOf(arg ?: ""))
+        HistoryType.BONUS_CHEST ->
+            if (arg != null) {
+                HistoryTitleSpec(R.string.hist_bonus_chest_xp, listOf(arg))
+            } else {
+                HistoryTitleSpec(R.string.hist_bonus_chest)
+            }
+        HistoryType.PERFECT_DAY -> HistoryTitleSpec(R.string.hist_perfect_day)
+        HistoryType.WEEKLY_LIMIT -> HistoryTitleSpec(R.string.hist_weekly_limit)
         else -> HistoryTitleSpec(null)
     }
 }
@@ -154,15 +164,20 @@ internal fun historyFilterIndex(item: HistoryData): Int = when (item.type) {
     HistoryType.QUEST_REWARD, HistoryType.QUEST_APPROVED,
     HistoryType.CUSTOM_QUEST_DONE, HistoryType.BONUS_QUEST_DONE,
     HistoryType.BONUS_QUEST_APPROVED, HistoryType.DIARY_GRADE_5,
-    HistoryType.DIARY_GRADE_4, HistoryType.HONEST_APPROVED -> HIST_FILTER_QUESTS
-    HistoryType.ACHIEVEMENT_UNLOCKED, HistoryType.STREAK_BONUS -> HIST_FILTER_ACHIEVEMENTS
+    HistoryType.DIARY_GRADE_4, HistoryType.DIARY_SUMMARY,
+    HistoryType.HONEST_APPROVED -> HIST_FILTER_QUESTS
+    HistoryType.ACHIEVEMENT_UNLOCKED, HistoryType.STREAK_BONUS,
+    HistoryType.LEVEL_UP, HistoryType.REWARD_MULTIPLIER,
+    HistoryType.BONUS_CHEST, HistoryType.PERFECT_DAY -> HIST_FILTER_ACHIEVEMENTS
     HistoryType.SCREEN_TIME_PURCHASE -> HIST_FILTER_SCREEN_TIME
     HistoryType.FINE -> HIST_FILTER_FINES
     // Ручные пополнения/списания родителя — не квесты и не штрафы:
     // показываем только в «Все» и отдельном фильтре «Ручные операции».
     HistoryType.ADMIN_REWARD, HistoryType.ADMIN_WITHDRAW -> HIST_FILTER_MANUAL
     HistoryType.CASHOUT_GIVEN, HistoryType.CASHOUT_REQUEST,
-    HistoryType.DREAM_SET, HistoryType.AVATAR_PURCHASE -> HIST_FILTER_OTHER
+    HistoryType.DREAM_SET, HistoryType.AVATAR_PURCHASE,
+    HistoryType.FRAME_PURCHASE, HistoryType.WEEKLY_LIMIT,
+    HistoryType.PARENT_GIFT -> HIST_FILTER_OTHER
     else -> when (item.category) {
         "Квесты", "Дневник", "Бонус-квесты", "Кастомные квесты" -> HIST_FILTER_QUESTS
         "Достижения", "Бонусы" -> HIST_FILTER_ACHIEVEMENTS
@@ -191,6 +206,35 @@ private fun localizedHistoryTitle(item: HistoryData): String {
             stringResource(cloudAvatarTypeOf(id).titleRes)
         } ?: item.title.removePrefix("Покупка аватара: ")
         return stringResource(R.string.hist_avatar_purchase, avatarTitle)
+    }
+    // Покупка рамки: arg хранит frameId — название резолвим через тип.
+    if (item.type == HistoryType.FRAME_PURCHASE) {
+        val frameTitle = item.arg?.let { id ->
+            stringResource(avatarFrameTypeOf(id).titleRes)
+        } ?: item.title.removePrefix("Покупка рамки: ")
+        return stringResource(R.string.hist_frame_purchase, frameTitle)
+    }
+    // Подарок родителю: arg хранит giftTypeId — название резолвим через тип.
+    if (item.type == HistoryType.PARENT_GIFT) {
+        val giftTitle = item.arg?.let { id ->
+            parentGiftTypeOfOrNull(id)?.let { stringResource(it.titleRes) }
+        } ?: item.title.removePrefix("Подарок родителю: ")
+        return stringResource(R.string.hist_parent_gift, giftTitle)
+    }
+    // Повышение уровня: arg хранит имя ранга (enum) — резолвим в строку.
+    if (item.type == HistoryType.LEVEL_UP) {
+        val rankName = item.arg?.let { rankKey ->
+            val rankRes = when (rankKey) {
+                "HOME_HELPER" -> R.string.gamification_rank_helper
+                "ORDER_KEEPER" -> R.string.gamification_rank_keeper
+                "BALANCE_MASTER" -> R.string.gamification_rank_master
+                "FAMILY_HERO" -> R.string.gamification_rank_hero
+                "HOUSE_LEGEND" -> R.string.gamification_rank_legend
+                else -> R.string.gamification_rank_novice
+            }
+            stringResource(rankRes)
+        } ?: item.title
+        return stringResource(R.string.hist_level_up, rankName)
     }
     val spec = historyTitleSpec(item)
     if (spec.resId == null) return item.title

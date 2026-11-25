@@ -3,6 +3,8 @@ package com.example.familibalance
 import com.example.familibalance.data.model.*
 import com.example.familibalance.data.repository.FamilyRepository
 import com.example.familibalance.data.storage.AppSharedState
+import com.example.familibalance.util.GamificationEngine
+import com.example.familibalance.util.getCurrentDateString
 import com.example.familibalance.viewmodel.actions.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -86,6 +88,10 @@ class MainViewModelTest {
                 viewModel.isInitializing.first { !it }
             }
         }
+        // Бонусный сундук по умолчанию выключен: 15% случайный бросок
+        // делал бы существующие тесты недетерминированными. Тесты сундука
+        // переопределяют roller сами.
+        viewModel.bonusChestRoller = { _ -> null }
     }
 
     @Test
@@ -311,8 +317,8 @@ class MainViewModelTest {
         viewModel.claimQuestReward("user_1", "diary")
 
         val updated = repository.children["user_1"]!!
-        // 100 + 80 (награда) - 20 (оценка 3) - 50 (оценка 2) = 110
-        assertEquals(110, updated.balance)
+        // 100 + 88 (80 × 1.1 за серию 4 дня) - 20 (оценка 3) - 50 (оценка 2) = 118
+        assertEquals(118, updated.balance)
         assertEquals(QuestStatus.CLAIMED, updated.diaryStatus)
         // Штрафы записаны в историю с причиной «дневник»
         assertTrue(updated.historyItems.any { it.title.contains("Оценка 3 (дневник)") && it.amount == "-20 ₽" })
@@ -348,8 +354,8 @@ class MainViewModelTest {
         // Если фикстуру расширят историей, фильтровать по time/date.
         val historySum = after.historyItems.sumOf { it.amountValue ?: 0 }
         assertEquals(balanceDelta, historySum)
-        // И явно: 100 + 80 - 20 - 50 = 110, дельта = +10
-        assertEquals(10, balanceDelta)
+        // И явно: 100 + 88 (80 × 1.1) - 20 - 50 = 118, дельта = +18
+        assertEquals(18, balanceDelta)
     }
 
     @Test
@@ -494,5 +500,523 @@ class MainViewModelTest {
             setOf("CAT", "PANDA", "ALIEN", "UNICORN"),
             child.unlockedAvatars.toSet()
         )
+    }
+
+    // ---------- Геймификация: XP, уровни, множители ----------
+
+    @Test
+    fun `claimQuestReward closet grants xp and level up bonus`() {
+        // level 1, xp=100 (до 109 не хватает 9) + 25 XP за шкаф → level 2.
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            closetStatus = QuestStatus.READY_TO_CLAIM,
+            wardrobeReward = 50,
+            level = 1,
+            xp = 100
+        )
+
+        viewModel.claimQuestReward("user_1", "closet")
+
+        val updated = repository.children["user_1"]!!
+        // coins=50 (mult 1.0) + level-up bonus 70 = +120 → 220
+        assertEquals(220, updated.balance)
+        assertEquals(2, updated.level)
+        assertEquals(16, updated.xp) // 100+25-109
+        assertEquals(QuestStatus.CLAIMED, updated.closetStatus)
+        // Инвариант: дельта баланса = сумма historyItems
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(120, historySum)
+        assertTrue(updated.historyItems.any { it.type == HistoryType.LEVEL_UP && it.amountValue == 70 })
+        assertTrue(updated.historyItems.any { it.type == HistoryType.REWARD_MULTIPLIER })
+    }
+
+    @Test
+    fun `claimQuestReward closet applies level and streak multiplier`() {
+        // level 10 (+0.1) + streak 7 (+0.25) → mult 1.35.
+        // coins = round(50*1.35)=68, xp = round(25*1.35)=34.
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            closetStatus = QuestStatus.READY_TO_CLAIM,
+            wardrobeReward = 50,
+            level = 10,
+            xp = 0,
+            streakDays = 7
+        )
+
+        viewModel.claimQuestReward("user_1", "closet")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(168, updated.balance) // 100 + 68, level-up нет (475 XP нужно)
+        assertEquals(34, updated.xp)
+        assertEquals(10, updated.level)
+        val reward = updated.historyItems.first { it.type == HistoryType.QUEST_REWARD }
+        assertEquals(68, reward.amountValue)
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(68, historySum)
+    }
+
+    @Test
+    fun `claimBonusQuestReward keeps balance delta equal to history sum with gamification`() {
+        val quest = BonusQuest(
+            title = "Помочь",
+            reward = 40,
+            status = QuestStatus.READY_TO_CLAIM
+        )
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            bonusQuests = listOf(quest),
+            level = 6, // +0.1
+            streakDays = 3 // +0.1 → mult 1.2
+        )
+
+        viewModel.claimBonusQuestReward("user_1", quest.id)
+
+        val updated = repository.children["user_1"]!!
+        // coins = round(40*1.2)=48, xp = round(30*1.2)=36
+        assertEquals(148, updated.balance)
+        assertEquals(36, updated.xp)
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(48, historySum)
+    }
+
+    // ---------- Бонусный сундук ----------
+
+    @Test
+    fun `claimQuestReward closet with bonus chest coins keeps balance delta equal to history sum`() {
+        viewModel.bonusChestRoller = { _ -> GamificationEngine.BonusChestReward.Coins(30) }
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            closetStatus = QuestStatus.READY_TO_CLAIM,
+            wardrobeReward = 50,
+            level = 1,
+            xp = 0
+        )
+
+        viewModel.claimQuestReward("user_1", "closet")
+
+        val updated = repository.children["user_1"]!!
+        // 100 + 50 (квест) + 30 (сундук) = 180; XP 25 — без level-up.
+        assertEquals(180, updated.balance)
+        assertEquals(25, updated.xp)
+        assertEquals(1, updated.level)
+        val chestEntry = updated.historyItems.first { it.type == HistoryType.BONUS_CHEST }
+        assertEquals(30, chestEntry.amountValue)
+        assertEquals("+30 ₽", chestEntry.amount)
+        // Инвариант: дельта баланса = сумма historyItems
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(80, historySum)
+        assertEquals(
+            GamificationEngine.BonusChestReward.Coins(30),
+            viewModel.bonusChestEvent.value
+        )
+    }
+
+    @Test
+    fun `claimQuestReward closet with bonus chest xp triggers level up and keeps invariant`() {
+        viewModel.bonusChestRoller = { _ -> GamificationEngine.BonusChestReward.Xp(15) }
+        // level 1, xp=80: квест +25 XP → 105 < 109 (level-up нет).
+        // Сундук +15 XP → 120 ≥ 109 → level 2, остаток 11, coinBonus 70.
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            closetStatus = QuestStatus.READY_TO_CLAIM,
+            wardrobeReward = 50,
+            level = 1,
+            xp = 80
+        )
+
+        viewModel.claimQuestReward("user_1", "closet")
+
+        val updated = repository.children["user_1"]!!
+        // 100 + 50 (квест) + 70 (level-up от XP сундука) = 220
+        assertEquals(220, updated.balance)
+        assertEquals(2, updated.level)
+        assertEquals(11, updated.xp) // 80 + 25 + 15 - 109
+        val chestEntry = updated.historyItems.first { it.type == HistoryType.BONUS_CHEST }
+        assertNull(chestEntry.amountValue) // XP-запись не денежная
+        assertEquals("15", chestEntry.arg)
+        assertTrue(updated.historyItems.any { it.type == HistoryType.LEVEL_UP && it.amountValue == 70 })
+        // Инвариант: дельта баланса = сумма historyItems
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(120, historySum)
+        assertEquals(
+            GamificationEngine.BonusChestReward.Xp(15),
+            viewModel.bonusChestEvent.value
+        )
+        // Level-up от XP сундука тоже уходит в UI-событие.
+        assertEquals(2, viewModel.levelUpEvent.value)
+    }
+
+    @Test
+    fun `claimBonusQuestReward with bonus chest coins keeps invariant`() {
+        viewModel.bonusChestRoller = { _ -> GamificationEngine.BonusChestReward.Coins(20) }
+        val quest = BonusQuest(
+            title = "Помочь",
+            reward = 40,
+            status = QuestStatus.READY_TO_CLAIM
+        )
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            bonusQuests = listOf(quest),
+            level = 1,
+            xp = 0
+        )
+
+        viewModel.claimBonusQuestReward("user_1", quest.id)
+
+        val updated = repository.children["user_1"]!!
+        // 100 + 40 (квест) + 20 (сундук) = 160
+        assertEquals(160, updated.balance)
+        assertTrue(updated.historyItems.any { it.type == HistoryType.BONUS_CHEST && it.amountValue == 20 })
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(60, historySum)
+    }
+
+    // ---------- Идеальный день ----------
+
+    private fun perfectDayChild(id: String = "user_1") = createChild(id).copy(
+        closetStatus = QuestStatus.READY_TO_CLAIM,
+        roomStatus = QuestStatus.READY_TO_CLAIM,
+        closetResetDate = LocalDate.now().toString(),
+        roomResetDate = LocalDate.now().toString(),
+        wardrobeReward = 50,
+        roomReward = 50,
+        level = 1,
+        xp = 0,
+        streakDays = 0
+    )
+
+    @Test
+    fun `claiming closet and room same day awards perfect day once with invariant`() {
+        repository.children["user_1"] = perfectDayChild()
+
+        viewModel.claimQuestReward("user_1", "closet")
+        // После первого квеста идеального дня ещё нет — комната не заклеймлена.
+        assertEquals(0, repository.children["user_1"]!!.perfectDaysStreak)
+
+        viewModel.claimQuestReward("user_1", "room")
+
+        val updated = repository.children["user_1"]!!
+        // 100 + 50 (шкаф) + 50 (комната) + 25 (идеальный день) = 225
+        assertEquals(225, updated.balance)
+        assertEquals(1, updated.perfectDaysStreak)
+        assertEquals(LocalDate.now().toString(), updated.lastPerfectDayDate)
+        // XP: 25 + 25 (квесты) + 15 (идеальный день) = 65, level-up нет.
+        assertEquals(65, updated.xp)
+        assertEquals(1, updated.level)
+        val perfectEntry = updated.historyItems.first { it.type == HistoryType.PERFECT_DAY }
+        assertEquals(25, perfectEntry.amountValue)
+        // Инвариант: дельта баланса = сумма historyItems
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(125, historySum)
+    }
+
+    @Test
+    fun `perfect day is not awarded twice on the same day`() {
+        repository.children["user_1"] = perfectDayChild().copy(
+            lastPerfectDayDate = LocalDate.now().toString(),
+            perfectDaysStreak = 1
+        )
+
+        viewModel.claimQuestReward("user_1", "closet")
+        viewModel.claimQuestReward("user_1", "room")
+
+        val updated = repository.children["user_1"]!!
+        // 100 + 50 + 50 = 200 — без повторного +25.
+        assertEquals(200, updated.balance)
+        assertEquals(1, updated.perfectDaysStreak)
+        assertFalse(updated.historyItems.any { it.type == HistoryType.PERFECT_DAY })
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(100, historySum)
+    }
+
+    @Test
+    fun `perfect day streak grows on consecutive days and resets after a miss`() {
+        val today = LocalDate.now()
+        // Вчера был идеальный день → серия 2 → 3.
+        repository.children["user_1"] = perfectDayChild().copy(
+            lastPerfectDayDate = today.minusDays(1).toString(),
+            perfectDaysStreak = 2
+        )
+        viewModel.claimQuestReward("user_1", "closet")
+        viewModel.claimQuestReward("user_1", "room")
+        assertEquals(3, repository.children["user_1"]!!.perfectDaysStreak)
+
+        // Пропуск дня: lastPerfectDayDate позавчера → серия сбрасывается в 1.
+        repository.children["user_2"] = perfectDayChild("user_2").copy(
+            lastPerfectDayDate = today.minusDays(2).toString(),
+            perfectDaysStreak = 5
+        )
+        viewModel.claimQuestReward("user_2", "closet")
+        viewModel.claimQuestReward("user_2", "room")
+        val missed = repository.children["user_2"]!!
+        assertEquals(1, missed.perfectDaysStreak)
+        assertEquals(today.toString(), missed.lastPerfectDayDate)
+    }
+
+    @Test
+    fun `perfect day streak boosts quest xp but not coins`() {
+        // Серия 3 → +10% XP: базовые 25 XP → round(25*1.1)=28, монеты без изменений.
+        repository.children["user_1"] = perfectDayChild().copy(
+            perfectDaysStreak = 3,
+            closetStatus = QuestStatus.READY_TO_CLAIM,
+            roomStatus = QuestStatus.AVAILABLE
+        )
+
+        viewModel.claimQuestReward("user_1", "closet")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(150, updated.balance) // 100 + 50, монеты не раздуваются
+        assertEquals(28, updated.xp)
+        assertEquals(3, updated.perfectDaysStreak) // комната не выполнена — серия не меняется
+    }
+
+    // ---------- Рамки аватара ----------
+
+    @Test
+    fun `purchaseFrame deducts balance unlocks and selects frame with history invariant`() {
+        repository.children["user_1"] = createChild().copy(balance = 200)
+
+        val ok = viewModel.purchaseFrame("user_1", "NEON")
+
+        assertTrue(ok)
+        val updated = repository.children["user_1"]!!
+        assertEquals(80, updated.balance) // 200 - 120
+        assertTrue("NEON" in updated.unlockedFrames)
+        assertEquals("NEON", updated.selectedFrameId)
+        val entry = updated.historyItems.first { it.type == HistoryType.FRAME_PURCHASE }
+        assertEquals(-120, entry.amountValue)
+        assertEquals("NEON", entry.arg)
+        // Инвариант: дельта баланса = сумма historyItems
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(-120, historySum)
+    }
+
+    @Test
+    fun `purchaseFrame fails without enough balance`() {
+        repository.children["user_1"] = createChild().copy(balance = 100)
+
+        assertFalse(viewModel.purchaseFrame("user_1", "NEON")) // 120 > 100
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(100, updated.balance)
+        assertEquals("NONE", updated.selectedFrameId)
+        assertFalse(updated.historyItems.any { it.type == HistoryType.FRAME_PURCHASE })
+    }
+
+    @Test
+    fun `level frames unlock by level and cannot be purchased`() {
+        // GUARDIAN открывается с 10 уровня.
+        repository.children["user_1"] = createChild().copy(level = 10, balance = 500)
+        viewModel.selectFrame("user_1", "GUARDIAN")
+        assertEquals("GUARDIAN", repository.children["user_1"]!!.selectedFrameId)
+
+        // На 9 уровне — нет.
+        repository.children["user_2"] = createChild("user_2").copy(level = 9, balance = 500)
+        viewModel.selectFrame("user_2", "GUARDIAN")
+        assertEquals("NONE", repository.children["user_2"]!!.selectedFrameId)
+
+        // Рамки за уровень не покупаются за монеты.
+        assertFalse(viewModel.purchaseFrame("user_1", "ROYAL_GOLD"))
+        assertFalse(viewModel.purchaseFrame("user_1", "GUARDIAN"))
+        assertEquals(500, repository.children["user_1"]!!.balance)
+    }
+
+    // ---------- Настройки экономики ----------
+
+    @Test
+    fun `updateEconomySettings mirrors base rewards into quest rewards`() {
+        repository.children["user_1"] = createChild()
+
+        viewModel.updateEconomySettings(
+            userId = "user_1",
+            baseClosetReward = 80,
+            baseRoomReward = 60,
+            baseDiaryFiveReward = 70,
+            multipliersEnabled = false,
+            bonusChestChancePercent = 10,
+            weeklyEarnLimit = 0
+        )
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(80, updated.baseClosetReward)
+        assertEquals(80, updated.wardrobeReward) // зеркало для клейма/карточек
+        assertEquals(60, updated.baseRoomReward)
+        assertEquals(60, updated.roomReward)
+        assertEquals(70, updated.baseDiaryFiveReward)
+        assertFalse(updated.multipliersEnabled)
+        assertEquals(10, updated.bonusChestChancePercent)
+        assertEquals(0, updated.weeklyEarnLimit)
+    }
+
+    @Test
+    fun `economy base reward and disabled multipliers give flat quest payout`() {
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            closetStatus = QuestStatus.READY_TO_CLAIM,
+            wardrobeReward = 80,
+            baseClosetReward = 80,
+            level = 20,
+            streakDays = 30,
+            multipliersEnabled = false,
+            xp = 0
+        )
+
+        viewModel.claimQuestReward("user_1", "closet")
+
+        val updated = repository.children["user_1"]!!
+        // Множитель 1.0: ровно базовая награда, без бонусов уровня/серии.
+        assertEquals(180, updated.balance)
+        val entry = updated.historyItems.first { it.type == HistoryType.QUEST_REWARD }
+        assertEquals(80, entry.amountValue)
+        // XP начисляется как обычно (без perfectDay-бонуса).
+        assertEquals(25, updated.xp)
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(80, historySum)
+    }
+
+    @Test
+    fun `bonusChestChancePercent zero disables chest even if roller would pay`() {
+        viewModel.bonusChestRoller = { _ -> GamificationEngine.BonusChestReward.Coins(30) }
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            closetStatus = QuestStatus.READY_TO_CLAIM,
+            wardrobeReward = 50,
+            bonusChestChancePercent = 0,
+            level = 1,
+            xp = 0
+        )
+
+        viewModel.claimQuestReward("user_1", "closet")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(150, updated.balance) // только награда квеста
+        assertFalse(updated.historyItems.any { it.type == HistoryType.BONUS_CHEST })
+        assertNull(viewModel.bonusChestEvent.value)
+    }
+
+    @Test
+    fun `weekly earn limit caps coins and keeps balance delta equal to history sum`() {
+        val priorEarning = HistoryData(
+            title = "Награда получена: Ранее",
+            time = "10:00",
+            date = getCurrentDateString(),
+            amount = "+80 ₽",
+            isIncome = true,
+            category = "Квесты",
+            type = HistoryType.QUEST_REWARD,
+            amountValue = 80
+        )
+        repository.children["user_1"] = createChild().copy(
+            balance = 200,
+            closetStatus = QuestStatus.READY_TO_CLAIM,
+            wardrobeReward = 50,
+            weeklyEarnLimit = 100,
+            historyItems = listOf(priorEarning),
+            level = 1,
+            xp = 0
+        )
+
+        viewModel.claimQuestReward("user_1", "closet")
+
+        val updated = repository.children["user_1"]!!
+        // Уже заработано 80 из 100 → начисляется только 20, XP — полностью.
+        assertEquals(220, updated.balance)
+        assertEquals(25, updated.xp)
+        val rewardEntry = updated.historyItems.first { it.type == HistoryType.QUEST_REWARD }
+        assertEquals(20, rewardEntry.amountValue)
+        assertTrue(updated.historyItems.any { it.type == HistoryType.WEEKLY_LIMIT })
+        // Инвариант: дельта баланса за клейм (20) = сумма новых записей
+        // (80 — заработок до клейма, уже был в балансе 200).
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(20, historySum - priorEarning.amountValue!!)
+    }
+
+    // ---------- Жетоны честности и подарки родителю ----------
+
+    @Test
+    fun `submitHonestAdmission grants token and 15 XP with level-up invariant`() {
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            xp = 100,
+            level = 1,
+            honestyTokens = 0
+        )
+
+        viewModel.submitHonestAdmission("user_1", "Я разбил вазу")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(1, updated.honestyTokens)
+        assertEquals(QuestStatus.PENDING, updated.honestAdmissionStatus)
+        // xp 100 + 15 = 115 ≥ 109 → level 2, остаток 6, coinBonus 70.
+        assertEquals(2, updated.level)
+        assertEquals(6L, updated.xp)
+        assertEquals(170, updated.balance) // 100 + 70 coinBonus
+        val levelUpEntry = updated.historyItems.first { it.type == HistoryType.LEVEL_UP }
+        assertEquals(70, levelUpEntry.amountValue)
+        // Инвариант: дельта баланса (70) = сумма записей истории.
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(70, historySum)
+    }
+
+    @Test
+    fun `submitHonestAdmission without level-up keeps balance and grants 15 XP`() {
+        repository.children["user_1"] = createChild().copy(
+            balance = 100,
+            xp = 0,
+            level = 1
+        )
+
+        viewModel.submitHonestAdmission("user_1", "Признание")
+
+        val updated = repository.children["user_1"]!!
+        assertEquals(1, updated.honestyTokens)
+        assertEquals(15L, updated.xp)
+        assertEquals(1, updated.level)
+        assertEquals(100, updated.balance) // без level-up баланс не меняется
+        assertFalse(updated.historyItems.any { it.type == HistoryType.LEVEL_UP })
+    }
+
+    @Test
+    fun `sendParentGift deducts coins adds pending gift and keeps invariant`() {
+        repository.children["user_1"] = createChild().copy(balance = 100)
+
+        val ok = viewModel.sendParentGift("user_1", "HUGS")
+
+        assertTrue(ok)
+        val updated = repository.children["user_1"]!!
+        assertEquals(50, updated.balance) // 100 - 50 (HUGS)
+        assertEquals(1, updated.pendingParentGifts.size)
+        assertEquals("HUGS", updated.pendingParentGifts[0].giftTypeId)
+        val entry = updated.historyItems.first { it.type == HistoryType.PARENT_GIFT }
+        assertEquals(-50, entry.amountValue)
+        // Инвариант: дельта баланса (-50) = сумма записей истории.
+        val historySum = updated.historyItems.sumOf { it.amountValue ?: 0 }
+        assertEquals(-50, historySum)
+        assertEquals("HUGS", viewModel.parentGiftEvent.value)
+    }
+
+    @Test
+    fun `sendParentGift rejected when balance is insufficient`() {
+        repository.children["user_1"] = createChild().copy(balance = 30)
+
+        val ok = viewModel.sendParentGift("user_1", "MOVIE_NIGHT") // 120 ₽
+
+        assertFalse(ok)
+        val updated = repository.children["user_1"]!!
+        assertEquals(30, updated.balance)
+        assertTrue(updated.pendingParentGifts.isEmpty())
+        assertFalse(updated.historyItems.any { it.type == HistoryType.PARENT_GIFT })
+        assertNull(viewModel.parentGiftEvent.value)
+    }
+
+    @Test
+    fun `useParentGift removes gift from pending list`() {
+        repository.children["user_1"] = createChild().copy(balance = 100)
+        viewModel.sendParentGift("user_1", "THANK_YOU")
+        val giftId = repository.children["user_1"]!!.pendingParentGifts.single().id
+
+        viewModel.useParentGift("user_1", giftId)
+
+        assertTrue(repository.children["user_1"]!!.pendingParentGifts.isEmpty())
     }
 }

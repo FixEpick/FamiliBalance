@@ -33,7 +33,7 @@ import com.example.familibalance.util.currencyString
 import com.example.familibalance.ui.theme.*
 
 /** Вкладки единой шторки «Магазин стиля». */
-enum class StyleShopTab { THEMES, AVATARS }
+enum class StyleShopTab { THEMES, AVATARS, FRAMES }
 
 /**
  * Шторка «Магазин стиля» с двумя вкладками: «Темы» и «Аватары».
@@ -58,6 +58,11 @@ fun ThemeSelectionBottomSheet(
     initialTab: StyleShopTab = StyleShopTab.THEMES,
     onAvatarSelected: (String) -> Unit = {},
     onPurchaseAvatar: (String) -> Boolean = { false },
+    selectedFrameId: String = "NONE",
+    unlockedFrames: List<String> = DefaultUnlockedFrameIds,
+    childLevel: Int = 1,
+    onFrameSelected: (String) -> Unit = {},
+    onPurchaseFrame: (String) -> Boolean = { false },
     onDismissRequest: () -> Unit
 ) {
     val sheetTitle = stringResource(R.string.style_shop_title)
@@ -67,12 +72,14 @@ fun ThemeSelectionBottomSheet(
     val lockedLabel = stringResource(R.string.theme_locked)
     val themesTabLabel = stringResource(R.string.style_tab_themes)
     val avatarsTabLabel = stringResource(R.string.style_tab_avatars)
+    val framesTabLabel = stringResource(R.string.style_tab_frames)
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
 
     var confettiTrigger by remember { mutableIntStateOf(0) }
     var tab by remember { mutableStateOf(initialTab) }
     var avatarPurchaseTarget by remember { mutableStateOf<CloudAvatarType?>(null) }
+    var framePurchaseTarget by remember { mutableStateOf<AvatarFrameType?>(null) }
 
     val darkThemes = AllAppThemes.filter { it.isDark }
     val lightThemes = AllAppThemes.filter { !it.isDark }
@@ -124,11 +131,29 @@ fun ThemeSelectionBottomSheet(
                         modifier = Modifier.weight(1f),
                         onClick = { tab = StyleShopTab.AVATARS }
                     )
+                    StyleShopTabButton(
+                        label = framesTabLabel,
+                        selected = tab == StyleShopTab.FRAMES,
+                        modifier = Modifier.weight(1f),
+                        onClick = { tab = StyleShopTab.FRAMES }
+                    )
                 }
 
-                if (tab == StyleShopTab.AVATARS) {
+                if (tab == StyleShopTab.FRAMES) {
+                    FrameShopContent(
+                        currentAvatar = currentAvatar,
+                        selectedFrameId = selectedFrameId,
+                        unlockedFrames = unlockedFrames,
+                        childLevel = childLevel,
+                        balance = balance,
+                        onFrameSelected = onFrameSelected,
+                        onPurchaseRequest = { framePurchaseTarget = it },
+                        onDone = onDismissRequest
+                    )
+                } else if (tab == StyleShopTab.AVATARS) {
                     AvatarShopContent(
                         currentAvatar = currentAvatar,
+                        currentFrameId = selectedFrameId,
                         unlockedAvatars = unlockedAvatars,
                         claimedAchievementTitles = claimedAchievementTitles,
                         balance = balance,
@@ -265,7 +290,7 @@ fun ThemeSelectionBottomSheet(
                                 )
                             }
                         }
-                        ThemeUnlockRule.Free -> Unit
+                        ThemeUnlockRule.Free, is ThemeUnlockRule.Level -> Unit
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(
@@ -361,6 +386,70 @@ fun ThemeSelectionBottomSheet(
                     },
                     dismissButton = {
                         TextButton(onClick = { avatarPurchaseTarget = null }) {
+                            Text(
+                                text = stringResource(R.string.action_cancel),
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                )
+            }
+            // Диалог подтверждения покупки рамки аватара.
+            framePurchaseTarget?.let { target ->
+                val rule = target.unlockRule as? ThemeUnlockRule.Paid
+                val price = rule?.price ?: 0
+                val canAfford = balance >= price
+                AppDialog(
+                    onDismissRequest = { framePurchaseTarget = null },
+                    title = {
+                        Text(
+                            text = stringResource(R.string.frame_buy_title),
+                            color = AccentColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        Column {
+                            Text(
+                                text = stringResource(
+                                    R.string.frame_buy_message,
+                                    stringResource(target.titleRes),
+                                    price
+                                ),
+                                color = TextPrimary,
+                                fontSize = 14.sp
+                            )
+                            if (!canAfford) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = stringResource(R.string.theme_buy_no_funds),
+                                    color = PenaltyRed,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(
+                            enabled = canAfford,
+                            onClick = {
+                                if (onPurchaseFrame(target.name)) {
+                                    FeedbackManager.playCoin(context, haptic)
+                                    confettiTrigger++
+                                }
+                                framePurchaseTarget = null
+                            }
+                        ) {
+                            Text(
+                                text = stringResource(R.string.theme_buy_confirm),
+                                color = if (canAfford) AccentColor else TextSecondary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { framePurchaseTarget = null }) {
                             Text(
                                 text = stringResource(R.string.action_cancel),
                                 color = TextSecondary
@@ -536,6 +625,7 @@ private fun StyleShopTabButton(
 @Composable
 private fun AvatarShopContent(
     currentAvatar: String?,
+    currentFrameId: String,
     unlockedAvatars: List<String>,
     claimedAchievementTitles: Set<String>,
     balance: Int,
@@ -565,6 +655,7 @@ private fun AvatarShopContent(
                 ?: lockedHint
             AvatarShopCard(
                 type = type,
+                frameId = currentFrameId,
                 isSelected = isSelected,
                 isUnlocked = unlocked,
                 canAfford = balance >= ((type.unlockRule as? ThemeUnlockRule.Paid)?.price ?: 0),
@@ -601,6 +692,7 @@ private fun AvatarShopContent(
 @Composable
 private fun AvatarShopCard(
     type: CloudAvatarType,
+    frameId: String,
     isSelected: Boolean,
     isUnlocked: Boolean,
     canAfford: Boolean,
@@ -624,7 +716,7 @@ private fun AvatarShopCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Box {
-            CloudAvatar(avatarId = type.name, size = 52.dp)
+            CloudAvatar(avatarId = type.name, size = 52.dp, frameId = frameId)
             if (!isUnlocked) {
                 // Затемнение + замок/кубок поверх аватара.
                 Box(
@@ -673,6 +765,162 @@ private fun AvatarShopCard(
             },
             color = when {
                 isUnlocked -> StatusGreen
+                rule is ThemeUnlockRule.Paid && !canAfford -> PenaltyRed
+                else -> AccentColor
+            },
+            fontSize = 9.sp,
+            maxLines = 1,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+/** Вкладка «Рамки»: сетка 3×2 превью текущего аватара в каждой рамке. */
+@Composable
+private fun FrameShopContent(
+    currentAvatar: String?,
+    selectedFrameId: String,
+    unlockedFrames: List<String>,
+    childLevel: Int,
+    balance: Int,
+    onFrameSelected: (String) -> Unit,
+    onPurchaseRequest: (AvatarFrameType) -> Unit,
+    onDone: () -> Unit
+) {
+    val doneLabel = stringResource(R.string.theme_done)
+    val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
+    val lockedHint = stringResource(R.string.frame_locked_level_toast)
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
+            .padding(top = 10.dp)
+            .heightIn(max = 420.dp)
+    ) {
+        items(AvatarFrameType.entries, key = { it.name }) { type ->
+            val unlocked = type.isFrameUnlocked(unlockedFrames, childLevel)
+            val isSelected = selectedFrameId.equals(type.name, ignoreCase = true)
+            val levelReq = (type.unlockRule as? ThemeUnlockRule.Level)?.minLevel
+            // Toast-подсказка резолвится здесь — onClick не composable-контекст.
+            val levelHint = levelReq?.let {
+                String.format(lockedHint, it)
+            } ?: lockedHint
+            FrameShopCard(
+                type = type,
+                avatarId = currentAvatar,
+                isSelected = isSelected,
+                isUnlocked = unlocked,
+                canAfford = balance >= ((type.unlockRule as? ThemeUnlockRule.Paid)?.price ?: 0),
+                onClick = {
+                    when {
+                        unlocked -> {
+                            FeedbackManager.playLaser(context, haptic)
+                            onFrameSelected(type.name)
+                        }
+                        type.unlockRule is ThemeUnlockRule.Paid -> onPurchaseRequest(type)
+                        else -> Toast.makeText(context, levelHint, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(10.dp))
+    Button(
+        onClick = onDone,
+        modifier = Modifier
+            .fillMaxWidth()
+            .bounceClick(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = AccentColor,
+            contentColor = AccentOnColor
+        ),
+        shape = AccentButtonShape
+    ) {
+        Text(doneLabel, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+    }
+}
+
+@Composable
+private fun FrameShopCard(
+    type: AvatarFrameType,
+    avatarId: String?,
+    isSelected: Boolean,
+    isUnlocked: Boolean,
+    canAfford: Boolean,
+    onClick: () -> Unit
+) {
+    val title = stringResource(type.titleRes)
+    val rule = type.unlockRule
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(GlassBackground)
+            .border(
+                width = if (isSelected) 2.dp else 1.dp,
+                color = if (isSelected) AccentColor else GlassStroke,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .bounceClick()
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box {
+            CloudAvatar(avatarId = avatarId, size = 52.dp, frameId = type.name)
+            if (!isUnlocked) {
+                // Затемнение + замок/звезда поверх превью рамки.
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color.Black.copy(alpha = 0.35f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (rule is ThemeUnlockRule.Level) "⭐" else "🔒",
+                        fontSize = 20.sp
+                    )
+                }
+            }
+            if (isSelected) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(2.dp)
+                        .size(18.dp)
+                        .clip(CircleShape)
+                        .background(StatusGreen),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("✓", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = title,
+            color = TextPrimary,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            maxLines = 1
+        )
+        Text(
+            text = when {
+                isSelected -> stringResource(R.string.frame_selected)
+                isUnlocked -> stringResource(R.string.frame_unlocked)
+                rule is ThemeUnlockRule.Paid -> currencyString(R.string.theme_price, rule.price)
+                rule is ThemeUnlockRule.Level ->
+                    stringResource(R.string.frame_level_req, rule.minLevel)
+                else -> ""
+            },
+            color = when {
+                isSelected || isUnlocked -> StatusGreen
                 rule is ThemeUnlockRule.Paid && !canAfford -> PenaltyRed
                 else -> AccentColor
             },

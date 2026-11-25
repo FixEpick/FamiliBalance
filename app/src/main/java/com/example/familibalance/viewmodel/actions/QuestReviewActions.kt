@@ -132,9 +132,9 @@ fun MainViewModel.applyDiaryGrades(childId: String, count5: Int, count4: Int, co
     val c4 = count4.coerceAtLeast(0)
     val c3 = count3.coerceAtLeast(0)
     val c2 = count2.coerceAtLeast(0)
-    // Положительные оценки (5→50, 4→30) — в diaryApprovedReward;
+    // Положительные оценки (5→baseDiaryFiveReward, 4→30) — в diaryApprovedReward;
     // штрафные (3, 2) применятся штрафами при получении награды.
-    val netReward = 50 * c5 + 30 * c4
+    val netReward = profile.baseDiaryFiveReward * c5 + 30 * c4
 
     val photoUrlToDelete = profile.diaryPhotoUrl
     updateChildProfile(
@@ -293,12 +293,14 @@ fun MainViewModel.updateBuiltInQuest(userId: String, kind: String, title: String
         "wardrobe", "closet", "шкаф" -> profile.copy(
             wardrobeTitle = title,
             wardrobeDesc = description,
-            wardrobeReward = reward
+            wardrobeReward = reward,
+            baseClosetReward = reward
         )
         "room", "комната" -> profile.copy(
             roomTitle = title,
             roomDesc = description,
-            roomReward = reward
+            roomReward = reward,
+            baseRoomReward = reward
         )
         "diary", "дневник" -> profile.copy(
             diaryTitle = title,

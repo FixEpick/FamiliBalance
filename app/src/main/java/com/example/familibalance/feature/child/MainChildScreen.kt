@@ -74,6 +74,11 @@ fun MainChildScreen(
     val boughtMinutesToday = child.boughtMinutesToday
     val honestAdmissionStatus = child.honestAdmissionStatus
 
+    // Геймификация: ранг, XP-прогресс и текущий множитель наград.
+    val rankName = stringResource(GamificationEngine.rankTitleRes(GamificationEngine.rankForLevel(child.level)))
+    val xpForNextLevel = GamificationEngine.xpToNextLevel(child.level)
+    val rewardMultiplier = GamificationEngine.rewardMultiplier(child.level, child.streakDays)
+
     // Кулдаун честного признания: 1 раз в 7 дней
     val honestCooldownDaysLeft = remember(child.lastHonestAdmissionDate) {
         val last = runCatching { LocalDate.parse(child.lastHonestAdmissionDate) }.getOrNull()
@@ -182,6 +187,28 @@ fun MainChildScreen(
     var activeCoinFlights by remember { mutableStateOf<List<CoinFlightData>>(emptyList()) }
     var confettiTrigger by remember { mutableIntStateOf(0) }
 
+    // Level-up из ViewModel: конфетти + фанфара (8-bit level_up).
+    val levelUpEvent by viewModel.levelUpEvent.collectAsStateWithLifecycle()
+    LaunchedEffect(levelUpEvent) {
+        if (levelUpEvent != null) {
+            confettiTrigger++
+            FeedbackManager.playLevelUp(context, haptic)
+            viewModel.consumeLevelUpEvent()
+        }
+    }
+
+    // Подарок родителю отправлен: 8-битный звук монетки + конфетти.
+    val parentGiftEvent by viewModel.parentGiftEvent.collectAsStateWithLifecycle()
+    LaunchedEffect(parentGiftEvent) {
+        if (parentGiftEvent != null) {
+            confettiTrigger++
+            FeedbackManager.playCoin(context, haptic)
+            viewModel.consumeParentGiftEvent()
+        }
+    }
+    // Текст Toast для не-composable лямбды — вычисляем здесь.
+    val parentGiftNoFundsText = stringResource(R.string.child_parent_gift_no_funds)
+
     LaunchedEffect(confettiTrigger) {
         if (confettiTrigger > 0) {
             delay(2500)
@@ -221,7 +248,13 @@ fun MainChildScreen(
                     onCashOutClick = { showCashOutDialog = true },
                     cashoutEnabled = !child.cashoutRequests.any {
                         it.status == CashoutStatus.PENDING || it.status == CashoutStatus.REJECTED
-                    }
+                    },
+                    level = child.level,
+                    rankName = rankName,
+                    xpIntoLevel = child.xp,
+                    xpForNext = xpForNextLevel,
+                    multiplier = rewardMultiplier,
+                    frameId = child.selectedFrameId
                 )
             }
 
@@ -254,6 +287,7 @@ fun MainChildScreen(
                         balance = balance,
                         isProcessingAction = isProcessingAction,
                         cooldownDaysLeft = dreamCooldownDaysLeft,
+                        onEdit = { showDreamDialog = true },
                         onClaim = {
                             triggerCoinFlight(Offset.Zero) {
                                 viewModel.claimDreamGoal(child.id)
@@ -445,17 +479,40 @@ fun MainChildScreen(
                 )
             }
 
+            // ================= БЛОК 4.1: ИДЕАЛЬНЫЕ ДНИ =================
+            item {
+                PerfectDaysCard(perfectDaysStreak = child.perfectDaysStreak)
+            }
+
             // ================= БЛОК 5: ЧЕСТНОЕ ПРИЗНАНИЕ (только когда активно) =================
             // На кулдауне и после применения скидки кнопка не занимает место —
-            // показываем её только когда функция доступна или есть что забрать.
-            if (honestCooldownDaysLeft <= 0 || honestAdmissionStatus == QuestStatus.READY_TO_CLAIM) {
+            // показываем её только когда функция доступна, есть что забрать
+            // или уже заработаны жетоны честности (счётчик виден всегда).
+            if (honestCooldownDaysLeft <= 0 || honestAdmissionStatus == QuestStatus.READY_TO_CLAIM || child.honestyTokens > 0) {
                 item {
                     HonestCatEntry(
                         status = honestAdmissionStatus,
                         cooldownDaysLeft = honestCooldownDaysLeft,
+                        honestyTokens = child.honestyTokens,
                         onOpen = { showHonestCatScreen = true }
                     )
                 }
+            }
+
+            // ================= БЛОК 5.1: ПОДАРОК РОДИТЕЛЮ =================
+            item {
+                ParentGiftCard(
+                    balance = child.balance,
+                    onSendGift = { gift ->
+                        if (!viewModel.sendParentGift(child.id, gift.name)) {
+                            android.widget.Toast.makeText(
+                                context,
+                                parentGiftNoFundsText,
+                                android.widget.Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                )
             }
         }
 

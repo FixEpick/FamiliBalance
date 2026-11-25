@@ -66,6 +66,15 @@ internal fun EconomySheetContent(
             item {
                 EconomyRow(stringResource(R.string.eco_dream), stringResource(R.string.eco_dream_value))
             }
+            item {
+                EconomyRow(stringResource(R.string.eco_xp), stringResource(R.string.eco_xp_value))
+            }
+            item {
+                EconomyRow(stringResource(R.string.eco_level_up), stringResource(R.string.eco_level_up_value))
+            }
+            item {
+                EconomyRow(stringResource(R.string.eco_reward_mult), stringResource(R.string.eco_reward_mult_value))
+            }
 
             // ===== Секция 2: Расходы =====
             item {
@@ -214,6 +223,7 @@ private fun ThemeEconomyRow(
         is ThemeUnlockRule.Paid -> currencyString(R.string.theme_price, rule.price)
         is ThemeUnlockRule.Achievement ->
             stringResource(R.string.theme_ach_prefix, stringResource(rule.titleRes))
+        is ThemeUnlockRule.Level -> stringResource(R.string.frame_level_req, rule.minLevel)
     }
     Row(
         modifier = Modifier
@@ -251,6 +261,7 @@ private fun AvatarEconomyRow(
         is ThemeUnlockRule.Paid -> currencyString(R.string.theme_price, rule.price)
         is ThemeUnlockRule.Achievement ->
             stringResource(R.string.theme_ach_prefix, stringResource(rule.titleRes))
+        is ThemeUnlockRule.Level -> stringResource(R.string.frame_level_req, rule.minLevel)
     }
     Row(
         modifier = Modifier

@@ -90,28 +90,34 @@ fun DreamGoalDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = { onConfirm(title.trim(), target) },
-                enabled = canConfirm,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .accentButtonChrome()
-                    .bounceClick(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = AccentOnColor,
-                    disabledContainerColor = Color.Transparent,
-                    disabledContentColor = TextSecondary
-                ),
-                shape = AccentButtonShape
-            ) {
-                Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel), color = TextSecondary)
+            // Кнопки стопкой на всю ширину: «Сохранить» сверху,
+            // «Отмена» по центру снизу — симметрично и без прилипания к краю.
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = { onConfirm(title.trim(), target) },
+                    enabled = canConfirm,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .accentButtonChrome()
+                        .bounceClick(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = AccentOnColor,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = TextSecondary
+                    ),
+                    shape = AccentButtonShape
+                ) {
+                    Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(androidx.compose.ui.Alignment.CenterHorizontally),
+                    colors = ButtonDefaults.textButtonColors(contentColor = TextSecondary)
+                ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
             }
         }
     )

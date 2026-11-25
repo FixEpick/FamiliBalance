@@ -43,7 +43,13 @@ fun BalanceCard(
     onBadgePositioned: (Offset) -> Unit,
     onAvatarClick: (() -> Unit)? = null,
     onCashOutClick: (() -> Unit)? = null,
-    cashoutEnabled: Boolean = true
+    cashoutEnabled: Boolean = true,
+    level: Int = 1,
+    rankName: String = "",
+    xpIntoLevel: Long = 0,
+    xpForNext: Long = 1,
+    multiplier: Double = 1.0,
+    frameId: String? = null
 ) {
     val theme = LocalAppTheme.current
     val context = LocalContext.current
@@ -161,6 +167,80 @@ fun BalanceCard(
                         }
                     }
                 }
+
+                // Геймификация: уровень, ранг, XP-прогресс и множитель наград.
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = contentColor.copy(alpha = 0.22f),
+                        border = BorderStroke(1.dp, contentColor.copy(alpha = 0.55f)),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.child_level_badge, level),
+                            color = contentColor,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                    if (rankName.isNotBlank()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = rankName,
+                            color = contentColor.copy(alpha = 0.85f),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+                    }
+                    if (multiplier > 1.0) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                            color = StatusYellow.copy(alpha = 0.25f),
+                            border = BorderStroke(1.dp, StatusYellow.copy(alpha = 0.6f)),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.child_reward_mult, multiplier),
+                                color = StatusYellow,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(6.dp))
+                val xpFraction = if (xpForNext > 0) (xpIntoLevel.toFloat() / xpForNext).coerceIn(0f, 1f) else 0f
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(5.dp)
+                        .clip(RoundedCornerShape(3.dp))
+                        .background(contentColor.copy(alpha = 0.25f))
+                ) {
+                    if (xpFraction > 0.001f) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(xpFraction)
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(3.dp))
+                                .background(contentColor)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.child_xp_progress, xpIntoLevel, xpForNext),
+                    color = contentColor.copy(alpha = 0.75f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
+                )
 
                 if (onCashOutClick != null) {
                     Spacer(modifier = Modifier.height(16.dp))

@@ -21,6 +21,7 @@ import com.example.familibalance.ui.theme.*
 fun HonestCatEntry(
     status: QuestStatus,
     cooldownDaysLeft: Int,
+    honestyTokens: Int = 0,
     onOpen: () -> Unit
 ) {
     when (status) {
@@ -152,5 +153,17 @@ fun HonestCatEntry(
                 )
             }
         }
+    }
+    // Счётчик заработанных жетонов честности — виден, когда > 0.
+    if (honestyTokens > 0) {
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = stringResource(R.string.child_honesty_tokens, honestyTokens),
+            color = AccentColor,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

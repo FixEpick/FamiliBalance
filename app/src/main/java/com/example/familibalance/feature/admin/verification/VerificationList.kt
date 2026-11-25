@@ -73,6 +73,17 @@ fun VerificationAdminContent(
 
 
 
+        // Подарки-купоны, отправленные ребёнком за монеты
+        if (child.pendingParentGifts.isNotEmpty()) {
+            item {
+                ParentGiftsCard(
+                    gifts = child.pendingParentGifts,
+                    actionEnabled = !isProcessingAction,
+                    onUseGift = { viewModel.useParentGift(child.id, it) }
+                )
+            }
+        }
+
         // Секция 1: Ждут подтверждения
         if (hasPending) {
             item {

@@ -7,12 +7,15 @@ import com.example.familibalance.data.model.*
 import com.example.familibalance.data.storage.*
 import com.example.familibalance.data.supabase.SupabaseManager
 import com.example.familibalance.ui.theme.AllAppThemes
+import com.example.familibalance.ui.theme.AvatarFrameType
+import com.example.familibalance.ui.theme.DefaultUnlockedFrameIds
 import com.example.familibalance.ui.theme.DefaultUnlockedThemeIds
 import com.example.familibalance.ui.theme.ThemeUnlockRule
 import com.example.familibalance.ui.theme.CloudAvatarType
 import com.example.familibalance.ui.theme.achievementAvatarIds
 import com.example.familibalance.ui.theme.achievementThemeIds
 import com.example.familibalance.ui.theme.cloudAvatarTypeOf
+import com.example.familibalance.ui.theme.isFrameUnlocked
 import com.example.familibalance.util.*
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -242,6 +245,57 @@ fun MainViewModel.purchaseAvatar(userId: String, avatarId: String): Boolean {
     return true
 }
 
+/**
+ * Выбор рамки аватара: применяется только если рамка открыта
+ * (бесплатная, купленная или достигнут нужный уровень).
+ */
+fun MainViewModel.selectFrame(userId: String, frameId: String) {
+    val profile = familyRepository.getChild(userId) ?: return
+    val type = AvatarFrameType.entries.firstOrNull { it.name == frameId } ?: return
+    if (!type.isFrameUnlocked(profile.unlockedFrames, profile.level)) return
+    if (profile.selectedFrameId == frameId) return
+    updateChildProfile(profile.copy(selectedFrameId = frameId))
+}
+
+/**
+ * Покупка рамки аватара за монеты: проверяет баланс, списывает цену,
+ * добавляет frameId в unlockedFrames и сразу выбирает её.
+ * Запись в историю — тип FRAME_PURCHASE, arg = frameId.
+ * Рамки за уровень не покупаются (открываются автоматически).
+ * @return true при успешной покупке/выборе уже купленной рамки.
+ */
+fun MainViewModel.purchaseFrame(userId: String, frameId: String): Boolean {
+    val profile = familyRepository.getChild(userId) ?: return false
+    val type = AvatarFrameType.entries.firstOrNull { it.name == frameId } ?: return false
+    val rule = type.unlockRule as? ThemeUnlockRule.Paid ?: return false
+    if (frameId in profile.unlockedFrames) {
+        // Уже куплена — просто применяем.
+        updateChildProfile(profile.copy(selectedFrameId = frameId))
+        return true
+    }
+    if (profile.balance < rule.price) return false
+    val updated = profile.copy(
+        balance = profile.balance - rule.price,
+        unlockedFrames = profile.unlockedFrames + frameId,
+        selectedFrameId = frameId,
+        historyItems = listOf(
+            HistoryData(
+                title = "Покупка рамки: ${type.name}",
+                time = getCurrentTimeString(),
+                date = getCurrentDateString(),
+                amount = "-${rule.price} ₽",
+                isIncome = false,
+                category = "Рамки",
+                type = HistoryType.FRAME_PURCHASE,
+                amountValue = -rule.price,
+                arg = frameId
+            )
+        ) + profile.historyItems
+    )
+    updateChildProfile(updated)
+    return true
+}
+
 fun MainViewModel.claimAchievementReward(userId: String, achievementId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.achievements.firstOrNull { it.id == achievementId } ?: return
@@ -409,9 +463,12 @@ fun MainViewModel.resetAllChildData(userId: String) {
             wardrobeTitle = "Фото шкафа",
             wardrobeDesc = "Наведи идеальный порядок на полках и сфотографируй результат для родителя",
             wardrobeReward = 50,
+            baseClosetReward = 50,
             roomTitle = "Фото комнаты",
             roomDesc = "Заправь кровать без складок, собери игрушки и пришли фото",
             roomReward = 50,
+            baseRoomReward = 50,
+            baseDiaryFiveReward = 50,
             diaryTitle = "📚 Дневник",
             diaryDesc = "Квест выполняется раз в неделю. Родитель проверяет все оценки в дневнике за прошедшую неделю.",
             diaryApprovedReward = 100,

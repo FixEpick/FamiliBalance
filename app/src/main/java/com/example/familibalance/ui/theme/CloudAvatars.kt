@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -110,10 +111,12 @@ fun CloudAvatar(
     avatarId: String?,
     modifier: Modifier = Modifier,
     size: Dp = 48.dp,
-    contentDescription: String? = null
+    contentDescription: String? = null,
+    frameId: String? = null
 ) {
     val theme = LocalAppTheme.current
     val type = cloudAvatarTypeOf(avatarId)
+    val frameType = avatarFrameTypeOf(frameId)
     val outline = if (theme.isDark) AvOutlineDark else AvOutlineLight
     val cloudBg = if (theme.isDark) theme.accent.copy(alpha = 0.22f) else AvBgLight
     val mod = if (contentDescription != null) {
@@ -129,7 +132,66 @@ fun CloudAvatar(
             // Слой 3: маленькие белые облачка снизу
             drawMiniCloudUnit(24f, 92f, 9f, outline)
             drawMiniCloudUnit(76f, 94f, 7.5f, outline)
+            // Слой 4: рамка аватара (вокруг головы, не перекрывая лицо)
+            drawAvatarFrame(frameType)
         }
+    }
+}
+
+/**
+ * Рисует стилизованную рамку вокруг аватара в координатах 100×100.
+ * Кольцо радиусом ~43 лежит снаружи головы персонажа — лицо не перекрывается.
+ */
+private fun DrawScope.drawAvatarFrame(type: AvatarFrameType) {
+    if (type == AvatarFrameType.NONE) return
+    val center = Offset(50f, 52f)
+    val ringRadius = 43f
+    when (type) {
+        AvatarFrameType.NEON -> {
+            drawCircle(Color(0xFF00E5FF).copy(alpha = 0.30f), ringRadius + 4f, center, style = Stroke(9f))
+            drawCircle(Color(0xFF00E5FF), ringRadius, center, style = Stroke(3.5f))
+            drawCircle(Color.White.copy(alpha = 0.85f), ringRadius, center, style = Stroke(1.2f))
+        }
+        AvatarFrameType.FIRE -> {
+            val brush = Brush.sweepGradient(
+                listOf(Color(0xFFFF9100), Color(0xFFFF1744), Color(0xFFFF9100)),
+                center = center
+            )
+            drawCircle(Color(0xFFFF6D00).copy(alpha = 0.28f), ringRadius + 4f, center, style = Stroke(9f))
+            drawCircle(brush, ringRadius, center, style = Stroke(4f))
+        }
+        AvatarFrameType.GUARDIAN -> {
+            val brush = Brush.sweepGradient(
+                listOf(Color(0xFFCFD8DC), Color(0xFF455A64), Color(0xFFCFD8DC)),
+                center = center
+            )
+            drawCircle(Color(0xFF90A4AE).copy(alpha = 0.25f), ringRadius + 4f, center, style = Stroke(8f))
+            drawCircle(brush, ringRadius, center, style = Stroke(3.5f))
+        }
+        AvatarFrameType.ROYAL_GOLD -> {
+            val brush = Brush.sweepGradient(
+                listOf(Color(0xFFFFF176), Color(0xFFB8860B), Color(0xFFFFF176)),
+                center = center
+            )
+            drawCircle(Color(0xFFFFD700).copy(alpha = 0.30f), ringRadius + 4f, center, style = Stroke(9f))
+            drawCircle(brush, ringRadius, center, style = Stroke(4f))
+        }
+        AvatarFrameType.STAR_LEGEND -> {
+            val brush = Brush.sweepGradient(
+                listOf(Color(0xFFB388FF), Color(0xFF311B92), Color(0xFFB388FF)),
+                center = center
+            )
+            drawCircle(Color(0xFF7C4DFF).copy(alpha = 0.30f), ringRadius + 4f, center, style = Stroke(9f))
+            drawCircle(brush, ringRadius, center, style = Stroke(4f))
+            // Звёздные искры на кольце.
+            for (i in 0 until 5) {
+                val angle = Math.toRadians((i * 72 + 18).toDouble())
+                val sx = center.x + (ringRadius + 1f) * kotlin.math.cos(angle).toFloat()
+                val sy = center.y + (ringRadius + 1f) * kotlin.math.sin(angle).toFloat()
+                drawCircle(Color.White.copy(alpha = 0.9f), 1.6f, Offset(sx, sy))
+            }
+        }
+        AvatarFrameType.NONE -> Unit
     }
 }
 

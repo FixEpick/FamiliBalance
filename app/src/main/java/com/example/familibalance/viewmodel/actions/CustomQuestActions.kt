@@ -111,27 +111,62 @@ fun MainViewModel.claimCustomQuestReward(userId: String, questId: String) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.customQuests.firstOrNull { it.id == questId } ?: return
     if (target.status == QuestStatus.READY_TO_CLAIM) {
+        val outcome = computeQuestReward(profile, target.reward, GamificationEngine.QuestKind.BONUS_OR_CUSTOM)
+        // Недельный лимит заработка: монеты ограничиваются остатком лимита,
+        // XP и level-up начисляются как обычно.
+        val weeklyCap = applyWeeklyEarnLimit(profile, outcome.coins)
+        val grantedCoins = weeklyCap.coins
+        val time = getCurrentTimeString()
+        val date = getCurrentDateString()
         val updatedQuests = profile.customQuests.map { quest ->
             if (quest.id == questId) quest.copy(status = QuestStatus.CLAIMED) else quest
         }
-        val updated = profile.copy(
+        val limitEntries = if (weeklyCap.capped) {
+            listOf(
+                HistoryData(
+                    title = "Недельный лимит заработка",
+                    time = time,
+                    date = date,
+                    amount = "",
+                    isIncome = false,
+                    category = "Бонусы",
+                    type = HistoryType.WEEKLY_LIMIT,
+                    arg = profile.weeklyEarnLimit.toString()
+                )
+            )
+        } else emptyList()
+        var updated = profile.copy(
             customQuests = updatedQuests,
-            balance = profile.balance + target.reward,
-            historyItems = listOf(
+            balance = profile.balance + grantedCoins + outcome.levelUp.coinBonus,
+            xp = outcome.levelUp.newXp,
+            level = outcome.levelUp.newLevel,
+            historyItems = limitEntries + listOf(
                 HistoryData(
                     title = "Квест выполнен: ${target.title}",
-                    time = getCurrentTimeString(),
-                    date = getCurrentDateString(),
-                    amount = "+${target.reward} ₽",
+                    time = time,
+                    date = date,
+                    amount = "+$grantedCoins ₽",
                     isIncome = true,
                     category = "Кастомные квесты",
                     type = HistoryType.CUSTOM_QUEST_DONE,
-                    amountValue = target.reward,
+                    amountValue = grantedCoins,
                     arg = target.title
                 )
-            ) + profile.historyItems
+            ) + gamificationHistoryEntries(outcome, time, date, 0) + profile.historyItems
         )
+        // Бонусный сундук: шанс из настроек экономики (0% — не выпадает).
+        val chest = rollChest(profile)?.let { applyBonusChest(updated, it, time, date) }
+        if (chest != null) {
+            updated = updated.copy(
+                balance = updated.balance + chest.balanceDelta,
+                xp = chest.xp,
+                level = chest.level,
+                historyItems = chest.historyEntries + updated.historyItems
+            )
+        }
         updateChildProfile(updated)
+        notifyLevelUp(outcome)
+        if (chest != null) notifyBonusChest(chest)
     }
     } finally {
         endProcessingAction()

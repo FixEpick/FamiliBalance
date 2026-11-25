@@ -185,13 +185,19 @@
     <string name="rules_title">📜 Rules scroll</string>
     <string name="rules_offline">No internet? Don\'t worry! All your quests and rewards are saved on the phone. As soon as the network is back, they\'ll be sent to the cloud automatically.</string>
     <string name="rules_balance_title">📖 How your balance works</string>
-    <string name="rules_balance_text">All earned rubles go to your wallet. You can exchange them for phone time (100 ₽ = 30 minutes) OR you can withdraw all your money at any time — take your whole balance as real paper money from your parent!</string>
+    <string name="rules_balance_text">All earned rubles go to your wallet. You can exchange them for phone time (100 ₽ = 30 minutes) OR you can withdraw all your money at any time — take your whole balance as real paper money from your parent! You also grow in levels: quests grant XP, and with each level you unlock new ranks and a bigger reward multiplier!</string>
     <string name="rules_earn_title">💰 How to earn:</string>
-    <string name="rules_earn_text">• Grade "5" in diary: +50 ₽\n• Grade "4" in diary: +30 ₽\n• Wardrobe photo (perfect order): +%1$d ₽\n• Room photo (made bed and tidiness): +%2$d ₽\n• Achievement bonuses: from 10 ₽ to 500 ₽ for the "Server Legend" rank!</string>
+    <string name="rules_earn_text">• Grade "5" in diary: +50 ₽\n• Grade "4" in diary: +30 ₽\n• Wardrobe photo (perfect order): +%1$d ₽\n• Room photo (made bed and tidiness): +%2$d ₽\n• Achievement bonuses: from 10 ₽ to 500 ₽ for the "Server Legend" rank!\n• Quest XP: wardrobe &amp; room +25 XP, diary +70 XP, bonus quests +30 XP — scaled by level and streak multiplier!</string>
     <string name="rules_penalty_title">🔴 What costs you money (Penalties)</string>
     <string name="rules_penalty_text">Grade "3" costs −20 ₽, grade "2" costs −50 ₽. Mischief and fooling around cost −30 ₽, and lying or cheating costs a full −100 ₽. But if you honestly tell your parent through the kitty before they find out — the penalty is cut exactly in half! (−10 ₽ for a three, −25 ₽ for a two, −15 ₽ for mischief and −50 ₽ for lying).</string>
     <string name="rules_streak_title">🔥 Days without penalties</string>
     <string name="rules_streak_text">Check in every day and get +50 ₽ every 7 days without penalties! But any penalty burns all accumulated days — and each missed day extinguishes one flame.</string>
+    <string name="rules_gamification_title">Levels, ranks &amp; XP</string>
+    <string name="rules_gamification_text">Every completed quest grants XP. As you level up, you unlock new ranks — from "Novice" to "House Legend" — and earn a coin bonus on each level-up. The higher your level and the longer your no-penalty streak, the bigger the reward multiplier — up to ×1.75!</string>
+    <string name="rules_bonus_chest_title">Bonus chest</string>
+    <string name="rules_bonus_chest_text">After every completed quest you have a 15%% chance to open a bonus chest — inside there are either coins (20 to 60 ₽) or bonus XP (10 to 15)!</string>
+    <string name="rules_perfect_day_title">Perfect day</string>
+    <string name="rules_perfect_day_text">Complete both daily quests — wardrobe photo and room photo — in one day to earn +25 ₽ and +15 XP! Each consecutive perfect day grows the streak: from day 3 quests grant +10%% XP, from day 7 — +20%%!</string>
     <string name="rules_screentime_title">⏳ Screen time</string>
     <string name="rules_screentime_text">Limit 90 minutes per day. Tariffs: 30 min = 100 ₽, 60 min = 200 ₽, 90 min = 300 ₽.</string>
     <string name="rules_honest_title">🐱 Honest admission</string>
@@ -221,6 +227,12 @@
     <string name="eco_streak_value">+50 ₽ every 7 days</string>
     <string name="eco_dream">🎯 Dream goal</string>
     <string name="eco_dream_value">you pick it</string>
+    <string name="eco_xp">Quest XP</string>
+    <string name="eco_xp_value">25–70 XP</string>
+    <string name="eco_level_up">Level up</string>
+    <string name="eco_level_up_value">coin bonus</string>
+    <string name="eco_reward_mult">Reward multiplier</string>
+    <string name="eco_reward_mult_value">up to ×1.75</string>
     <string name="eco_set_by_dad">amount set by parent</string>
     <string name="eco_time30">⏳ 30 minutes of screen time</string>
     <string name="eco_time60">⏳ 60 minutes of screen time</string>
@@ -344,6 +356,19 @@
     <string name="style_shop_title">Style shop</string>
     <string name="style_tab_themes">🎨 Themes</string>
     <string name="style_tab_avatars">🦸 Avatars</string>
+    <string name="style_tab_frames">🖼 Frames</string>
+    <string name="frame_none">No frame</string>
+    <string name="frame_neon">Neon outline</string>
+    <string name="frame_fire">Fire streak</string>
+    <string name="frame_guardian">Order keeper</string>
+    <string name="frame_royal_gold">Royal gold</string>
+    <string name="frame_star_legend">Star legend</string>
+    <string name="frame_selected">Selected</string>
+    <string name="frame_unlocked">Unlocked</string>
+    <string name="frame_level_req">From level %1$d</string>
+    <string name="frame_buy_title">Buy frame?</string>
+    <string name="frame_buy_message">Frame "%1$s" — %2$d ₽. Deduct from balance?</string>
+    <string name="frame_locked_level_toast">Frame unlocks at level %1$d</string>
     <string name="economy_avatars_section">🦸 Avatars</string>
     <string name="avatar_cat">Kitty</string>
     <string name="avatar_panda">Panda</string>
@@ -400,6 +425,69 @@
     <string name="hist_dream_set">Goal set: %1$s</string>
     <string name="hist_theme_purchase">Theme purchased: %1$s</string>
     <string name="hist_avatar_purchase">Avatar purchased: %1$s</string>
+    <string name="hist_frame_purchase">Frame purchased: %1$s</string>
+    <string name="hist_level_up">New level: %1$s</string>
+    <string name="hist_reward_multiplier">Level &amp; streak bonus: %1$s</string>
+    <string name="hist_bonus_chest">Bonus chest</string>
+    <string name="hist_bonus_chest_xp">Bonus chest: +%1$s XP</string>
+    <string name="hist_perfect_day">Perfect day: +25 ₽ and +15 XP</string>
+    <string name="hist_weekly_limit">Weekly earning limit</string>
+
+    <!-- Economy settings (parent admin) -->
+    <string name="admin_economy_title">Economy settings</string>
+    <string name="admin_economy_reward_closet">Reward: wardrobe photo</string>
+    <string name="admin_economy_reward_room">Reward: room photo</string>
+    <string name="admin_economy_reward_diary5">Reward: diary grade 5</string>
+    <string name="admin_economy_multipliers">Reward multipliers (level &amp; streaks)</string>
+    <string name="admin_economy_chest_chance">Bonus chest chance</string>
+    <string name="admin_economy_chance_pct">%1$d%%</string>
+    <string name="admin_economy_weekly_limit">Weekly earning limit</string>
+    <string name="admin_economy_no_limit">No limit</string>
+    <string name="admin_economy_set_limit">Set limit</string>
+    <string name="admin_economy_reset_defaults">Reset to defaults</string>
+
+    <!-- Parent gifts & honesty tokens -->
+    <string name="gift_thank_you">Card: Thanks for caring</string>
+    <string name="gift_hugs">Coupon: Hugs without the queue</string>
+    <string name="gift_help_chores">Coupon: Help with chores off the queue</string>
+    <string name="gift_movie_night">Coupon: Family night of my choice</string>
+    <string name="child_honesty_tokens">Honesty tokens: %1$d</string>
+    <string name="child_parent_gift_title">Gift for parent</string>
+    <string name="child_parent_gift_hint">Thank your parent — buy a card or coupon</string>
+    <string name="child_parent_gift_send">Send</string>
+    <string name="child_parent_gift_no_funds">Not enough coins</string>
+    <string name="admin_gifts_title">Gifts from child</string>
+    <string name="admin_gift_use">Accept / Use</string>
+    <string name="hist_parent_gift">Gift for parent: %1$s</string>
+    <string name="rules_honesty_tokens_title">Honesty tokens</string>
+    <string name="rules_honesty_tokens_text">Each honest admission earns you an honesty token and 15 XP.</string>
+    <string name="rules_parent_gifts_title">Gifts for parent</string>
+    <string name="rules_parent_gifts_text">For coins you can send your parent a card or coupon — they will see it in their app.</string>
+
+    <!-- Gamification: levels, ranks, XP -->
+    <string name="gamification_rank_novice">Novice</string>
+    <string name="gamification_rank_helper">Home Helper</string>
+    <string name="gamification_rank_keeper">Order Keeper</string>
+    <string name="gamification_rank_master">Balance Master</string>
+    <string name="gamification_rank_hero">Family Hero</string>
+    <string name="gamification_rank_legend">House Legend</string>
+    <string name="child_level_badge">Lv. %1$d</string>
+    <string name="child_xp_progress">%1$d / %2$d XP</string>
+    <string name="child_reward_mult">×%1$.1f</string>
+    <string name="dream_edit_btn">Edit</string>
+    <string name="dream_progress_percent">%1$d%%</string>
+
+    <!-- Bonus chest dialog -->
+    <string name="bonus_chest_title">Bonus chest!</string>
+    <string name="bonus_chest_you_got">You got:</string>
+    <string name="bonus_chest_claim">Claim!</string>
+
+    <!-- Perfect days card -->
+    <string name="child_perfect_days_title">Perfect days</string>
+    <string name="child_perfect_days_streak">%1$d days in a row</string>
+    <string name="child_perfect_days_hint">Complete wardrobe &amp; room in one day</string>
+    <string name="child_perfect_days_bonus">+%1$d%% XP</string>
+    <string name="child_perfect_days_reward">+25 ₽ and +15 XP</string>
 
     <!-- Auth / admin ViewModel messages (UiText) -->
     <string name="auth_err_nickname">Enter nickname</string>

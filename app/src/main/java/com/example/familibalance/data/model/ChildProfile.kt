@@ -1,6 +1,7 @@
 package com.example.familibalance.data.model
 
 import com.example.familibalance.ui.theme.DefaultUnlockedAvatarIds
+import com.example.familibalance.ui.theme.DefaultUnlockedFrameIds
 import com.example.familibalance.ui.theme.DefaultUnlockedThemeIds
 import kotlinx.serialization.Serializable
 
@@ -90,7 +91,35 @@ data class ChildProfileState(
     /** Epoch ms последнего локального изменения состояния (last-writer-wins при синхронизации). */
     val stateUpdatedAt: Long = 0,
     /** Код валюты наград (RUB/USD/EUR/GBP/KZT/BYN/COIN) — только символ отображения, без конвертации. */
-    val rewardCurrency: String = "RUB"
+    val rewardCurrency: String = "RUB",
+    /** XP текущего уровня (сброс в 0 при каждом level-up). См. GamificationEngine. */
+    val xp: Long = 0L,
+    /** Текущий уровень 1–50+. См. GamificationEngine. */
+    val level: Int = 1,
+    /** Серия «идеальных дней» подряд (шкаф + комната за один день). */
+    val perfectDaysStreak: Int = 0,
+    /** Дата (yyyy-MM-dd) последнего идеального дня; null — ещё не было. */
+    val lastPerfectDayDate: String? = null,
+    /** Выбранная рамка аватара (AvatarFrameType.name). */
+    val selectedFrameId: String = "NONE",
+    /** Купленные рамки аватара; рамки за уровень открываются динамически. */
+    val unlockedFrames: List<String> = DefaultUnlockedFrameIds,
+    /** Базовая награда за «Фото шкафа» (зеркалит wardrobeReward). */
+    val baseClosetReward: Int = 50,
+    /** Базовая награда за «Фото комнаты» (зеркалит roomReward). */
+    val baseRoomReward: Int = 50,
+    /** Базовая награда за оценку 5 в дневнике. */
+    val baseDiaryFiveReward: Int = 50,
+    /** false — награды без множителей уровня/серии/идеальных дней (×1.0). */
+    val multipliersEnabled: Boolean = true,
+    /** Шанс бонусного сундука после квеста, % (0/10/15/20). */
+    val bonusChestChancePercent: Int = 15,
+    /** Недельный лимит заработка монет за задания; 0 — без лимита. */
+    val weeklyEarnLimit: Int = 0,
+    /** Жетоны честности: +1 за каждое отправленное честное признание. */
+    val honestyTokens: Int = 0,
+    /** Активные (непогашенные) подарки-купоны, отправленные родителю. */
+    val pendingParentGifts: List<ParentGiftItem> = emptyList()
 ) {
     constructor(
         id: String,
@@ -182,7 +211,21 @@ data class ChildProfileState(
             status = dto.status,
             deviceId = dto.deviceId,
             stateUpdatedAt = dto.stateUpdatedAt,
-            rewardCurrency = dto.rewardCurrency
+            rewardCurrency = dto.rewardCurrency,
+            xp = dto.xp,
+            level = dto.level,
+            perfectDaysStreak = dto.perfectDaysStreak,
+            lastPerfectDayDate = dto.lastPerfectDayDate,
+            selectedFrameId = dto.selectedFrameId,
+            unlockedFrames = dto.unlockedFrames,
+            baseClosetReward = dto.baseClosetReward,
+            baseRoomReward = dto.baseRoomReward,
+            baseDiaryFiveReward = dto.baseDiaryFiveReward,
+            multipliersEnabled = dto.multipliersEnabled,
+            bonusChestChancePercent = dto.bonusChestChancePercent,
+            weeklyEarnLimit = dto.weeklyEarnLimit,
+            honestyTokens = dto.honestyTokens,
+            pendingParentGifts = dto.pendingParentGifts
         )
     }
 }
@@ -265,7 +308,35 @@ data class ChildProfileDto(
     val status: String = "active",
     val deviceId: String = "",
     val stateUpdatedAt: Long = 0,
-    val rewardCurrency: String = "RUB"
+    val rewardCurrency: String = "RUB",
+    /** XP текущего уровня (сброс в 0 при каждом level-up). См. GamificationEngine. */
+    val xp: Long = 0L,
+    /** Текущий уровень 1–50+. См. GamificationEngine. */
+    val level: Int = 1,
+    /** Серия «идеальных дней» подряд (шкаф + комната за один день). */
+    val perfectDaysStreak: Int = 0,
+    /** Дата (yyyy-MM-dd) последнего идеального дня; null — ещё не было. */
+    val lastPerfectDayDate: String? = null,
+    /** Выбранная рамка аватара (AvatarFrameType.name). */
+    val selectedFrameId: String = "NONE",
+    /** Купленные рамки аватара; рамки за уровень открываются динамически. */
+    val unlockedFrames: List<String> = DefaultUnlockedFrameIds,
+    /** Базовая награда за «Фото шкафа» (зеркалит wardrobeReward). */
+    val baseClosetReward: Int = 50,
+    /** Базовая награда за «Фото комнаты» (зеркалит roomReward). */
+    val baseRoomReward: Int = 50,
+    /** Базовая награда за оценку 5 в дневнике. */
+    val baseDiaryFiveReward: Int = 50,
+    /** false — награды без множителей уровня/серии/идеальных дней (×1.0). */
+    val multipliersEnabled: Boolean = true,
+    /** Шанс бонусного сундука после квеста, % (0/10/15/20). */
+    val bonusChestChancePercent: Int = 15,
+    /** Недельный лимит заработка монет за задания; 0 — без лимита. */
+    val weeklyEarnLimit: Int = 0,
+    /** Жетоны честности: +1 за каждое отправленное честное признание. */
+    val honestyTokens: Int = 0,
+    /** Активные (непогашенные) подарки-купоны, отправленные родителю. */
+    val pendingParentGifts: List<ParentGiftItem> = emptyList()
 )
 
 fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
@@ -343,5 +414,19 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     status = status,
     deviceId = deviceId,
     stateUpdatedAt = stateUpdatedAt,
-    rewardCurrency = rewardCurrency
+    rewardCurrency = rewardCurrency,
+    xp = xp,
+    level = level,
+    perfectDaysStreak = perfectDaysStreak,
+    lastPerfectDayDate = lastPerfectDayDate,
+    selectedFrameId = selectedFrameId,
+    unlockedFrames = unlockedFrames,
+    baseClosetReward = baseClosetReward,
+    baseRoomReward = baseRoomReward,
+    baseDiaryFiveReward = baseDiaryFiveReward,
+    multipliersEnabled = multipliersEnabled,
+    bonusChestChancePercent = bonusChestChancePercent,
+    weeklyEarnLimit = weeklyEarnLimit,
+    honestyTokens = honestyTokens,
+    pendingParentGifts = pendingParentGifts
 )

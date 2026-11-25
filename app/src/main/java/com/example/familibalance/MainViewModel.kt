@@ -123,6 +123,31 @@ class MainViewModel(
     private val _autoLoginChildId = MutableStateFlow<String?>(null)
     val autoLoginChildId: StateFlow<String?> = _autoLoginChildId.asStateFlow()
 
+    /** Событие повышения уровня: новый уровень. UI показывает confetti + звук. */
+    internal val _levelUpEvent = MutableStateFlow<Int?>(null)
+    val levelUpEvent: StateFlow<Int?> = _levelUpEvent.asStateFlow()
+
+    fun consumeLevelUpEvent() {
+        _levelUpEvent.value = null
+    }
+
+    /** Событие бонусного сундука: выпавшая награда. UI показывает диалог + confetti. */
+    internal val _bonusChestEvent = MutableStateFlow<GamificationEngine.BonusChestReward?>(null)
+    val bonusChestEvent: StateFlow<GamificationEngine.BonusChestReward?> = _bonusChestEvent.asStateFlow()
+
+    fun consumeBonusChestEvent() {
+        _bonusChestEvent.value = null
+    }
+
+    /**
+     * Источник броска бонусного сундука после клейма награды.
+     * Аргумент — шанс в процентах (bonusChestChancePercent профиля).
+     * Переопределяется в unit-тестах для детерминизма.
+     */
+    internal var bonusChestRoller: (Int) -> GamificationEngine.BonusChestReward? = { percent ->
+        GamificationEngine.rollBonusChest(percent / 100.0)
+    }
+
     fun resetDiaryScanState() {
         _diaryScanState.value = DiaryScanState.Idle
     }
@@ -313,6 +338,14 @@ class MainViewModel(
         }
     }
 
+    /** Событиеlevel-up — уже есть; событие отправки подарка родителю (giftTypeId). */
+    internal val _parentGiftEvent = MutableStateFlow<String?>(null)
+    val parentGiftEvent: StateFlow<String?> = _parentGiftEvent.asStateFlow()
+
+    fun consumeParentGiftEvent() {
+        _parentGiftEvent.value = null
+    }
+
     /** Отправка честного признания на проверку папе. Кулдаун — 1 раз в 7 дней. */
     fun submitHonestAdmission(childId: String, text: String) {
         val child = familyRepository.getChild(childId) ?: return
@@ -321,13 +354,43 @@ class MainViewModel(
         // Кулдаун 7 дней. lastDate «в будущем» (откат времени/часового
         // пояса) не блокирует отправку — считаем кулдаун прошедшим.
         if (lastDate != null && !lastDate.isAfter(today) && lastDate.isAfter(today.minusDays(7))) return
+        // Жетон честности +1 и +15 XP (с возможным level-up и его coinBonus).
+        // Инвариант: balance += coinBonus; история получает LEVEL_UP —
+        // сумма записей равна дельте баланса.
+        val levelUp = GamificationEngine.applyXp(child.xp, child.level, 15)
+        val time = getCurrentTimeString()
+        val date = getCurrentDateString()
+        val entries = mutableListOf<HistoryData>()
+        var balance = child.balance
+        if (levelUp.levelsGained > 0) {
+            balance += levelUp.coinBonus
+            entries += HistoryData(
+                title = "Новый уровень!",
+                time = time,
+                date = date,
+                amount = "+${levelUp.coinBonus} ₽",
+                isIncome = true,
+                category = "Достижения",
+                type = HistoryType.LEVEL_UP,
+                amountValue = levelUp.coinBonus,
+                arg = levelUp.rank.name
+            )
+        }
         updateChildProfile(
             child.copy(
                 honestAdmissionStatus = QuestStatus.PENDING,
                 honestAdmissionText = text.trim(),
-                lastHonestAdmissionDate = today.toString()
+                lastHonestAdmissionDate = today.toString(),
+                honestyTokens = child.honestyTokens + 1,
+                xp = levelUp.newXp,
+                level = levelUp.newLevel,
+                balance = balance,
+                historyItems = entries + child.historyItems
             )
         )
+        if (levelUp.levelsGained > 0) {
+            _levelUpEvent.value = levelUp.newLevel
+        }
         PushNotifier.honestAdmissionSubmitted(child.parentUserId, child.name)
     }
 

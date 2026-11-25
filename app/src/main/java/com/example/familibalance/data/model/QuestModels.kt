@@ -94,7 +94,24 @@ object HistoryType {
     const val DREAM_SET = "DREAM_SET"
     const val THEME_PURCHASE = "THEME_PURCHASE"
     const val AVATAR_PURCHASE = "AVATAR_PURCHASE"
+    const val LEVEL_UP = "LEVEL_UP"
+    const val REWARD_MULTIPLIER = "REWARD_MULTIPLIER"
+    const val BONUS_CHEST = "BONUS_CHEST"
+    const val PERFECT_DAY = "PERFECT_DAY"
+    const val FRAME_PURCHASE = "FRAME_PURCHASE"
+    const val WEEKLY_LIMIT = "WEEKLY_LIMIT"
+    const val PARENT_GIFT = "PARENT_GIFT"
 }
+
+/** Купон/открытка, купленная ребёнком для родителя (ожидает «использования»). */
+@Serializable
+data class ParentGiftItem(
+    val id: String,
+    /** ParentGiftType.name: THANK_YOU / HUGS / HELP_CHORES / MOVIE_NIGHT. */
+    val giftTypeId: String,
+    /** Дата и время отправки в формате "dd.MM.yyyy HH:mm". */
+    val createdAt: String = ""
+)
 
 @Serializable
 enum class CashoutStatus {

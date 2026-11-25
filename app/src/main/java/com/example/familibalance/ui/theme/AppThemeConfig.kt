@@ -19,6 +19,8 @@ sealed interface ThemeUnlockRule {
     data class Paid(val price: Int) : ThemeUnlockRule
     /** Открывается автоматически при заявке (isClaimed) достижения с таким заголовком. */
     data class Achievement(val achievementTitle: String, @StringRes val titleRes: Int) : ThemeUnlockRule
+    /** Открывается автоматически при достижении минимального уровня. */
+    data class Level(val minLevel: Int) : ThemeUnlockRule
 }
 
 data class AppThemeConfig(

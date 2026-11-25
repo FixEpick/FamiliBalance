@@ -239,6 +239,9 @@ item {
             )
         }
         item {
+            EconomySettingsCard(child = child, viewModel = viewModel)
+        }
+        item {
             OutlinedButton(
                 onClick = { showLogoutDialog = true },
                 border = BorderStroke(1.dp, PenaltyRed),

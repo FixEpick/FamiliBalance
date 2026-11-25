@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,6 +38,7 @@ fun DreamGoalCard(
     balance: Int,
     isProcessingAction: Boolean,
     cooldownDaysLeft: Int = 0,
+    onEdit: () -> Unit = {},
     onClaim: () -> Unit
 ) {
     val title = if (dreamTitle.isBlank()) {
@@ -87,24 +89,76 @@ fun DreamGoalCard(
                         color = if (isGoalReached) StatusYellow else LocalAppPalette.current.primaryNeon,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 1
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
-                DreamCooldownStar(cooldownDaysLeft = cooldownDaysLeft)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    DreamCooldownStar(cooldownDaysLeft = cooldownDaysLeft)
+                    // Кнопка редактирования цели — всегда доступна
+                    // (кулдаун контролируется на уровне setDreamGoal/UI).
+                    IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.dream_edit_btn),
+                            color = TextMuted,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
             }
-            Text(
-                text = "$balance / $dreamTarget ${rewardCurrencySymbol()}",
-                color = TextPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-            LinearProgressIndicator(
-                progress = { currentProgress },
-                modifier = Modifier.fillMaxWidth().height(6.dp),
-                color = progressBarColor,
-                trackColor = LocalAppPalette.current.primaryNeon.copy(alpha = 0.15f),
-                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "$balance / $dreamTarget ${rewardCurrencySymbol()}",
+                    color = TextPrimary,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = stringResource(R.string.dream_progress_percent, (progressFraction * 100).toInt()),
+                    color = if (isGoalReached) StatusYellow else LocalAppPalette.current.primaryNeon,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            // Прогресс-бар с отметками этапов 25% / 50% / 75%.
+            Box(modifier = Modifier.fillMaxWidth()) {
+                LinearProgressIndicator(
+                    progress = { currentProgress },
+                    modifier = Modifier.fillMaxWidth().height(6.dp),
+                    color = progressBarColor,
+                    trackColor = LocalAppPalette.current.primaryNeon.copy(alpha = 0.15f),
+                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                )
+                listOf(0.25f, 0.5f, 0.75f).forEach { milestone ->
+                    // Тик на доле ширины: fillMaxWidth(milestone) + CenterEnd
+                    // ставит отметку ровно на 25%/50%/75% прогресс-бара.
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(milestone)
+                            .height(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .width(2.dp)
+                                .height(10.dp)
+                                .background(
+                                    if (currentProgress >= milestone) progressBarColor
+                                    else LocalAppPalette.current.primaryNeon.copy(alpha = 0.35f),
+                                    RoundedCornerShape(1.dp)
+                                )
+                        )
+                    }
+                }
+            }
             if (isGoalReached) {
                 Text(
                     text = stringResource(R.string.child_dream_reached),
