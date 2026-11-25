@@ -51,7 +51,6 @@ fun VerificationAdminContent(
         }
         return
     }
-    val lieFineReason = stringResource(R.string.admin_fine_reason_lie)
     val hasPending = child.closetStatus == QuestStatus.PENDING ||
         child.roomStatus == QuestStatus.PENDING ||
         child.diaryStatus == QuestStatus.PENDING ||
@@ -127,8 +126,7 @@ fun VerificationAdminContent(
                         viewModel.adminRejectQuest(child.id, "closet", reason)
                     },
                     onRejectWithFine = { reason, withFine ->
-                        viewModel.adminRejectQuest(child.id, "closet", reason)
-                        if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
+                        viewModel.adminRejectQuest(child.id, "closet", reason, withCheatPenalty = withFine)
                     }
                 )
             }
@@ -163,8 +161,7 @@ fun VerificationAdminContent(
                         viewModel.adminRejectQuest(child.id, "room", reason)
                     },
                     onRejectWithFine = { reason, withFine ->
-                        viewModel.adminRejectQuest(child.id, "room", reason)
-                        if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
+                        viewModel.adminRejectQuest(child.id, "room", reason, withCheatPenalty = withFine)
                     }
                 )
             }
@@ -189,9 +186,8 @@ fun VerificationAdminContent(
                         viewModel.resetDiaryScanState()
                     },
                     onRejectWithFine = { reason, withFine ->
-                        viewModel.adminRejectQuest(child.id, "diary", reason)
+                        viewModel.adminRejectQuest(child.id, "diary", reason, withCheatPenalty = withFine)
                         viewModel.resetDiaryScanState()
-                        if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
                     }
                 )
             }
@@ -211,8 +207,7 @@ fun VerificationAdminContent(
                     viewModel.adminRejectBonusQuest(child.id, bQuest.id, reason)
                 },
                 onRejectWithFine = { reason, withFine ->
-                    viewModel.adminRejectBonusQuest(child.id, bQuest.id, reason)
-                    if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
+                    viewModel.adminRejectBonusQuest(child.id, bQuest.id, reason, withCheatPenalty = withFine)
                 }
             )
         }
@@ -231,8 +226,7 @@ fun VerificationAdminContent(
                     viewModel.adminRejectCustomQuest(child.id, cQuest.id, reason)
                 },
                 onRejectWithFine = { reason, withFine ->
-                    viewModel.adminRejectCustomQuest(child.id, cQuest.id, reason)
-                    if (withFine) viewModel.applyFine(child.id, 100, lieFineReason)
+                    viewModel.adminRejectCustomQuest(child.id, cQuest.id, reason, withCheatPenalty = withFine)
                 }
             )
         }

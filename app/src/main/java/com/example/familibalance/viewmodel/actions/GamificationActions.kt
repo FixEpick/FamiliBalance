@@ -1,6 +1,8 @@
 package com.example.familibalance.viewmodel.actions
 
+import android.app.Application
 import com.example.familibalance.MainViewModel
+import com.example.familibalance.R
 import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.data.model.HistoryData
 import com.example.familibalance.data.model.HistoryType
@@ -22,6 +24,9 @@ internal data class QuestRewardOutcome(
     val baseCoins: Int,
     val xpGain: Int,
     val multiplier: Double,
+    /** Множители по отдельности — для расшифровки «Уровень ×… + Серия ×…». */
+    val levelMultiplier: Double,
+    val streakMultiplier: Double,
     val levelUp: GamificationEngine.LevelUpResult
 )
 
@@ -32,15 +37,19 @@ internal data class QuestRewardOutcome(
 internal fun computeQuestReward(
     profile: ChildProfileState,
     baseCoins: Int,
-    kind: GamificationEngine.QuestKind
+    kind: GamificationEngine.QuestKind,
+    baseXpOverride: Int? = null
 ): QuestRewardOutcome {
     // multipliersEnabled=false → множитель 1.0: без бонусов уровня,
     // серии и идеальных дней (XP тоже без надбавок).
+    val effLevel = if (profile.multipliersEnabled) profile.level else 1
+    val effStreak = if (profile.multipliersEnabled) profile.streakDays else 0
+    val baseXp = baseXpOverride ?: GamificationEngine.baseXp(kind)
     val reward = GamificationEngine.computeReward(
         baseCoins = baseCoins,
-        baseXp = GamificationEngine.baseXp(kind),
-        level = if (profile.multipliersEnabled) profile.level else 1,
-        streakDays = if (profile.multipliersEnabled) profile.streakDays else 0
+        baseXp = baseXp,
+        level = effLevel,
+        streakDays = effStreak
     )
     // Серия идеальных дней усиливает только XP (рост уровня), монеты не растут.
     val perfectBonus = if (profile.multipliersEnabled) {
@@ -59,6 +68,8 @@ internal fun computeQuestReward(
         baseCoins = baseCoins,
         xpGain = xpGain,
         multiplier = reward.multiplier,
+        levelMultiplier = GamificationEngine.levelMultiplier(effLevel),
+        streakMultiplier = GamificationEngine.streakMultiplier(effStreak),
         levelUp = levelUp
     )
 }
@@ -81,14 +92,21 @@ internal fun ChildProfileState.withGamification(outcome: QuestRewardOutcome): Ch
  *                  (для дневника: coins - diaryApprovedReward; для
  *                  одиночных квестов 0 — сумма уже в основной записи).
  */
-internal fun gamificationHistoryEntries(
+internal fun MainViewModel.gamificationHistoryEntries(
     outcome: QuestRewardOutcome,
     time: String,
     date: String,
     coinDelta: Int
 ): List<HistoryData> {
     val entries = mutableListOf<HistoryData>()
-    val multText = "×${"%.2f".format(outcome.multiplier).trimEnd('0').trimEnd('.')} • +${outcome.xpGain} XP"
+    // Расшифровка множителя: «×1.25 (Уровень ×1.14 + Серия ×1.10) • +28 XP».
+    val breakdown = this.getApplication<Application>().getString(
+        R.string.mult_breakdown,
+        outcome.multiplier,
+        outcome.levelMultiplier,
+        outcome.streakMultiplier
+    )
+    val multText = "$breakdown • +${outcome.xpGain} XP"
     if (outcome.multiplier > 1.0 || outcome.xpGain > 0) {
         entries += HistoryData(
             title = "Бонус за уровень и серию",
@@ -148,8 +166,6 @@ private val HISTORY_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy")
  * level-up бонусы, сундуки и ручные пополнения не входят.
  */
 internal fun ChildProfileState.earnedThisWeek(): Int {
-    val limit = weeklyEarnLimit
-    if (limit <= 0) return 0
     val today = LocalDate.now()
     val weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
     val weekEnd = weekStart.plusDays(6)

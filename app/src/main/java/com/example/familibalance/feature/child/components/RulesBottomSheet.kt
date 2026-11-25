@@ -1,11 +1,14 @@
 package com.example.familibalance.feature.child.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -59,14 +62,16 @@ internal fun RulesSheetContent(
 
             RuleBlock(
                 title = stringResource(R.string.rules_balance_title),
-                text = currencyString(R.string.rules_balance_text)
+                text = currencyString(R.string.rules_balance_text),
+                defaultExpanded = true
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
                 title = stringResource(R.string.rules_earn_title),
-                text = currencyString(R.string.rules_earn_text, wardrobeReward, roomReward)
+                text = currencyString(R.string.rules_earn_text, wardrobeReward, roomReward),
+                defaultExpanded = true
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -151,8 +156,10 @@ internal fun RulesSheetContent(
 @Composable
 private fun RuleBlock(
     title: String,
-    text: String
+    text: String,
+    defaultExpanded: Boolean = false
 ) {
+    var expanded by rememberSaveable { mutableStateOf(defaultExpanded) }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -161,19 +168,36 @@ private fun RuleBlock(
         colors = CardDefaults.cardColors(containerColor = GlassBackground)
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Text(
-                text = title,
-                color = TextPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = text,
-                color = TextMuted,
-                fontSize = 14.sp,
-                lineHeight = 20.sp
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+            ) {
+                Text(
+                    text = title,
+                    color = TextPrimary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = if (expanded) "▲" else "▼",
+                    color = TextSecondary,
+                    fontSize = 13.sp
+                )
+            }
+            AnimatedVisibility(visible = expanded) {
+                Column {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = text,
+                        color = TextMuted,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp
+                    )
+                }
+            }
         }
     }
 }

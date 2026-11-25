@@ -190,23 +190,23 @@
     <string name="rules_balance_title">📖 Как работает твой баланс</string>
     <string name="rules_balance_text">Все заработанные рубли падают в твой кошелёк. Ты можешь менять их на время в телефоне (100 ₽ = 30 минут) ИЛИ ты можешь в любой момент вывести все деньги — то есть забрать весь свой баланс настоящими бумажными деньгами на руки у родителя! А ещё ты растёшь в уровнях: за задания начисляется XP, с уровнем открываются новые ранги и растёт множитель наград!</string>
     <string name="rules_earn_title">💰 Как заработать:</string>
-    <string name="rules_earn_text">• Оценка «5» в дневнике: +50 ₽\n• Оценка «4» в дневнике: +30 ₽\n• Фото шкафа (идеальный порядок): +%1$d ₽\n• Фото комнаты (заправленная кровать и порядок): +%2$d ₽\n• Бонусы за Достижения: от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!\n• XP за задания: шкаф и комната +25 XP, дневник +70 XP, доп. задания +30 XP — с множителем за уровень и серию!</string>
+    <string name="rules_earn_text">• Оценка «5» в дневнике: +50 ₽\n• Оценка «4» в дневнике: +30 ₽\n• Фото шкафа (идеальный порядок): +%1$d ₽\n• Фото комнаты (заправленная кровать и порядок): +%2$d ₽\n• Бонусы за Достижения: от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!\n• XP за задания: шкаф и комната +25 XP, дневник — 5: +70 XP, 4: +45 XP, доп. задания +30 XP — с множителем за уровень и серию!</string>
     <string name="rules_penalty_title">🔴 За что вычитается денежка (Штрафы)</string>
     <string name="rules_penalty_text">За оценку «3» списывается −20 ₽, за оценку «2» — −50 ₽. За баловство и шалости — −30 ₽, а за обман или попытку схитрить — сразу −100 ₽. Но если ты сам честно рассказал родителю через кошечку до того, как он узнал — штраф уменьшится ровно вдвое! (−10 ₽ за тройку, −25 ₽ за двойку, −15 ₽ за баловство и −50 ₽ за обман).</string>
     <string name="rules_streak_title">🔥 Дни без штрафов</string>
     <string name="rules_streak_text">Отмечайся каждый день и получай +50 ₽ каждые 7 дней без штрафов! Но любой штраф сжигает все накопленные дни — а за каждый пропущенный день гаснет один огонёк.</string>
     <string name="rules_gamification_title">Уровни, ранги и XP</string>
-    <string name="rules_gamification_text">Каждое выполненное задание даёт XP. С ростом уровня ты открываешь новые ранги — от «Новичка» до «Легенды дома» — и получаешь бонус монет при каждом повышении. Чем выше уровень и чем длиннее серия дней без штрафов, тем больше множитель к наградам — максимум ×1.75!</string>
+    <string name="rules_gamification_text">Каждое выполненное задание даёт XP. С ростом уровня ты открываешь новые ранги — от «Новичка» до «Легенды дома» — и получаешь бонус монет при каждом повышении. Чем выше уровень и чем длиннее серия дней без штрафов, тем больше множитель к наградам — максимум ×1.65! Бонус за каждый новый уровень: 40 + уровень × 8 монет.</string>
     <string name="rules_bonus_chest_title">Бонусный сундук</string>
     <string name="rules_bonus_chest_text">После каждого выполненного задания у тебя есть 15% шанс открыть бонусный сундук — внутри либо монеты (от 20 до 60 ₽), либо дополнительный XP (от 10 до 15)!</string>
     <string name="rules_perfect_day_title">Идеальный день</string>
     <string name="rules_perfect_day_text">Выполни оба ежедневных задания — фото шкафа и фото комнаты — за один день и получи +25 ₽ и +15 XP! Каждый следующий идеальный день подряд увеличивает серию: с 3-го дня задания дают +10%% XP, с 7-го — +20%%!</string>
     <string name="rules_screentime_title">⏳ Экранное время</string>
-    <string name="rules_screentime_text">Лимит 90 минут в день. Тарифы: 30 мин = 100 ₽, 60 мин = 200 ₽, 90 мин = 300 ₽.</string>
+    <string name="rules_screentime_text">Лимит 90 минут в день. Тарифы: 30 мин = 100 ₽, 60 мин = 220 ₽, 90 мин = 320 ₽.</string>
     <string name="rules_honest_title">🐱 Честное признание</string>
     <string name="rules_honest_text">Скидка 50% на любой штраф — хоть за двойку, хоть за обман. Доступно раз в 7 дней — расскажи родителю правду через кошечку!</string>
     <string name="rules_diary_title">📓 Дневник</string>
-    <string name="rules_diary_text">Сдаётся раз в неделю. Оценки: 5 (+50 ₽), 4 (+30 ₽), 3 (-20 ₽), 2 (-50 ₽).</string>
+    <string name="rules_diary_text">Сдаётся раз в неделю. Оценки: 5 (+50 ₽, +70 XP), 4 (+30 ₽, +45 XP), 3 (-20 ₽), 2 (-50 ₽).</string>
     <string name="rules_achievements_title">🏆 Достижения</string>
     <string name="rules_achievements_text">Получай бонусы за новые ранги от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!</string>
     <string name="rules_understood">Понятно!</string>
@@ -233,9 +233,9 @@
     <string name="eco_xp">XP за задания</string>
     <string name="eco_xp_value">25–70 XP</string>
     <string name="eco_level_up">Повышение уровня</string>
-    <string name="eco_level_up_value">бонус монет</string>
+    <string name="eco_level_up_value">40 + уровень × 8 монет</string>
     <string name="eco_reward_mult">Множитель наград</string>
-    <string name="eco_reward_mult_value">до ×1.75</string>
+    <string name="eco_reward_mult_value">до ×1.65</string>
     <string name="eco_set_by_dad">сумма задаётся родителем</string>
     <string name="eco_time30">⏳ 30 минут экранного времени</string>
     <string name="eco_time60">⏳ 60 минут экранного времени</string>
@@ -458,6 +458,11 @@
     <string name="admin_economy_no_limit">Без лимита</string>
     <string name="admin_economy_set_limit">Задать лимит</string>
     <string name="admin_economy_reset_defaults">Сбросить по умолчанию</string>
+    <string name="admin_economy_preset_soft">Мягкий</string>
+    <string name="admin_economy_preset_balanced">Сбалансированный</string>
+    <string name="admin_economy_preset_strict">Строгий</string>
+    <string name="admin_economy_weekly_earned">Заработано на этой неделе: %1$d %2$s</string>
+    <string name="admin_economy_weekly_earned_limit">Заработано на этой неделе: %1$d / %2$d %3$s</string>
 
     <!-- Parent gifts & honesty tokens -->
     <string name="gift_thank_you">Открытка: Спасибо за заботу</string>
@@ -484,6 +489,7 @@
     <string name="gamification_rank_master">Мастер баланса</string>
     <string name="gamification_rank_hero">Герой семьи</string>
     <string name="gamification_rank_legend">Легенда дома</string>
+    <string name="mult_breakdown">×%1$.2f (Уровень ×%2$.2f + Серия ×%3$.2f)</string>
     <string name="child_level_badge">Ур. %1$d</string>
     <string name="child_xp_progress">%1$d / %2$d XP</string>
     <string name="child_reward_mult">×%1$.1f</string>
@@ -624,6 +630,7 @@
     <string name="admin_reject_tpl_finish">Убрать до конца</string>
     <string name="admin_reject_tpl_partial">Сделано не полностью</string>
     <string name="admin_reject_default_reason">Требуется доработка</string>
+    <string name="admin_reject_reason_cheat">Родитель отметил, что задание сделано нечестно</string>
     <string name="admin_diary_scanning">Сканирование оценок…</string>
     <string name="admin_diary_scan_success">Оценки распознаны!</string>
     <string name="admin_diary_scan_error">Ошибка сканирования: %1$s</string>
@@ -671,6 +678,7 @@
     <string name="admin_fine_reason_mischief">Баловство</string>
     <string name="admin_fine_reason_lie">Обман</string>
     <string name="admin_reject_fine_lie">Списать штраф за обман (−100 ₽)</string>
+    <string name="admin_reject_fine_streak_warning">Серия без штрафов будет сброшена</string>
     <string name="admin_cashout_button">💵 Выдать наличные (%1$d ₽)</string>
     <string name="admin_cashout_amount_label">Сумма выдачи ₽</string>
     <string name="admin_cashout_max">Макс</string>
@@ -699,6 +707,7 @@
     <string name="admin_set_reset_dream_label">Удалить цель-мечту</string>
     <string name="admin_set_reset_theme_label">Сбросить тему оформления</string>
     <string name="admin_set_reset_all">Обнулить всё</string>
+    <string name="admin_set_reset_all_warning">Сбросит почти все данные ребёнка. Это действие нельзя отменить.</string>
     <string name="admin_set_reset_select">Выберите, что сбросить…</string>
     <string name="admin_set_reset_execute">Выполнить сброс</string>
     <string name="admin_set_sync">🔄 Синхронизировать с сервером</string>

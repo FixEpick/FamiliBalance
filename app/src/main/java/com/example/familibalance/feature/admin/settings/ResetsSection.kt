@@ -161,5 +161,11 @@ private fun ResetsContent(
                 fontWeight = FontWeight.Bold
             )
         }
+        Text(
+            text = stringResource(R.string.admin_set_reset_all_warning),
+            color = TextSecondary,
+            fontSize = 11.sp,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }

@@ -77,7 +77,7 @@ fun MainChildScreen(
     // Геймификация: ранг, XP-прогресс и текущий множитель наград.
     val rankName = stringResource(GamificationEngine.rankTitleRes(GamificationEngine.rankForLevel(child.level)))
     val xpForNextLevel = GamificationEngine.xpToNextLevel(child.level)
-    val rewardMultiplier = GamificationEngine.rewardMultiplier(child.level, child.streakDays)
+    val rewardMultiplier = GamificationEngine.totalMultiplier(child.level, child.streakDays)
 
     // Кулдаун честного признания: 1 раз в 7 дней
     val honestCooldownDaysLeft = remember(child.lastHonestAdmissionDate) {
@@ -236,7 +236,7 @@ fun MainChildScreen(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(6.dp),
-            contentPadding = PaddingValues(bottom = 16.dp, top = 8.dp, start = 16.dp, end = 16.dp)
+            contentPadding = PaddingValues(bottom = 28.dp, top = 8.dp, start = 16.dp, end = 16.dp)
         ) {
             // ================= БЛОК 1: КАРТОЧКА БАЛАНСА =================
             item {
@@ -254,6 +254,7 @@ fun MainChildScreen(
                     xpIntoLevel = child.xp,
                     xpForNext = xpForNextLevel,
                     multiplier = rewardMultiplier,
+                    streakDays = child.streakDays,
                     frameId = child.selectedFrameId
                 )
             }

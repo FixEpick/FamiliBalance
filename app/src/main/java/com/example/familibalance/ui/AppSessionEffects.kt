@@ -2,6 +2,7 @@ package com.example.familibalance.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -27,6 +28,21 @@ fun AppSessionEffects(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    // Смена/восстановление сессии (логин родителя, cold start с сохранённой
+    // сессией, anon→parent): первичная загрузка в MainViewModel могла
+    // отработать до auth или под другой учёткой — isRowVisibleToUser тогда
+    // отфильтровывал все строки, и админка открывалась пустой. Перетягиваем
+    // профили и гарантируем Realtime-подписку под новый uid.
+    val sessionUid = (sessionStatus as? SessionStatus.Authenticated)
+        ?.session?.user?.id
+    LaunchedEffect(sessionUid) {
+        if (sessionUid != null) {
+            SupabaseManager.refreshFromCloud(context)
+            SupabaseManager.startRealtimeSync(context)
+        }
+    }
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {

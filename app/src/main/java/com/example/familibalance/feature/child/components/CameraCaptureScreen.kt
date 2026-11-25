@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -79,6 +80,17 @@ fun CameraCaptureScreen(
 
     var lensFacing by remember { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
     var isCapturing by remember { mutableStateOf(false) }
+
+    // Activity больше не пересоздаётся при повороте (configChanges в
+    // манифесте), поэтому PreviewView сам подстраивает превью, а
+    // ImageCapture.targetRotation нужно обновлять вручную — иначе
+    // EXIF-ориентация снятого фото будет от старой конфигурации.
+    val configuration = LocalConfiguration.current
+    DisposableEffect(configuration) {
+        imageCapture.targetRotation = previewView.display?.rotation
+            ?: android.view.Surface.ROTATION_0
+        onDispose { }
+    }
 
     val closeDescription = stringResource(R.string.camera_capture_close)
     val switchDescription = stringResource(R.string.camera_capture_switch)

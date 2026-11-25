@@ -1,5 +1,6 @@
 package com.example.familibalance.viewmodel.actions
 
+import android.app.Application
 import androidx.lifecycle.viewModelScope
 import com.example.familibalance.MainViewModel
 import com.example.familibalance.*
@@ -68,9 +69,22 @@ fun MainViewModel.adminApproveQuest(userId: String, questType: String) {
     }
 }
 
-/** Админ отклоняет квест (шкаф/комната/дневник): статус AVAILABLE + удаление фото. Запись в историю не добавляется — отклонение не является операцией со средствами. */
-fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: String) {
+/** Сумма штрафа за обман при отклонении задания родителем. */
+private const val CHEAT_FINE_AMOUNT = 100
+
+/**
+ * Причина отклонения со штрафом за обман: если родитель не ввёл
+ * свой текст — подставляется понятная для ребёнка дефолтная причина.
+ */
+private fun MainViewModel.cheatRejectReason(reason: String): String =
+    reason.ifBlank {
+        getApplication<Application>().getString(R.string.admin_reject_reason_cheat)
+    }
+
+/** Админ отклоняет квест (шкаф/комната/дневник): статус AVAILABLE + удаление фото. Запись в историю не добавляется — отклонение не является операцией со средствами. При [withCheatPenalty] дополнительно списывается штраф за обман (сбрасывает серию без штрафов). */
+fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: String, withCheatPenalty: Boolean = false) {
     val profile = familyRepository.getChild(userId) ?: return
+    val effectiveReason = if (withCheatPenalty) cheatRejectReason(reason) else reason
     val photoUrlToDelete = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.closetPhotoUrl
         "room", "комната" -> profile.roomPhotoUrl
@@ -88,19 +102,19 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
             closetStatus = QuestStatus.AVAILABLE,
             closetComment = "",
             closetPhotoUrl = null,
-            closetRejectReason = reason
+            closetRejectReason = effectiveReason
         )
         "room", "комната" -> profile.copy(
             roomStatus = QuestStatus.AVAILABLE,
             roomComment = "",
             roomPhotoUrl = null,
-            roomRejectReason = reason
+            roomRejectReason = effectiveReason
         )
         "diary", "дневник", "итоги" -> profile.copy(
             diaryStatus = QuestStatus.AVAILABLE,
             diaryComment = "",
             diaryPhotoUrl = null,
-            diaryRejectReason = reason,
+            diaryRejectReason = effectiveReason,
             diaryCount5 = 0,
             diaryCount4 = 0,
             diaryCount3 = 0,
@@ -110,11 +124,16 @@ fun MainViewModel.adminRejectQuest(userId: String, questType: String, reason: St
     }
     updateChildProfile(updated)
     if (rejectedTitle != null) {
-        PushNotifier.questRejected(userId, rejectedTitle, reason)
+        PushNotifier.questRejected(userId, rejectedTitle, effectiveReason)
     }
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
+    }
+    // Штраф за обман: -100 ₽ в историю + сброс серии без штрафов
+    // (applyFineInternal обнуляет streakDays/lastStreakDate).
+    if (withCheatPenalty) {
+        applyFineInternal(userId, CHEAT_FINE_AMOUNT, effectiveReason)
     }
 }
 
@@ -181,19 +200,23 @@ fun MainViewModel.adminApproveBonusQuest(userId: String, questId: String) {
     }
 }
 
-/** Админ отклоняет бонус-квест: AVAILABLE + причина + удаление фото (без записи в историю). */
-fun MainViewModel.adminRejectBonusQuest(userId: String, questId: String, reason: String) {
+/** Админ отклоняет бонус-квест: AVAILABLE + причина + удаление фото (без записи в историю). При [withCheatPenalty] — штраф за обман со сбросом серии. */
+fun MainViewModel.adminRejectBonusQuest(userId: String, questId: String, reason: String, withCheatPenalty: Boolean = false) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.bonusQuests.firstOrNull { it.id == questId } ?: return
+    val effectiveReason = if (withCheatPenalty) cheatRejectReason(reason) else reason
     val photoUrlToDelete = target.photoUrl
     val updatedQuests = profile.bonusQuests.map { q ->
-        if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = reason, photoUrl = null) else q
+        if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = effectiveReason, photoUrl = null) else q
     }
     updateChildProfile(profile.copy(bonusQuests = updatedQuests))
-    PushNotifier.questRejected(userId, target.title, reason)
+    PushNotifier.questRejected(userId, target.title, effectiveReason)
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch { SupabaseManager.deleteQuestPhoto(photoUrlToDelete) }
+    }
+    if (withCheatPenalty) {
+        applyFineInternal(userId, CHEAT_FINE_AMOUNT, effectiveReason)
     }
 }
 
@@ -220,21 +243,25 @@ fun MainViewModel.adminApproveCustomQuest(userId: String, questId: String) {
     }
 }
 
-/** Админ отклоняет кастомный квест: AVAILABLE + причина + удаление фото (без записи в историю). */
-fun MainViewModel.adminRejectCustomQuest(userId: String, questId: String, reason: String) {
+/** Админ отклоняет кастомный квест: AVAILABLE + причина + удаление фото (без записи в историю). При [withCheatPenalty] — штраф за обман со сбросом серии. */
+fun MainViewModel.adminRejectCustomQuest(userId: String, questId: String, reason: String, withCheatPenalty: Boolean = false) {
     val profile = familyRepository.getChild(userId) ?: return
     val target = profile.customQuests.firstOrNull { it.id == questId } ?: return
+    val effectiveReason = if (withCheatPenalty) cheatRejectReason(reason) else reason
     val photoUrlToDelete = target.photoUrl
     val updatedQuests = profile.customQuests.map { q ->
-        if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = reason, photoUrl = null) else q
+        if (q.id == questId) q.copy(status = QuestStatus.AVAILABLE, rejectReason = effectiveReason, photoUrl = null) else q
     }
     updateChildProfile(profile.copy(customQuests = updatedQuests))
-    PushNotifier.questRejected(userId, target.title, reason)
+    PushNotifier.questRejected(userId, target.title, effectiveReason)
     if (!photoUrlToDelete.isNullOrBlank()) {
         PhotoStorage.deleteLocalFileIfPresent(getApplication(), photoUrlToDelete)
         viewModelScope.launch {
             SupabaseManager.deleteQuestPhoto(photoUrlToDelete)
         }
+    }
+    if (withCheatPenalty) {
+        applyFineInternal(userId, CHEAT_FINE_AMOUNT, effectiveReason)
     }
 }
 

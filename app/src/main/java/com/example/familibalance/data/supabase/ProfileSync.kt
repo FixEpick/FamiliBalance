@@ -53,6 +53,25 @@ data class FamilyProfileRowTs(
 /** Синхронизация профилей: pull из облака, push в облако, фильтрация видимости. */
 internal object ProfileSync {
 
+    /**
+     * Last-writer-wins: удалённая версия state_json новее локальной?
+     *
+     * Основной критерий — монотонный [stateVersion] (не зависит от расхождения
+     * часов устройств). При равных версиях — legacy-профили без счётчика
+     * (оба 0) или одновременные правки — fallback на клиентский
+     * stateUpdatedAt (epoch ms).
+     */
+    internal fun isRemoteStateNewer(
+        remoteVersion: Long,
+        remoteTs: Long,
+        localVersion: Long,
+        localTs: Long
+    ): Boolean = when {
+        remoteVersion > localVersion -> true
+        remoteVersion < localVersion -> false
+        else -> remoteTs > 0 && remoteTs > localTs
+    }
+
     /** JSON для чтения stateUpdatedAt из удалённого state_json (last-writer-wins). */
     private val stateJsonFormat = Json {
         ignoreUnknownKeys = true
@@ -315,13 +334,20 @@ internal object ProfileSync {
                         com.example.familibalance.data.repository.SyncStatus.isTsNewer(remoteVer, lastCloudVer))
                 if (remoteChanged) {
                     // Облако изменилось с нашей последней синхронизации — возможен
-                    // конфликт. Tiebreak по клиентским часам (редкий случай).
+                    // конфликт. Основной критерий — монотонный stateVersion
+                    // (не зависит от расхождения часов устройств); при равных
+                    // версиях (legacy-профили без счётчика) — fallback на
+                    // клиентский stateUpdatedAt.
                     val remoteIsNewer = remoteRow.let { row ->
                         runCatching {
-                            val remoteTs = stateJsonFormat
+                            val remoteDto = stateJsonFormat
                                 .decodeFromString<ChildProfileDto>(row.state_json)
-                                .stateUpdatedAt
-                            remoteTs > 0 && remoteTs > updatedChild.stateUpdatedAt
+                            isRemoteStateNewer(
+                                remoteVersion = remoteDto.stateVersion,
+                                remoteTs = remoteDto.stateUpdatedAt,
+                                localVersion = updatedChild.stateVersion,
+                                localTs = updatedChild.stateUpdatedAt
+                            )
                         }.getOrDefault(false)
                     }
                     if (remoteIsNewer) {

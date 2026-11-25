@@ -284,7 +284,7 @@ fun ChildSection(
                         // и тонкая полоска XP-прогресса.
                         val headerRank = GamificationEngine.rankForLevel(child.level)
                         val headerXpForNext = GamificationEngine.xpToNextLevel(child.level)
-                        val headerMult = GamificationEngine.rewardMultiplier(child.level, child.streakDays)
+                        val headerMult = GamificationEngine.totalMultiplier(child.level, child.streakDays)
                         val headerXpFraction = if (headerXpForNext > 0) {
                             (child.xp.toFloat() / headerXpForNext).coerceIn(0f, 1f)
                         } else 0f

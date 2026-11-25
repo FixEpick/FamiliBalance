@@ -161,7 +161,15 @@ fun MainViewModel.syncAchievementThemesOnLoad() {
     var changed = false
     AppSharedState.children.replaceAll { _, child ->
         val synced = child.withAchievementThemesUnlocked()
-        if (synced != child) { changed = true; synced } else child
+        if (synced != child) {
+            changed = true
+            // Локальная мутация: бампаем версию, чтобы LWW при синхронизации
+            // не счёл этот снапшот устаревшим и не откатил чужие правки.
+            synced.copy(
+                stateUpdatedAt = System.currentTimeMillis(),
+                stateVersion = synced.stateVersion + 1
+            )
+        } else child
     }
     if (changed) {
         familyRepository.saveAndSync()

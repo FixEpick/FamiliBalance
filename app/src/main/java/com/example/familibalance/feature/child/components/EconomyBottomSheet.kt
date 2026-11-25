@@ -82,13 +82,13 @@ internal fun EconomySheetContent(
                 EconomySectionTitle(stringResource(R.string.economy_spend_section))
             }
             item {
-                EconomyRow(stringResource(R.string.eco_time30), "100 $curSym")
+                EconomyRow(stringResource(R.string.eco_time30), "${ScreenTimeTariffs.PACKAGES[0].cost} $curSym")
             }
             item {
-                EconomyRow(stringResource(R.string.eco_time60), "200 $curSym")
+                EconomyRow(stringResource(R.string.eco_time60), "${ScreenTimeTariffs.PACKAGES[1].cost} $curSym")
             }
             item {
-                EconomyRow(stringResource(R.string.eco_time90), "300 $curSym")
+                EconomyRow(stringResource(R.string.eco_time90), "${ScreenTimeTariffs.PACKAGES[2].cost} $curSym")
             }
 
             // ===== Секция 3: Штрафы =====

@@ -49,6 +49,7 @@ fun BalanceCard(
     xpIntoLevel: Long = 0,
     xpForNext: Long = 1,
     multiplier: Double = 1.0,
+    streakDays: Int = 0,
     frameId: String? = null
 ) {
     val theme = LocalAppTheme.current
@@ -241,6 +242,20 @@ fun BalanceCard(
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Medium
                 )
+                // Расшифровка множителя: «×1.25 (Уровень ×1.14 + Серия ×1.10)».
+                if (multiplier > 1.0) {
+                    Text(
+                        text = stringResource(
+                            R.string.mult_breakdown,
+                            multiplier,
+                            GamificationEngine.levelMultiplier(level),
+                            GamificationEngine.streakMultiplier(streakDays)
+                        ),
+                        color = contentColor.copy(alpha = 0.7f),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
 
                 if (onCashOutClick != null) {
                     Spacer(modifier = Modifier.height(16.dp))

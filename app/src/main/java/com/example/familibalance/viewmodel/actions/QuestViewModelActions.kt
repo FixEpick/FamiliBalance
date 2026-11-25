@@ -162,6 +162,9 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
     var addRewardHistoryEntry = true
     // Геймификация: тип квеста для базового XP (Шкаф/Комната/Дневник).
     var rewardKind: GamificationEngine.QuestKind? = null
+    // Дневник: XP считается по оценкам (5 → +70, 4 → +45, 3/2 → 0),
+    // а не плоским baseXp(DIARY). null — использовать базовый XP квеста.
+    var rewardXpOverride: Int? = null
     // Штрафные оценки дневника (3 и 2) — применяются после updateChildProfile,
     // когда статус уже CLAIMED (applyFineInternal читает свежий профиль).
     var diaryFine3 = 0
@@ -234,6 +237,8 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
                 questTitle = "📚 Итоги недели (Дневник)"
                 rewardAmount = profile.diaryApprovedReward
                 rewardKind = GamificationEngine.QuestKind.DIARY
+                rewardXpOverride = c5 * GamificationEngine.DIARY_GRADE5_XP +
+                    c4 * GamificationEngine.DIARY_GRADE4_XP
                 addRewardHistoryEntry = false
             }
         }
@@ -243,7 +248,7 @@ fun MainViewModel.claimQuestReward(userId: String, questType: String) {
         // Инвариант: balance += coins + coinBonus; история получает
         // QUEST_REWARD/DONE (coins) + REWARD_MULTIPLIER (дельта/инфо)
         // + LEVEL_UP (coinBonus) — сумма записей равна дельте баланса.
-        val outcome = computeQuestReward(profile, rewardAmount, rewardKind)
+        val outcome = computeQuestReward(profile, rewardAmount, rewardKind, rewardXpOverride)
         // Недельный лимит заработка: монеты ограничиваются остатком лимита,
         // XP и level-up начисляются как обычно. Инвариант сохраняется —
         // в историю идёт фактически начисленная сумма (grantedCoins).

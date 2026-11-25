@@ -75,6 +75,17 @@ object AppStateStorage {
         return jsonFormat.encodeToString(child.toDto())
     }
 
+    /**
+     * Удалённая версия строго новее локальной? По монотонному stateVersion;
+     * при равных версиях (legacy-профили без счётчика) — по stateUpdatedAt.
+     */
+    private fun isRemoteStateNewer(dto: ChildProfileDto, local: ChildProfileState): Boolean =
+        if (dto.stateVersion > 0 || local.stateVersion > 0) {
+            dto.stateVersion > local.stateVersion
+        } else {
+            dto.stateUpdatedAt > local.stateUpdatedAt
+        }
+
     fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null, remoteUpdatedAt: String? = null) {
         try {
             val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
@@ -89,9 +100,11 @@ object AppStateStorage {
             // Применяем удалённую версию, только если она строго новее
             // локальной (last-writer-wins) — иначе одобрение админа
             // навсегда игнорировалось, а старый PENDING перезаписывал облако.
+            // Критерий — монотонный stateVersion (часы устройств не важны);
+            // для legacy-профилей без счётчика — fallback на stateUpdatedAt.
             if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) {
                 val local = AppSharedState.children[userId]
-                if (local != null && local.stateUpdatedAt >= dto.stateUpdatedAt) return
+                if (local != null && !isRemoteStateNewer(dto, local)) return
             }
             // Колонка parent_user_id в БД важнее значения внутри state_json
             val profile = ChildProfileState.fromDto(dto)
@@ -134,9 +147,10 @@ object AppStateStorage {
                 // Dirty-профиль: применяем удалённую версию, только если она
                 // строго новее локальной — иначе Realtime-апдейты админа
                 // (approve/reject) терялись, пока профиль был dirty.
+                // Сравнение по монотонному stateVersion; legacy (0/0) — по ts.
                 if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) {
                     val local = AppSharedState.children[userId]
-                    if (local != null && local.stateUpdatedAt >= dto.stateUpdatedAt) {
+                    if (local != null && !isRemoteStateNewer(dto, local)) {
                         // local.ts == remote.ts — это эхо собственного push'а
                         // (в облаке лежит наш же снапшот): не проблема, debug.
                         // local.ts > remote.ts — реальные локальные правки ещё

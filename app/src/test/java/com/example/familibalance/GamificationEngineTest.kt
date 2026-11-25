@@ -59,58 +59,60 @@ class GamificationEngineTest {
     // ---------- Множители ----------
 
     @Test
-    fun `levelBonus tiers`() {
-        assertEquals(0.0, GamificationEngine.levelBonus(1), 0.001)
-        assertEquals(0.0, GamificationEngine.levelBonus(5), 0.001)
-        assertEquals(0.1, GamificationEngine.levelBonus(6), 0.001)
-        assertEquals(0.2, GamificationEngine.levelBonus(15), 0.001)
-        assertEquals(0.3, GamificationEngine.levelBonus(20), 0.001)
-        assertEquals(0.35, GamificationEngine.levelBonus(25), 0.001)
-        assertEquals(0.5, GamificationEngine.levelBonus(40), 0.001)
-        // Кап +0.5 даже на высоких уровнях
-        assertEquals(0.5, GamificationEngine.levelBonus(100), 0.001)
+    fun `levelMultiplier grows linearly and caps at 1_40`() {
+        assertEquals(1.00, GamificationEngine.levelMultiplier(1), 0.001)
+        assertEquals(1.015, GamificationEngine.levelMultiplier(2), 0.001)
+        assertEquals(1.075, GamificationEngine.levelMultiplier(6), 0.001)
+        assertEquals(1.135, GamificationEngine.levelMultiplier(10), 0.001)
+        assertEquals(1.39, GamificationEngine.levelMultiplier(27), 0.001)
+        // 1 + 39*0.015 = 1.585 → кап 1.40
+        assertEquals(1.40, GamificationEngine.levelMultiplier(40), 0.001)
+        assertEquals(1.40, GamificationEngine.levelMultiplier(100), 0.001)
     }
 
     @Test
-    fun `streakBonus tiers`() {
-        assertEquals(0.0, GamificationEngine.streakBonus(0), 0.001)
-        assertEquals(0.1, GamificationEngine.streakBonus(3), 0.001)
-        assertEquals(0.25, GamificationEngine.streakBonus(7), 0.001)
-        assertEquals(0.4, GamificationEngine.streakBonus(14), 0.001)
-        assertEquals(0.5, GamificationEngine.streakBonus(30), 0.001)
-        assertEquals(0.5, GamificationEngine.streakBonus(365), 0.001)
+    fun `streakMultiplier tiers`() {
+        assertEquals(1.00, GamificationEngine.streakMultiplier(0), 0.001)
+        assertEquals(1.00, GamificationEngine.streakMultiplier(2), 0.001)
+        assertEquals(1.10, GamificationEngine.streakMultiplier(3), 0.001)
+        assertEquals(1.10, GamificationEngine.streakMultiplier(6), 0.001)
+        assertEquals(1.20, GamificationEngine.streakMultiplier(7), 0.001)
+        assertEquals(1.20, GamificationEngine.streakMultiplier(13), 0.001)
+        assertEquals(1.25, GamificationEngine.streakMultiplier(14), 0.001)
+        assertEquals(1.25, GamificationEngine.streakMultiplier(365), 0.001)
     }
 
     @Test
-    fun `rewardMultiplier caps at 1_75`() {
-        // level 40 (+0.5) + streak 30+ (+0.5) = 2.0 → кап 1.75
-        assertEquals(1.75, GamificationEngine.rewardMultiplier(40, 30), 0.001)
-        assertEquals(1.75, GamificationEngine.rewardMultiplier(100, 100), 0.001)
-        // level 1, streak 0 → 1.0
-        assertEquals(1.0, GamificationEngine.rewardMultiplier(1, 0), 0.001)
-        // level 10 (+0.1) + streak 7 (+0.25) = 1.35
-        assertEquals(1.35, GamificationEngine.rewardMultiplier(10, 7), 0.001)
+    fun `totalMultiplier caps at 1_65`() {
+        // level 1 × streak 0 → 1.0
+        assertEquals(1.0, GamificationEngine.totalMultiplier(1, 0), 0.001)
+        // level 10 (×1.135) × streak 7 (×1.20) = 1.362
+        assertEquals(1.362, GamificationEngine.totalMultiplier(10, 7), 0.001)
+        // level 40 (кап ×1.40) × streak 30 (×1.25) = 1.75 → кап 1.65
+        assertEquals(1.65, GamificationEngine.totalMultiplier(40, 30), 0.001)
+        assertEquals(1.65, GamificationEngine.totalMultiplier(100, 100), 0.001)
     }
 
     @Test
     fun `computeReward rounds coins and xp`() {
-        // base 50 монет × 1.35 = 67.5 → 68; XP 25 × 1.35 = 33.75 → 34
+        // level 10 (×1.135) × streak 7 (×1.20) = ×1.362:
+        // base 50 монет × 1.362 = 68.1 → 68; XP 25 × 1.362 = 34.05 → 34
         val r = GamificationEngine.computeReward(50, 25, level = 10, streakDays = 7)
         assertEquals(68, r.coins)
         assertEquals(34, r.xp)
-        assertEquals(1.35, r.multiplier, 0.001)
+        assertEquals(1.362, r.multiplier, 0.001)
     }
 
     // ---------- Level-up ----------
 
     @Test
     fun `applyXp single level up grants bonus`() {
-        // level 1: need 109 XP. Даём 109 → level 2, bonus = 50 + 2*10 = 70.
+        // level 1: need 109 XP. Даём 109 → level 2, bonus = 40 + 2*8 = 56.
         val res = GamificationEngine.applyXp(currentXp = 0, currentLevel = 1, xpGain = 109)
         assertEquals(2, res.newLevel)
         assertEquals(0, res.newXp)
         assertEquals(1, res.levelsGained)
-        assertEquals(70, res.coinBonus)
+        assertEquals(56, res.coinBonus)
         assertEquals(GamificationEngine.Rank.NOVICE, res.rank)
     }
 
@@ -120,8 +122,8 @@ class GamificationEngineTest {
         val res = GamificationEngine.applyXp(currentXp = 0, currentLevel = 1, xpGain = 250)
         assertEquals(2, res.levelsGained)
         assertEquals(3, res.newLevel)
-        // bonus = (50+2*10) + (50+3*10) = 70 + 80 = 150
-        assertEquals(150, res.coinBonus)
+        // bonus = (40+2*8) + (40+3*8) = 56 + 64 = 120
+        assertEquals(120, res.coinBonus)
         assertEquals(GamificationEngine.Rank.NOVICE, res.rank)
     }
 
@@ -183,6 +185,14 @@ class GamificationEngineTest {
             if (GamificationEngine.rollBonusChest(random = Random(seed)) != null) hits++
         }
         assertTrue("hits=$hits (ожидалось ~300 из 2000)", hits in 200..400)
+    }
+
+    // ---------- Тарифы экранного времени ----------
+
+    @Test
+    fun `screen time packages cost 100 220 320`() {
+        val packages = com.example.familibalance.util.ScreenTimeTariffs.PACKAGES
+        assertEquals(listOf(30 to 100, 60 to 220, 90 to 320), packages.map { it.minutes to it.cost })
     }
 
     // ---------- Идеальный день ----------

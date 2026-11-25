@@ -119,9 +119,12 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
         // Изменённые профили отправляем через pushChildProfile: он помечает
         // их dirty в SyncStatus и повторяет отправку при неудаче (MVI-01).
         AppStateStorage.checkResets(appContext).forEach { changed ->
-            // Сброс — локальное изменение: обновляем stateUpdatedAt, чтобы
-            // last-writer-wins в ProfileSync не проигнорировал его.
-            val stamped = changed.copy(stateUpdatedAt = System.currentTimeMillis())
+            // Сброс — локальное изменение: обновляем stateUpdatedAt/stateVersion,
+            // чтобы last-writer-wins в ProfileSync не проигнорировал его.
+            val stamped = changed.copy(
+                stateUpdatedAt = System.currentTimeMillis(),
+                stateVersion = changed.stateVersion + 1
+            )
             AppSharedState.children[stamped.id] = stamped
             pushChildProfile(stamped)
         }
@@ -167,12 +170,16 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
 
     override fun syncNow(childId: String?) {
         saveLocalAsync()
-        // Pull: подтягиваем свежие данные из облака (изменения с других устройств),
-        // затем push: отправляем выбранного ребёнка и все dirty-профили.
-        SupabaseManager.refreshFromCloud(appContext)
-        val targetId = childId ?: selectedChildId
-        AppSharedState.children[targetId]?.let { pushChildProfile(it) }
-        retryDirtyChildren()
+        // Pull-first: сначала дожидаемся свежих профилей из облака, чтобы
+        // push ниже не отправил устаревший локальный снапшот поверх чужих
+        // правок (approve/reject родителя, изменения с другого устройства).
+        // LWW-проверка в ProfileSync.pushChildProfile — второй рубеж защиты.
+        initScope.launch {
+            runCatching { SupabaseManager.pullFromCloud(appContext) }
+            val targetId = childId ?: selectedChildId
+            AppSharedState.children[targetId]?.let { pushChildProfile(it) }
+            retryDirtyChildren()
+        }
         // Watchdog: если за 10 сек ни один push не завершился (сессия не создана,
         // сеть мёртвая, onResult не вызван) — принудительно сбрасываем isSyncing,
         // чтобы UI не висел на вечном спиннере. Сами push'и доработают в фоне,
@@ -217,8 +224,17 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
         // чтобы UI и Repository видели актуальную версию профиля.
         // stateUpdatedAt — метка последнего локального изменения для
         // last-writer-wins при синхронизации (ProfileSync сравнивает
-        // с удалённой версией перед upsert).
-        val stamped = profile.copy(stateUpdatedAt = System.currentTimeMillis())
+        // с удалённой версией перед upsert). stateVersion — монотонный
+        // счётчик, не зависящий от расхождения часов устройств.
+        // max со свежей версией: если за время действия пришёл remote
+        // (applyRemoteChildJson), устаревший снапшот не должен откатить
+        // счётчик — иначе LWW в ProfileSync увидел бы «локальную» правку
+        // с версией, коллидирующей с удалённой.
+        val freshVersion = AppSharedState.children[profile.id]?.stateVersion ?: 0L
+        val stamped = profile.copy(
+            stateUpdatedAt = System.currentTimeMillis(),
+            stateVersion = maxOf(profile.stateVersion, freshVersion) + 1
+        )
         AppSharedState.children[stamped.id] = stamped
         saveLocalAsync()
         pushChildProfile(stamped)

@@ -187,23 +187,23 @@
     <string name="rules_balance_title">📖 How your balance works</string>
     <string name="rules_balance_text">All earned rubles go to your wallet. You can exchange them for phone time (100 ₽ = 30 minutes) OR you can withdraw all your money at any time — take your whole balance as real paper money from your parent! You also grow in levels: quests grant XP, and with each level you unlock new ranks and a bigger reward multiplier!</string>
     <string name="rules_earn_title">💰 How to earn:</string>
-    <string name="rules_earn_text">• Grade "5" in diary: +50 ₽\n• Grade "4" in diary: +30 ₽\n• Wardrobe photo (perfect order): +%1$d ₽\n• Room photo (made bed and tidiness): +%2$d ₽\n• Achievement bonuses: from 10 ₽ to 500 ₽ for the "Server Legend" rank!\n• Quest XP: wardrobe &amp; room +25 XP, diary +70 XP, bonus quests +30 XP — scaled by level and streak multiplier!</string>
+    <string name="rules_earn_text">• Grade "5" in diary: +50 ₽\n• Grade "4" in diary: +30 ₽\n• Wardrobe photo (perfect order): +%1$d ₽\n• Room photo (made bed and tidiness): +%2$d ₽\n• Achievement bonuses: from 10 ₽ to 500 ₽ for the "Server Legend" rank!\n• Quest XP: wardrobe &amp; room +25 XP, diary — grade 5: +70 XP, grade 4: +45 XP, bonus quests +30 XP — scaled by level and streak multiplier!</string>
     <string name="rules_penalty_title">🔴 What costs you money (Penalties)</string>
     <string name="rules_penalty_text">Grade "3" costs −20 ₽, grade "2" costs −50 ₽. Mischief and fooling around cost −30 ₽, and lying or cheating costs a full −100 ₽. But if you honestly tell your parent through the kitty before they find out — the penalty is cut exactly in half! (−10 ₽ for a three, −25 ₽ for a two, −15 ₽ for mischief and −50 ₽ for lying).</string>
     <string name="rules_streak_title">🔥 Days without penalties</string>
     <string name="rules_streak_text">Check in every day and get +50 ₽ every 7 days without penalties! But any penalty burns all accumulated days — and each missed day extinguishes one flame.</string>
     <string name="rules_gamification_title">Levels, ranks &amp; XP</string>
-    <string name="rules_gamification_text">Every completed quest grants XP. As you level up, you unlock new ranks — from "Novice" to "House Legend" — and earn a coin bonus on each level-up. The higher your level and the longer your no-penalty streak, the bigger the reward multiplier — up to ×1.75!</string>
+    <string name="rules_gamification_text">Every completed quest grants XP. As you level up, you unlock new ranks — from "Novice" to "House Legend" — and earn a coin bonus on each level-up. The higher your level and the longer your no-penalty streak, the bigger the reward multiplier — up to ×1.65! Level-up coin bonus: 40 + level × 8.</string>
     <string name="rules_bonus_chest_title">Bonus chest</string>
     <string name="rules_bonus_chest_text">After every completed quest you have a 15%% chance to open a bonus chest — inside there are either coins (20 to 60 ₽) or bonus XP (10 to 15)!</string>
     <string name="rules_perfect_day_title">Perfect day</string>
     <string name="rules_perfect_day_text">Complete both daily quests — wardrobe photo and room photo — in one day to earn +25 ₽ and +15 XP! Each consecutive perfect day grows the streak: from day 3 quests grant +10%% XP, from day 7 — +20%%!</string>
     <string name="rules_screentime_title">⏳ Screen time</string>
-    <string name="rules_screentime_text">Limit 90 minutes per day. Tariffs: 30 min = 100 ₽, 60 min = 200 ₽, 90 min = 300 ₽.</string>
+    <string name="rules_screentime_text">Limit 90 minutes per day. Tariffs: 30 min = 100 ₽, 60 min = 220 ₽, 90 min = 320 ₽.</string>
     <string name="rules_honest_title">🐱 Honest admission</string>
     <string name="rules_honest_text">50%% discount on any penalty — a two or a lie alike. Available once every 7 days — tell your parent the truth through the kitty!</string>
     <string name="rules_diary_title">📓 Diary</string>
-    <string name="rules_diary_text">Submitted once a week. Grades: 5 (+50 ₽), 4 (+30 ₽), 3 (-20 ₽), 2 (-50 ₽).</string>
+    <string name="rules_diary_text">Submitted once a week. Grades: 5 (+50 ₽, +70 XP), 4 (+30 ₽, +45 XP), 3 (-20 ₽), 2 (-50 ₽).</string>
     <string name="rules_achievements_title">🏆 Achievements</string>
     <string name="rules_achievements_text">Earn bonuses for new ranks from 10 ₽ to 500 ₽ for the "Server Legend" rank!</string>
     <string name="rules_understood">Got it!</string>
@@ -230,9 +230,9 @@
     <string name="eco_xp">Quest XP</string>
     <string name="eco_xp_value">25–70 XP</string>
     <string name="eco_level_up">Level up</string>
-    <string name="eco_level_up_value">coin bonus</string>
+    <string name="eco_level_up_value">40 + level × 8 coins</string>
     <string name="eco_reward_mult">Reward multiplier</string>
-    <string name="eco_reward_mult_value">up to ×1.75</string>
+    <string name="eco_reward_mult_value">up to ×1.65</string>
     <string name="eco_set_by_dad">amount set by parent</string>
     <string name="eco_time30">⏳ 30 minutes of screen time</string>
     <string name="eco_time60">⏳ 60 minutes of screen time</string>
@@ -445,6 +445,11 @@
     <string name="admin_economy_no_limit">No limit</string>
     <string name="admin_economy_set_limit">Set limit</string>
     <string name="admin_economy_reset_defaults">Reset to defaults</string>
+    <string name="admin_economy_preset_soft">Easy</string>
+    <string name="admin_economy_preset_balanced">Balanced</string>
+    <string name="admin_economy_preset_strict">Strict</string>
+    <string name="admin_economy_weekly_earned">Earned this week: %1$d %2$s</string>
+    <string name="admin_economy_weekly_earned_limit">Earned this week: %1$d / %2$d %3$s</string>
 
     <!-- Parent gifts & honesty tokens -->
     <string name="gift_thank_you">Card: Thanks for caring</string>
@@ -471,6 +476,7 @@
     <string name="gamification_rank_master">Balance Master</string>
     <string name="gamification_rank_hero">Family Hero</string>
     <string name="gamification_rank_legend">House Legend</string>
+    <string name="mult_breakdown">×%1$.2f (Level ×%2$.2f + Streak ×%3$.2f)</string>
     <string name="child_level_badge">Lv. %1$d</string>
     <string name="child_xp_progress">%1$d / %2$d XP</string>
     <string name="child_reward_mult">×%1$.1f</string>
@@ -611,6 +617,7 @@
     <string name="admin_reject_tpl_finish">Finish it completely</string>
     <string name="admin_reject_tpl_partial">It\'s not fully done</string>
     <string name="admin_reject_default_reason">Needs rework</string>
+    <string name="admin_reject_reason_cheat">Parent marked the quest as done dishonestly</string>
     <string name="admin_diary_scanning">Scanning grades…</string>
     <string name="admin_diary_scan_success">Grades recognized!</string>
     <string name="admin_diary_scan_error">Scan error: %1$s</string>
@@ -658,6 +665,7 @@
     <string name="admin_fine_reason_mischief">Mischief</string>
     <string name="admin_fine_reason_lie">Lying</string>
     <string name="admin_reject_fine_lie">Apply lying penalty (−100 ₽)</string>
+    <string name="admin_reject_fine_streak_warning">The no-penalty streak will be reset</string>
     <string name="admin_cashout_button">💵 Give cash (%1$d ₽)</string>
     <string name="admin_cashout_amount_label">Payout amount ₽</string>
     <string name="admin_cashout_max">Max</string>
@@ -686,6 +694,7 @@
     <string name="admin_set_reset_dream_label">Delete dream goal</string>
     <string name="admin_set_reset_theme_label">Reset theme</string>
     <string name="admin_set_reset_all">Reset everything</string>
+    <string name="admin_set_reset_all_warning">Resets almost all of the child\'s data. This action cannot be undone.</string>
     <string name="admin_set_reset_select">Select what to reset…</string>
     <string name="admin_set_reset_execute">Perform reset</string>
     <string name="admin_set_sync">🔄 Sync with server</string>

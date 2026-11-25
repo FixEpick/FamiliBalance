@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
@@ -58,7 +59,9 @@ fun ParentGiftCard(
             Spacer(modifier = Modifier.height(10.dp))
             ParentGiftType.entries.chunked(2).forEach { rowGifts ->
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Max),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     rowGifts.forEach { gift ->
@@ -68,7 +71,7 @@ fun ParentGiftCard(
                             enabled = affordable,
                             modifier = Modifier
                                 .weight(1f)
-                                .height(64.dp)
+                                .fillMaxHeight()
                                 .bounceClick(),
                             shape = RoundedCornerShape(12.dp),
                             border = BorderStroke(
@@ -84,7 +87,7 @@ fun ParentGiftCard(
                                 contentColor = if (affordable) TextPrimary else TextSecondary,
                                 disabledContentColor = TextSecondary
                             ),
-                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp)
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp)
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -99,7 +102,8 @@ fun ParentGiftCard(
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.SemiBold,
                                     textAlign = TextAlign.Center,
-                                    maxLines = 2,
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis,
                                     lineHeight = 12.sp
                                 )
                                 Text(

@@ -76,11 +76,13 @@ fun BuyTimeBottomSheet(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            val tariffs = listOf(
-                TariffData(pluralStringResource(R.plurals.child_tariff_minutes, 30, 30), 100, 30),
-                TariffData(pluralStringResource(R.plurals.child_tariff_minutes, 60, 60), 200, 60),
-                TariffData(pluralStringResource(R.plurals.child_tariff_minutes, 90, 90), 300, 90)
-            )
+            val tariffs = ScreenTimeTariffs.PACKAGES.map { pkg ->
+                TariffData(
+                    pluralStringResource(R.plurals.child_tariff_minutes, pkg.minutes, pkg.minutes),
+                    pkg.cost,
+                    pkg.minutes
+                )
+            }
 
             tariffs.forEach { tariff ->
                 val isAffordable = !isProcessing && (currentBalance >= tariff.cost) && (boughtMinutesToday + tariff.minutes <= dailyLimit)

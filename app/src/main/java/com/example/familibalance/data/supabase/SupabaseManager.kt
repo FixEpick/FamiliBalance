@@ -189,6 +189,13 @@ object SupabaseManager {
     fun refreshFromCloud(context: Context) = ProfileSync.refreshFromCloud(context)
 
     /**
+     * Suspend-вариант pull: ждёт завершения загрузки профилей.
+     * Используется в pull-before-push (syncNow), чтобы push не ушёл
+     * со stale-снапшотом до применения свежих данных из облака.
+     */
+    suspend fun pullFromCloud(context: Context) = ProfileSync.loadProfilesFromCloud(context)
+
+    /**
      * Отправляет обновлённое состояние конкретного ребёнка в Supabase
      * (а если есть локальное фото — сначала загружает его в облачный Storage)
      */

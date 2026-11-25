@@ -4,7 +4,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,10 +19,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -70,10 +73,15 @@ fun RejectReasonTemplateChips(onSelect: (String) -> Unit) {
     }
 }
 
-/** Полноэкранный просмотр фото с pinch-zoom и двойным тапом для сброса. */
+/**
+ * Полноэкранный просмотр фото: pinch-zoom (×1–×4), панорамирование
+ * только при масштабе > 1 с ограничением смещения, двойной тап
+ * переключает ×1 ↔ ×2.5 (при возврате в ×1 позиция сбрасывается).
+ */
 @Composable
 fun FullScreenImageDialog(
     photoUrl: String,
+    contentDescription: String,
     onDismiss: () -> Unit
 ) {
     Dialog(
@@ -81,19 +89,38 @@ fun FullScreenImageDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         AppLocaleContent {
+        var scale by remember { mutableFloatStateOf(1f) }
+        var offset by remember { mutableStateOf(Offset.Zero) }
+        var containerSize by remember { mutableStateOf(IntSize.Zero) }
+
+        val transformState = rememberTransformableState { _, zoomChange, panChange, _ ->
+            val newScale = (scale * zoomChange).coerceIn(1f, 4f)
+            if (newScale > 1f) {
+                // Лимит смещения: фото не уходит за экран — не дальше
+                // половины «лишнего» размера (scale - 1) / 2.
+                val maxX = containerSize.width * (newScale - 1f) / 2f
+                val maxY = containerSize.height * (newScale - 1f) / 2f
+                offset = Offset(
+                    (offset.x + panChange.x).coerceIn(-maxX, maxX),
+                    (offset.y + panChange.y).coerceIn(-maxY, maxY)
+                )
+            } else {
+                offset = Offset.Zero
+            }
+            scale = newScale
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.9f))
-                .clickable { onDismiss() },
+                .clickable { onDismiss() }
+                .onSizeChanged { containerSize = it },
             contentAlignment = Alignment.Center
         ) {
-            var scale by remember { mutableFloatStateOf(1f) }
-            var offset by remember { mutableStateOf(Offset.Zero) }
-
             AsyncImage(
                 model = photoUrl,
-                contentDescription = stringResource(R.string.a11y_fullscreen_diary_photo),
+                contentDescription = contentDescription,
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
@@ -102,19 +129,16 @@ fun FullScreenImageDialog(
                         translationX = offset.x
                         translationY = offset.y
                     }
+                    .transformable(transformState)
                     .pointerInput(Unit) {
-                        detectTransformGestures { centroid, pan, zoomDelta, rotation ->
-                            val newScale = (scale * zoomDelta).coerceIn(1f, 5f)
-                            offset = Offset(
-                                (offset.x + pan.x) * newScale / scale,
-                                (offset.y + pan.y) * newScale / scale
-                            )
-                            scale = newScale
-                        }
                         detectTapGestures(
                             onDoubleTap = {
-                                scale = 1f
-                                offset = Offset.Zero
+                                if (scale > 1f) {
+                                    scale = 1f
+                                    offset = Offset.Zero
+                                } else {
+                                    scale = 2.5f
+                                }
                             },
                             onTap = {
                                 if (scale == 1f) {
@@ -139,7 +163,7 @@ fun FullScreenImageDialog(
                     color = Color.White,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.semantics { contentDescription = closeDesc }
+                    modifier = Modifier.semantics { this.contentDescription = closeDesc }
                 )
             }
         }

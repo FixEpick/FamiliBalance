@@ -90,6 +90,10 @@ data class ChildProfileState(
     val deviceId: String = "",
     /** Epoch ms последнего локального изменения состояния (last-writer-wins при синхронизации). */
     val stateUpdatedAt: Long = 0,
+    /** Монотонный счётчик локальных изменений: +1 при каждом updateChildProfile.
+     *  В отличие от stateUpdatedAt не зависит от расхождения часов устройств —
+     *  основной критерий last-writer-wins при синхронизации state_json. */
+    val stateVersion: Long = 0,
     /** Код валюты наград (RUB/USD/EUR/GBP/KZT/BYN/COIN) — только символ отображения, без конвертации. */
     val rewardCurrency: String = "RUB",
     /** XP текущего уровня (сброс в 0 при каждом level-up). См. GamificationEngine. */
@@ -211,6 +215,7 @@ data class ChildProfileState(
             status = dto.status,
             deviceId = dto.deviceId,
             stateUpdatedAt = dto.stateUpdatedAt,
+            stateVersion = dto.stateVersion,
             rewardCurrency = dto.rewardCurrency,
             xp = dto.xp,
             level = dto.level,
@@ -308,6 +313,8 @@ data class ChildProfileDto(
     val status: String = "active",
     val deviceId: String = "",
     val stateUpdatedAt: Long = 0,
+    /** Монотонный счётчик локальных изменений (см. ChildProfileState.stateVersion). */
+    val stateVersion: Long = 0,
     val rewardCurrency: String = "RUB",
     /** XP текущего уровня (сброс в 0 при каждом level-up). См. GamificationEngine. */
     val xp: Long = 0L,
@@ -414,6 +421,7 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     status = status,
     deviceId = deviceId,
     stateUpdatedAt = stateUpdatedAt,
+    stateVersion = stateVersion,
     rewardCurrency = rewardCurrency,
     xp = xp,
     level = level,

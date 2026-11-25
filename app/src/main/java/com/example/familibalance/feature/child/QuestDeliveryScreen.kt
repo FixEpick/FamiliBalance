@@ -116,11 +116,13 @@ private fun QuestDeliveryScreenContent(
     var capturedPhotoFile by remember { mutableStateOf<java.io.File?>(null) }
     // Встроенная камера CameraX: процесс не уходит в фон,
     // поэтому OS не убивает приложение при съёмке фото.
-    var showCamera by remember { mutableStateOf(false) }
+    // rememberSaveable: при process death камера переоткроется,
+    // а не «сбросится» на экран списка заданий.
+    var showCamera by rememberSaveable { mutableStateOf(false) }
     // Блокирует «Назад»/повторную отправку, пока submitQuestForReview не вернётся:
     // иначе экран закрывался до завершения persist+push и пользователь видел
     // «выкидывание» на главный экран без подтверждения.
-    var isSubmitting by remember { mutableStateOf(false) }
+    var isSubmitting by rememberSaveable { mutableStateOf(false) }
     // Разрешение на уведомления просим в момент первой отправки квеста —
     // ребёнок уже понял, зачем они нужны («узнать о проверке родителем»).
     val requestNotifPermission = rememberPushPermissionRequester()

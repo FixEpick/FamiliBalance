@@ -2,7 +2,6 @@ package com.example.familibalance.util
 
 import androidx.annotation.StringRes
 import com.example.familibalance.R
-import kotlin.math.min
 import kotlin.math.round
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -55,27 +54,37 @@ object GamificationEngine {
         QuestKind.BONUS_OR_CUSTOM -> 30
     }
 
-    /** Аддитивная надбавка к множителю от уровня (ур. 1–5 → +0.0 … макс +0.5). */
-    fun levelBonus(level: Int): Double = when {
-        level <= 5 -> 0.0
-        level <= 10 -> 0.1
-        level <= 15 -> 0.2
-        level <= 20 -> 0.3
-        else -> min(0.3 + 0.05 * ((level - 20) / 5), 0.5)
+    /** XP за оценку «5» в дневнике. */
+    const val DIARY_GRADE5_XP = 70
+    /** XP за оценку «4» в дневнике. Оценки 3 и 2 XP не дают. */
+    const val DIARY_GRADE4_XP = 45
+
+    /**
+     * Множитель от уровня: ×1.00 + 0.015 за каждый уровень выше 1,
+     * кап ×1.40 (достигается примерно на 27 уровне).
+     */
+    fun levelMultiplier(level: Int): Double =
+        minOf(1.00 + (level.coerceAtLeast(1) - 1) * 0.015, 1.40)
+
+    /**
+     * Множитель от серии дней без штрафов:
+     * 0–2 дня → ×1.00, 3–6 → ×1.10, 7–13 → ×1.20, 14+ → ×1.25.
+     */
+    fun streakMultiplier(streakDays: Int): Double = when {
+        streakDays >= 14 -> 1.25
+        streakDays >= 7 -> 1.20
+        streakDays >= 3 -> 1.10
+        else -> 1.00
     }
 
-    /** Аддитивная надбавка от серии дней без штрафов. */
-    fun streakBonus(streakDays: Int): Double = when {
-        streakDays >= 30 -> 0.5
-        streakDays >= 14 -> 0.4
-        streakDays >= 7 -> 0.25
-        streakDays >= 3 -> 0.1
-        else -> 0.0
-    }
+    /** Итоговый множитель наград: level × streak, общий кап ×1.65. */
+    fun totalMultiplier(level: Int, streakDays: Int): Double =
+        minOf(levelMultiplier(level) * streakMultiplier(streakDays), 1.65)
 
-    /** Итоговый множитель наград: 1.0 + levelBonus + streakBonus, кап 1.75. */
+    /** @deprecated Используйте [totalMultiplier]. */
+    @Deprecated("Use totalMultiplier", ReplaceWith("totalMultiplier(level, streakDays)"))
     fun rewardMultiplier(level: Int, streakDays: Int): Double =
-        min(1.0 + levelBonus(level) + streakBonus(streakDays), 1.75)
+        totalMultiplier(level, streakDays)
 
     data class RewardResult(
         val coins: Int,
@@ -85,7 +94,7 @@ object GamificationEngine {
 
     /** Итоговые монеты и XP с учётом множителя (округление до целого). */
     fun computeReward(baseCoins: Int, baseXp: Int, level: Int, streakDays: Int): RewardResult {
-        val mult = rewardMultiplier(level, streakDays)
+        val mult = totalMultiplier(level, streakDays)
         return RewardResult(
             coins = (baseCoins * mult).roundToInt(),
             xp = (baseXp * mult).roundToInt(),
@@ -104,7 +113,7 @@ object GamificationEngine {
 
     /**
      * Начисляет XP и проводит через возможные повышения уровня.
-     * Бонус за каждый новый уровень: 50 + newLevel * 10 монет.
+     * Бонус за каждый новый уровень: 40 + newLevel * 8 монет.
      */
     fun applyXp(currentXp: Long, currentLevel: Int, xpGain: Int): LevelUpResult {
         var xp = currentXp + xpGain.coerceAtLeast(0)
@@ -115,7 +124,7 @@ object GamificationEngine {
             xp -= xpToNextLevel(level)
             level++
             gained++
-            bonus += 50 + level * 10
+            bonus += 40 + level * 8
         }
         return LevelUpResult(
             newXp = xp,

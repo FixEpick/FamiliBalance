@@ -277,6 +277,7 @@ fun DiaryVerificationCard(
 
     if (showRejectDialog) {
         val defaultRejectReason = stringResource(R.string.admin_reject_default_reason)
+        val cheatRejectReason = stringResource(R.string.admin_reject_reason_cheat)
         AppDialog(
             onDismissRequest = { showRejectDialog = false },
             title = { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) },
@@ -303,12 +304,27 @@ fun DiaryVerificationCard(
                                 fontSize = 13.sp
                             )
                         }
+                        if (applyLieFine) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = stringResource(R.string.admin_reject_fine_streak_warning),
+                                color = PenaltyRed,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             },
             confirmButton = {
                 Button(onClick = {
-                    val reason = if (rejectReasonText.isNotBlank()) rejectReasonText else defaultRejectReason
+                    val reason = if (rejectReasonText.isNotBlank()) {
+                        rejectReasonText
+                    } else if (applyLieFine) {
+                        cheatRejectReason
+                    } else {
+                        defaultRejectReason
+                    }
                     if (applyLieFine && onRejectWithFine != null) {
                         onRejectWithFine(reason, true)
                     } else {
@@ -331,6 +347,7 @@ fun DiaryVerificationCard(
     if (showFullScreenImage && !photoUrl.isNullOrEmpty()) {
         FullScreenImageDialog(
             photoUrl = photoUrl,
+            contentDescription = stringResource(R.string.a11y_fullscreen_diary_photo),
             onDismiss = { showFullScreenImage = false }
         )
     }

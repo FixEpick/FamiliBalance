@@ -176,7 +176,11 @@ class MainViewModel(
         val now = System.currentTimeMillis()
         AppSharedState.children.replaceAll { _, child ->
             if (child.rewardCurrency == code) child
-            else child.copy(rewardCurrency = code, stateUpdatedAt = now)
+            else child.copy(
+                rewardCurrency = code,
+                stateUpdatedAt = now,
+                stateVersion = child.stateVersion + 1
+            )
         }
         familyRepository.saveAndSync()
         emitFamilyState()
@@ -208,6 +212,14 @@ class MainViewModel(
                         AppSharedState.children.keys.firstOrNull() ?: "user_1"
                 }
                 AppStateStorage.saveLocalOnly(getApplication())
+            }
+            // Pull свежего state_json ДО локальных сбросов: checkResets/
+            // resetDailyQuestsIfNeeded не должны вычислять изменения по
+            // устаревшему кэшу и пушить его поверх чужих правок
+            // (approve/reject родителя). Таймаут — чтобы офлайн-старт
+            // не задерживал инициализацию.
+            withTimeoutOrNull(10_000) {
+                ProfileSync.loadProfilesFromCloud(getApplication())
             }
             checkResets()
             // Достижения, заявленные ранее, дооткрывают привязанные темы.

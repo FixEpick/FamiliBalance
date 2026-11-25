@@ -1,10 +1,13 @@
 package com.example.familibalance.feature.admin.settings
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,6 +21,7 @@ import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.util.currencyString
 import com.example.familibalance.util.rewardCurrencySymbol
+import com.example.familibalance.viewmodel.actions.earnedThisWeek
 import com.example.familibalance.viewmodel.actions.resetEconomySettings
 import com.example.familibalance.viewmodel.actions.updateEconomySettings
 
@@ -35,6 +39,7 @@ fun EconomySettingsCard(
     modifier: Modifier = Modifier
 ) {
     val currency = rewardCurrencySymbol()
+    var expanded by rememberSaveable { mutableStateOf(true) }
 
     fun update(
         closet: Int = child.baseClosetReward,
@@ -64,16 +69,67 @@ fun EconomySettingsCard(
             .glassCard()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { expanded = !expanded }
+            ) {
                 IconBadge(emoji = "💰", size = 30.dp, emojiSize = 15.dp)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.admin_economy_title),
                     color = TextPrimary,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = if (expanded) "▲" else "▼",
+                    color = TextSecondary,
+                    fontSize = 14.sp
                 )
             }
+            AnimatedVisibility(visible = expanded) {
+            Column {
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Быстрые пресеты экономики.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                EconomyPreset.entries.forEach { preset ->
+                    OutlinedButton(
+                        onClick = {
+                            update(
+                                closet = preset.closet,
+                                room = preset.room,
+                                diary5 = preset.diary5,
+                                multipliers = preset.multipliers,
+                                chestChance = preset.chestChance,
+                                weeklyLimit = preset.weeklyLimit
+                            )
+                        },
+                        border = BorderStroke(1.dp, GlassStroke),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.Transparent,
+                            contentColor = TextSecondary
+                        ),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            text = stringResource(preset.labelRes),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             EconomyRewardStepper(
@@ -209,6 +265,22 @@ fun EconomySettingsCard(
                     }
                 }
             }
+            // Прогресс заработка за текущую неделю (пн–вс).
+            val earnedThisWeek = child.earnedThisWeek()
+            Text(
+                text = if (child.weeklyEarnLimit > 0) {
+                    stringResource(
+                        R.string.admin_economy_weekly_earned_limit,
+                        earnedThisWeek,
+                        child.weeklyEarnLimit,
+                        currency
+                    )
+                } else {
+                    stringResource(R.string.admin_economy_weekly_earned, earnedThisWeek, currency)
+                },
+                color = TextSecondary,
+                fontSize = 12.sp
+            )
 
             Spacer(modifier = Modifier.height(10.dp))
             TextButton(
@@ -221,8 +293,25 @@ fun EconomySettingsCard(
                     fontSize = 13.sp
                 )
             }
+            }
+            }
         }
     }
+}
+
+/** Готовые пресеты экономики: мягкий / сбалансированный / строгий. */
+private enum class EconomyPreset(
+    val closet: Int,
+    val room: Int,
+    val diary5: Int,
+    val multipliers: Boolean,
+    val chestChance: Int,
+    val weeklyLimit: Int,
+    val labelRes: Int
+) {
+    SOFT(70, 70, 70, true, 20, 0, R.string.admin_economy_preset_soft),
+    BALANCED(50, 50, 50, true, 15, 0, R.string.admin_economy_preset_balanced),
+    STRICT(30, 30, 40, false, 10, 600, R.string.admin_economy_preset_strict)
 }
 
 /** Строка «название — значение» со степпером −/+. */
