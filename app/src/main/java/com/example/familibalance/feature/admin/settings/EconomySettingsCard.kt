@@ -39,7 +39,7 @@ fun EconomySettingsCard(
     modifier: Modifier = Modifier
 ) {
     val currency = rewardCurrencySymbol()
-    var expanded by rememberSaveable { mutableStateOf(true) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
 
     fun update(
         closet: Int = child.baseClosetReward,
@@ -62,37 +62,35 @@ fun EconomySettingsCard(
 
     Surface(
         shape = GlassCardShape,
-        color = GlassBackground,
-        border = BorderStroke(1.dp, GlassStroke),
+        color = Color.Transparent,
         modifier = modifier
             .fillMaxWidth()
             .glassCard()
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { expanded = !expanded }
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
             ) {
-                IconBadge(emoji = "💰", size = 30.dp, emojiSize = 15.dp)
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = stringResource(R.string.admin_economy_title),
                     color = TextPrimary,
-                    fontSize = 18.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
                 Text(
                     text = if (expanded) "▲" else "▼",
                     color = TextSecondary,
-                    fontSize = 14.sp
+                    fontSize = 12.sp
                 )
             }
             AnimatedVisibility(visible = expanded) {
-            Column {
-            Spacer(modifier = Modifier.height(12.dp))
+            Column(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 14.dp)) {
+            Spacer(modifier = Modifier.height(4.dp))
 
             // Быстрые пресеты экономики.
             Row(

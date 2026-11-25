@@ -163,7 +163,12 @@ fun ProgressAdminContent(viewModel: MainViewModel) {
             onDismissRequest = { showDreamGoalDialog = false },
             title = { Text(if (child.dreamTarget > 0) stringResource(R.string.admin_dream_edit) else stringResource(R.string.admin_dream_set), color = AccentColor, fontWeight = FontWeight.Bold) },
             text = {
-                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .imePadding(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     AppOutlinedField(value = dreamTitle, onValueChange = { dreamTitle = it }, label = { Text(stringResource(R.string.admin_goal_name_label), color = TextPrimary) }, singleLine = true, colors = editorFieldColors())
                     AppOutlinedField(value = if (dreamTargetVal > 0) dreamTargetVal.toString() else "", onValueChange = { dreamTargetVal = it.toIntOrNull() ?: 0 }, label = { Text(currencyString(R.string.child_cashout_amount_label), color = TextPrimary) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, colors = editorFieldColors())
                 }

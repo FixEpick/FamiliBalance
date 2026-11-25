@@ -467,22 +467,18 @@ fun MainChildScreen(
                 }
             }
 
-            // ================= БЛОК 4: ДНИ БЕЗ ШТРАФОВ (7 ОГОНЬКОВ) =================
+            // ================= БЛОК 4+4.1: ДНИ БЕЗ ШТРАФОВ + ИДЕАЛЬНЫЕ ДНИ =================
             item {
-                StreakFlameCard(
+                CombinedStreaksCard(
                     streakDays = child.streakDays,
                     lastStreakDate = child.lastStreakDate,
+                    perfectDaysStreak = child.perfectDaysStreak,
                     onCheckIn = {
                         FeedbackManager.playCoin(context, haptic)
                         confettiTrigger++
                         viewModel.checkInStreak(child.id)
                     }
                 )
-            }
-
-            // ================= БЛОК 4.1: ИДЕАЛЬНЫЕ ДНИ =================
-            item {
-                PerfectDaysCard(perfectDaysStreak = child.perfectDaysStreak)
             }
 
             // ================= БЛОК 5: ЧЕСТНОЕ ПРИЗНАНИЕ (только когда активно) =================
@@ -512,6 +508,13 @@ fun MainChildScreen(
                                 android.widget.Toast.LENGTH_SHORT
                             ).show()
                         }
+                    },
+                    onInsufficientFunds = {
+                        android.widget.Toast.makeText(
+                            context,
+                            parentGiftNoFundsText,
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
                     }
                 )
             }

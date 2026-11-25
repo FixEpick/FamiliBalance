@@ -251,6 +251,22 @@ private fun localizedHistoryTitle(item: HistoryData): String {
     return stringResource(spec.resId, *args.toTypedArray())
 }
 
+/**
+ * Итоговая сумма сводки дневника из arg вида
+ * «5×2 (+50), 4×1 (+30), 3×1 (-20)»: суммируются все знаковые
+ * слагаемые в скобках. null/пустой arg → null (нечисловая запись).
+ */
+private fun diarySummaryTotal(arg: String?): Int? {
+    if (arg.isNullOrBlank()) return null
+    var total = 0
+    var found = false
+    Regex("""[+-]\d+""").findAll(arg).forEach {
+        total += it.value.toInt()
+        found = true
+    }
+    return if (found) total else null
+}
+
 /** Заголовок-разделитель дня: «Сегодня»/«Вчера»/«19 ноября» (или «19 November»). */
 @Composable
 private fun HistoryDateHeader(date: String) {
@@ -506,15 +522,25 @@ fun HistoryScreen(
                     HistoryDateHeader(date = date)
                 }
                 items(dayItems) { item ->
+                    // У сводки дневника amountValue = null (не дублировать
+                    // начисления за оценки), но итог считаем из формулы в arg
+                    // и показываем справа — как у остальных операций.
+                    val diaryTotal = if (item.type == HistoryType.DIARY_SUMMARY) {
+                        diarySummaryTotal(item.arg)
+                    } else null
                     HistoryItem(
                         title = localizedHistoryTitle(item),
                         time = item.time,
-                        amount = if (item.type == HistoryType.HONEST_APPROVED) {
-                            stringResource(R.string.hist_honest_amount)
-                        } else {
-                            RewardCurrency.localize(item.amount, currentChild.rewardCurrency)
+                        amount = when {
+                            item.type == HistoryType.HONEST_APPROVED ->
+                                stringResource(R.string.hist_honest_amount)
+                            diaryTotal != null -> RewardCurrency.localize(
+                                (if (diaryTotal >= 0) "+" else "") + "$diaryTotal ₽",
+                                currentChild.rewardCurrency
+                            )
+                            else -> RewardCurrency.localize(item.amount, currentChild.rewardCurrency)
                         },
-                        isIncome = item.isIncome
+                        isIncome = diaryTotal?.let { it >= 0 } ?: item.isIncome
                     )
                 }
             }

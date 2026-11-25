@@ -66,8 +66,8 @@ android {
         applicationId = "com.example.familibalance"
         minSdk = 24
         targetSdk = 37
-        versionCode = 34
-        versionName = "2.4.1"
+        versionCode = 35
+        versionName = "2.4.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

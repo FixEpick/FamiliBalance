@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -32,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
-import com.example.familibalance.ui.theme.GlassBackground
 import com.example.familibalance.ui.theme.GlassStroke
 import com.example.familibalance.ui.theme.PenaltyRed
 import com.example.familibalance.ui.theme.SpaceBgStart
@@ -45,33 +43,12 @@ fun LazyListScope.resetsSection(
     onRequestReset: (kind: ResetKind) -> Unit
 ) {
     item {
-        var showResets by rememberSaveable { mutableStateOf(false) }
-        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            OutlinedButton(
-                onClick = { showResets = !showResets },
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, PenaltyRed.copy(alpha = 0.6f)),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = GlassBackground,
-                    contentColor = PenaltyRed
-                )
-            ) {
-                Text(
-                    text = if (showResets) {
-                        stringResource(R.string.admin_set_resets_open)
-                    } else {
-                        stringResource(R.string.admin_set_resets_closed)
-                    },
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
-            }
-            if (showResets) {
-                ResetsContent(
-                    onRequestReset = onRequestReset
-                )
-            }
+        SettingsAccordionCard(
+            title = stringResource(R.string.admin_set_resets_title)
+        ) {
+            ResetsContent(
+                onRequestReset = onRequestReset
+            )
         }
     }
 }

@@ -48,7 +48,7 @@ fun CashOutDialog(
             }
         },
         text = {
-            Column {
+            Column(modifier = Modifier.imePadding()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 AppOutlinedField(
                     value = amountText,

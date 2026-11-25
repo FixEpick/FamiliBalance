@@ -202,7 +202,10 @@ fun AdminScreen(
             title = { AppLocaleContent { Text(stringResource(R.string.admin_cashout_title), color = AccentColor, fontWeight = FontWeight.Bold) } },
             text = {
                 AppLocaleContent {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(
+                        modifier = Modifier.imePadding(),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
                         Text(
                             currencyString(
                                 R.string.admin_cashout_available,

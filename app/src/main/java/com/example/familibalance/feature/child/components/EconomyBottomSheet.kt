@@ -44,9 +44,9 @@ internal fun EconomySheetContent(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-            // ===== Секция 1: Доходы =====
+            // ===== Секция 1: Заработок (базовые ставки) =====
             item {
-                EconomySectionTitle(stringResource(R.string.economy_earn_section))
+                EconomySectionTitle(stringResource(R.string.economy2_earn_section))
             }
             item {
                 EconomyRow(stringResource(R.string.eco_wardrobe_photo), "+${child.wardrobeReward} $curSym")
@@ -61,13 +61,22 @@ internal fun EconomySheetContent(
                 EconomyRow(stringResource(R.string.eco_diary_grade4), "+30 $curSym")
             }
             item {
+                EconomyRow(stringResource(R.string.eco_xp), stringResource(R.string.eco_xp_value))
+            }
+
+            // ===== Секция 2: Бонусы и множители =====
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                EconomySectionTitle(stringResource(R.string.economy2_bonuses_section))
+            }
+            item {
                 EconomyRow(stringResource(R.string.eco_streak), currencyString(R.string.eco_streak_value))
             }
             item {
-                EconomyRow(stringResource(R.string.eco_dream), stringResource(R.string.eco_dream_value))
+                EconomyRow(stringResource(R.string.eco_perfect_day), currencyString(R.string.eco_perfect_day_value))
             }
             item {
-                EconomyRow(stringResource(R.string.eco_xp), stringResource(R.string.eco_xp_value))
+                EconomyRow(stringResource(R.string.eco_chest), currencyString(R.string.eco_chest_value))
             }
             item {
                 EconomyRow(stringResource(R.string.eco_level_up), stringResource(R.string.eco_level_up_value))
@@ -76,10 +85,10 @@ internal fun EconomySheetContent(
                 EconomyRow(stringResource(R.string.eco_reward_mult), stringResource(R.string.eco_reward_mult_value))
             }
 
-            // ===== Секция 2: Расходы =====
+            // ===== Секция 3: На что потратить =====
             item {
                 Spacer(modifier = Modifier.height(12.dp))
-                EconomySectionTitle(stringResource(R.string.economy_spend_section))
+                EconomySectionTitle(stringResource(R.string.economy2_spend_section))
             }
             item {
                 EconomyRow(stringResource(R.string.eco_time30), "${ScreenTimeTariffs.PACKAGES[0].cost} $curSym")
@@ -90,11 +99,14 @@ internal fun EconomySheetContent(
             item {
                 EconomyRow(stringResource(R.string.eco_time90), "${ScreenTimeTariffs.PACKAGES[2].cost} $curSym")
             }
+            item {
+                EconomyRow(stringResource(R.string.eco_parent_gifts), currencyString(R.string.eco_parent_gifts_value))
+            }
 
-            // ===== Секция 3: Штрафы =====
+            // ===== Секция 4: Штрафы и честное признание =====
             item {
                 Spacer(modifier = Modifier.height(12.dp))
-                EconomySectionTitle(stringResource(R.string.economy_fines_section))
+                EconomySectionTitle(stringResource(R.string.economy2_fines_section))
             }
             item {
                 EconomyRow(stringResource(R.string.eco_diary_grade3), "−20 $curSym", PenaltyRed)
@@ -115,10 +127,10 @@ internal fun EconomySheetContent(
                 EconomyRow(stringResource(R.string.eco_parent_fine), stringResource(R.string.eco_set_by_dad), PenaltyRed)
             }
 
-            // ===== Секция 4: Достижения =====
+            // ===== Секция 5: Достижения и магазин =====
             item {
                 Spacer(modifier = Modifier.height(12.dp))
-                EconomySectionTitle(stringResource(R.string.economy_achievements_section))
+                EconomySectionTitle(stringResource(R.string.economy2_shop_section))
             }
             AchievementBranch.entries.forEach { branch ->
                 val branchItems = child.achievements
@@ -169,6 +181,18 @@ internal fun EconomySheetContent(
                 val unlocked = type.isAvatarUnlocked(child.unlockedAvatars, claimedTitles)
                 item(key = "avatar_${type.name}") {
                     AvatarEconomyRow(type = type, unlocked = unlocked)
+                }
+            }
+
+            // ===== Секция 5 (продолжение): Рамки аватара =====
+            item {
+                Spacer(modifier = Modifier.height(12.dp))
+                EconomySectionTitle(stringResource(R.string.economy_frames_section))
+            }
+            AvatarFrameType.entries.forEach { type ->
+                val unlocked = type.isFrameUnlocked(child.unlockedFrames, child.level)
+                item(key = "frame_${type.name}") {
+                    FrameEconomyRow(type = type, unlocked = unlocked)
                 }
             }
 
@@ -224,6 +248,44 @@ private fun ThemeEconomyRow(
         is ThemeUnlockRule.Achievement ->
             stringResource(R.string.theme_ach_prefix, stringResource(rule.titleRes))
         is ThemeUnlockRule.Level -> stringResource(R.string.frame_level_req, rule.minLevel)
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = title, color = TextMuted, fontSize = 14.sp)
+        Text(
+            text = buildAnnotatedString {
+                append(condition)
+                if (unlocked) {
+                    append("  ")
+                    withStyle(SpanStyle(color = StatusGreen)) {
+                        append(stringResource(R.string.theme_unlocked_label))
+                    }
+                }
+            },
+            color = TextPrimary,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun FrameEconomyRow(
+    type: AvatarFrameType,
+    unlocked: Boolean
+) {
+    val title = stringResource(type.titleRes)
+    val condition = when (val rule = type.unlockRule) {
+        is ThemeUnlockRule.Free -> stringResource(R.string.theme_free_label)
+        is ThemeUnlockRule.Paid -> currencyString(R.string.theme_price, rule.price)
+        is ThemeUnlockRule.Level -> stringResource(R.string.frame_level_req, rule.minLevel)
+        is ThemeUnlockRule.Achievement ->
+            stringResource(R.string.theme_ach_prefix, stringResource(rule.titleRes))
     }
     Row(
         modifier = Modifier

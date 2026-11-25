@@ -50,7 +50,7 @@ fun DreamGoalDialog(
             }
         },
         text = {
-            Column {
+            Column(modifier = Modifier.imePadding()) {
                 AppOutlinedField(
                     value = title,
                     onValueChange = { title = it.take(40) },

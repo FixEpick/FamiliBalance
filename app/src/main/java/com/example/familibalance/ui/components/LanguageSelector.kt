@@ -21,9 +21,9 @@ import com.example.familibalance.AppLocaleState
 import com.example.familibalance.R
 import com.example.familibalance.ui.theme.*
 
-private data class LanguageOption(val tag: String, @androidx.annotation.StringRes val nameRes: Int)
+internal data class LanguageOption(val tag: String, @androidx.annotation.StringRes val nameRes: Int)
 
-private val languageOptions = listOf(
+internal val languageOptions = listOf(
     LanguageOption("ru", R.string.language_ru),
     LanguageOption("en", R.string.language_en)
 )

@@ -211,6 +211,18 @@
     <string name="rules_achievements_text">Получай бонусы за новые ранги от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!</string>
     <string name="rules_understood">Понятно!</string>
 
+    <!-- Rules sheet v2: 5 карточек без дублирования цифр -->
+    <string name="rules2_balance_title">Баланс и вывод</string>
+    <string name="rules2_balance_text">Монеты начисляются за выполненные задания, оценки в дневнике и достижения. Накопленное можно обменять на экранное время или попросить у родителя вывести наличными.</string>
+    <string name="rules2_quests_title">Задания и проверка</string>
+    <string name="rules2_quests_text">Каждый день — фото шкафа и фото комнаты, раз в неделю — дневник с оценками. Родитель проверяет отчёты и может попросить переснять.</string>
+    <string name="rules2_levels_title">Уровни, XP и множители</string>
+    <string name="rules2_levels_text">За задания начисляется XP: с ростом уровня повышается ранг — от «Новичка» до «Легенды дома». Уровень и серия выполнения увеличивают награды за квесты (до ×1.65).</string>
+    <string name="rules2_streaks_title">Серии и бонусный сундук</string>
+    <string name="rules2_streaks_text">Отмечайся каждый день без штрафов — на 7-й день получишь +50 ₽. «Идеальный день» — шкаф и комната за один день: +25 ₽ и +15 XP. После задания может выпасть бонусный сундук.</string>
+    <string name="rules2_honest_gifts_title">Честное признание и подарки</string>
+    <string name="rules2_honest_gifts_text">Признайся через кошечку до того, как об этом узнает родитель: штраф уменьшится вдвое, а ты получишь жетон честности и XP. За монеты можно отправить родителю открытку или купон.</string>
+
     <!-- Economy sheet -->
     <string name="economy_title">💰 Экономика</string>
     <string name="economy_earn_section">💰 Как заработать</string>
@@ -246,6 +258,18 @@
     <string name="eco_branch_diary">📓 Дневник</string>
     <string name="eco_branch_wardrobe">📸 Шкаф</string>
     <string name="eco_branch_room">🛏️ Комната</string>
+    <string name="economy2_earn_section">Заработок (базовые ставки)</string>
+    <string name="economy2_bonuses_section">Бонусы и множители</string>
+    <string name="economy2_spend_section">На что потратить</string>
+    <string name="economy2_fines_section">Штрафы и честное признание</string>
+    <string name="economy2_shop_section">Достижения и магазин</string>
+    <string name="economy_frames_section">🖼 Рамки аватара</string>
+    <string name="eco_perfect_day">Идеальный день</string>
+    <string name="eco_perfect_day_value">+25 ₽ и +15 XP</string>
+    <string name="eco_chest">Бонусный сундук</string>
+    <string name="eco_chest_value">15%%: 20–60 ₽ или 10–15 XP</string>
+    <string name="eco_parent_gifts">Подарки родителю</string>
+    <string name="eco_parent_gifts_value">30–120 ₽</string>
 
     <!-- Pending quests sheet -->
     <string name="child_pending_title">Квесты на проверке</string>
@@ -380,6 +404,8 @@
     <string name="frame_buy_title">Купить рамку?</string>
     <string name="frame_buy_message">Рамка «%1$s» — %2$d ₽. Списать с баланса?</string>
     <string name="frame_locked_level_toast">Рамка откроется с %1$d уровня</string>
+    <string name="frame_apply">Применить</string>
+    <string name="frame_unlocks_at">Откроется с %1$d уровня</string>
     <string name="economy_avatars_section">🦸 Аватары</string>
     <string name="avatar_cat">Котик</string>
     <string name="avatar_panda">Панда</string>
@@ -473,7 +499,9 @@
     <string name="child_parent_gift_title">Подарок родителю</string>
     <string name="child_parent_gift_hint">Поблагодари родителя — купи открытку или купон</string>
     <string name="child_parent_gift_send">Отправить</string>
-    <string name="child_parent_gift_no_funds">Не хватает монет</string>
+    <string name="child_parent_gift_confirm_text">Отправить «%1$s» и списать %2$d %3$s с баланса?</string>
+    <string name="child_parent_gift_confirm_send">Подарить</string>
+    <string name="child_parent_gift_no_funds">Недостаточно средств</string>
     <string name="admin_gifts_title">Подарки от ребёнка</string>
     <string name="admin_gift_use">Принять / Использовать</string>
     <string name="hist_parent_gift">Подарок родителю: %1$s</string>
@@ -696,6 +724,7 @@
     <string name="admin_set_approve">Одобрить</string>
     <string name="admin_set_security">🔐 Безопасность</string>
     <string name="admin_set_pin_management">🔐 Управление ПИН-кодами</string>
+    <string name="admin_set_resets_title">Очистка и сбросы</string>
     <string name="admin_set_resets_open">🗑 Очистка и сбросы ▲</string>
     <string name="admin_set_resets_closed">🗑 Очистка и сбросы ▼</string>
     <string name="admin_set_reset_quests_label">Сбросить прогресс всех заданий</string>
@@ -712,6 +741,7 @@
     <string name="admin_set_reset_execute">Выполнить сброс</string>
     <string name="admin_set_sync">🔄 Синхронизировать с сервером</string>
     <string name="admin_set_language">🌐 Язык интерфейса</string>
+    <string name="admin_set_language_note">Язык применяется ко всему приложению сразу.</string>
     <string name="admin_set_currency">💱 Валюта наград</string>
     <string name="admin_set_currency_note">Меняется только значок — баланс и суммы не пересчитываются.</string>
     <string name="cur_rub">Российский рубль</string>

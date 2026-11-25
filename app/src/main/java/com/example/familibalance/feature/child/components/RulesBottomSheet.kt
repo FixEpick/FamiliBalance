@@ -61,94 +61,38 @@ internal fun RulesSheetContent(
             Spacer(modifier = Modifier.height(16.dp))
 
             RuleBlock(
-                title = stringResource(R.string.rules_balance_title),
-                text = currencyString(R.string.rules_balance_text),
+                title = stringResource(R.string.rules2_balance_title),
+                text = stringResource(R.string.rules2_balance_text),
                 defaultExpanded = true
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = stringResource(R.string.rules_earn_title),
-                text = currencyString(R.string.rules_earn_text, wardrobeReward, roomReward),
+                title = stringResource(R.string.rules2_quests_title),
+                text = stringResource(R.string.rules2_quests_text),
                 defaultExpanded = true
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = stringResource(R.string.rules_penalty_title),
-                text = currencyString(R.string.rules_penalty_text)
+                title = stringResource(R.string.rules2_levels_title),
+                text = stringResource(R.string.rules2_levels_text)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = stringResource(R.string.rules_streak_title),
-                text = currencyString(R.string.rules_streak_text)
+                title = stringResource(R.string.rules2_streaks_title),
+                text = stringResource(R.string.rules2_streaks_text)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             RuleBlock(
-                title = stringResource(R.string.rules_gamification_title),
-                text = stringResource(R.string.rules_gamification_text)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RuleBlock(
-                title = stringResource(R.string.rules_bonus_chest_title),
-                text = stringResource(R.string.rules_bonus_chest_text)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RuleBlock(
-                title = stringResource(R.string.rules_perfect_day_title),
-                text = stringResource(R.string.rules_perfect_day_text)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RuleBlock(
-                title = stringResource(R.string.rules_screentime_title),
-                text = currencyString(R.string.rules_screentime_text)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RuleBlock(
-                title = stringResource(R.string.rules_honest_title),
-                text = stringResource(R.string.rules_honest_text)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RuleBlock(
-                title = stringResource(R.string.rules_honesty_tokens_title),
-                text = stringResource(R.string.rules_honesty_tokens_text)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RuleBlock(
-                title = stringResource(R.string.rules_parent_gifts_title),
-                text = stringResource(R.string.rules_parent_gifts_text)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RuleBlock(
-                title = stringResource(R.string.rules_diary_title),
-                text = currencyString(R.string.rules_diary_text)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            RuleBlock(
-                title = stringResource(R.string.rules_achievements_title),
-                text = currencyString(R.string.rules_achievements_text)
+                title = stringResource(R.string.rules2_honest_gifts_title),
+                text = stringResource(R.string.rules2_honest_gifts_text)
             )
     }
 }

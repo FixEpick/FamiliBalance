@@ -34,7 +34,6 @@ import com.example.familibalance.feature.admin.settings.*
 import com.example.familibalance.ui.auth.ChangeParentPinDialog
 import com.example.familibalance.ui.auth.ParentGateDialog
 import com.example.familibalance.ui.auth.SetChildPinDialog
-import com.example.familibalance.ui.components.LanguageSelectorRow
 import com.example.familibalance.ui.components.childDisplayName
 import com.example.familibalance.viewmodel.AdminEvent
 import com.example.familibalance.viewmodel.AdminViewModel
@@ -169,26 +168,21 @@ fun AdminSettingsScreen(
             requests = pendingRequests,
             onApprove = { adminVm.approveRequest(it) }
         )
-item {
-    Spacer(modifier = Modifier.height(6.dp))
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        IconBadge(emoji = "🔐", size = 30.dp, emojiSize = 15.dp)
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(text = stringResource(R.string.admin_set_security), color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-    }
-}
-item {
-    OutlinedButton(
-        onClick = { showPinPicker = true },
-        border = BorderStroke(1.dp, AccentColor),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor),
-        shape = AccentButtonShape,
-        modifier = Modifier.fillMaxWidth().height(50.dp).bounceClick()
-    ) {
-        Text(stringResource(R.string.admin_set_pin_management), fontWeight = FontWeight.Bold)
-    }
-    Spacer(modifier = Modifier.height(20.dp))
-}
+        item {
+            SettingsAccordionCard(
+                title = stringResource(R.string.admin_set_security)
+            ) {
+                OutlinedButton(
+                    onClick = { showPinPicker = true },
+                    border = BorderStroke(1.dp, AccentColor),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = AccentColor),
+                    shape = AccentButtonShape,
+                    modifier = Modifier.fillMaxWidth().height(50.dp).bounceClick()
+                ) {
+                    Text(stringResource(R.string.admin_set_pin_management), fontWeight = FontWeight.Bold)
+                }
+            }
+        }
         resetsSection(
             onRequestReset = { kind -> requestReset(kind) }
         )
@@ -218,19 +212,7 @@ item {
             }
         }
         item {
-            Surface(
-                shape = GlassCardShape,
-                color = GlassBackground,
-                border = BorderStroke(1.dp, GlassStroke),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .glassCard()
-            ) {
-                LanguageSelectorRow(
-                    label = stringResource(R.string.admin_set_language),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-                )
-            }
+            LanguageCard()
         }
         item {
             CurrencyCard(

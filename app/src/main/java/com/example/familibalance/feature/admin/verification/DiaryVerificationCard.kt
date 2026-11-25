@@ -282,7 +282,7 @@ fun DiaryVerificationCard(
             onDismissRequest = { showRejectDialog = false },
             title = { Text(stringResource(R.string.admin_reject_reason_title), color = TextPrimary) },
             text = {
-                Column {
+                Column(modifier = Modifier.imePadding()) {
                     RejectReasonTemplateChips(onSelect = { rejectReasonText = it })
                     Spacer(modifier = Modifier.height(8.dp))
                     AppOutlinedField(

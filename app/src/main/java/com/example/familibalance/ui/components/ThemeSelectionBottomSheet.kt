@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -375,7 +376,8 @@ fun ThemeSelectionBottomSheet(
                                     confettiTrigger++
                                 }
                                 avatarPurchaseTarget = null
-                            }
+                            },
+                            modifier = Modifier.alpha(if (canAfford) 1f else 0.38f)
                         ) {
                             Text(
                                 text = stringResource(R.string.theme_buy_confirm),
@@ -439,7 +441,8 @@ fun ThemeSelectionBottomSheet(
                                     confettiTrigger++
                                 }
                                 framePurchaseTarget = null
-                            }
+                            },
+                            modifier = Modifier.alpha(if (canAfford) 1f else 0.38f)
                         ) {
                             Text(
                                 text = stringResource(R.string.theme_buy_confirm),
@@ -775,7 +778,7 @@ private fun AvatarShopCard(
     }
 }
 
-/** Вкладка «Рамки»: сетка 3×2 превью текущего аватара в каждой рамке. */
+/** Вкладка «Рамки»: крупное превью аватара в рамке + сетка 3×2. */
 @Composable
 private fun FrameShopContent(
     currentAvatar: String?,
@@ -790,58 +793,154 @@ private fun FrameShopContent(
     val doneLabel = stringResource(R.string.theme_done)
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
-    val lockedHint = stringResource(R.string.frame_locked_level_toast)
+    // Рамка, примеряемая в превью (по умолчанию — текущая выбранная).
+    var previewFrameId by rememberSaveable { mutableStateOf(selectedFrameId) }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .padding(top = 10.dp)
-            .heightIn(max = 420.dp)
-    ) {
-        items(AvatarFrameType.entries, key = { it.name }) { type ->
-            val unlocked = type.isFrameUnlocked(unlockedFrames, childLevel)
-            val isSelected = selectedFrameId.equals(type.name, ignoreCase = true)
-            val levelReq = (type.unlockRule as? ThemeUnlockRule.Level)?.minLevel
-            // Toast-подсказка резолвится здесь — onClick не composable-контекст.
-            val levelHint = levelReq?.let {
-                String.format(lockedHint, it)
-            } ?: lockedHint
-            FrameShopCard(
-                type = type,
-                avatarId = currentAvatar,
-                isSelected = isSelected,
-                isUnlocked = unlocked,
-                canAfford = balance >= ((type.unlockRule as? ThemeUnlockRule.Paid)?.price ?: 0),
-                onClick = {
-                    when {
-                        unlocked -> {
+    val previewType = avatarFrameTypeOf(previewFrameId)
+    val previewUnlocked = previewType.isFrameUnlocked(unlockedFrames, childLevel)
+    val previewSelected = previewFrameId.equals(selectedFrameId, ignoreCase = true)
+    val previewPaid = previewType.unlockRule as? ThemeUnlockRule.Paid
+    val previewLevel = (previewType.unlockRule as? ThemeUnlockRule.Level)?.minLevel
+    val previewCanAfford = balance >= (previewPaid?.price ?: 0)
+
+    Column {
+        // ===== Превью аватара в примеряемой рамке =====
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CloudAvatar(avatarId = currentAvatar, size = 96.dp, frameId = previewFrameId)
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = stringResource(previewType.titleRes),
+                color = TextPrimary,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            when {
+                previewSelected -> FrameStatusBadge(
+                    text = stringResource(R.string.frame_selected),
+                    color = StatusGreen
+                )
+                previewUnlocked -> Button(
+                    onClick = {
+                        FeedbackManager.playLaser(context, haptic)
+                        onFrameSelected(previewType.name)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .accentButtonChrome()
+                        .bounceClick(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = AccentOnColor
+                    ),
+                    shape = AccentButtonShape
+                ) {
+                    Text(
+                        text = stringResource(R.string.frame_apply),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+                previewPaid != null -> Button(
+                    onClick = { onPurchaseRequest(previewType) },
+                    enabled = previewCanAfford,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(44.dp)
+                        .alpha(if (previewCanAfford) 1f else 0.38f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AccentColor,
+                        contentColor = AccentOnColor,
+                        disabledContainerColor = AccentColor.copy(alpha = 0.3f),
+                        disabledContentColor = AccentOnColor.copy(alpha = 0.6f)
+                    ),
+                    shape = AccentButtonShape
+                ) {
+                    Text(
+                        text = stringResource(
+                            R.string.theme_buy_for,
+                            currencyString(R.string.theme_price, previewPaid.price)
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                }
+                previewLevel != null -> FrameStatusBadge(
+                    text = stringResource(R.string.frame_unlocks_at, previewLevel),
+                    color = AccentColor
+                )
+            }
+        }
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .padding(top = 10.dp)
+                .heightIn(max = 420.dp)
+        ) {
+            items(AvatarFrameType.entries, key = { it.name }) { type ->
+                val unlocked = type.isFrameUnlocked(unlockedFrames, childLevel)
+                val isSelected = selectedFrameId.equals(type.name, ignoreCase = true)
+                val isPreviewed = previewFrameId.equals(type.name, ignoreCase = true)
+                FrameShopCard(
+                    type = type,
+                    avatarId = currentAvatar,
+                    isSelected = isSelected,
+                    isPreviewed = isPreviewed,
+                    isUnlocked = unlocked,
+                    canAfford = balance >= ((type.unlockRule as? ThemeUnlockRule.Paid)?.price ?: 0),
+                    onClick = {
+                        // Любая рамка примеряется в превью сверху;
+                        // открытая — сразу применяется.
+                        previewFrameId = type.name
+                        if (unlocked) {
                             FeedbackManager.playLaser(context, haptic)
                             onFrameSelected(type.name)
                         }
-                        type.unlockRule is ThemeUnlockRule.Paid -> onPurchaseRequest(type)
-                        else -> Toast.makeText(context, levelHint, Toast.LENGTH_SHORT).show()
                     }
-                }
-            )
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Button(
+            onClick = onDone,
+            modifier = Modifier
+                .fillMaxWidth()
+                .bounceClick(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = AccentColor,
+                contentColor = AccentOnColor
+            ),
+            shape = AccentButtonShape
+        ) {
+            Text(doneLabel, fontWeight = FontWeight.Bold, fontSize = 15.sp)
         }
     }
+}
 
-    Spacer(modifier = Modifier.height(10.dp))
-    Button(
-        onClick = onDone,
+/** Компактный бейдж статуса рамки под превью (выбрана / откроется с уровня). */
+@Composable
+private fun FrameStatusBadge(text: String, color: Color) {
+    Text(
+        text = text,
+        color = color,
+        fontSize = 12.sp,
+        fontWeight = FontWeight.Bold,
         modifier = Modifier
-            .fillMaxWidth()
-            .bounceClick(),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = AccentColor,
-            contentColor = AccentOnColor
-        ),
-        shape = AccentButtonShape
-    ) {
-        Text(doneLabel, fontWeight = FontWeight.Bold, fontSize = 15.sp)
-    }
+            .clip(RoundedCornerShape(10.dp))
+            .background(color.copy(alpha = 0.15f))
+            .border(1.dp, color.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+    )
 }
 
 @Composable
@@ -849,6 +948,7 @@ private fun FrameShopCard(
     type: AvatarFrameType,
     avatarId: String?,
     isSelected: Boolean,
+    isPreviewed: Boolean = false,
     isUnlocked: Boolean,
     canAfford: Boolean,
     onClick: () -> Unit
@@ -861,8 +961,12 @@ private fun FrameShopCard(
             .clip(RoundedCornerShape(16.dp))
             .background(GlassBackground)
             .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) AccentColor else GlassStroke,
+                width = if (isSelected || isPreviewed) 2.dp else 1.dp,
+                color = when {
+                    isSelected -> AccentColor
+                    isPreviewed -> AccentColor.copy(alpha = 0.6f)
+                    else -> GlassStroke
+                },
                 shape = RoundedCornerShape(16.dp)
             )
             .bounceClick()

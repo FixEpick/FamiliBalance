@@ -208,6 +208,18 @@
     <string name="rules_achievements_text">Earn bonuses for new ranks from 10 ₽ to 500 ₽ for the "Server Legend" rank!</string>
     <string name="rules_understood">Got it!</string>
 
+    <!-- Rules sheet v2: 5 cards without duplicated numbers -->
+    <string name="rules2_balance_title">Balance and cash-out</string>
+    <string name="rules2_balance_text">Coins are earned for completed quests, diary grades and achievements. You can spend them on screen time or ask your parent to cash out.</string>
+    <string name="rules2_quests_title">Quests and review</string>
+    <string name="rules2_quests_text">Every day — a wardrobe photo and a room photo, once a week — a graded diary. Your parent reviews the reports and may ask you to retake them.</string>
+    <string name="rules2_levels_title">Levels, XP and multipliers</string>
+    <string name="rules2_levels_text">Quests award XP: as your level grows, your rank rises — from Novice to Home Legend. Level and completion streaks increase quest rewards (up to ×1.65).</string>
+    <string name="rules2_streaks_title">Streaks and bonus chest</string>
+    <string name="rules2_streaks_text">Check in every day without penalties — on day 7 you get +50 ₽. A "perfect day" means wardrobe and room done in one day: +25 ₽ and +15 XP. A bonus chest may drop after a quest.</string>
+    <string name="rules2_honest_gifts_title">Honest admission and gifts</string>
+    <string name="rules2_honest_gifts_text">Confess through the kitty before your parent finds out: the fine is halved and you earn an honesty token and XP. For coins you can send your parent a card or coupon.</string>
+
     <!-- Economy sheet -->
     <string name="economy_title">💰 Economy</string>
     <string name="economy_earn_section">💰 How to earn</string>
@@ -243,6 +255,18 @@
     <string name="eco_branch_diary">📓 Diary</string>
     <string name="eco_branch_wardrobe">📸 Wardrobe</string>
     <string name="eco_branch_room">🛏️ Room</string>
+    <string name="economy2_earn_section">Earnings (base rates)</string>
+    <string name="economy2_bonuses_section">Bonuses and multipliers</string>
+    <string name="economy2_spend_section">What to spend on</string>
+    <string name="economy2_fines_section">Fines and honest admission</string>
+    <string name="economy2_shop_section">Achievements and shop</string>
+    <string name="economy_frames_section">🖼 Avatar frames</string>
+    <string name="eco_perfect_day">Perfect day</string>
+    <string name="eco_perfect_day_value">+25 ₽ and +15 XP</string>
+    <string name="eco_chest">Bonus chest</string>
+    <string name="eco_chest_value">15%%: 20–60 ₽ or 10–15 XP</string>
+    <string name="eco_parent_gifts">Gifts for parent</string>
+    <string name="eco_parent_gifts_value">30–120 ₽</string>
 
     <!-- Pending quests sheet -->
     <string name="child_pending_title">Quests under review</string>
@@ -369,6 +393,8 @@
     <string name="frame_buy_title">Buy frame?</string>
     <string name="frame_buy_message">Frame "%1$s" — %2$d ₽. Deduct from balance?</string>
     <string name="frame_locked_level_toast">Frame unlocks at level %1$d</string>
+    <string name="frame_apply">Apply</string>
+    <string name="frame_unlocks_at">Unlocks at level %1$d</string>
     <string name="economy_avatars_section">🦸 Avatars</string>
     <string name="avatar_cat">Kitty</string>
     <string name="avatar_panda">Panda</string>
@@ -460,7 +486,9 @@
     <string name="child_parent_gift_title">Gift for parent</string>
     <string name="child_parent_gift_hint">Thank your parent — buy a card or coupon</string>
     <string name="child_parent_gift_send">Send</string>
-    <string name="child_parent_gift_no_funds">Not enough coins</string>
+    <string name="child_parent_gift_confirm_text">Send "%1$s" and deduct %2$d %3$s from the balance?</string>
+    <string name="child_parent_gift_confirm_send">Gift</string>
+    <string name="child_parent_gift_no_funds">Not enough funds</string>
     <string name="admin_gifts_title">Gifts from child</string>
     <string name="admin_gift_use">Accept / Use</string>
     <string name="hist_parent_gift">Gift for parent: %1$s</string>
@@ -683,6 +711,7 @@
     <string name="admin_set_approve">Approve</string>
     <string name="admin_set_security">🔐 Security</string>
     <string name="admin_set_pin_management">🔐 PIN management</string>
+    <string name="admin_set_resets_title">Cleanup &amp; resets</string>
     <string name="admin_set_resets_open">🗑 Cleanup &amp; resets ▲</string>
     <string name="admin_set_resets_closed">🗑 Cleanup &amp; resets ▼</string>
     <string name="admin_set_reset_quests_label">Reset progress of all quests</string>
@@ -699,6 +728,7 @@
     <string name="admin_set_reset_execute">Perform reset</string>
     <string name="admin_set_sync">🔄 Sync with server</string>
     <string name="admin_set_language">🌐 Interface language</string>
+    <string name="admin_set_language_note">The language applies to the whole app instantly.</string>
     <string name="admin_set_currency">💱 Reward currency</string>
     <string name="admin_set_currency_note">Only the symbol changes — balances and amounts are not converted.</string>
     <string name="cur_rub">Russian ruble</string>

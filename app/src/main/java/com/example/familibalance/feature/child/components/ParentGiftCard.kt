@@ -4,7 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -15,21 +15,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.familibalance.R
 import com.example.familibalance.data.model.ParentGiftType
+import com.example.familibalance.ui.components.AppDialog
 import com.example.familibalance.ui.theme.*
 import com.example.familibalance.util.rewardCurrencySymbol
 
 /**
  * Компактная карточка «Подарок родителю»: 4 купона-открытки
- * в стиле «Мягкое стекло». Клик по доступному подарку отправляет
- * его родителю (списание монет — в ViewModel).
+ * в стиле «Мягкое стекло». Клик по доступному подарку открывает
+ * диалог подтверждения; списание монет — в ViewModel после «Подарить».
  */
 @Composable
 fun ParentGiftCard(
     balance: Int,
     onSendGift: (ParentGiftType) -> Unit,
+    onInsufficientFunds: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val currency = rewardCurrencySymbol()
+    var pendingGift by remember { mutableStateOf<ParentGiftType?>(null) }
     Surface(
         shape = GlassCardShape,
         color = GlassBackground,
@@ -67,8 +70,13 @@ fun ParentGiftCard(
                     rowGifts.forEach { gift ->
                         val affordable = balance >= gift.price
                         OutlinedButton(
-                            onClick = { onSendGift(gift) },
-                            enabled = affordable,
+                            onClick = {
+                                if (affordable) {
+                                    pendingGift = gift
+                                } else {
+                                    onInsufficientFunds()
+                                }
+                            },
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
@@ -121,6 +129,47 @@ fun ParentGiftCard(
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
+    }
+
+    // Диалог подтверждения покупки подарка.
+    pendingGift?.let { gift ->
+        AppDialog(
+            onDismissRequest = { pendingGift = null },
+            title = {
+                Text(
+                    text = stringResource(R.string.child_parent_gift_title),
+                    color = TextPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(
+                        R.string.child_parent_gift_confirm_text,
+                        stringResource(gift.titleRes),
+                        gift.price,
+                        currency
+                    ),
+                    color = TextSecondary,
+                    fontSize = 14.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onSendGift(gift)
+                        pendingGift = null
+                    }
+                ) {
+                    Text(stringResource(R.string.child_parent_gift_confirm_send))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingGift = null }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        )
     }
 }
 
