@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -162,7 +163,12 @@ fun DiaryVerificationCard(
                                         .fillMaxWidth()
                                         .padding(horizontal = 8.dp)
                                         .align(Alignment.TopStart)
-                                        .offset(y = (180.dp - 24.dp) * scanProgress)
+                                        .offset {
+                                            IntOffset(
+                                                0,
+                                                ((180.dp - 24.dp) * scanProgress).roundToPx()
+                                            )
+                                        }
                                         .height(3.dp)
                                         .background(
                                             brush = Brush.verticalGradient(

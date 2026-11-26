@@ -250,7 +250,7 @@ fun AchievementsScreen(
             }
         }
 
-        items(displayList, contentType = { "achievement" }) { item ->
+        items(displayList, key = { it.id }, contentType = { "achievement" }) { item ->
             AchievementCard(
                 title = systemTitle(item.title),
                 condition = item.condition,

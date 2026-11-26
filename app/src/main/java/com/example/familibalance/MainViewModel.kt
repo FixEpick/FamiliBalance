@@ -327,6 +327,8 @@ class MainViewModel(
         _isProcessingAction.value = true
         try {
             val child = familyRepository.getChild(childId) ?: return
+            // Защита от ухода баланса в минус (гонка/устаревший UI).
+            if (child.balance < cost) return
             val updated = child.copy(
                 balance = child.balance - cost,
                 boughtMinutesToday = child.boughtMinutesToday + minutes,

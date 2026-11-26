@@ -83,7 +83,7 @@ fun MainViewModel.submitCustomQuestPhoto(userId: String, questId: String, photoU
     val profile = familyRepository.getChild(userId) ?: return
     val persistedPhotoUrl = PhotoStorage.persistIfNeeded(getApplication(), photoUrl)
     val updatedQuests = profile.customQuests.map { quest ->
-        if (quest.id == questId) {
+        if (quest.id == questId && quest.status == QuestStatus.AVAILABLE) {
             quest.copy(
                 status = QuestStatus.PENDING,
                 // Не затираем фото пустой строкой: если persist не дал результата —

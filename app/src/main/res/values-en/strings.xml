@@ -22,7 +22,6 @@
 
     <!-- Register / auth -->
     <string name="register_title">Registration</string>
-    <string name="reg_avatar">AVATAR</string>
     <string name="reg_nickname">Nickname</string>
     <string name="reg_pin">PIN code</string>
     <string name="reg_pin_hint">4 digits — your child will use them to log in</string>
@@ -93,7 +92,6 @@
     <string name="action_cancel">Cancel</string>
 
     <!-- Logout -->
-    <string name="logout_button">Log out / Switch user</string>
     <string name="logout_title">Log out</string>
     <string name="logout_message">Are you sure you want to log out? You can log in again using parent email, name and PIN code</string>
     <string name="logout_confirm">Log out</string>
@@ -125,7 +123,6 @@
     <string name="child_balance">Balance</string>
     <string name="child_bank_name">Bank</string>
     <string name="child_cashout_btn">Cash Out</string>
-    <string name="child_cashout_hint">*works when you\'re with your parent</string>
     <string name="child_no_cashout_requests">No active withdrawal requests</string>
     <string name="child_cashout_requests_title">💵 Active withdrawal requests:</string>
     <string name="child_cashout_amount">Amount: %1$d ₽</string>
@@ -150,11 +147,8 @@
     <string name="child_bought_minutes">Bought today: %1$d / %2$d min</string>
     <string name="child_buy_time_btn">Buy time</string>
     <string name="child_daily_limit_note">Daily limit %1$d min • Resets tomorrow</string>
-    <string name="child_streak_title">Days without penalties</string>
     <string name="child_streak_compact">No-penalty streak: %1$d/7 d</string>
-    <string name="child_streak_day_label">%1$d d</string>
     <string name="child_streak_checkin">Check in today</string>
-    <string name="child_streak_checked_today">✓ Today is counted — your streak is safe</string>
     <string name="child_streak_checked_short">✓ Today counted</string>
     <string name="child_streak_bonus">+50 ₽ bonus on day 7</string>
     <string name="child_honest_cooldown">Honest admission • Available in %1$d d.</string>
@@ -163,8 +157,6 @@
     <string name="child_honest_pending">• Admission is being reviewed by your parent</string>
     <string name="child_honest_claimed">✓ 50%% discount already applied</string>
     <string name="child_honest_ready">✓ Honest admission approved by your parent (penalty halved)</string>
-    <string name="child_rules_btn">📜 Rules scroll</string>
-    <string name="child_economy_btn">💰 Economy</string>
     <string name="info_sheet_tab_rules">Rules</string>
     <string name="info_sheet_tab_economy">Rates and rewards</string>
     <string name="child_cashout_dialog_title">Withdraw cash</string>
@@ -182,30 +174,7 @@
     </plurals>
 
     <!-- Rules sheet -->
-    <string name="rules_title">📜 Rules scroll</string>
     <string name="rules_offline">No internet? Don\'t worry! All your quests and rewards are saved on the phone. As soon as the network is back, they\'ll be sent to the cloud automatically.</string>
-    <string name="rules_balance_title">📖 How your balance works</string>
-    <string name="rules_balance_text">All earned rubles go to your wallet. You can exchange them for phone time (100 ₽ = 30 minutes) OR you can withdraw all your money at any time — take your whole balance as real paper money from your parent! You also grow in levels: quests grant XP, and with each level you unlock new ranks and a bigger reward multiplier!</string>
-    <string name="rules_earn_title">💰 How to earn:</string>
-    <string name="rules_earn_text">• Grade "5" in diary: +50 ₽\n• Grade "4" in diary: +30 ₽\n• Wardrobe photo (perfect order): +%1$d ₽\n• Room photo (made bed and tidiness): +%2$d ₽\n• Achievement bonuses: from 10 ₽ to 500 ₽ for the "Server Legend" rank!\n• Quest XP: wardrobe &amp; room +25 XP, diary — grade 5: +70 XP, grade 4: +45 XP, bonus quests +30 XP — scaled by level and streak multiplier!</string>
-    <string name="rules_penalty_title">🔴 What costs you money (Penalties)</string>
-    <string name="rules_penalty_text">Grade "3" costs −20 ₽, grade "2" costs −50 ₽. Mischief and fooling around cost −30 ₽, and lying or cheating costs a full −100 ₽. But if you honestly tell your parent through the kitty before they find out — the penalty is cut exactly in half! (−10 ₽ for a three, −25 ₽ for a two, −15 ₽ for mischief and −50 ₽ for lying).</string>
-    <string name="rules_streak_title">🔥 Days without penalties</string>
-    <string name="rules_streak_text">Check in every day and get +50 ₽ every 7 days without penalties! But any penalty burns all accumulated days — and each missed day extinguishes one flame.</string>
-    <string name="rules_gamification_title">Levels, ranks &amp; XP</string>
-    <string name="rules_gamification_text">Every completed quest grants XP. As you level up, you unlock new ranks — from "Novice" to "House Legend" — and earn a coin bonus on each level-up. The higher your level and the longer your no-penalty streak, the bigger the reward multiplier — up to ×1.65! Level-up coin bonus: 40 + level × 8.</string>
-    <string name="rules_bonus_chest_title">Bonus chest</string>
-    <string name="rules_bonus_chest_text">After every completed quest you have a 15%% chance to open a bonus chest — inside there are either coins (20 to 60 ₽) or bonus XP (10 to 15)!</string>
-    <string name="rules_perfect_day_title">Perfect day</string>
-    <string name="rules_perfect_day_text">Complete both daily quests — wardrobe photo and room photo — in one day to earn +25 ₽ and +15 XP! Each consecutive perfect day grows the streak: from day 3 quests grant +10%% XP, from day 7 — +20%%!</string>
-    <string name="rules_screentime_title">⏳ Screen time</string>
-    <string name="rules_screentime_text">Limit 90 minutes per day. Tariffs: 30 min = 100 ₽, 60 min = 220 ₽, 90 min = 320 ₽.</string>
-    <string name="rules_honest_title">🐱 Honest admission</string>
-    <string name="rules_honest_text">50%% discount on any penalty — a two or a lie alike. Available once every 7 days — tell your parent the truth through the kitty!</string>
-    <string name="rules_diary_title">📓 Diary</string>
-    <string name="rules_diary_text">Submitted once a week. Grades: 5 (+50 ₽, +70 XP), 4 (+30 ₽, +45 XP), 3 (-20 ₽), 2 (-50 ₽).</string>
-    <string name="rules_achievements_title">🏆 Achievements</string>
-    <string name="rules_achievements_text">Earn bonuses for new ranks from 10 ₽ to 500 ₽ for the "Server Legend" rank!</string>
     <string name="rules_understood">Got it!</string>
 
     <!-- Rules sheet v2: 5 cards without duplicated numbers -->
@@ -221,11 +190,6 @@
     <string name="rules2_honest_gifts_text">Confess through the kitty before your parent finds out: the fine is halved and you earn an honesty token and XP. For coins you can send your parent a card or coupon.</string>
 
     <!-- Economy sheet -->
-    <string name="economy_title">💰 Economy</string>
-    <string name="economy_earn_section">💰 How to earn</string>
-    <string name="economy_spend_section">💸 What to spend on</string>
-    <string name="economy_fines_section">🔴 What gets deducted (penalties)</string>
-    <string name="economy_achievements_section">🏆 Achievements</string>
     <string name="economy_themes_section">🎨 Appearance themes</string>
     <string name="eco_wardrobe_photo">📸 Wardrobe photo</string>
     <string name="eco_room_photo">🛏️ Room photo</string>
@@ -237,8 +201,6 @@
     <string name="eco_lie">🤥 Lying or cheating</string>
     <string name="eco_streak">🔥 No-penalty streak</string>
     <string name="eco_streak_value">+50 ₽ every 7 days</string>
-    <string name="eco_dream">🎯 Dream goal</string>
-    <string name="eco_dream_value">you pick it</string>
     <string name="eco_xp">Quest XP</string>
     <string name="eco_xp_value">25–70 XP</string>
     <string name="eco_level_up">Level up</string>
@@ -327,18 +289,9 @@
     <string name="ach_claim_reward">🎁 Claim reward %1$s</string>
 
     <!-- Theme selection sheet -->
-    <string name="theme_shop_title">Theme shop</string>
     <string name="theme_shop_subtitle">Pick the palette you like the most</string>
-    <string name="theme_selected">✓ Selected</string>
     <string name="theme_done">Done</string>
     <string name="theme_name_cosmic_blue">Cosmic blue</string>
-    <string name="theme_name_cyber_pink">Cyber pink</string>
-    <string name="theme_name_toxic_green">Toxic green</string>
-    <string name="theme_name_solar_gold">Solar gold</string>
-    <string name="theme_name_inferno_red">Inferno red</string>
-    <string name="theme_name_galaxy_purple">Galaxy purple</string>
-    <string name="theme_name_arctic_ice">Arctic ice</string>
-    <string name="theme_name_sunset_orange">Sunset orange</string>
     <string name="theme_name_cyber_neon">Cyber neon</string>
     <string name="theme_name_cloud_light">Cloudy day</string>
     <string name="theme_name_pixel_craft">Pixel craft</string>
@@ -355,9 +308,6 @@
     <string name="theme_ach_prefix">Achievement: %1$s</string>
     <string name="theme_free_label">Free</string>
     <string name="theme_unlocked_label">✓ Unlocked</string>
-    <string name="theme_locked_achievement_toast">Unlocks with the "%1$s" achievement</string>
-    <string name="theme_buy_title">Buy theme?</string>
-    <string name="theme_buy_message">Buy "%1$s" for %2$s?</string>
     <string name="theme_buy_confirm">Buy</string>
     <string name="theme_buy_no_funds">Not enough coins</string>
     <string name="theme_preview_badge">👁 Preview</string>
@@ -369,7 +319,6 @@
     <string name="theme_unlocks_for">Unlocks with: %1$s</string>
 
     <!-- Avatar selection sheet -->
-    <string name="avatar_sheet_title">Choose avatar</string>
     <string name="avatar_choose_title">Choose an avatar</string>
     <string name="avatar_unlocked_label">Unlocked</string>
     <string name="avatar_locked_hint">This avatar unlocks with an achievement</string>
@@ -392,7 +341,6 @@
     <string name="frame_level_req">From level %1$d</string>
     <string name="frame_buy_title">Buy frame?</string>
     <string name="frame_buy_message">Frame "%1$s" — %2$d ₽. Deduct from balance?</string>
-    <string name="frame_locked_level_toast">Frame unlocks at level %1$d</string>
     <string name="frame_apply">Apply</string>
     <string name="frame_unlocks_at">Unlocks at level %1$d</string>
     <string name="economy_avatars_section">🦸 Avatars</string>
@@ -485,17 +433,12 @@
     <string name="child_honesty_tokens">Honesty tokens: %1$d</string>
     <string name="child_parent_gift_title">Gift for parent</string>
     <string name="child_parent_gift_hint">Thank your parent — buy a card or coupon</string>
-    <string name="child_parent_gift_send">Send</string>
     <string name="child_parent_gift_confirm_text">Send "%1$s" and deduct %2$d %3$s from the balance?</string>
     <string name="child_parent_gift_confirm_send">Gift</string>
     <string name="child_parent_gift_no_funds">Not enough funds</string>
     <string name="admin_gifts_title">Gifts from child</string>
     <string name="admin_gift_use">Accept / Use</string>
     <string name="hist_parent_gift">Gift for parent: %1$s</string>
-    <string name="rules_honesty_tokens_title">Honesty tokens</string>
-    <string name="rules_honesty_tokens_text">Each honest admission earns you an honesty token and 15 XP.</string>
-    <string name="rules_parent_gifts_title">Gifts for parent</string>
-    <string name="rules_parent_gifts_text">For coins you can send your parent a card or coupon — they will see it in their app.</string>
 
     <!-- Gamification: levels, ranks, XP -->
     <string name="gamification_rank_novice">Novice</string>
@@ -518,7 +461,10 @@
 
     <!-- Perfect days card -->
     <string name="child_perfect_days_title">Perfect days</string>
-    <string name="child_perfect_days_streak">%1$d days in a row</string>
+    <plurals name="child_perfect_days_streak">
+        <item quantity="one">%1$d day in a row</item>
+        <item quantity="other">%1$d days in a row</item>
+    </plurals>
     <string name="child_perfect_days_hint">Complete wardrobe &amp; room in one day</string>
     <string name="child_perfect_days_bonus">+%1$d%% XP</string>
     <string name="child_perfect_days_reward">+25 ₽ and +15 XP</string>
@@ -614,7 +560,6 @@
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Claim reward</string>
-    <string name="task_rejected_by_dad">❌ Rejected by parent: %1$s</string>
     <string name="task_execute">📷 Do it</string>
     <string name="task_fix_resubmit">🔧 Fix &amp; Resubmit</string>
     <string name="task_rejected_badge">Rejected</string>
@@ -712,8 +657,6 @@
     <string name="admin_set_security">🔐 Security</string>
     <string name="admin_set_pin_management">🔐 PIN management</string>
     <string name="admin_set_resets_title">Cleanup &amp; resets</string>
-    <string name="admin_set_resets_open">🗑 Cleanup &amp; resets ▲</string>
-    <string name="admin_set_resets_closed">🗑 Cleanup &amp; resets ▼</string>
     <string name="admin_set_reset_quests_label">Reset progress of all quests</string>
     <string name="admin_set_reset_achievements_label">Reset achievements and stats</string>
     <string name="admin_set_reset_honest_label">Reset honest admission</string>
@@ -763,8 +706,6 @@
     <string name="admin_set_confirm_title">Confirmation</string>
     <string name="admin_set_confirm_message">Are you sure? This action cannot be undone</string>
     <string name="admin_set_confirm">Confirm</string>
-    <string name="admin_set_delete_title">Delete account</string>
-    <string name="admin_set_delete_message">Are you sure? All data, including child profiles and photos, will be permanently deleted. This action cannot be undone.</string>
     <string name="admin_set_delete_error">Failed to delete account. Check your connection and try again.</string>
     <string name="admin_set_delete">Delete</string>
 

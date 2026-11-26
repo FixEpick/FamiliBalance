@@ -194,7 +194,7 @@ fun VerificationAdminContent(
             }
         }
 
-        items(child.bonusQuests.filter { it.status == QuestStatus.PENDING }) { bQuest ->
+        items(child.bonusQuests.filter { it.status == QuestStatus.PENDING }, key = { it.id }, contentType = { "bonus_quest" }) { bQuest ->
             QuestVerificationCard(
                 title = stringResource(R.string.admin_bonus_prefix, bQuest.title),
                 reward = "+${bQuest.reward} ${rewardCurrencySymbol()}",

@@ -239,8 +239,4 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
         saveLocalAsync()
         pushChildProfile(stamped)
     }
-
-    override fun addAdminNotification(message: String) {
-        AppSharedState.adminNotificationLog.add(0, message)
-    }
 }

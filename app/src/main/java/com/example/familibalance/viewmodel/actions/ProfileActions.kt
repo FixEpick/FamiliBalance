@@ -12,7 +12,10 @@ import com.example.familibalance.data.auth.AuthRepository
 import com.example.familibalance.data.model.ChildProfileState
 import com.example.familibalance.data.supabase.SupabaseManager
 import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 
 // Rate-limit входа ребёнка хранится в SecurePrefs (EncryptedSharedPreferences),
 // чтобы счётчики и блокировки переживали перезапуск приложения.
@@ -192,6 +195,26 @@ fun MainViewModel.loginChild(
         if (supabase != null && (authUid.isEmpty() || !sessionEmail.isNullOrBlank())) {
             runCatching { supabase.auth.signInAnonymously() }
             authUid = runCatching { supabase.auth.currentUserOrNull()?.id }.getOrNull().orEmpty()
+        }
+
+        // Клейм устройства: RPC проверяет PIN и проставляет auth_user_id
+        // анонимной сессии в family_profiles. Без этого первый upsert
+        // упадёт на UPDATE-политике RLS (в старой строке auth_user_id пуст).
+        // Best-effort: если RPC ещё не развёрнут — sync просто не сработает
+        // до применения миграции, локальный вход не ломается.
+        if (supabase != null && authUid.isNotBlank()) {
+            runCatching {
+                supabase.postgrest.rpc(
+                    "claim_child_profile",
+                    buildJsonObject {
+                        put("p_child_id", JsonPrimitive(profile.id))
+                        put("p_parent_email", JsonPrimitive(parentEmail.trim()))
+                        put("p_pin", JsonPrimitive(pin))
+                    }
+                )
+            }.onFailure {
+                android.util.Log.w("MainViewModel", "claim_child_profile failed: ${it.message}")
+            }
         }
 
         // Миграция legacy PIN: если pinCode в старом формате (без ':'),

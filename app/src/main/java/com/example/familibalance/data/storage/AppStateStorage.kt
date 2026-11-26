@@ -1,7 +1,7 @@
 package com.example.familibalance.data.storage
 
 import android.content.Context
-import android.net.Uri
+import android.util.Log
 import androidx.core.content.edit
 import com.example.familibalance.data.SecurePrefs
 import com.example.familibalance.data.model.ChildProfileDto
@@ -17,7 +17,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 object AppSharedState {
     var selectedChildId: String = "user_1"
-    var tempImageUri: Uri? = null
 
     /** Событие: удалённое состояние применено к [children] (Realtime / первичная загрузка). */
     val remoteStateChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 16)
@@ -33,9 +32,6 @@ object AppSharedState {
             ?: children["user_1"]
             ?: children.values.firstOrNull()
             ?: ChildProfileState(id = "user_1", name = "Игрок", avatar = "🧒")
-
-    val adminNotificationLog = mutableListOf<String>()
-    var adminNotificationMessage: String? = null
 }
 
 object AppStateStorage {
@@ -67,7 +63,7 @@ object AppStateStorage {
                 putString(KEY_STATE, rootObj.toString())
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("AppStateStorage", "saveLocalOnly failed", e)
         }
     }
 
@@ -85,47 +81,6 @@ object AppStateStorage {
         } else {
             dto.stateUpdatedAt > local.stateUpdatedAt
         }
-
-    fun applyRemoteChildJson(context: Context, userId: String, jsonStr: String, parentUserId: String? = null, status: String? = null, authUserId: String? = null, remoteUpdatedAt: String? = null) {
-        try {
-            val dto = jsonFormat.decodeFromString<ChildProfileDto>(jsonStr)
-            // Дубль уже синхронизированной версии (server updated_at не новее
-            // последней применённой) — пропускаем, чтобы echo собственных push'ей
-            // и повторные Realtime-события не гоняли UI по кругу.
-            val lastCloudVer = com.example.familibalance.data.repository.SyncStatus.cloudVersion(userId)
-            if (remoteUpdatedAt != null && lastCloudVer.isNotEmpty() &&
-                !com.example.familibalance.data.repository.SyncStatus.isTsNewer(remoteUpdatedAt, lastCloudVer)
-            ) return
-            // Dirty-профиль: локальные правки ещё не ушли в облако.
-            // Применяем удалённую версию, только если она строго новее
-            // локальной (last-writer-wins) — иначе одобрение админа
-            // навсегда игнорировалось, а старый PENDING перезаписывал облако.
-            // Критерий — монотонный stateVersion (часы устройств не важны);
-            // для legacy-профилей без счётчика — fallback на stateUpdatedAt.
-            if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) {
-                val local = AppSharedState.children[userId]
-                if (local != null && !isRemoteStateNewer(dto, local)) return
-            }
-            // Колонка parent_user_id в БД важнее значения внутри state_json
-            val profile = ChildProfileState.fromDto(dto)
-                .copy(
-                    parentUserId = parentUserId?.takeIf { it.isNotBlank() } ?: dto.parentUserId,
-                    authUserId = authUserId?.takeIf { it.isNotBlank() } ?: dto.authUserId,
-                    status = status?.takeIf { it.isNotBlank() } ?: dto.status
-                )
-            AppSharedState.children[userId] = profile
-            saveLocalOnly(context)
-            com.example.familibalance.data.repository.SyncStatus.setCloudVersion(userId, remoteUpdatedAt)
-            // Удалённая версия применена — локальные несинхронизированные
-            // правки устарели (last-writer-wins): снимаем dirty-метку,
-            // иначе retryDirtyChildren позже отправит старый снапшот
-            // и перезапишет approve/reject админа (ping-pong статусов).
-            com.example.familibalance.data.repository.SyncStatus.markClean(userId)
-            AppSharedState.remoteStateChanged.tryEmit(Unit)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
 
     /**
      * Suspend-вариант: парсит JSON на IO-потоке, применяет на Main.
@@ -191,7 +146,7 @@ object AppStateStorage {
                 AppSharedState.remoteStateChanged.tryEmit(Unit)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("AppStateStorage", "applyRemoteChildJsonAsync failed", e)
         }
     }
 
@@ -214,13 +169,13 @@ object AppStateStorage {
                             val dto = jsonFormat.decodeFromString<ChildProfileDto>(childObj.toString())
                             AppSharedState.children[id] = ChildProfileState.fromDto(dto).copy(id = id)
                         } catch (e: Exception) {
-                            e.printStackTrace()
+                            Log.e("AppStateStorage", "child profile parse failed: $id", e)
                         }
                     }
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("AppStateStorage", "loadState failed", e)
         }
     }
 
@@ -285,7 +240,7 @@ object AppStateStorage {
                 saveLocalOnly(context)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("AppStateStorage", "checkResets failed", e)
         }
         return changedChildren
     }

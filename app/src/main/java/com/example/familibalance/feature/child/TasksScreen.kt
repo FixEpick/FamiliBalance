@@ -345,7 +345,7 @@ fun TasksScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                items(visibleCustomQuests) { quest ->
+                items(visibleCustomQuests, key = { it.id }, contentType = { "custom_quest" }) { quest ->
                     val badgeText = when (quest.frequency) {
                         QuestFrequency.ONCE -> stringResource(R.string.freq_once)
                         QuestFrequency.DAILY -> stringResource(R.string.freq_daily)

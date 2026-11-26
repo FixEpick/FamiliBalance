@@ -27,8 +27,8 @@ import kotlin.math.sin
  */
 @Composable
 fun ThemedBackground(
-    theme: AppThemeConfig = LocalAppTheme.current,
     modifier: Modifier = Modifier,
+    theme: AppThemeConfig = LocalAppTheme.current,
     content: @Composable () -> Unit
 ) {
     val bgStart by animateColorAsState(theme.background, tween(300), label = "bgStart")

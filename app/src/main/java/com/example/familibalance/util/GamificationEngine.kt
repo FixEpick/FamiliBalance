@@ -81,11 +81,6 @@ object GamificationEngine {
     fun totalMultiplier(level: Int, streakDays: Int): Double =
         minOf(levelMultiplier(level) * streakMultiplier(streakDays), 1.65)
 
-    /** @deprecated Используйте [totalMultiplier]. */
-    @Deprecated("Use totalMultiplier", ReplaceWith("totalMultiplier(level, streakDays)"))
-    fun rewardMultiplier(level: Int, streakDays: Int): Double =
-        totalMultiplier(level, streakDays)
-
     data class RewardResult(
         val coins: Int,
         val xp: Int,

@@ -23,7 +23,6 @@
 
     <!-- Register / auth -->
     <string name="register_title">Регистрация</string>
-    <string name="reg_avatar">АВАТАР</string>
     <string name="reg_nickname">Никнейм</string>
     <string name="reg_pin">PIN-код</string>
     <string name="reg_pin_hint">4 цифры — ребёнок будет входить по ним</string>
@@ -94,7 +93,6 @@
     <string name="action_cancel">Отмена</string>
 
     <!-- Logout -->
-    <string name="logout_button">Выйти / Сменить пользователя</string>
     <string name="logout_title">Выход</string>
     <string name="logout_message">Вы уверены, что хотите выйти? Вы сможете снова войти, используя email родителя, имя и PIN-код</string>
     <string name="logout_confirm">Выйти</string>
@@ -126,7 +124,6 @@
     <string name="child_balance">Баланс</string>
     <string name="child_bank_name">Банк</string>
     <string name="child_cashout_btn">Забрать наличными</string>
-    <string name="child_cashout_hint">*работает, когда вы с родителем</string>
     <string name="child_no_cashout_requests">Нет активных заявок на вывод</string>
     <string name="child_cashout_requests_title">💵 Активные заявки на вывод:</string>
     <string name="child_cashout_amount">Сумма: %1$d ₽</string>
@@ -151,11 +148,8 @@
     <string name="child_bought_minutes">Куплено сегодня: %1$d / %2$d мин</string>
     <string name="child_buy_time_btn">Купить время</string>
     <string name="child_daily_limit_note">Дневной лимит %1$d мин • Обновится завтра</string>
-    <string name="child_streak_title">Дни без штрафов</string>
     <string name="child_streak_compact">Серия без штрафов: %1$d/7</string>
-    <string name="child_streak_day_label">%1$d дн</string>
     <string name="child_streak_checkin">Отметиться сегодня</string>
-    <string name="child_streak_checked_today">✓ Сегодняшний день засчитан — стрик в безопасности</string>
     <string name="child_streak_checked_short">✓ Сегодня засчитан</string>
     <string name="child_streak_bonus">Бонус +50 ₽ на 7-й день</string>
     <string name="child_honest_cooldown">Честное признание • Доступно через %1$d дн.</string>
@@ -164,8 +158,6 @@
     <string name="child_honest_pending">• Признание на проверке у родителя</string>
     <string name="child_honest_claimed">✓ Скидка 50% уже применена</string>
     <string name="child_honest_ready">✓ Честное признание одобрено родителем (Штраф уменьшен в половину)</string>
-    <string name="child_rules_btn">📜 Свиток правил</string>
-    <string name="child_economy_btn">💰 Экономика</string>
     <string name="info_sheet_tab_rules">Правила</string>
     <string name="info_sheet_tab_economy">Тарифы и награды</string>
     <string name="child_cashout_dialog_title">Вывести наличные</string>
@@ -185,30 +177,7 @@
     </plurals>
 
     <!-- Rules sheet -->
-    <string name="rules_title">📜 Свиток правил</string>
     <string name="rules_offline">Нет интернета? Не переживай! Все твои квесты и награды сохранены на телефоне. Как только появится сеть, они сами отправятся в облако.</string>
-    <string name="rules_balance_title">📖 Как работает твой баланс</string>
-    <string name="rules_balance_text">Все заработанные рубли падают в твой кошелёк. Ты можешь менять их на время в телефоне (100 ₽ = 30 минут) ИЛИ ты можешь в любой момент вывести все деньги — то есть забрать весь свой баланс настоящими бумажными деньгами на руки у родителя! А ещё ты растёшь в уровнях: за задания начисляется XP, с уровнем открываются новые ранги и растёт множитель наград!</string>
-    <string name="rules_earn_title">💰 Как заработать:</string>
-    <string name="rules_earn_text">• Оценка «5» в дневнике: +50 ₽\n• Оценка «4» в дневнике: +30 ₽\n• Фото шкафа (идеальный порядок): +%1$d ₽\n• Фото комнаты (заправленная кровать и порядок): +%2$d ₽\n• Бонусы за Достижения: от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!\n• XP за задания: шкаф и комната +25 XP, дневник — 5: +70 XP, 4: +45 XP, доп. задания +30 XP — с множителем за уровень и серию!</string>
-    <string name="rules_penalty_title">🔴 За что вычитается денежка (Штрафы)</string>
-    <string name="rules_penalty_text">За оценку «3» списывается −20 ₽, за оценку «2» — −50 ₽. За баловство и шалости — −30 ₽, а за обман или попытку схитрить — сразу −100 ₽. Но если ты сам честно рассказал родителю через кошечку до того, как он узнал — штраф уменьшится ровно вдвое! (−10 ₽ за тройку, −25 ₽ за двойку, −15 ₽ за баловство и −50 ₽ за обман).</string>
-    <string name="rules_streak_title">🔥 Дни без штрафов</string>
-    <string name="rules_streak_text">Отмечайся каждый день и получай +50 ₽ каждые 7 дней без штрафов! Но любой штраф сжигает все накопленные дни — а за каждый пропущенный день гаснет один огонёк.</string>
-    <string name="rules_gamification_title">Уровни, ранги и XP</string>
-    <string name="rules_gamification_text">Каждое выполненное задание даёт XP. С ростом уровня ты открываешь новые ранги — от «Новичка» до «Легенды дома» — и получаешь бонус монет при каждом повышении. Чем выше уровень и чем длиннее серия дней без штрафов, тем больше множитель к наградам — максимум ×1.65! Бонус за каждый новый уровень: 40 + уровень × 8 монет.</string>
-    <string name="rules_bonus_chest_title">Бонусный сундук</string>
-    <string name="rules_bonus_chest_text">После каждого выполненного задания у тебя есть 15% шанс открыть бонусный сундук — внутри либо монеты (от 20 до 60 ₽), либо дополнительный XP (от 10 до 15)!</string>
-    <string name="rules_perfect_day_title">Идеальный день</string>
-    <string name="rules_perfect_day_text">Выполни оба ежедневных задания — фото шкафа и фото комнаты — за один день и получи +25 ₽ и +15 XP! Каждый следующий идеальный день подряд увеличивает серию: с 3-го дня задания дают +10%% XP, с 7-го — +20%%!</string>
-    <string name="rules_screentime_title">⏳ Экранное время</string>
-    <string name="rules_screentime_text">Лимит 90 минут в день. Тарифы: 30 мин = 100 ₽, 60 мин = 220 ₽, 90 мин = 320 ₽.</string>
-    <string name="rules_honest_title">🐱 Честное признание</string>
-    <string name="rules_honest_text">Скидка 50% на любой штраф — хоть за двойку, хоть за обман. Доступно раз в 7 дней — расскажи родителю правду через кошечку!</string>
-    <string name="rules_diary_title">📓 Дневник</string>
-    <string name="rules_diary_text">Сдаётся раз в неделю. Оценки: 5 (+50 ₽, +70 XP), 4 (+30 ₽, +45 XP), 3 (-20 ₽), 2 (-50 ₽).</string>
-    <string name="rules_achievements_title">🏆 Достижения</string>
-    <string name="rules_achievements_text">Получай бонусы за новые ранги от 10 ₽ до 500 ₽ за ранг «Легенда Сервера»!</string>
     <string name="rules_understood">Понятно!</string>
 
     <!-- Rules sheet v2: 5 карточек без дублирования цифр -->
@@ -224,11 +193,6 @@
     <string name="rules2_honest_gifts_text">Признайся через кошечку до того, как об этом узнает родитель: штраф уменьшится вдвое, а ты получишь жетон честности и XP. За монеты можно отправить родителю открытку или купон.</string>
 
     <!-- Economy sheet -->
-    <string name="economy_title">💰 Экономика</string>
-    <string name="economy_earn_section">💰 Как заработать</string>
-    <string name="economy_spend_section">💸 На что потратить</string>
-    <string name="economy_fines_section">🔴 За что списывают (штрафы)</string>
-    <string name="economy_achievements_section">🏆 Достижения</string>
     <string name="economy_themes_section">🎨 Темы оформления</string>
     <string name="eco_wardrobe_photo">📸 Фото шкафа</string>
     <string name="eco_room_photo">🛏️ Фото комнаты</string>
@@ -240,8 +204,6 @@
     <string name="eco_lie">🤥 Обман или попытка схитрить</string>
     <string name="eco_streak">🔥 Стрик без штрафов</string>
     <string name="eco_streak_value">+50 ₽ каждые 7 дней</string>
-    <string name="eco_dream">🎯 Цель-мечта</string>
-    <string name="eco_dream_value">выбираешь сам</string>
     <string name="eco_xp">XP за задания</string>
     <string name="eco_xp_value">25–70 XP</string>
     <string name="eco_level_up">Повышение уровня</string>
@@ -338,18 +300,9 @@
     <string name="ach_claim_reward">🎁 Забрать награду %1$s</string>
 
     <!-- Theme selection sheet -->
-    <string name="theme_shop_title">Магазин тем</string>
     <string name="theme_shop_subtitle">Выбери палитру, которая нравится больше всего</string>
-    <string name="theme_selected">✓ Выбрана</string>
     <string name="theme_done">Готово</string>
     <string name="theme_name_cosmic_blue">Космический синий</string>
-    <string name="theme_name_cyber_pink">Кибер розовый</string>
-    <string name="theme_name_toxic_green">Токсичный зелёный</string>
-    <string name="theme_name_solar_gold">Солнечное золото</string>
-    <string name="theme_name_inferno_red">Инферно красный</string>
-    <string name="theme_name_galaxy_purple">Галактический фиолетовый</string>
-    <string name="theme_name_arctic_ice">Арктический лёд</string>
-    <string name="theme_name_sunset_orange">Закатный оранжевый</string>
     <string name="theme_name_cyber_neon">Кибер-неон</string>
     <string name="theme_name_cloud_light">Облачный день</string>
     <string name="theme_name_pixel_craft">Пиксель-крафт</string>
@@ -366,9 +319,6 @@
     <string name="theme_ach_prefix">За достижение: %1$s</string>
     <string name="theme_free_label">Бесплатно</string>
     <string name="theme_unlocked_label">✓ Открыта</string>
-    <string name="theme_locked_achievement_toast">Тема откроется за достижение «%1$s»</string>
-    <string name="theme_buy_title">Купить тему?</string>
-    <string name="theme_buy_message">Купить тему «%1$s» за %2$s?</string>
     <string name="theme_buy_confirm">Купить</string>
     <string name="theme_buy_no_funds">Недостаточно средств</string>
     <string name="theme_preview_badge">👁 Предпросмотр</string>
@@ -380,7 +330,6 @@
     <string name="theme_unlocks_for">Откроется за: %1$s</string>
 
     <!-- Avatar selection sheet -->
-    <string name="avatar_sheet_title">Выбор аватара</string>
     <string name="avatar_choose_title">Выберите аватар</string>
     <string name="avatar_unlocked_label">Открыт</string>
     <string name="avatar_locked_hint">Этот аватар откроется за достижение</string>
@@ -403,7 +352,6 @@
     <string name="frame_level_req">С %1$d уровня</string>
     <string name="frame_buy_title">Купить рамку?</string>
     <string name="frame_buy_message">Рамка «%1$s» — %2$d ₽. Списать с баланса?</string>
-    <string name="frame_locked_level_toast">Рамка откроется с %1$d уровня</string>
     <string name="frame_apply">Применить</string>
     <string name="frame_unlocks_at">Откроется с %1$d уровня</string>
     <string name="economy_avatars_section">🦸 Аватары</string>
@@ -498,17 +446,12 @@
     <string name="child_honesty_tokens">Жетонов честности: %1$d</string>
     <string name="child_parent_gift_title">Подарок родителю</string>
     <string name="child_parent_gift_hint">Поблагодари родителя — купи открытку или купон</string>
-    <string name="child_parent_gift_send">Отправить</string>
     <string name="child_parent_gift_confirm_text">Отправить «%1$s» и списать %2$d %3$s с баланса?</string>
     <string name="child_parent_gift_confirm_send">Подарить</string>
     <string name="child_parent_gift_no_funds">Недостаточно средств</string>
     <string name="admin_gifts_title">Подарки от ребёнка</string>
     <string name="admin_gift_use">Принять / Использовать</string>
     <string name="hist_parent_gift">Подарок родителю: %1$s</string>
-    <string name="rules_honesty_tokens_title">Жетоны честности</string>
-    <string name="rules_honesty_tokens_text">За каждое честное признание ты получаешь жетон честности и 15 XP.</string>
-    <string name="rules_parent_gifts_title">Подарки родителю</string>
-    <string name="rules_parent_gifts_text">За монеты можно отправить родителю открытку или купон — он увидит его в своём приложении.</string>
 
     <!-- Gamification: уровни, ранги, XP -->
     <string name="gamification_rank_novice">Новичок</string>
@@ -531,7 +474,12 @@
 
     <!-- Perfect days card -->
     <string name="child_perfect_days_title">Идеальные дни</string>
-    <string name="child_perfect_days_streak">%1$d дн. подряд</string>
+    <plurals name="child_perfect_days_streak">
+        <item quantity="one">%1$d день подряд</item>
+        <item quantity="few">%1$d дня подряд</item>
+        <item quantity="many">%1$d дней подряд</item>
+        <item quantity="other">%1$d дней подряд</item>
+    </plurals>
     <string name="child_perfect_days_hint">Выполни шкаф и комнату за день</string>
     <string name="child_perfect_days_bonus">+%1$d%% XP</string>
     <string name="child_perfect_days_reward">+25 ₽ и +15 XP</string>
@@ -627,7 +575,6 @@
 
     <!-- TaskCard -->
     <string name="task_claim_reward">🎉 Получить награду</string>
-    <string name="task_rejected_by_dad">❌ Отклонено родителем: %1$s</string>
     <string name="task_execute">📷 Выполнить</string>
     <string name="task_fix_resubmit">🔧 Исправить и отправить</string>
     <string name="task_rejected_badge">Отклонено</string>
@@ -725,8 +672,6 @@
     <string name="admin_set_security">🔐 Безопасность</string>
     <string name="admin_set_pin_management">🔐 Управление ПИН-кодами</string>
     <string name="admin_set_resets_title">Очистка и сбросы</string>
-    <string name="admin_set_resets_open">🗑 Очистка и сбросы ▲</string>
-    <string name="admin_set_resets_closed">🗑 Очистка и сбросы ▼</string>
     <string name="admin_set_reset_quests_label">Сбросить прогресс всех заданий</string>
     <string name="admin_set_reset_achievements_label">Сбросить достижения и статистику</string>
     <string name="admin_set_reset_honest_label">Сбросить честное признание</string>
@@ -776,8 +721,6 @@
     <string name="admin_set_confirm_title">Подтверждение</string>
     <string name="admin_set_confirm_message">Вы уверены? Это действие нельзя отменить</string>
     <string name="admin_set_confirm">Подтвердить</string>
-    <string name="admin_set_delete_title">Удалить аккаунт</string>
-    <string name="admin_set_delete_message">Вы уверены? Все данные, включая профили детей и фото, будут удалены навсегда. Это действие нельзя отменить.</string>
     <string name="admin_set_delete_error">Не удалось удалить аккаунт. Проверьте подключение и попробуйте ещё раз.</string>
     <string name="admin_set_delete">Удалить</string>
 

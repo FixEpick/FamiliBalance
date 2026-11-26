@@ -78,7 +78,7 @@ fun AdminAchievementsScreen(
             )
         }
 
-        items(child.achievements) { achievement ->
+        items(child.achievements, key = { it.id }, contentType = { "achievement" }) { achievement ->
         Card(
             modifier = Modifier
                 .fillMaxWidth()

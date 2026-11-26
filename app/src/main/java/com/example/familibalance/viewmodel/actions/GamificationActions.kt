@@ -113,7 +113,9 @@ internal fun MainViewModel.gamificationHistoryEntries(
             time = time,
             date = date,
             amount = if (coinDelta != 0) {
-                if (coinDelta > 0) "+$coinDelta ₽" else "-$coinDelta ₽"
+                // coinDelta уже со знаком: при срабатывании недельного лимита
+                // он может быть отрицательным — не добавляем второй «-».
+                if (coinDelta > 0) "+$coinDelta ₽" else "$coinDelta ₽"
             } else "",
             isIncome = coinDelta >= 0,
             category = "Бонусы",

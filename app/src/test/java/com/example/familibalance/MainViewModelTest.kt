@@ -61,7 +61,6 @@ class MainViewModelTest {
         override fun updateChildProfile(profile: ChildProfileState) {
             children[profile.id] = profile
         }
-        override fun addAdminNotification(message: String) {}
     }
 
     private lateinit var repository: FakeFamilyRepository

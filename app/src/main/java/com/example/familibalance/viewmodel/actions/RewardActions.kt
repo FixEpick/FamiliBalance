@@ -52,8 +52,6 @@ fun MainViewModel.claimDreamGoal(userId: String) {
         ) + profile.historyItems
     )
 
-    val message = "Ребёнок ${profile.name} осуществил цель «$claimedDreamTitle» на $target ₽."
-    familyRepository.addAdminNotification(message)
     PushNotifier.dreamReached(profile.parentUserId, profile.name, claimedDreamTitle, target, RewardCurrency.symbolOf(profile.rewardCurrency))
 
     updateChildProfile(updated)

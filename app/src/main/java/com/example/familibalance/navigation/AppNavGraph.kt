@@ -109,7 +109,7 @@ fun AppNavGraph(
         if (!autoChildNavigated && autoLoginChildId != null) {
             autoChildNavigated = true
             // Регистрация FCM-токена ребёнка для пушей «Игрок»
-            PushTokenRegistrar.registerChild(context, autoLoginChildId!!)
+            PushTokenRegistrar.registerChild(context, autoLoginChildId)
             SecurePrefs.get(context, "app_prefs")
                 .edit {
                     putBoolean("onboarding_done", true)

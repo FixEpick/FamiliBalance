@@ -36,6 +36,17 @@ private fun MainViewModel.clearQuestPhotoIfNeeded(profile: ChildProfileState, qu
 /** Ребёнок отправляет фото квеста (шкаф/комната/дневник) на проверку папе. */
 fun MainViewModel.submitQuestForReview(userId: String, questType: String, photoUrl: String?, comment: String = "") {
     val profile = familyRepository.getChild(userId) ?: return
+    // Отправить на проверку можно только доступный квест или обновить
+    // фото уже отправленного (PENDING — пересъёмка из шторки ожидания).
+    // READY_TO_CLAIM/CLAIMED блокируем: повторная отправка затирала бы
+    // статус (в т.ч. одобрение админа) и фото.
+    val currentStatus = when (questType.lowercase()) {
+        "closet", "шкаф" -> profile.closetStatus
+        "room", "комната" -> profile.roomStatus
+        "diary", "дневник", "итоги" -> profile.diaryStatus
+        else -> return
+    }
+    if (currentStatus != QuestStatus.AVAILABLE && currentStatus != QuestStatus.PENDING) return
     val persistedPhotoUrl = PhotoStorage.persistIfNeeded(getApplication(), photoUrl)
     val updated = when (questType.lowercase()) {
         "closet", "шкаф" -> profile.copy(
@@ -352,7 +363,7 @@ fun MainViewModel.submitBonusQuestByChild(userId: String, questId: String, photo
     val profile = familyRepository.getChild(userId) ?: return
     val persistedPhotoUrl = PhotoStorage.persistIfNeeded(getApplication(), photoUri?.toString())
     val updatedQuests = profile.bonusQuests.map { q ->
-        if (q.id == questId) {
+        if (q.id == questId && q.status == QuestStatus.AVAILABLE) {
             q.copy(
                 status = QuestStatus.PENDING,
                 rejectReason = null,

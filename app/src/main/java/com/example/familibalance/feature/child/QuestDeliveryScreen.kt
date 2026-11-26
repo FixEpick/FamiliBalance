@@ -55,10 +55,10 @@ import com.example.familibalance.feature.child.components.CameraCaptureScreen
 fun QuestDeliveryScreen(
     questName: String,
     rewardText: String,
+    modifier: Modifier = Modifier,
     photoRequired: Boolean = true,
     onSendClick: (comment: String, photoUri: Uri?) -> Unit,
-    onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onBackClick: () -> Unit
 ) {
     // Страховка от IllegalStateException "No ActivityResultRegistryOwner":
     // LocalContext может быть переопределён (LocalizedAppContent, окна Dialog),
@@ -95,10 +95,10 @@ fun QuestDeliveryScreen(
 private fun QuestDeliveryScreenContent(
     questName: String,
     rewardText: String,
+    modifier: Modifier = Modifier,
     photoRequired: Boolean = true,
     onSendClick: (comment: String, photoUri: Uri?) -> Unit,
-    onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onBackClick: () -> Unit
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current

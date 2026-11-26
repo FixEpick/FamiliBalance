@@ -54,7 +54,4 @@ interface FamilyRepository {
 
     /** Единая точка обновления профиля: локальное сохранение + push в Supabase. */
     fun updateChildProfile(profile: ChildProfileState)
-
-    /** Добавляет сообщение в лог уведомлений админа. */
-    fun addAdminNotification(message: String)
 }

@@ -342,8 +342,8 @@ fun MainViewModel.claimAchievementReward(userId: String, achievementId: String) 
 
 /** Удаляет фото квестов профиля из Supabase Storage (best-effort, fire-and-forget). */
 private fun MainViewModel.deleteQuestPhotos(urls: List<String?>) {
-    urls.filterNot { it.isNullOrBlank() }.forEach { url ->
-        viewModelScope.launch { SupabaseManager.deleteQuestPhoto(url!!) }
+    urls.filterNotNull().filter { it.isNotBlank() }.forEach { url ->
+        viewModelScope.launch { SupabaseManager.deleteQuestPhoto(url) }
     }
 }
 

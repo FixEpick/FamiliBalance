@@ -3,6 +3,7 @@ package com.example.familibalance.feature.child.components
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.util.Log
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -292,7 +293,7 @@ private fun downscaleQuestPhoto(photoFile: File) {
         }
         bitmap.recycle()
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w("CameraCaptureScreen", "downscaleQuestPhoto failed", e)
         // Оставляем оригинальный файл — сжатие не критично для отправки.
     }
 }

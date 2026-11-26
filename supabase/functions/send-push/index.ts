@@ -102,6 +102,71 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "invalid_role" }, 400);
   }
 
+  // Авторизация вызывающего: функция доступна любому держателю anon-ключа,
+  // поэтому проверяем, что caller реально связан с target_user_id.
+  // Без этой проверки любой мог слать произвольные пуши чужим устройствам
+  // (спам/фишинг под видом уведомлений приложения).
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const callerJwt = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : "";
+  if (!callerJwt) {
+    return jsonResponse({ error: "unauthorized" }, 401);
+  }
+  const callerClient = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!
+  );
+  const { data: { user: caller } } = await callerClient.auth.getUser(callerJwt);
+  if (!caller) {
+    return jsonResponse({ error: "unauthorized" }, 401);
+  }
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  // Разрешённые связи caller → target:
+  //  - parent-target: target_user_id == caller.id (свой кабинет)
+  //    ИЛИ caller — ребёнок этого родителя (auth_user_id → parent_user_id);
+  //  - child-target:  family_profiles.user_id == target_user_id И
+  //    (parent_user_id == caller.id — родитель пишет ребёнку
+  //     ИЛИ auth_user_id == caller.id — устройство ребёнка пишет себе
+  //     ИЛИ user_id == caller.id — legacy uid).
+  // Родитель всегда может писать самому себе — не требует связей в БД.
+  if (target_role === "parent" && target_user_id === caller.id) {
+    // пропускаем проверку связей
+  } else {
+  const { data: linkRows, error: linkError } = await supabase
+    .from("family_profiles")
+    .select("user_id, parent_user_id, auth_user_id")
+    .or(
+      `user_id.eq.${target_user_id},parent_user_id.eq.${caller.id},auth_user_id.eq.${caller.id}`
+    );
+  if (linkError) {
+    console.error("authorization lookup failed:", linkError);
+    return jsonResponse({ error: "db_error" }, 500);
+  }
+  const allowed = (linkRows ?? []).some((row: {
+    user_id: string;
+    parent_user_id: string | null;
+    auth_user_id: string | null;
+  }) => {
+    if (target_role === "parent") {
+      return target_user_id === caller.id ||
+        (row.auth_user_id === caller.id && row.parent_user_id === target_user_id);
+    }
+    return row.user_id === target_user_id &&
+      (row.parent_user_id === caller.id ||
+        row.auth_user_id === caller.id ||
+        row.user_id === caller.id);
+  });
+  if (!allowed) {
+    return jsonResponse({ error: "forbidden" }, 403);
+  }
+  }
+
   // Service account из secrets — без него пуши не отправить.
   const saRaw = Deno.env.get("FCM_SERVICE_ACCOUNT");
   if (!saRaw) {
@@ -114,11 +179,7 @@ Deno.serve(async (req) => {
     project_id: string;
   };
 
-  // Токены целевой роли/пользователя.
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
+  // Токены целевой роли/пользователя (service-role клиент создан выше).
   const { data: tokens, error } = await supabase
     .from("device_tokens")
     .select("fcm_token")

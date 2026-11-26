@@ -134,7 +134,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
         update { copy(isLoading = true, errorMessage = null) }
         viewModelScope.launch {
-            // TODO: здесь будет signUpChild + сохранение профиля через инвайт
             _events.emit(AuthEvent.PlayerSuccess)
             update { copy(isLoading = false) }
         }
