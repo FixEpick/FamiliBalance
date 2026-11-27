@@ -121,11 +121,14 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
         AppStateStorage.checkResets(appContext).forEach { changed ->
             // Сброс — локальное изменение: обновляем stateUpdatedAt/stateVersion,
             // чтобы last-writer-wins в ProfileSync не проигнорировал его.
-            val stamped = changed.copy(
-                stateUpdatedAt = System.currentTimeMillis(),
-                stateVersion = changed.stateVersion + 1
-            )
-            AppSharedState.children[stamped.id] = stamped
+            // Чтение свежей версии + штамповка + put — атомарно под write-lock.
+            val stamped = AppSharedState.write {
+                val freshVersion = AppSharedState.children[changed.id]?.stateVersion ?: 0L
+                changed.copy(
+                    stateUpdatedAt = System.currentTimeMillis(),
+                    stateVersion = maxOf(changed.stateVersion, freshVersion) + 1
+                ).also { AppSharedState.children[it.id] = it }
+            }
             pushChildProfile(stamped)
         }
     }
@@ -230,12 +233,28 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
         // (applyRemoteChildJson), устаревший снапшот не должен откатить
         // счётчик — иначе LWW в ProfileSync увидел бы «локальную» правку
         // с версией, коллидирующей с удалённой.
-        val freshVersion = AppSharedState.children[profile.id]?.stateVersion ?: 0L
-        val stamped = profile.copy(
-            stateUpdatedAt = System.currentTimeMillis(),
-            stateVersion = maxOf(profile.stateVersion, freshVersion) + 1
-        )
-        AppSharedState.children[stamped.id] = stamped
+        // Чтение свежей версии, штамповка и put — атомарно под общим
+        // write-lock: параллельный remote-apply (applyRemoteChildJsonAsync)
+        // не вклинится между чтением stateVersion и записью.
+        val stamped = AppSharedState.write {
+            val freshVersion = AppSharedState.children[profile.id]?.stateVersion ?: 0L
+            val stampedProfile = profile.copy(
+                stateUpdatedAt = System.currentTimeMillis(),
+                stateVersion = maxOf(profile.stateVersion, freshVersion) + 1
+            )
+            // Derived-баланс: balance = balanceBase + Σ historyItems.amountValue.
+            // База вычисляется один раз (legacy-профили) и дальше хранится
+            // в state_json; при явном null (сброс истории) пересчитывается.
+            // Любая мутация balance без парной записи истории будет
+            // автоматически «поглощена» базой — инвариант не ломается.
+            val moneySum = stampedProfile.historyItems.sumOf { it.amountValue ?: 0 }
+            val base = stampedProfile.balanceBase
+                ?: (stampedProfile.balance - moneySum)
+            stampedProfile.copy(
+                balanceBase = base,
+                balance = base + moneySum
+            ).also { AppSharedState.children[it.id] = it }
+        }
         saveLocalAsync()
         pushChildProfile(stamped)
     }

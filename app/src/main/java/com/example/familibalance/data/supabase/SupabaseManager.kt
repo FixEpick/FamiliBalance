@@ -283,10 +283,13 @@ object SupabaseManager {
             }
         }
 
-        // 4. Локальное удаление.
-        AppSharedState.children.remove(childId)
-        if (AppSharedState.selectedChildId == childId) {
-            AppSharedState.selectedChildId = AppSharedState.children.keys.firstOrNull() ?: "user_1"
+        // 4. Локальное удаление — под общим write-lock вместе с коррекцией
+        // selectedChildId, чтобы читатели не увидели dangling-выбор.
+        AppSharedState.write {
+            AppSharedState.children.remove(childId)
+            if (AppSharedState.selectedChildId == childId) {
+                AppSharedState.selectedChildId = AppSharedState.children.keys.firstOrNull() ?: "user_1"
+            }
         }
         com.example.familibalance.data.repository.SyncStatus.markClean(childId)
         AppStateStorage.saveLocalOnly(context)

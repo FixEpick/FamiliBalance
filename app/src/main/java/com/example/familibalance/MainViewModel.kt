@@ -174,7 +174,7 @@ class MainViewModel(
      */
     fun setRewardCurrency(code: String) {
         val now = System.currentTimeMillis()
-        AppSharedState.children.replaceAll { _, child ->
+        AppSharedState.mutateAll { child ->
             if (child.rewardCurrency == code) child
             else child.copy(
                 rewardCurrency = code,
@@ -203,14 +203,19 @@ class MainViewModel(
             // Разовая чистка легаси-дефолтов «Пользователь 1/2» из локального стейта.
             // В Supabase такие строки удаляются вручную через дашборд.
             val legacyIds = setOf("user_1", "user_2")
-            if (AppSharedState.children.keys.any { it in legacyIds }) {
-                AppSharedState.children.keys.removeAll(legacyIds)
-                if (AppSharedState.selectedChildId in legacyIds ||
-                    AppSharedState.children[AppSharedState.selectedChildId] == null
-                ) {
-                    AppSharedState.selectedChildId =
-                        AppSharedState.children.keys.firstOrNull() ?: "user_1"
-                }
+            val removedLegacy = AppSharedState.write {
+                if (AppSharedState.children.keys.any { it in legacyIds }) {
+                    AppSharedState.children.keys.removeAll(legacyIds)
+                    if (AppSharedState.selectedChildId in legacyIds ||
+                        AppSharedState.children[AppSharedState.selectedChildId] == null
+                    ) {
+                        AppSharedState.selectedChildId =
+                            AppSharedState.children.keys.firstOrNull() ?: "user_1"
+                    }
+                    true
+                } else false
+            }
+            if (removedLegacy) {
                 AppStateStorage.saveLocalOnly(getApplication())
             }
             // Pull свежего state_json ДО локальных сбросов: checkResets/
@@ -257,8 +262,10 @@ class MainViewModel(
             // минуя онбординг и форму входа. В обычной жизни флаг false.
             if (com.example.familibalance.util.BenchmarkSession.requested) {
                 val bench = com.example.familibalance.util.BenchmarkSession.createChildProfile()
-                AppSharedState.children[bench.id] = bench
-                AppSharedState.selectedChildId = bench.id
+                AppSharedState.write {
+                    AppSharedState.children[bench.id] = bench
+                    AppSharedState.selectedChildId = bench.id
+                }
                 prefs.edit {
                     putBoolean("is_logged_in", true)
                     putString("logged_in_child_id", bench.id)
@@ -501,8 +508,10 @@ class MainViewModel(
 
     /** Очистка состояния при выходе из аккаунта: профили и выбор не должны «протекать» другой семье. */
     fun clearState() {
-        AppSharedState.children.clear()
-        AppSharedState.selectedChildId = "user_1"
+        AppSharedState.write {
+            AppSharedState.children.clear()
+            AppSharedState.selectedChildId = "user_1"
+        }
         emitFamilyState()
     }
 

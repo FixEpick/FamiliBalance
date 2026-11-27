@@ -1113,4 +1113,46 @@ class MainViewModelTest {
 
         assertTrue(repository.children["user_1"]!!.pendingParentGifts.isEmpty())
     }
+
+    // ---------- Derived balance (balanceBase + Σ amountValue) ----------
+
+    private fun moneyEntry(amount: Int) = HistoryData(
+        title = "t", time = "t", date = "d",
+        amount = "$amount ₽", isIncome = amount >= 0,
+        category = "c", type = HistoryType.QUEST_REWARD, amountValue = amount
+    )
+
+    @Test
+    fun `derivedBalance falls back to stored balance for legacy profile`() {
+        val child = createChild().copy(balance = 137)
+        // balanceBase == null → derived == хранимый balance
+        assertEquals(137, child.derivedBalance)
+    }
+
+    @Test
+    fun `derivedBalance equals base plus history sum`() {
+        val child = createChild().copy(
+            balance = 150,
+            balanceBase = 100,
+            historyItems = listOf(moneyEntry(30), moneyEntry(-20), moneyEntry(40))
+        )
+        assertEquals(150, child.derivedBalance)
+    }
+
+    @Test
+    fun `toDto folds dropped money sum into balanceBase when history exceeds cap`() {
+        // 201 денежная запись: последняя 200 остаются в истории,
+        // сумма первой обязана переехать в balanceBase — derived не плывёт.
+        val items = (1..201).map { moneyEntry(it) }
+        val child = createChild().copy(
+            balance = 100 + items.sumOf { it.amountValue!! },
+            historyItems = items
+        )
+        val dto = child.toDto()
+        assertEquals(200, dto.historyItems.size)
+        val roundTripped = ChildProfileState.fromDto(dto)
+        assertEquals(child.balance, roundTripped.derivedBalance)
+        // Первая запись (amountValue=1) «выпала» — её сумма в базе.
+        assertEquals(101, dto.balanceBase)
+    }
 }

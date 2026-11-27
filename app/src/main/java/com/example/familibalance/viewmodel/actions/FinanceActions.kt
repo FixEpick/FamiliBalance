@@ -50,14 +50,18 @@ internal fun MainViewModel.applyFineInternal(childId: String, amount: Int, reaso
     val finalAmount = if (discounted) amount / 2 else amount
     val baseTitle = if (reason.isNotBlank()) "Штраф: ${reason.trim()}" else "Штраф от папы"
     val title = if (discounted) "$baseTitle (Скидка 50% за честное признание)" else baseTitle
+    // Баланс клампится в 0 — в историю пишем ФАКТИЧЕСКУЮ дельту,
+    // иначе derived-баланс (base + Σ amountValue) разойдётся с balance.
+    val newBalance = (profile.balance - finalAmount).coerceAtLeast(0)
+    val actualDelta = newBalance - profile.balance
     updateChildProfile(
         profile.copy(
-            balance = (profile.balance - finalAmount).coerceAtLeast(0),
+            balance = newBalance,
             streakDays = 0,
             lastStreakDate = "",
             honestAdmissionStatus = if (discounted) QuestStatus.CLAIMED else profile.honestAdmissionStatus,
             historyItems = listOf(
-                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "-$finalAmount ₽", false, "Штрафы", type = HistoryType.FINE, amountValue = -finalAmount, arg = reason.trim().ifBlank { null })
+                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "$actualDelta ₽", false, "Штрафы", type = HistoryType.FINE, amountValue = actualDelta, arg = reason.trim().ifBlank { null })
             ) + profile.historyItems
         )
     )
@@ -70,11 +74,14 @@ fun MainViewModel.adminWithdraw(userId: String, amount: Int, description: String
     try {
     val profile = familyRepository.getChild(userId) ?: return
     val title = if (description.isNotBlank()) "Списание: ${description.trim()}" else "Списание от родителя"
+    // Кламп в 0 — в историю идёт фактическая дельта (см. applyFineInternal).
+    val newBalance = (profile.balance - amount).coerceAtLeast(0)
+    val actualDelta = newBalance - profile.balance
     updateChildProfile(
         profile.copy(
-            balance = (profile.balance - amount).coerceAtLeast(0),
+            balance = newBalance,
             historyItems = listOf(
-                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "-$amount ₽", false, "Штрафы", type = HistoryType.ADMIN_WITHDRAW, amountValue = -amount, arg = description.trim().ifBlank { null })
+                HistoryData(title, getCurrentTimeString(), getCurrentDateString(), "$actualDelta ₽", false, "Штрафы", type = HistoryType.ADMIN_WITHDRAW, amountValue = actualDelta, arg = description.trim().ifBlank { null })
             ) + profile.historyItems
         )
     )

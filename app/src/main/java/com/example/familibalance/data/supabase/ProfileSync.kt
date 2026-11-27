@@ -13,7 +13,9 @@ import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.status.SessionStatus
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,6 +24,10 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -245,6 +251,10 @@ internal object ProfileSync {
                 // админа (approve/reject). Фото-URL подставляем только в те поля,
                 // которые remote не трогал (значение совпадает со старым снапшотом).
                 val updatedChild = withContext(Dispatchers.Main) {
+                    // Чтение fresh-снапшота, сборка updated и put — атомарно
+                    // под общим write-lock: локальная правка или remote-apply
+                    // не вклинятся между чтением и записью.
+                    AppSharedState.write {
                     val fresh = AppSharedState.children[child.id] ?: child
                     var updated = fresh.copy(
                         closetPhotoUrl = if (fresh.closetPhotoUrl == child.closetPhotoUrl) newCloset else fresh.closetPhotoUrl,
@@ -286,6 +296,7 @@ internal object ProfileSync {
 
                     AppSharedState.children[child.id] = updated
                     updated
+                    }
                 }
 
                 if (hasUploadedNewPhoto) {
@@ -365,16 +376,106 @@ internal object ProfileSync {
                 // !remoteChanged: облако не менялось с нашей последней синхронизации —
                 // upsert безопасен при любых расхождениях клиентских часов.
 
-                supabase.from("family_profiles").upsert(
-                    FamilyProfileRow(
-                        user_id = child.id,
-                        state_json = jsonString,
-                        parentUserId = parentId.ifBlank { null },
-                        parentEmail = updatedChild.parentEmail.ifBlank { null },
-                        authUserId = authId.ifBlank { null },
-                        status = updatedChild.status.ifBlank { "active" }
+                // Versioned write: RPC атомарно принимает запись только при
+                // строго большей state_version (см. миграцию
+                // 20261128000000_family_profiles_state_version.sql). Это закрывает
+                // гонку «select → upsert», когда два клиента одновременно
+                // проверяли версию и оба писали.
+                val rpcStatus = runCatching {
+                    val result = supabase.postgrest.rpc(
+                        "push_profile_state",
+                        buildJsonObject {
+                            put("p_user_id", JsonPrimitive(child.id))
+                            put("p_state_json", JsonPrimitive(jsonString))
+                            put("p_state_version", JsonPrimitive(updatedChild.stateVersion))
+                            parentId.ifBlank { null }?.let {
+                                put("p_parent_user_id", JsonPrimitive(it))
+                            }
+                            updatedChild.parentEmail.ifBlank { null }?.let {
+                                put("p_parent_email", JsonPrimitive(it))
+                            }
+                            authId.ifBlank { null }?.let {
+                                put("p_auth_user_id", JsonPrimitive(it))
+                            }
+                            put("p_status", JsonPrimitive(updatedChild.status.ifBlank { "active" }))
+                        }
                     )
-                )
+                    val element = Json.parseToJsonElement(result.data)
+                    val rows = when (element) {
+                        is JsonArray -> element
+                        is JsonObject -> JsonArray(listOf(element))
+                        else -> null
+                    }
+                    (rows?.firstOrNull() as? JsonObject)
+                        ?.get("status")?.jsonPrimitive?.contentOrNull
+                }.getOrElse { e ->
+                    if (e is CancellationException) throw e
+                    if (isMissingRpcFunction(e)) {
+                        // Миграция ещё не применена — откатываемся на старый
+                        // upsert, чтобы push не висел в dirty до деплоя SQL.
+                        Log.w("SupabaseManager", "push_profile_state RPC отсутствует — fallback на upsert")
+                        null
+                    } else throw e
+                }
+
+                if (rpcStatus == "conflict") {
+                    // Сервер отклонил: там уже лежит версия >= нашей.
+                    // Стягиваем remote и решаем по LWW.
+                    val remoteRow = runCatching {
+                        supabase.from("family_profiles")
+                            .select(columns = Columns.list("state_json", "updated_at")) {
+                                filter { eq("user_id", child.id) }
+                            }
+                            .decodeList<FamilyProfileRowTs>()
+                            .firstOrNull()
+                    }.getOrNull()
+                    val remoteNewer = remoteRow?.let { row ->
+                        runCatching {
+                            val remoteDto = stateJsonFormat
+                                .decodeFromString<ChildProfileDto>(row.state_json)
+                            isRemoteStateNewer(
+                                remoteVersion = remoteDto.stateVersion,
+                                remoteTs = remoteDto.stateUpdatedAt,
+                                localVersion = updatedChild.stateVersion,
+                                localTs = updatedChild.stateUpdatedAt
+                            )
+                        }.getOrDefault(false)
+                    } ?: true
+                    if (remoteNewer) {
+                        remoteRow?.let { row ->
+                            AppStateStorage.applyRemoteChildJsonAsync(
+                                context, row.user_id, row.state_json,
+                                null, null, null, row.updatedAt
+                            )
+                        }
+                        onResult?.invoke(true)
+                        Log.d("SupabaseManager", "Профиль ${child.id}: конфликт версий — применена удалённая")
+                        return@launch
+                    }
+                    // Remote не новее (равная версия — наш же retry долетел):
+                    // считаем синхронизацию достигнутой, dirty снимаем.
+                    SyncStatus.markClean(child.id)
+                    remoteRow?.updatedAt?.let {
+                        SyncStatus.setCloudVersion(child.id, it)
+                    }
+                    onResult?.invoke(true)
+                    Log.d("SupabaseManager", "Профиль ${child.id}: конфликт версий — remote идентичен, clean")
+                    return@launch
+                }
+
+                if (rpcStatus == null) {
+                    // Fallback: RPC нет в БД — старый безусловный upsert.
+                    supabase.from("family_profiles").upsert(
+                        FamilyProfileRow(
+                            user_id = child.id,
+                            state_json = jsonString,
+                            parentUserId = parentId.ifBlank { null },
+                            parentEmail = updatedChild.parentEmail.ifBlank { null },
+                            authUserId = authId.ifBlank { null },
+                            status = updatedChild.status.ifBlank { "active" }
+                        )
+                    )
+                }
                 // Фиксируем серверную версию, которую только что записали —
                 // следующие push'и смогут отличить «облако не менялось» от конфликта.
                 runCatching {
@@ -404,6 +505,16 @@ internal object ProfileSync {
                 onResult?.invoke(false)
             }
         }
+    }
+
+    /** Ошибка «RPC-функции нет в БД» (миграция не применена) — PGRST202 / Could not find the function. */
+    private fun isMissingRpcFunction(e: Throwable): Boolean {
+        val msg = e.message.orEmpty()
+        return msg.contains("PGRST202", ignoreCase = true) ||
+                (msg.contains("Could not find the function", ignoreCase = true) &&
+                        msg.contains("push_profile_state", ignoreCase = true)) ||
+                (msg.contains("does not exist", ignoreCase = true) &&
+                        msg.contains("push_profile_state", ignoreCase = true))
     }
 
     /** Определяет ошибки доступа: RLS-политики, 401/403, проблемы с JWT/anon-ключом. */

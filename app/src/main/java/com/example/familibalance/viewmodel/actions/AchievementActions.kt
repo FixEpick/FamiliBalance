@@ -67,7 +67,10 @@ fun MainViewModel.resetStreak(userId: String) {
 
 fun MainViewModel.clearHistory(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
-    updateChildProfile(profile.copy(historyItems = emptyList()))
+    // historyItems очищается — balanceBase сбрасываем в null, иначе
+    // derived-баланс (base + Σ amountValue) «потеряет» всю историю
+    // и занизит balance при ближайшем updateChildProfile.
+    updateChildProfile(profile.copy(historyItems = emptyList(), balanceBase = null))
 }
 
 fun MainViewModel.resetAchievements(userId: String) {
@@ -159,7 +162,7 @@ internal fun ChildProfileState.withAchievementThemesUnlocked(): ChildProfileStat
  */
 fun MainViewModel.syncAchievementThemesOnLoad() {
     var changed = false
-    AppSharedState.children.replaceAll { _, child ->
+    AppSharedState.mutateAll { child ->
         val synced = child.withAchievementThemesUnlocked()
         if (synced != child) {
             changed = true
@@ -451,7 +454,26 @@ fun MainViewModel.resetStreakAndTime(userId: String) {
 
 fun MainViewModel.resetBalance(userId: String) {
     val profile = familyRepository.getChild(userId) ?: return
-    updateChildProfile(profile.copy(balance = 0))
+    // Derived-баланс: обнуление без записи в истории сломало бы инвариант
+    // «дельта = Σ amountValue» — добавляем компенсирующую запись.
+    updateChildProfile(
+        profile.copy(
+            balance = 0,
+            historyItems = listOf(
+                HistoryData(
+                    title = "Сброс баланса",
+                    time = getCurrentTimeString(),
+                    date = getCurrentDateString(),
+                    amount = "-${profile.balance} ₽",
+                    isIncome = false,
+                    category = "Штрафы",
+                    type = HistoryType.ADMIN_WITHDRAW,
+                    amountValue = -profile.balance,
+                    arg = "Сброс баланса"
+                )
+            ) + profile.historyItems
+        )
+    )
 }
 
 fun MainViewModel.resetAllChildData(userId: String) {

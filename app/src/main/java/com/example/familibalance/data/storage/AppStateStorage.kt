@@ -16,6 +16,7 @@ import java.util.Calendar
 import java.util.concurrent.ConcurrentHashMap
 
 object AppSharedState {
+    @Volatile
     var selectedChildId: String = "user_1"
 
     /** Событие: удалённое состояние применено к [children] (Realtime / первичная загрузка). */
@@ -26,6 +27,33 @@ object AppSharedState {
     // ConcurrentHashMap: children мутируется из Realtime-потока (IO) и Main —
     // обычный mutableMapOf давал ConcurrentModificationException.
     val children = ConcurrentHashMap<String, ChildProfileState>()
+
+    /**
+     * Единый lock для read-modify-write мутаций [children].
+     * ConcurrentHashMap атомарен только на одну операцию put/get — связка
+     * «прочитать свежую версию → трансформировать → записать» без lock'а
+     * теряла обновления при гонке локальной правки и Realtime-применения.
+     * Все записи в children должны идти через [write] (или быть единственным put).
+     */
+    private val writeLock = Any()
+
+    fun <T> write(block: () -> T): T = synchronized(writeLock, block)
+
+    /** Атомарный read-modify-write одного профиля. Возвращает новый экземпляр или null. */
+    fun mutateChild(id: String, transform: (ChildProfileState) -> ChildProfileState): ChildProfileState? =
+        write {
+            val current = children[id] ?: return@write null
+            val next = transform(current)
+            if (next != current) children[id] = next
+            next
+        }
+
+    /** Атомарный read-modify-write всех профилей (replaceAll под общим lock'ом). */
+    fun mutateAll(transform: (ChildProfileState) -> ChildProfileState) {
+        write {
+            children.replaceAll { _, child -> transform(child) }
+        }
+    }
 
     val currentChild: ChildProfileState
         get() = children[selectedChildId]
@@ -47,7 +75,17 @@ object AppStateStorage {
         encodeDefaults = true
     }
 
+    /** Сериализует saveLocalOnly: параллельные вызовы (IO-корутины,
+     *  Realtime, UI) не должны писать в prefs вразнобой. */
+    private val saveLock = Any()
+
     fun saveLocalOnly(context: Context) {
+        synchronized(saveLock) {
+            saveLocalOnlyInternal(context)
+        }
+    }
+
+    private fun saveLocalOnlyInternal(context: Context) {
         try {
             val prefs = SecurePrefs.get(context, PREFS_NAME)
             val rootObj = org.json.JSONObject()
@@ -103,35 +141,44 @@ object AppStateStorage {
                 // строго новее локальной — иначе Realtime-апдейты админа
                 // (approve/reject) терялись, пока профиль был dirty.
                 // Сравнение по монотонному stateVersion; legacy (0/0) — по ts.
-                if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) {
-                    val local = AppSharedState.children[userId]
-                    if (local != null && !isRemoteStateNewer(dto, local)) {
-                        // local.ts == remote.ts — это эхо собственного push'а
-                        // (в облаке лежит наш же снапшот): не проблема, debug.
-                        // local.ts > remote.ts — реальные локальные правки ещё
-                        // не ушли в облако: пропуск осознанный, warning.
-                        if (local.stateUpdatedAt == dto.stateUpdatedAt) {
-                            android.util.Log.d(
-                                "AppStateStorage",
-                                "remote update SKIPPED (dirty+echo): user=$userId ts=${dto.stateUpdatedAt}"
-                            )
-                        } else {
-                            android.util.Log.w(
-                                "AppStateStorage",
-                                "remote update SKIPPED (dirty+LWW): user=$userId " +
-                                    "local.ts=${local.stateUpdatedAt} remote.ts=${dto.stateUpdatedAt}"
-                            )
+                // Проверка и запись — под общим write-lock: локальная правка
+                // не может вклиниться между LWW-решением и put.
+                val profile = AppSharedState.write {
+                    var skip = false
+                    if (com.example.familibalance.data.repository.SyncStatus.isChildDirty(userId)) {
+                        val local = AppSharedState.children[userId]
+                        if (local != null && !isRemoteStateNewer(dto, local)) {
+                            // local.ts == remote.ts — это эхо собственного push'а
+                            // (в облаке лежит наш же снапшот): не проблема, debug.
+                            // local.ts > remote.ts — реальные локальные правки ещё
+                            // не ушли в облако: пропуск осознанный, warning.
+                            if (local.stateUpdatedAt == dto.stateUpdatedAt) {
+                                android.util.Log.d(
+                                    "AppStateStorage",
+                                    "remote update SKIPPED (dirty+echo): user=$userId ts=${dto.stateUpdatedAt}"
+                                )
+                            } else {
+                                android.util.Log.w(
+                                    "AppStateStorage",
+                                    "remote update SKIPPED (dirty+LWW): user=$userId " +
+                                        "local.ts=${local.stateUpdatedAt} remote.ts=${dto.stateUpdatedAt}"
+                                )
+                            }
+                            skip = true
                         }
-                        return@withContext
                     }
-                }
-                val profile = ChildProfileState.fromDto(dto)
-                    .copy(
-                        parentUserId = parentUserId?.takeIf { it.isNotBlank() } ?: dto.parentUserId,
-                        authUserId = authUserId?.takeIf { it.isNotBlank() } ?: dto.authUserId,
-                        status = status?.takeIf { it.isNotBlank() } ?: dto.status
-                    )
-                AppSharedState.children[userId] = profile
+                    if (skip) {
+                        null
+                    } else {
+                        ChildProfileState.fromDto(dto)
+                            .copy(
+                                parentUserId = parentUserId?.takeIf { it.isNotBlank() } ?: dto.parentUserId,
+                                authUserId = authUserId?.takeIf { it.isNotBlank() } ?: dto.authUserId,
+                                status = status?.takeIf { it.isNotBlank() } ?: dto.status
+                            )
+                            .also { AppSharedState.children[userId] = it }
+                    }
+                } ?: return@withContext
                 saveLocalOnly(context)
                 android.util.Log.d(
                     "AppStateStorage",
@@ -162,14 +209,18 @@ object AppStateStorage {
 
             if (rootObj.has("children")) {
                 val childrenObj = rootObj.getJSONObject("children")
-                childrenObj.keys().forEach { id ->
-                    if (childrenObj.has(id)) {
-                        val childObj = childrenObj.getJSONObject(id)
-                        try {
-                            val dto = jsonFormat.decodeFromString<ChildProfileDto>(childObj.toString())
-                            AppSharedState.children[id] = ChildProfileState.fromDto(dto).copy(id = id)
-                        } catch (e: Exception) {
-                            Log.e("AppStateStorage", "child profile parse failed: $id", e)
+                // Под общим write-lock: loadState может идти параллельно
+                // с Realtime/локальными мутациями — не затираем их.
+                AppSharedState.write {
+                    childrenObj.keys().forEach { id ->
+                        if (childrenObj.has(id)) {
+                            val childObj = childrenObj.getJSONObject(id)
+                            try {
+                                val dto = jsonFormat.decodeFromString<ChildProfileDto>(childObj.toString())
+                                AppSharedState.children[id] = ChildProfileState.fromDto(dto).copy(id = id)
+                            } catch (e: Exception) {
+                                Log.e("AppStateStorage", "child profile parse failed: $id", e)
+                            }
                         }
                     }
                 }
@@ -220,7 +271,7 @@ object AppStateStorage {
             if (isNewDay) {
                 // Сбросы встроенных квестов (шкаф/комната/дневник) выполняет
                 // MainViewModel.resetDailyQuestsIfNeeded с учётом frequency каждого квеста.
-                AppSharedState.children.replaceAll { _, child ->
+                AppSharedState.mutateAll { child ->
                     val reset = child.copy(
                         boughtMinutesToday = 0,
                         bonusQuests = child.bonusQuests.filter { it.status != QuestStatus.CLAIMED }

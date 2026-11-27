@@ -123,7 +123,15 @@ data class ChildProfileState(
     /** Жетоны честности: +1 за каждое отправленное честное признание. */
     val honestyTokens: Int = 0,
     /** Активные (непогашенные) подарки-купоны, отправленные родителю. */
-    val pendingParentGifts: List<ParentGiftItem> = emptyList()
+    val pendingParentGifts: List<ParentGiftItem> = emptyList(),
+    /**
+     * База derived-баланса: balance = balanceBase + Σ historyItems.amountValue.
+     * null — база ещё не вычислена (legacy-профиль): derivedBalance откатывается
+     * на хранимый balance. Вычисляется один раз в updateChildProfile и дальше
+     * поддерживается инвариантом; при усечении истории сумма «выпавших»
+     * денежных записей складывается в базу (см. toDto).
+     */
+    val balanceBase: Int? = null
 ) {
     constructor(
         id: String,
@@ -230,9 +238,21 @@ data class ChildProfileState(
             bonusChestChancePercent = dto.bonusChestChancePercent,
             weeklyEarnLimit = dto.weeklyEarnLimit,
             honestyTokens = dto.honestyTokens,
-            pendingParentGifts = dto.pendingParentGifts
+            pendingParentGifts = dto.pendingParentGifts,
+            balanceBase = dto.balanceBase
         )
     }
+
+    /**
+     * Баланс, вычисленный из истории: balanceBase + сумма amountValue.
+     * При balanceBase == null (legacy) возвращает хранимый balance —
+     * reconcile в updateChildProfile проставит базу при первой правке.
+     */
+    val derivedBalance: Int
+        get() {
+            val base = balanceBase ?: (balance - historyItems.sumOf { it.amountValue ?: 0 })
+            return base + historyItems.sumOf { it.amountValue ?: 0 }
+        }
 }
 
 @Serializable
@@ -343,10 +363,20 @@ data class ChildProfileDto(
     /** Жетоны честности: +1 за каждое отправленное честное признание. */
     val honestyTokens: Int = 0,
     /** Активные (непогашенные) подарки-купоны, отправленные родителю. */
-    val pendingParentGifts: List<ParentGiftItem> = emptyList()
+    val pendingParentGifts: List<ParentGiftItem> = emptyList(),
+    /** База derived-баланса (см. ChildProfileState.balanceBase). */
+    val balanceBase: Int? = null
 )
 
-fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
+fun ChildProfileState.toDto(): ChildProfileDto {
+    // При усечении истории до MAX_HISTORY_ITEMS сумма «выпавших»
+    // денежных записей переносится в базу — derived-баланс не плывёт.
+    val effectiveBase = balanceBase
+        ?: (balance - historyItems.sumOf { it.amountValue ?: 0 })
+    val droppedSum = historyItems
+        .dropLast(MAX_HISTORY_ITEMS)
+        .sumOf { it.amountValue ?: 0 }
+    return ChildProfileDto(
     id = id,
     name = name,
     avatar = avatar,
@@ -436,5 +466,7 @@ fun ChildProfileState.toDto(): ChildProfileDto = ChildProfileDto(
     bonusChestChancePercent = bonusChestChancePercent,
     weeklyEarnLimit = weeklyEarnLimit,
     honestyTokens = honestyTokens,
-    pendingParentGifts = pendingParentGifts
-)
+    pendingParentGifts = pendingParentGifts,
+    balanceBase = effectiveBase + droppedSum
+    )
+}
