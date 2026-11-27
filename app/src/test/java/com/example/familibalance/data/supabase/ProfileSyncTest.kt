@@ -31,13 +31,13 @@ class ProfileSyncTest {
     @Before
     fun setUp() {
         context = RuntimeEnvironment.getApplication()
-        AppSharedState.children.clear()
+        AppSharedState.clearChildren()
         SyncStatus.attach(context)
     }
 
     @After
     fun tearDown() {
-        AppSharedState.children.clear()
+        AppSharedState.clearChildren()
         listOf("vis_u1", "lww_clean", "lww_dirty_old", "lww_dirty_new", "lww_echo").forEach {
             SyncStatus.markClean(it)
         }
@@ -130,7 +130,7 @@ class ProfileSyncTest {
     @Test
     fun `remote update applied to clean profile`() = runBlocking {
         val local = child("lww_clean", ts = 1_000, balance = 50)
-        AppSharedState.children["lww_clean"] = local
+        AppSharedState.putChild(local)
 
         val remote = child("lww_clean", ts = 2_000, balance = 99)
         val json = AppStateStorage.serializeSingleChild(remote)
@@ -146,7 +146,7 @@ class ProfileSyncTest {
     @Test
     fun `remote update skipped when dirty local is newer`() = runBlocking {
         val local = child("lww_dirty_old", ts = 5_000, balance = 50)
-        AppSharedState.children["lww_dirty_old"] = local
+        AppSharedState.putChild(local)
         SyncStatus.markDirty("lww_dirty_old")
 
         // Удалённая версия старше локальной — локальные правки в приоритете
@@ -164,7 +164,7 @@ class ProfileSyncTest {
     @Test
     fun `remote update applied when dirty local is older and clears dirty`() = runBlocking {
         val local = child("lww_dirty_new", ts = 1_000, balance = 50)
-        AppSharedState.children["lww_dirty_new"] = local
+        AppSharedState.putChild(local)
         SyncStatus.markDirty("lww_dirty_new")
 
         // Удалённая версия новее — побеждает last-writer-wins,
@@ -183,7 +183,7 @@ class ProfileSyncTest {
     @Test
     fun `echo of already synced version is skipped`() = runBlocking {
         val local = child("lww_echo", ts = 3_000, balance = 10)
-        AppSharedState.children["lww_echo"] = local
+        AppSharedState.putChild(local)
 
         // Серверный updated_at уже применён — повторное событие (echo push'а)
         // не должно менять состояние и дёргать UI.

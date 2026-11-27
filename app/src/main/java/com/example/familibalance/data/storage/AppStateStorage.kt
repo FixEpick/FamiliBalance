@@ -10,10 +10,13 @@ import com.example.familibalance.data.model.QuestStatus
 import com.example.familibalance.data.model.toDto
 import com.example.familibalance.util.getCurrentDateString
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.util.Calendar
-import java.util.concurrent.ConcurrentHashMap
 
 object AppSharedState {
     @Volatile
@@ -24,34 +27,69 @@ object AppSharedState {
 
     // Профили загружаются из локального хранилища / Supabase.
     // Дефолтных «Пользователь 1/2» больше нет — первый запуск показывает пустой список.
-    // ConcurrentHashMap: children мутируется из Realtime-потока (IO) и Main —
-    // обычный mutableMapOf давал ConcurrentModificationException.
-    val children = ConcurrentHashMap<String, ChildProfileState>()
+    //
+    // Хранилище — MutableStateFlow<ImmutableMap>: все мутации идут через
+    // атомарный update {} (CAS), а не через synchronized+ConcurrentHashMap.
+    // StateFlow сам эмитит новое состояние подписчикам — UI может
+    // подписаться напрямую вместо ручного emitFamilyState.
+    private val _children = MutableStateFlow<Map<String, ChildProfileState>>(emptyMap())
+
+    /** StateFlow детей — для подписки (collect) в UI/репозитории. */
+    val childrenFlow: StateFlow<Map<String, ChildProfileState>> = _children.asStateFlow()
 
     /**
-     * Единый lock для read-modify-write мутаций [children].
-     * ConcurrentHashMap атомарен только на одну операцию put/get — связка
-     * «прочитать свежую версию → трансформировать → записать» без lock'а
-     * теряла обновления при гонке локальной правки и Realtime-применения.
-     * Все записи в children должны идти через [write] (или быть единственным put).
+     * Снимок для чтения без подписки. Возвращает иммутабельную Map —
+     * безопасно читать из любого потока; записи только через
+     * putChild/removeChild/clearChildren/mutate* (прямой записи нет —
+     * компилятор не даст children[id] = ...).
+     */
+    val children: Map<String, ChildProfileState>
+        get() = _children.value
+
+    /**
+     * Единый lock для составных операций, трогающих children + selectedChildId
+     * (удаление профиля, очистка при logout, legacy-cleanup). Одиночные
+     * мутации children атомарны сами по себе через StateFlow.update.
      */
     private val writeLock = Any()
 
     fun <T> write(block: () -> T): T = synchronized(writeLock, block)
+
+    fun putChild(profile: ChildProfileState) {
+        _children.update { it + (profile.id to profile) }
+    }
+
+    fun putAll(profiles: Collection<ChildProfileState>) {
+        if (profiles.isEmpty()) return
+        _children.update { it + profiles.associateBy(ChildProfileState::id) }
+    }
+
+    fun removeChild(id: String) {
+        _children.update { it - id }
+    }
+
+    fun removeKeys(ids: Set<String>) {
+        if (ids.isEmpty()) return
+        _children.update { it - ids }
+    }
+
+    fun clearChildren() {
+        _children.value = emptyMap()
+    }
 
     /** Атомарный read-modify-write одного профиля. Возвращает новый экземпляр или null. */
     fun mutateChild(id: String, transform: (ChildProfileState) -> ChildProfileState): ChildProfileState? =
         write {
             val current = children[id] ?: return@write null
             val next = transform(current)
-            if (next != current) children[id] = next
+            if (next != current) putChild(next)
             next
         }
 
-    /** Атомарный read-modify-write всех профилей (replaceAll под общим lock'ом). */
+    /** Атомарный read-modify-write всех профилей. */
     fun mutateAll(transform: (ChildProfileState) -> ChildProfileState) {
         write {
-            children.replaceAll { _, child -> transform(child) }
+            _children.update { map -> map.mapValues { (_, child) -> transform(child) } }
         }
     }
 
@@ -176,7 +214,7 @@ object AppStateStorage {
                                 authUserId = authUserId?.takeIf { it.isNotBlank() } ?: dto.authUserId,
                                 status = status?.takeIf { it.isNotBlank() } ?: dto.status
                             )
-                            .also { AppSharedState.children[userId] = it }
+                            .also { AppSharedState.putChild(it) }
                     }
                 } ?: return@withContext
                 saveLocalOnly(context)
@@ -212,17 +250,19 @@ object AppStateStorage {
                 // Под общим write-lock: loadState может идти параллельно
                 // с Realtime/локальными мутациями — не затираем их.
                 AppSharedState.write {
+                    val loaded = mutableListOf<ChildProfileState>()
                     childrenObj.keys().forEach { id ->
                         if (childrenObj.has(id)) {
                             val childObj = childrenObj.getJSONObject(id)
                             try {
                                 val dto = jsonFormat.decodeFromString<ChildProfileDto>(childObj.toString())
-                                AppSharedState.children[id] = ChildProfileState.fromDto(dto).copy(id = id)
+                                loaded += ChildProfileState.fromDto(dto).copy(id = id)
                             } catch (e: Exception) {
                                 Log.e("AppStateStorage", "child profile parse failed: $id", e)
                             }
                         }
                     }
+                    AppSharedState.putAll(loaded)
                 }
             }
         } catch (e: Exception) {

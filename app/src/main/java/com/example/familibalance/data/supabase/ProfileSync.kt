@@ -294,7 +294,7 @@ internal object ProfileSync {
                         }
                     }
 
-                    AppSharedState.children[child.id] = updated
+                    AppSharedState.putChild(updated)
                     updated
                     }
                 }
@@ -419,47 +419,7 @@ internal object ProfileSync {
                 }
 
                 if (rpcStatus == "conflict") {
-                    // Сервер отклонил: там уже лежит версия >= нашей.
-                    // Стягиваем remote и решаем по LWW.
-                    val remoteRow = runCatching {
-                        supabase.from("family_profiles")
-                            .select(columns = Columns.list("state_json", "updated_at")) {
-                                filter { eq("user_id", child.id) }
-                            }
-                            .decodeList<FamilyProfileRowTs>()
-                            .firstOrNull()
-                    }.getOrNull()
-                    val remoteNewer = remoteRow?.let { row ->
-                        runCatching {
-                            val remoteDto = stateJsonFormat
-                                .decodeFromString<ChildProfileDto>(row.state_json)
-                            isRemoteStateNewer(
-                                remoteVersion = remoteDto.stateVersion,
-                                remoteTs = remoteDto.stateUpdatedAt,
-                                localVersion = updatedChild.stateVersion,
-                                localTs = updatedChild.stateUpdatedAt
-                            )
-                        }.getOrDefault(false)
-                    } ?: true
-                    if (remoteNewer) {
-                        remoteRow?.let { row ->
-                            AppStateStorage.applyRemoteChildJsonAsync(
-                                context, row.user_id, row.state_json,
-                                null, null, null, row.updatedAt
-                            )
-                        }
-                        onResult?.invoke(true)
-                        Log.d("SupabaseManager", "Профиль ${child.id}: конфликт версий — применена удалённая")
-                        return@launch
-                    }
-                    // Remote не новее (равная версия — наш же retry долетел):
-                    // считаем синхронизацию достигнутой, dirty снимаем.
-                    SyncStatus.markClean(child.id)
-                    remoteRow?.updatedAt?.let {
-                        SyncStatus.setCloudVersion(child.id, it)
-                    }
-                    onResult?.invoke(true)
-                    Log.d("SupabaseManager", "Профиль ${child.id}: конфликт версий — remote идентичен, clean")
+                    resolveVersionConflict(context, supabase, child, updatedChild, onResult)
                     return@launch
                 }
 
@@ -492,6 +452,15 @@ internal object ProfileSync {
                 Log.d("SupabaseManager", "Профиль ${child.id} успешно отправлен в Supabase")
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
+                // Триггер enforce_family_profiles_version отклонил запись:
+                // в облаке уже лежит более свежая версия — это конфликт,
+                // а не сбой сети. Разрешаем через pull + LWW.
+                if (e.message?.contains("stale_state_version", ignoreCase = true) == true) {
+                    Log.d("SupabaseManager", "Профиль ${child.id}: stale_state_version — pull remote")
+                    val fresh = AppSharedState.children[child.id] ?: child
+                    resolveVersionConflict(context, supabase, child, fresh, onResult)
+                    return@launch
+                }
                 if (isRlsOrAuthError(e)) {
                     Log.e(
                         "SupabaseManager",
@@ -505,6 +474,60 @@ internal object ProfileSync {
                 onResult?.invoke(false)
             }
         }
+    }
+
+    /**
+     * Разрешение конфликта версий: сервер отклонил запись (RPC 'conflict'
+     * или триггер stale_state_version). Стягиваем remote и решаем по LWW:
+     * remote новее → применяем удалённую; равная/старее → наш retry
+     * уже долетел, считаем синхронизацию достигнутой.
+     */
+    private suspend fun resolveVersionConflict(
+        context: Context,
+        supabase: SupabaseClient,
+        child: ChildProfileState,
+        local: ChildProfileState,
+        onResult: ((Boolean) -> Unit)?
+    ) {
+        val remoteRow = runCatching {
+            supabase.from("family_profiles")
+                .select(columns = Columns.list("state_json", "updated_at")) {
+                    filter { eq("user_id", child.id) }
+                }
+                .decodeList<FamilyProfileRowTs>()
+                .firstOrNull()
+        }.getOrNull()
+        val remoteNewer = remoteRow?.let { row ->
+            runCatching {
+                val remoteDto = stateJsonFormat
+                    .decodeFromString<ChildProfileDto>(row.state_json)
+                isRemoteStateNewer(
+                    remoteVersion = remoteDto.stateVersion,
+                    remoteTs = remoteDto.stateUpdatedAt,
+                    localVersion = local.stateVersion,
+                    localTs = local.stateUpdatedAt
+                )
+            }.getOrDefault(false)
+        } ?: true
+        if (remoteNewer) {
+            remoteRow?.let { row ->
+                AppStateStorage.applyRemoteChildJsonAsync(
+                    context, row.user_id, row.state_json,
+                    null, null, null, row.updatedAt
+                )
+            }
+            onResult?.invoke(true)
+            Log.d("SupabaseManager", "Профиль ${child.id}: конфликт версий — применена удалённая")
+            return
+        }
+        // Remote не новее (равная версия — наш же retry долетел):
+        // считаем синхронизацию достигнутой, dirty снимаем.
+        SyncStatus.markClean(child.id)
+        remoteRow?.updatedAt?.let {
+            SyncStatus.setCloudVersion(child.id, it)
+        }
+        onResult?.invoke(true)
+        Log.d("SupabaseManager", "Профиль ${child.id}: конфликт версий — remote идентичен, clean")
     }
 
     /** Ошибка «RPC-функции нет в БД» (миграция не применена) — PGRST202 / Could not find the function. */

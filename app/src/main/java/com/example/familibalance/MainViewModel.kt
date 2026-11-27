@@ -205,7 +205,7 @@ class MainViewModel(
             val legacyIds = setOf("user_1", "user_2")
             val removedLegacy = AppSharedState.write {
                 if (AppSharedState.children.keys.any { it in legacyIds }) {
-                    AppSharedState.children.keys.removeAll(legacyIds)
+                    AppSharedState.removeKeys(legacyIds)
                     if (AppSharedState.selectedChildId in legacyIds ||
                         AppSharedState.children[AppSharedState.selectedChildId] == null
                     ) {
@@ -246,8 +246,10 @@ class MainViewModel(
                 }.getOrNull().orEmpty()
                 val benchChildren =
                     com.example.familibalance.util.BenchmarkSession.createAdminChildren(uid)
-                benchChildren.forEach { AppSharedState.children[it.id] = it }
-                AppSharedState.selectedChildId = benchChildren.first().id
+                AppSharedState.write {
+                    AppSharedState.putAll(benchChildren)
+                    AppSharedState.selectedChildId = benchChildren.first().id
+                }
                 prefs.edit {
                     putBoolean("is_admin_logged_in", true)
                     putBoolean("onboarding_done", true)
@@ -263,7 +265,7 @@ class MainViewModel(
             if (com.example.familibalance.util.BenchmarkSession.requested) {
                 val bench = com.example.familibalance.util.BenchmarkSession.createChildProfile()
                 AppSharedState.write {
-                    AppSharedState.children[bench.id] = bench
+                    AppSharedState.putChild(bench)
                     AppSharedState.selectedChildId = bench.id
                 }
                 prefs.edit {
@@ -509,7 +511,7 @@ class MainViewModel(
     /** Очистка состояния при выходе из аккаунта: профили и выбор не должны «протекать» другой семье. */
     fun clearState() {
         AppSharedState.write {
-            AppSharedState.children.clear()
+            AppSharedState.clearChildren()
             AppSharedState.selectedChildId = "user_1"
         }
         emitFamilyState()

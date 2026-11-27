@@ -7,6 +7,27 @@ import kotlinx.serialization.Serializable
 
 private const val MAX_HISTORY_ITEMS = 200
 
+/**
+ * Усечение истории для хранения/синхронизации.
+ *
+ * Денежные записи (amountValue != null) — это леджер баланса
+ * (balance = balanceBase + Σ amountValue): они НЕ усекаются никогда,
+ * иначе derived-баланс терял бы факты. Под лимит попадают только
+ * неденежные записи (информационные: множитель, уровень без монет и т.п.).
+ * Порядок записей сохраняется.
+ */
+internal fun trimHistoryItems(items: List<HistoryData>): List<HistoryData> {
+    if (items.size <= MAX_HISTORY_ITEMS) return items
+    val moneyCount = items.count { it.amountValue != null }
+    val nonMoneyKeep = maxOf(0, MAX_HISTORY_ITEMS - moneyCount)
+    // Последние nonMoneyKeep неденежных записей — «выжившие»
+    val keptNonMoney = items
+        .filter { it.amountValue == null }
+        .takeLast(nonMoneyKeep)
+        .toSet()
+    return items.filter { it.amountValue != null || it in keptNonMoney }
+}
+
 @Serializable
 data class ChildProfileState(
     val id: String,
@@ -194,7 +215,7 @@ data class ChildProfileState(
             cashoutRequests = dto.cashoutRequests,
             pendingQuests = dto.pendingQuests,
             bonusQuests = dto.bonusQuests,
-            historyItems = dto.historyItems.takeLast(MAX_HISTORY_ITEMS),
+            historyItems = trimHistoryItems(dto.historyItems),
             selectedThemeId = dto.selectedThemeId,
             unlockedThemes = dto.unlockedThemes,
             unlockedAvatars = dto.unlockedAvatars,
@@ -369,13 +390,14 @@ data class ChildProfileDto(
 )
 
 fun ChildProfileState.toDto(): ChildProfileDto {
-    // При усечении истории до MAX_HISTORY_ITEMS сумма «выпавших»
-    // денежных записей переносится в базу — derived-баланс не плывёт.
+    // Денежные записи не усекаются (trimHistoryItems) — «выпасть» может
+    // только неденежная запись с amountValue=null, поэтому droppedSum
+    // практически всегда 0; формула оставлена для страховки.
+    val keptHistory = trimHistoryItems(historyItems)
     val effectiveBase = balanceBase
         ?: (balance - historyItems.sumOf { it.amountValue ?: 0 })
-    val droppedSum = historyItems
-        .dropLast(MAX_HISTORY_ITEMS)
-        .sumOf { it.amountValue ?: 0 }
+    val droppedSum = historyItems.sumOf { it.amountValue ?: 0 } -
+        keptHistory.sumOf { it.amountValue ?: 0 }
     return ChildProfileDto(
     id = id,
     name = name,
@@ -422,7 +444,7 @@ fun ChildProfileState.toDto(): ChildProfileDto {
     cashoutRequests = cashoutRequests,
     pendingQuests = pendingQuests.toList(),
     bonusQuests = bonusQuests.toList(),
-    historyItems = historyItems.takeLast(MAX_HISTORY_ITEMS),
+    historyItems = keptHistory,
     selectedThemeId = selectedThemeId,
     unlockedThemes = unlockedThemes,
     unlockedAvatars = unlockedAvatars,

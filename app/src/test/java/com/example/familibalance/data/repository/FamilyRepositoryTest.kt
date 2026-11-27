@@ -37,7 +37,7 @@ class FamilyRepositoryTest {
     @Before
     fun setUp() {
         context = RuntimeEnvironment.getApplication()
-        AppSharedState.children.clear()
+        AppSharedState.clearChildren()
         AppSharedState.selectedChildId = "user_1"
         // Чистим dirty-статусы от предыдущих тестов
         SyncStatus.attach(context)
@@ -47,7 +47,7 @@ class FamilyRepositoryTest {
 
     @After
     fun tearDown() {
-        AppSharedState.children.clear()
+        AppSharedState.clearChildren()
         SyncStatus.markClean("user_1")
         SyncStatus.markClean("user_2")
     }
@@ -55,7 +55,7 @@ class FamilyRepositoryTest {
     @Test
     fun `updateChildProfile saves locally and initiates cloud push`() {
         val child = createChild("user_1")
-        AppSharedState.children[child.id] = child
+        AppSharedState.putChild(child)
         repository = FamilyRepositoryImpl(context)
 
         repository.updateChildProfile(child)
@@ -78,8 +78,8 @@ class FamilyRepositoryTest {
     fun `dirty child is retried on repository init while clean child is not pushed`() {
         val dirtyChild = createChild("user_1")
         val cleanChild = createChild("user_2")
-        AppSharedState.children[dirtyChild.id] = dirtyChild
-        AppSharedState.children[cleanChild.id] = cleanChild
+        AppSharedState.putChild(dirtyChild)
+        AppSharedState.putChild(cleanChild)
 
         // Помечаем user_1 как dirty ДО создания репозитория
         SyncStatus.attach(context)
@@ -101,8 +101,8 @@ class FamilyRepositoryTest {
     fun `saveAndSync with onlyChildId pushes only that child`() {
         val child1 = createChild("user_1")
         val child2 = createChild("user_2")
-        AppSharedState.children[child1.id] = child1
-        AppSharedState.children[child2.id] = child2
+        AppSharedState.putChild(child1)
+        AppSharedState.putChild(child2)
         repository = FamilyRepositoryImpl(context)
 
         repository.saveAndSync(onlyChildId = "user_1")
@@ -114,7 +114,7 @@ class FamilyRepositoryTest {
     @Test
     fun `getChild returns child from shared state`() {
         val child = createChild("user_1")
-        AppSharedState.children[child.id] = child
+        AppSharedState.putChild(child)
         repository = FamilyRepositoryImpl(context)
 
         assertTrue(repository.getChild("user_1") === child)

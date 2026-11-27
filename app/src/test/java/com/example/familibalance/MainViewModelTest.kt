@@ -573,7 +573,7 @@ class MainViewModelTest {
         // а не repository — заполняем оба, чтобы не зависеть от порядка тестов.
         val child = createChild().copy(achievements = listOf(claimed))
         repository.children["user_1"] = child
-        AppSharedState.children["user_1"] = child
+        AppSharedState.putChild(child)
         try {
             viewModel.syncAchievementThemesOnLoad()
 
@@ -583,7 +583,7 @@ class MainViewModelTest {
             assertTrue("CAT" in updated.unlockedAvatars)
             assertTrue("PANDA" in updated.unlockedAvatars)
         } finally {
-            AppSharedState.children.remove("user_1")
+            AppSharedState.removeChild("user_1")
         }
     }
 
@@ -1140,19 +1140,43 @@ class MainViewModelTest {
     }
 
     @Test
-    fun `toDto folds dropped money sum into balanceBase when history exceeds cap`() {
-        // 201 денежная запись: последняя 200 остаются в истории,
-        // сумма первой обязана переехать в balanceBase — derived не плывёт.
+    fun `toDto never drops money entries - they are the balance ledger`() {
+        // 201 денежная запись: ВСЕ сохраняются (леджер баланса),
+        // derived-баланс после round-trip не плывёт.
         val items = (1..201).map { moneyEntry(it) }
         val child = createChild().copy(
             balance = 100 + items.sumOf { it.amountValue!! },
             historyItems = items
         )
         val dto = child.toDto()
-        assertEquals(200, dto.historyItems.size)
+        assertEquals(201, dto.historyItems.size)
         val roundTripped = ChildProfileState.fromDto(dto)
         assertEquals(child.balance, roundTripped.derivedBalance)
-        // Первая запись (amountValue=1) «выпала» — её сумма в базе.
-        assertEquals(101, dto.balanceBase)
+    }
+
+    @Test
+    fun `toDto caps only non-money entries at 200`() {
+        // 150 денежных + 100 неденежных: выживают все 150 money
+        // и последние 50 non-money (лимит 200 суммарно).
+        val money = (1..150).map { moneyEntry(it) }
+        val info = (1..100).map {
+            HistoryData(
+                title = "info$it", time = "t", date = "d",
+                amount = "", isIncome = true, category = "c",
+                type = HistoryType.REWARD_MULTIPLIER, amountValue = null
+            )
+        }
+        val child = createChild().copy(
+            balance = 100 + money.sumOf { it.amountValue!! },
+            historyItems = money + info
+        )
+        val dto = child.toDto()
+        assertEquals(200, dto.historyItems.size)
+        assertEquals(150, dto.historyItems.count { it.amountValue != null })
+        // Последние 50 информационных записей (info51..info100)
+        assertTrue(dto.historyItems.none { it.title == "info1" })
+        assertTrue(dto.historyItems.any { it.title == "info100" })
+        val roundTripped = ChildProfileState.fromDto(dto)
+        assertEquals(child.balance, roundTripped.derivedBalance)
     }
 }

@@ -127,7 +127,7 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
                 changed.copy(
                     stateUpdatedAt = System.currentTimeMillis(),
                     stateVersion = maxOf(changed.stateVersion, freshVersion) + 1
-                ).also { AppSharedState.children[it.id] = it }
+                ).also { AppSharedState.putChild(it) }
             }
             pushChildProfile(stamped)
         }
@@ -253,7 +253,7 @@ class FamilyRepositoryImpl(context: Context) : FamilyRepository {
             stampedProfile.copy(
                 balanceBase = base,
                 balance = base + moneySum
-            ).also { AppSharedState.children[it.id] = it }
+            ).also { AppSharedState.putChild(it) }
         }
         saveLocalAsync()
         pushChildProfile(stamped)

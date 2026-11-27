@@ -286,7 +286,7 @@ object SupabaseManager {
         // 4. Локальное удаление — под общим write-lock вместе с коррекцией
         // selectedChildId, чтобы читатели не увидели dangling-выбор.
         AppSharedState.write {
-            AppSharedState.children.remove(childId)
+            AppSharedState.removeChild(childId)
             if (AppSharedState.selectedChildId == childId) {
                 AppSharedState.selectedChildId = AppSharedState.children.keys.firstOrNull() ?: "user_1"
             }

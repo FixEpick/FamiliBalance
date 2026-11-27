@@ -43,12 +43,12 @@ class SyncConflictTest {
     @Before
     fun setUp() {
         SyncStatus.attach(context)
-        AppSharedState.children.clear()
+        AppSharedState.clearChildren()
     }
 
     @After
     fun tearDown() {
-        AppSharedState.children.clear()
+        AppSharedState.clearChildren()
         SyncStatus.markClean("user_1")
         SyncStatus.markClean("user_2")
     }
@@ -110,7 +110,7 @@ class SyncConflictTest {
             stateVersion = 1,
             stateUpdatedAt = 5_000
         )
-        AppSharedState.children["user_1"] = local
+        AppSharedState.putChild(local)
         SyncStatus.markDirty("user_1")
 
         // Родитель в облаке: APPROVED→READY_TO_CLAIM, версия v2.
@@ -145,7 +145,7 @@ class SyncConflictTest {
             stateVersion = 3,
             stateUpdatedAt = 9_000
         )
-        AppSharedState.children["user_1"] = local
+        AppSharedState.putChild(local)
         SyncStatus.markDirty("user_1")
 
         val staleRemote = local.copy(
